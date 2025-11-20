@@ -1,0 +1,235 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { partnerAPI, userAPI, sessionAPI } from '../../services/api';
+import RadarChartComponent from '../charts/RadarChart';
+import SessionList from '../sessions/SessionList';
+import { Users, Activity, User, Calendar, Copy, Check } from 'lucide-react';
+
+const PartnerDashboard = () => {
+  const { user } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [userSessions, setUserSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    loadPartnerUsers();
+  }, [user.id]);
+
+  const loadPartnerUsers = async () => {
+    try {
+      const response = await partnerAPI.getUsers(user.id);
+      setUsers(response.data.users || []);
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+      setLoading(false);
+    }
+  };
+
+  const handleUserSelect = async (selectedUserId) => {
+    try {
+      setLoading(true);
+      const [profileResponse, sessionsResponse] = await Promise.all([
+        partnerAPI.getUserProfile(user.id, selectedUserId),
+        userAPI.getSessions(selectedUserId)
+      ]);
+
+      setSelectedUser(profileResponse.data.user);
+      setUserProfile(profileResponse.data.profileHistory || []);
+      setUserSessions(sessionsResponse.data.sessions || []);
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to load user data:', err);
+      setLoading(false);
+    }
+  };
+
+  const handleCreateSession = async (userId) => {
+    try {
+      await sessionAPI.create({
+        user_id: userId,
+        partner_id: user.id
+      });
+      
+      alert('Session created successfully! The user can now complete their assessment.');
+      
+      // Reload user data
+      if (selectedUser && selectedUser.id === userId) {
+        handleUserSelect(userId);
+      }
+    } catch (err) {
+      console.error('Failed to create session:', err);
+      const errorMessage = err.response?.data?.error || 'Failed to create session';
+      if (errorMessage.includes('incomplete session') || errorMessage.includes('in progress')) {
+        alert('Cannot create a new session because an existing session is still in progress');
+      } else {
+        alert(errorMessage);
+      }
+    }
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    if (!window.confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await sessionAPI.delete(sessionId);
+      alert('Session deleted successfully');
+      // Reload user sessions
+      if (selectedUser) {
+        handleUserSelect(selectedUser.id);
+      }
+    } catch (err) {
+      console.error('Failed to delete session:', err);
+      alert('Failed to delete session');
+    }
+  };
+
+  const copyPartnerIdToClipboard = () => {
+    if (user.partner_id) {
+      navigator.clipboard.writeText(user.partner_id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  if (loading && users.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Activity className="h-12 w-12 text-primary-600 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
+        <p className="text-gray-600 mt-1">Manage your clients and track their progress</p>
+        
+        {/* Partner ID Display */}
+        {user.partner_id && (
+          <div className="mt-4 inline-flex items-center bg-primary-50 border-2 border-primary-200 rounded-lg px-4 py-3">
+            <div className="mr-3">
+              <p className="text-xs text-gray-600 font-medium">Your Partner ID</p>
+              <p className="text-2xl font-bold text-primary-700 tracking-wider">{user.partner_id}</p>
+            </div>
+            <button
+              onClick={copyPartnerIdToClipboard}
+              className="p-2 hover:bg-primary-100 rounded-md transition-colors"
+              title="Copy Partner ID"
+            >
+              {copied ? (
+                <Check className="h-5 w-5 text-green-600" />
+              ) : (
+                <Copy className="h-5 w-5 text-primary-600" />
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Users List */}
+        <div className="lg:col-span-1">
+          <div className="card sticky top-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Your Clients ({users.length})
+              </h2>
+            </div>
+            
+            {users.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Users className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                <p>No clients assigned yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {users.map((client) => (
+                  <button
+                    key={client.id}
+                    onClick={() => handleUserSelect(client.id)}
+                    className={`w-full text-left p-3 rounded-lg border-2 transition ${
+                      selectedUser?.id === client.id
+                        ? 'border-primary-600 bg-primary-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <User className="h-5 w-5 text-gray-400" />
+                      <div>
+                        <p className="font-medium text-gray-900">{client.name}</p>
+                        <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* User Details */}
+        <div className="lg:col-span-2">
+          {selectedUser ? (
+            <div className="space-y-6">
+              {/* User Info Card */}
+              <div className="card">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">{selectedUser.name}</h2>
+                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+                      <span>{selectedUser.sex}, {selectedUser.age} years</span>
+                      {selectedUser.email && <span>{selectedUser.email}</span>}
+                      {selectedUser.contact && <span>{selectedUser.contact}</span>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleCreateSession(selectedUser.id)}
+                    className="btn btn-primary flex items-center space-x-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    <span>New Session</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Progress Chart */}
+              <RadarChartComponent 
+                profileHistory={userProfile}
+                title={`${selectedUser.name}'s Progress`}
+              />
+
+              {/* Sessions */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Session History</h3>
+                <SessionList 
+                  sessions={userSessions} 
+                  onDeleteSession={handleDeleteSession}
+                  canDelete={true}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="card text-center py-16">
+              <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg">Select a client to view their progress</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PartnerDashboard;
+

@@ -1,0 +1,287 @@
+import React, { useState } from 'react';
+import { X, Building2, Mail, Phone, MapPin, FileText, CreditCard, Lock } from 'lucide-react';
+
+const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    contact: '',
+    address: '',
+    gst_no: '',
+    subscription_plan: '',
+    password: '',
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Organization name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    if (!formData.contact.trim()) {
+      newErrors.contact = 'Contact number is required';
+    } else if (!/^\d{10}$/.test(formData.contact.replace(/\D/g, ''))) {
+      newErrors.contact = 'Contact number must be 10 digits';
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validate()) {
+      onSubmit(formData);
+    }
+  };
+
+  const handleClose = () => {
+    setFormData({
+      name: '',
+      email: '',
+      contact: '',
+      address: '',
+      gst_no: '',
+      subscription_plan: '',
+      password: '',
+    });
+    setErrors({});
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+            <Building2 className="h-6 w-6 mr-2 text-indigo-600" />
+            Create New Organization
+          </h2>
+          <button
+            onClick={handleClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            disabled={isLoading}
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Organization Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Organization Name <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  errors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter organization name"
+                disabled={isLoading}
+              />
+            </div>
+            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  errors.email ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="organization@example.com"
+                disabled={isLoading}
+              />
+            </div>
+            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+          </div>
+
+          {/* Contact Number */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Contact Number <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="tel"
+                name="contact"
+                value={formData.contact}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  errors.contact ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="1234567890"
+                disabled={isLoading}
+              />
+            </div>
+            {errors.contact && <p className="mt-1 text-sm text-red-500">{errors.contact}</p>}
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Address <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                rows="3"
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  errors.address ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter full address"
+                disabled={isLoading}
+              />
+            </div>
+            {errors.address && <p className="mt-1 text-sm text-red-500">{errors.address}</p>}
+          </div>
+
+          {/* GST Number (Optional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              GST Number (Optional)
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                name="gst_no"
+                value={formData.gst_no}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="GST registration number"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {/* Subscription Plan */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Subscription Plan (Optional)
+            </label>
+            <div className="relative">
+              <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <select
+                name="subscription_plan"
+                value={formData.subscription_plan}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                disabled={isLoading}
+              >
+                <option value="">Select a plan</option>
+                <option value="basic">Basic - Up to 10 clients/month</option>
+                <option value="silver">Silver - 10-50 clients/month</option>
+                <option value="gold">Gold - 50+ clients/month</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Initial Password <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  errors.password ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter initial password"
+                disabled={isLoading}
+              />
+            </div>
+            {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+            <p className="mt-1 text-xs text-gray-500">
+              The organization will use this password for initial login
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Creating...' : 'Create Organization'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default CreateOrganizationModal;
+
