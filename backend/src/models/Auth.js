@@ -20,6 +20,34 @@ class Auth {
     return result.rows[0];
   }
 
+  static async findByEmailOrPhone(identifier) {
+    // First try to find by email
+    const emailResult = await this.findByEmail(identifier);
+    if (emailResult) {
+      return emailResult;
+    }
+
+    // If not found by email, try to find by phone number
+    // Search in users, partners, and organizations tables
+    const phoneQuery = `
+      SELECT ac.* FROM auth_credentials ac
+      WHERE ac.reference_id IN (
+        SELECT id FROM users WHERE contact = $1
+        UNION
+        SELECT id FROM partners WHERE contact = $1
+        UNION
+        SELECT id FROM organizations WHERE contact = $1
+      )
+      AND ac.user_type = CASE
+        WHEN EXISTS (SELECT 1 FROM users WHERE contact = $1 AND id = ac.reference_id) THEN 'user'
+        WHEN EXISTS (SELECT 1 FROM partners WHERE contact = $1 AND id = ac.reference_id) THEN 'partner'
+        WHEN EXISTS (SELECT 1 FROM organizations WHERE contact = $1 AND id = ac.reference_id) THEN 'organization'
+      END
+    `;
+    const phoneResult = await db.query(phoneQuery, [identifier]);
+    return phoneResult.rows[0];
+  }
+
   static async findByTypeAndId(userType, referenceId) {
     const query = 'SELECT * FROM auth_credentials WHERE user_type = $1 AND reference_id = $2';
     const result = await db.query(query, [userType, referenceId]);

@@ -34,6 +34,26 @@ const updatePartner = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized to update this partner' });
     }
 
+    // Validate email format if provided
+    if (updates.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(updates.email)) {
+        return res.status(400).json({ 
+          error: 'Please provide a valid email address' 
+        });
+      }
+    }
+
+    // Validate contact number format if provided
+    if (updates.contact) {
+      const phoneRegex = /^\+\d{1,4}\d{7,15}$/;
+      if (!phoneRegex.test(updates.contact)) {
+        return res.status(400).json({ 
+          error: 'Please provide a valid contact number with country code (e.g., +919876543210)' 
+        });
+      }
+    }
+
     const updatedPartner = await Partner.update(id, updates);
     res.json({ 
       message: 'Partner updated successfully',

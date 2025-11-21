@@ -6,6 +6,8 @@ import AdminLayout from './components/layout/AdminLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import UserDashboardPage from './pages/UserDashboardPage';
 import PartnerDashboardPage from './pages/PartnerDashboardPage';
 import OrganizationDashboardPage from './pages/OrganizationDashboardPage';
@@ -46,6 +48,8 @@ function AppRoutes() {
       <Route path="/" element={user ? <Navigate to={getRedirectPath()} /> : <Home />} />
       <Route path="/login" element={user ? <Navigate to={getRedirectPath()} /> : <Login />} />
       <Route path="/signup" element={user ? <Navigate to={getRedirectPath()} /> : <Signup />} />
+      <Route path="/forgot-password" element={user ? <Navigate to={getRedirectPath()} /> : <ForgotPassword />} />
+      <Route path="/reset-password" element={user ? <Navigate to={getRedirectPath()} /> : <ResetPassword />} />
       
       {/* Admin Routes - Use AdminLayout instead of Navbar */}
       <Route

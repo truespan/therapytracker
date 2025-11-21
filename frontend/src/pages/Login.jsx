@@ -63,24 +63,32 @@ const Login = () => {
             <div>
               <label className="label">
                 <Mail className="inline h-4 w-4 mr-1" />
-                Email Address
+                Email or Phone Number
               </label>
               <input
-                type="email"
+                type="text"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 className="input"
-                placeholder="you@example.com"
+                placeholder="email@example.com or +919876543210"
                 required
               />
             </div>
 
             <div>
-              <label className="label">
-                <Lock className="inline h-4 w-4 mr-1" />
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="label mb-0">
+                  <Lock className="inline h-4 w-4 mr-1" />
+                  Password
+                </label>
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
               <input
                 type="password"
                 name="password"

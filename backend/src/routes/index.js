@@ -18,6 +18,8 @@ const router = express.Router();
 router.post('/auth/signup', authController.signup);
 router.post('/auth/login', authController.login);
 router.get('/auth/me', authenticateToken, authController.getCurrentUser);
+router.post('/auth/forgot-password', authController.forgotPassword);
+router.post('/auth/reset-password', authController.resetPassword);
 
 // ==================== PROFILE FIELDS ROUTES ====================
 router.get('/profile-fields', authenticateToken, profileController.getAllFields);

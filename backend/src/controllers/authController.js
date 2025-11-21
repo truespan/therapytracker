@@ -5,6 +5,8 @@ const Partner = require('../models/Partner');
 const Organization = require('../models/Organization');
 const Admin = require('../models/Admin');
 const Auth = require('../models/Auth');
+const PasswordReset = require('../models/PasswordReset');
+const { sendPasswordResetEmail } = require('../utils/emailService');
 const db = require('../config/database');
 
 const SALT_ROUNDS = 10;
@@ -18,6 +20,25 @@ const signup = async (req, res) => {
       return res.status(400).json({ 
         error: 'User type, email, and password are required' 
       });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        error: 'Please provide a valid email address' 
+      });
+    }
+
+    // Validate contact number format if provided
+    if (userData.contact) {
+      // Contact should be in format: +[country code][number]
+      const phoneRegex = /^\+\d{1,4}\d{7,15}$/;
+      if (!phoneRegex.test(userData.contact)) {
+        return res.status(400).json({ 
+          error: 'Please provide a valid contact number with country code (e.g., +919876543210)' 
+        });
+      }
     }
 
     // Check if email already exists
@@ -163,19 +184,19 @@ const login = async (req, res) => {
 
     // Validate input
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return res.status(400).json({ error: 'Email or phone number and password are required' });
     }
 
-    // Find auth credentials
-    const authRecord = await Auth.findByEmail(email);
+    // Find auth credentials by email or phone
+    const authRecord = await Auth.findByEmailOrPhone(email);
     if (!authRecord) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, authRecord.password_hash);
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Fetch user details based on type
@@ -263,9 +284,93 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { identifier } = req.body; // Can be email or phone
+
+    if (!identifier) {
+      return res.status(400).json({ error: 'Email or phone number is required' });
+    }
+
+    // Find user by email or phone
+    const authRecord = await Auth.findByEmailOrPhone(identifier);
+    
+    // For security, always return success even if user doesn't exist
+    // This prevents email enumeration attacks
+    if (!authRecord) {
+      return res.json({ 
+        message: 'If an account exists with that email or phone number, a password reset link has been sent.' 
+      });
+    }
+
+    // Delete any existing tokens for this email
+    await PasswordReset.deleteByEmail(authRecord.email);
+
+    // Create new reset token
+    const resetToken = await PasswordReset.createToken(authRecord.email);
+
+    // Send password reset email
+    try {
+      await sendPasswordResetEmail(authRecord.email, resetToken.token);
+      console.log(`Password reset email sent to: ${authRecord.email}`);
+    } catch (emailError) {
+      console.error('Failed to send password reset email:', emailError);
+      return res.status(500).json({ 
+        error: 'Failed to send password reset email. Please contact support.' 
+      });
+    }
+
+    res.json({ 
+      message: 'If an account exists with that email or phone number, a password reset link has been sent.' 
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to process password reset request' });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token and new password are required' });
+    }
+
+    // Validate password length
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    // Find and validate token
+    const resetToken = await PasswordReset.findByToken(token);
+    if (!resetToken) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // Update password
+    await Auth.updatePassword(resetToken.email, passwordHash);
+
+    // Delete used token
+    await PasswordReset.deleteToken(token);
+
+    console.log(`Password reset successful for: ${resetToken.email}`);
+
+    res.json({ message: 'Password reset successful. You can now login with your new password.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+};
+
 module.exports = {
   signup,
   login,
-  getCurrentUser
+  getCurrentUser,
+  forgotPassword,
+  resetPassword
 };
 

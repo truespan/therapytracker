@@ -11,6 +11,7 @@ const Signup = () => {
     sex: 'Male',
     age: '',
     email: '',
+    countryCode: '+91',
     contact: '',
     address: '',
     password: '',
@@ -70,7 +71,29 @@ const Signup = () => {
 
     // Common validations
     if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.contact.trim()) newErrors.contact = 'Contact is required';
+    
+    // Email validation - now required
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+    }
+    
+    // Contact validation
+    if (!formData.contact.trim()) {
+      newErrors.contact = 'Contact number is required';
+    } else {
+      // Validate phone number (only digits, 7-15 digits)
+      const phoneRegex = /^\d{7,15}$/;
+      if (!phoneRegex.test(formData.contact.trim())) {
+        newErrors.contact = 'Please enter a valid phone number (7-15 digits)';
+      }
+    }
+    
     if (!formData.password) newErrors.password = 'Password is required';
     if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     if (formData.password !== formData.confirmPassword) {
@@ -118,7 +141,8 @@ const Signup = () => {
     // Prepare data based on user type
     const submitData = {
       userType,
-      email: formData.email || `${formData.contact}@temp.com`, // Use contact as email if not provided
+      email: formData.email,
+      contact: `${formData.countryCode}${formData.contact}`, // Combine country code with phone number
       password: formData.password,
       name: formData.name,
       contact: formData.contact,
@@ -244,7 +268,7 @@ const Signup = () => {
 
               {/* Email */}
               <div>
-                <label className="label">Email (Optional)</label>
+                <label className="label">Email *</label>
                 <input
                   type="email"
                   name="email"
@@ -252,6 +276,7 @@ const Signup = () => {
                   onChange={handleChange}
                   className="input"
                   placeholder="you@example.com"
+                  required
                 />
                 {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
               </div>
@@ -259,15 +284,46 @@ const Signup = () => {
               {/* Contact */}
               <div>
                 <label className="label">Contact Number *</label>
-                <input
-                  type="tel"
-                  name="contact"
-                  value={formData.contact}
-                  onChange={handleChange}
-                  className="input"
-                  placeholder="+1-555-0100"
-                />
+                <div className="flex space-x-2">
+                  <select
+                    name="countryCode"
+                    value={formData.countryCode}
+                    onChange={handleChange}
+                    className="input w-24 text-sm px-2"
+                  >
+                    <option value="+91">🇮🇳 +91</option>
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+61">🇦🇺 +61</option>
+                    <option value="+81">🇯🇵 +81</option>
+                    <option value="+86">🇨🇳 +86</option>
+                    <option value="+49">🇩🇪 +49</option>
+                    <option value="+33">🇫🇷 +33</option>
+                    <option value="+39">🇮🇹 +39</option>
+                    <option value="+7">🇷🇺 +7</option>
+                    <option value="+55">🇧🇷 +55</option>
+                    <option value="+27">🇿🇦 +27</option>
+                    <option value="+82">🇰🇷 +82</option>
+                    <option value="+65">🇸🇬 +65</option>
+                    <option value="+60">🇲🇾 +60</option>
+                    <option value="+971">🇦🇪 +971</option>
+                    <option value="+966">🇸🇦 +966</option>
+                    <option value="+20">🇪🇬 +20</option>
+                    <option value="+234">🇳🇬 +234</option>
+                    <option value="+52">🇲🇽 +52</option>
+                  </select>
+                  <input
+                    type="tel"
+                    name="contact"
+                    value={formData.contact}
+                    onChange={handleChange}
+                    className="input flex-1"
+                    placeholder="9876543210"
+                    pattern="[0-9]*"
+                  />
+                </div>
                 {errors.contact && <p className="text-red-600 text-sm mt-1">{errors.contact}</p>}
+                <p className="text-gray-500 text-xs mt-1">Enter phone number without country code</p>
               </div>
 
               {/* Partner ID (for user) */}
