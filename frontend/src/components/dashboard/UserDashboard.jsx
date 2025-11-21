@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { userAPI } from '../../services/api';
+import { userAPI, appointmentAPI } from '../../services/api';
 import RadarChartComponent from '../charts/RadarChart';
 import ProgressComparison from '../charts/ProgressComparison';
 import SessionList from '../sessions/SessionList';
@@ -9,13 +9,14 @@ import ProfileQuestionnaire from '../profile/ProfileQuestionnaire';
 import SessionFeedback from '../sessions/SessionFeedback';
 import CustomFieldManager from '../profile/CustomFieldManager';
 import AssessmentQuestionnaire from '../profile/AssessmentQuestionnaire';
-import { Activity, TrendingUp, List, ClipboardList } from 'lucide-react';
+import { Activity, TrendingUp, List, ClipboardList, Calendar } from 'lucide-react';
 
 const UserDashboard = () => {
   const { user } = useAuth();
   const [profileHistory, setProfileHistory] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [partners, setPartners] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [showNewSession, setShowNewSession] = useState(false);
@@ -25,6 +26,7 @@ const UserDashboard = () => {
 
   useEffect(() => {
     loadData();
+    loadAppointments();
   }, [user.id]);
 
   const loadData = async () => {
@@ -42,6 +44,15 @@ const UserDashboard = () => {
     } catch (err) {
       console.error('Failed to load user data:', err);
       setLoading(false);
+    }
+  };
+
+  const loadAppointments = async () => {
+    try {
+      const response = await appointmentAPI.getByUser(user.id);
+      setAppointments(response.data.appointments || []);
+    } catch (err) {
+      console.error('Failed to load appointments:', err);
     }
   };
 
@@ -179,6 +190,36 @@ const UserDashboard = () => {
       {/* Content */}
       {activeTab === 'overview' && (
         <div>
+          {/* Upcoming Appointments Widget */}
+          {appointments.length > 0 && (
+            <div className="card mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Calendar className="h-5 w-5 mr-2 text-primary-600" />
+                Upcoming Appointments
+              </h3>
+              <div className="space-y-3">
+                {appointments.slice(0, 3).map(apt => (
+                  <div key={apt.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">{apt.title}</p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(apt.appointment_date).toLocaleString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                      <p className="text-sm text-gray-500">with {apt.partner_name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {sessions.length === 0 ? (
             <div className="card text-center py-12">
               <ClipboardList className="h-16 w-16 text-gray-400 mx-auto mb-4" />

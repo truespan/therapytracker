@@ -1,0 +1,281 @@
+import React, { useState, useEffect } from 'react';
+import { appointmentAPI } from '../../services/api';
+import { X, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import moment from 'moment';
+
+const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    user_id: '',
+    title: '',
+    appointment_date: '',
+    appointment_time: '',
+    duration_minutes: 60,
+    notes: ''
+  });
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    if (appointment) {
+      // Edit mode
+      setFormData({
+        user_id: appointment.user_id,
+        title: appointment.title,
+        appointment_date: moment(appointment.appointment_date).format('YYYY-MM-DD'),
+        appointment_time: moment(appointment.appointment_date).format('HH:mm'),
+        duration_minutes: appointment.duration_minutes,
+        notes: appointment.notes || ''
+      });
+    } else if (selectedSlot) {
+      // Create mode
+      setFormData({
+        user_id: '',
+        title: '',
+        appointment_date: moment(selectedSlot.start).format('YYYY-MM-DD'),
+        appointment_time: moment(selectedSlot.start).format('HH:mm'),
+        duration_minutes: moment(selectedSlot.end).diff(moment(selectedSlot.start), 'minutes') || 60,
+        notes: ''
+      });
+    }
+  }, [appointment, selectedSlot]);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    setError('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!formData.user_id || !formData.title || !formData.appointment_date || !formData.appointment_time) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      // Create datetime string in local timezone format (YYYY-MM-DD HH:mm:ss)
+      // This preserves the user's selected time without timezone conversion
+      const appointmentDateTime = `${formData.appointment_date} ${formData.appointment_time}:00`;
+      const endMoment = moment(`${formData.appointment_date} ${formData.appointment_time}`).add(formData.duration_minutes, 'minutes');
+      const endDateTime = endMoment.format('YYYY-MM-DD HH:mm:ss');
+
+      const appointmentData = {
+        partner_id: partnerId,
+        user_id: parseInt(formData.user_id),
+        title: formData.title,
+        appointment_date: appointmentDateTime,
+        end_date: endDateTime,
+        duration_minutes: parseInt(formData.duration_minutes),
+        notes: formData.notes
+      };
+
+      if (appointment) {
+        await appointmentAPI.update(appointment.id, appointmentData);
+        setSuccess('Appointment updated successfully');
+      } else {
+        await appointmentAPI.create(appointmentData);
+        setSuccess('Appointment created successfully');
+      }
+
+      setTimeout(() => {
+        onSave();
+      }, 1000);
+    } catch (err) {
+      console.error('Save appointment error:', err);
+      setError(err.response?.data?.error || 'Failed to save appointment');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this appointment?')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await appointmentAPI.delete(appointment.id);
+      setSuccess('Appointment deleted successfully');
+      setTimeout(() => {
+        onSave();
+      }, 1000);
+    } catch (err) {
+      console.error('Delete appointment error:', err);
+      setError('Failed to delete appointment');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {appointment ? 'Edit Appointment' : 'New Appointment'}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
+              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+              <span className="text-sm">{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2 text-green-700">
+              <CheckCircle className="h-5 w-5 flex-shrink-0" />
+              <span className="text-sm">{success}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Client <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="user_id"
+              value={formData.user_id}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              required
+            >
+              <option value="">Select a client</option>
+              {users.map(user => (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="e.g., Therapy Session"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="appointment_date"
+                value={formData.appointment_date}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Time <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="time"
+                name="appointment_time"
+                value={formData.appointment_time}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Duration (minutes)
+            </label>
+            <select
+              name="duration_minutes"
+              value={formData.duration_minutes}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="30">30 minutes</option>
+              <option value="45">45 minutes</option>
+              <option value="60">1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Notes
+            </label>
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              rows="3"
+              placeholder="Add any notes about this appointment..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+            />
+          </div>
+
+          <div className="flex space-x-3 pt-4">
+            {appointment && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>{deleting ? 'Deleting...' : 'Delete'}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 py-2 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {saving ? 'Saving...' : appointment ? 'Update' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default AppointmentModal;
+

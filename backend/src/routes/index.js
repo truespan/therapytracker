@@ -10,6 +10,7 @@ const organizationController = require('../controllers/organizationController');
 const sessionController = require('../controllers/sessionController');
 const profileController = require('../controllers/profileController');
 const adminController = require('../controllers/adminController');
+const appointmentController = require('../controllers/appointmentController');
 
 const router = express.Router();
 
@@ -53,6 +54,14 @@ router.post('/sessions/:sessionId/profile', authenticateToken, sessionController
 
 // ==================== PROFILE DATA ROUTES ====================
 router.get('/profile-data/users/:userId', authenticateToken, profileController.getUserProfileData);
+
+// ==================== APPOINTMENT ROUTES ====================
+router.post('/appointments', authenticateToken, appointmentController.createAppointment);
+router.get('/appointments/:id', authenticateToken, appointmentController.getAppointmentById);
+router.get('/partners/:partnerId/appointments', authenticateToken, appointmentController.getPartnerAppointments);
+router.get('/users/:userId/appointments', authenticateToken, appointmentController.getUserAppointments);
+router.put('/appointments/:id', authenticateToken, appointmentController.updateAppointment);
+router.delete('/appointments/:id', authenticateToken, appointmentController.deleteAppointment);
 
 // ==================== ADMIN ROUTES ====================
 // Admin management routes - require admin role

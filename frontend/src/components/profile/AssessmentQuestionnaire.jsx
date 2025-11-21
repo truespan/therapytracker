@@ -22,6 +22,11 @@ const AssessmentQuestionnaire = ({ userId, sessionId, onComplete, viewOnly = fal
     loadData();
   }, [userId, sessionId]);
 
+  // Reset expanded category when viewOnly changes (e.g., when session becomes completed)
+  useEffect(() => {
+    setExpandedCategory(null);
+  }, [viewOnly]);
+
   // Expose refreshFields method to parent via callback
   useEffect(() => {
     if (onFieldAdded && typeof onFieldAdded === 'function') {
@@ -36,6 +41,9 @@ const AssessmentQuestionnaire = ({ userId, sessionId, onComplete, viewOnly = fal
 
   const loadData = async () => {
     try {
+      // Reset expanded category to ensure all categories are collapsed on reload
+      setExpandedCategory(null);
+      
       // Validate sessionId is present for proper field filtering
       if (!sessionId) {
         console.warn('[AssessmentQuestionnaire] No sessionId provided, fields may not be filtered correctly');
@@ -167,21 +175,24 @@ const AssessmentQuestionnaire = ({ userId, sessionId, onComplete, viewOnly = fal
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Disable button immediately
+    setSaving(true);
     setError('');
     setSuccess(false);
 
     if (!isAllAnswered()) {
       setError('Please answer all questions before submitting');
+      setSaving(false);
       return;
     }
 
     // Check if we have a session ID
     if (!sessionId) {
       setError('No active session. Please contact your therapist.');
+      setSaving(false);
       return;
     }
-
-    setSaving(true);
 
     try {
       // Save main issue first

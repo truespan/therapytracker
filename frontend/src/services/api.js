@@ -101,5 +101,20 @@ export const adminAPI = {
   getDashboardStats: () => api.get('/admin/dashboard/stats'),
 };
 
+// Appointment APIs
+export const appointmentAPI = {
+  create: (data) => api.post('/appointments', data),
+  getById: (id) => api.get(`/appointments/${id}`),
+  getByPartner: (partnerId, startDate, endDate) => {
+    const params = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+    return api.get(`/partners/${partnerId}/appointments`, { params });
+  },
+  getByUser: (userId) => api.get(`/users/${userId}/appointments`),
+  update: (id, data) => api.put(`/appointments/${id}`, data),
+  delete: (id) => api.delete(`/appointments/${id}`)
+};
+
 export default api;
 
