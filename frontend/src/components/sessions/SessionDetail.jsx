@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { sessionAPI } from '../../services/api';
 import { formatDate } from '../../utils/chartHelpers';
-import { Calendar, User, Star, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Calendar, User, Star, MessageSquare, ArrowLeft, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 
 const SessionDetail = ({ sessionId, onBack }) => {
   const [session, setSession] = useState(null);
   const [profileData, setProfileData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isMainIssueExpanded, setIsMainIssueExpanded] = useState(false);
 
   useEffect(() => {
     loadSessionDetail();
@@ -80,6 +81,31 @@ const SessionDetail = ({ sessionId, onBack }) => {
             </div>
           )}
         </div>
+
+        {/* Main Issue - Collapsible */}
+        {session.main_issue && (
+          <div className="mb-6 border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setIsMainIssueExpanded(!isMainIssueExpanded)}
+              className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 transition flex items-center justify-between"
+            >
+              <div className="flex items-center space-x-2">
+                {isMainIssueExpanded ? (
+                  <ChevronDown className="h-5 w-5 text-gray-600" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-gray-600" />
+                )}
+                <FileText className="h-4 w-4 text-gray-600" />
+                <span className="font-medium text-gray-900">Key Issues Described</span>
+              </div>
+            </button>
+            {isMainIssueExpanded && (
+              <div className="px-4 py-3 bg-white border-t border-gray-200">
+                <p className="text-gray-700 whitespace-pre-wrap">{session.main_issue}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {session.rating && (
           <div className="mb-6">

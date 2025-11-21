@@ -82,7 +82,7 @@ const getUserSessions = async (req, res) => {
 const updateSession = async (req, res) => {
   try {
     const { id } = req.params;
-    const { feedback_text, rating, completed } = req.body;
+    const { feedback_text, rating, completed, main_issue } = req.body;
 
     const session = await Session.findById(id);
     if (!session) {
@@ -92,7 +92,8 @@ const updateSession = async (req, res) => {
     const updatedSession = await Session.update(id, {
       feedback_text,
       rating,
-      completed
+      completed,
+      main_issue
     });
 
     res.json({

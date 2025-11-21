@@ -12,8 +12,11 @@ const AssessmentQuestionnaire = ({ userId, sessionId, onComplete, viewOnly = fal
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [mainIssue, setMainIssue] = useState('');
+  const [wordCount, setWordCount] = useState(0);
 
   const ratingOptions = ['Excellent', 'Good', 'Fair', 'Poor', 'Very Poor'];
+  const MAX_WORDS = 200;
 
   useEffect(() => {
     loadData();
@@ -69,6 +72,15 @@ const AssessmentQuestionnaire = ({ userId, sessionId, onComplete, viewOnly = fal
       if (sessionId) {
         try {
           const sessionResponse = await sessionAPI.getById(sessionId);
+          
+          // Load main issue if it exists
+          if (sessionResponse.data.session && sessionResponse.data.session.main_issue) {
+            setMainIssue(sessionResponse.data.session.main_issue);
+            // Calculate word count
+            const words = sessionResponse.data.session.main_issue.trim().split(/\s+/).filter(w => w.length > 0);
+            setWordCount(words.length);
+          }
+          
           if (sessionResponse.data.profileData && sessionResponse.data.profileData.length > 0) {
             const sessionResponses = {};
             sessionResponse.data.profileData.forEach(item => {
@@ -103,6 +115,22 @@ const AssessmentQuestionnaire = ({ userId, sessionId, onComplete, viewOnly = fal
     });
     setError('');
     setSuccess(false);
+  };
+
+  const handleMainIssueChange = (e) => {
+    if (viewOnly) return;
+    
+    const text = e.target.value;
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+    const count = words.length;
+    
+    // Only update if within word limit
+    if (count <= MAX_WORDS) {
+      setMainIssue(text);
+      setWordCount(count);
+      setError('');
+      setSuccess(false);
+    }
   };
 
   const toggleCategory = (category) => {
@@ -156,6 +184,13 @@ const AssessmentQuestionnaire = ({ userId, sessionId, onComplete, viewOnly = fal
     setSaving(true);
 
     try {
+      // Save main issue first
+      if (mainIssue.trim()) {
+        await sessionAPI.update(sessionId, {
+          main_issue: mainIssue.trim()
+        });
+      }
+
       // Format ratings for API
       const ratingsArray = Object.entries(responses)
         .filter(([_, value]) => value !== '')
@@ -213,56 +248,89 @@ const AssessmentQuestionnaire = ({ userId, sessionId, onComplete, viewOnly = fal
 
   return (
     <div className="card">
+      {/* 1. Header */}
       <div className="mb-6">
         <h3 className="text-xl font-bold text-gray-900 mb-2">
           {viewOnly ? `Session ${sessionNumber} - Assessment Responses` : 'Mind & Body Assessment Questionnaire'}
         </h3>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-gray-600">
           {viewOnly 
             ? 'Your submitted responses for this session are shown below.' 
             : 'Please rate each question based on your current experience. Your responses will help us provide better support.'
           }
         </p>
-
-        {viewOnly && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start space-x-2">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-blue-800">
-              These responses have been submitted. You can update them when your therapist starts a new session.
-            </p>
-          </div>
-        )}
-
-        {!viewOnly && hasPreviousResponses && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start space-x-2">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-blue-800">
-              Your previous ratings are shown below for reference. Update them based on how you feel now.
-            </p>
-          </div>
-        )}
-
-        {/* Progress Bar - Only show for editable mode */}
-        {!viewOnly && (
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Progress: {progress.answered} of {progress.total} questions answered
-              </span>
-              <span className="text-sm font-medium text-primary-600">
-                {progressPercentage}%
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
+      {/* 2. Main Issue Text Area */}
+      {!viewOnly && (
+        <div className="mb-6">
+          <label className="block mb-2">
+            <span className="text-gray-900 font-semibold">Please describe your key issue(s) briefly here.</span>
+          </label>
+          <textarea
+            value={mainIssue}
+            onChange={handleMainIssueChange}
+            placeholder="Share what brings you to therapy or what you'd like to work on..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+            rows="5"
+            disabled={viewOnly}
+          />
+          <div className="flex justify-end mt-2">
+            <span className={`text-sm ${wordCount > MAX_WORDS ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+              {wordCount}/{MAX_WORDS} words
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* View Only - Show Main Issue */}
+      {viewOnly && mainIssue && (
+        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <h4 className="text-gray-900 font-semibold mb-2">Key Issues Described:</h4>
+          <p className="text-gray-700 whitespace-pre-wrap">{mainIssue}</p>
+        </div>
+      )}
+
+      {/* 3. Previous Ratings Info Box */}
+      {viewOnly && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start space-x-2">
+          <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-blue-800">
+            These responses have been submitted. You can update them when your therapist starts a new session.
+          </p>
+        </div>
+      )}
+
+      {!viewOnly && hasPreviousResponses && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start space-x-2">
+          <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-blue-800">
+            Your previous ratings are shown below for reference. Update them based on how you feel now.
+          </p>
+        </div>
+      )}
+
+      {/* 4. Progress Bar - Only show for editable mode */}
+      {!viewOnly && (
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-gray-700">
+              Progress: {progress.answered} of {progress.total} questions answered
+            </span>
+            <span className="text-sm font-medium text-primary-600">
+              {progressPercentage}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 5. Error/Success Messages */}
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
           <AlertCircle className="h-5 w-5 flex-shrink-0" />

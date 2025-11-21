@@ -52,16 +52,17 @@ class Session {
   }
 
   static async update(id, sessionData) {
-    const { feedback_text, rating, completed } = sessionData;
+    const { feedback_text, rating, completed, main_issue } = sessionData;
     const query = `
       UPDATE sessions 
       SET feedback_text = COALESCE($1, feedback_text),
           rating = COALESCE($2, rating),
-          completed = COALESCE($3, completed)
-      WHERE id = $4
+          completed = COALESCE($3, completed),
+          main_issue = COALESCE($4, main_issue)
+      WHERE id = $5
       RETURNING *
     `;
-    const values = [feedback_text, rating, completed, id];
+    const values = [feedback_text, rating, completed, main_issue, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }
