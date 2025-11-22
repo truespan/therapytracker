@@ -28,23 +28,43 @@ class Auth {
     }
 
     // If not found by email, try to find by phone number
-    // Search in users, partners, and organizations tables
+    // Normalize phone number - if it doesn't start with +, assume it's an Indian number
+    let phoneNumber = identifier.trim();
+    
+    // If the identifier is numeric and doesn't start with +, add +91 (India country code)
+    if (/^\d+$/.test(phoneNumber)) {
+      phoneNumber = `+91${phoneNumber}`;
+    }
+    
+    console.log(`[AUTH] Searching for phone - Original: ${identifier}, Normalized: ${phoneNumber}`);
+    
+    // Simplified query - search for contact in each table separately and join with auth
     const phoneQuery = `
-      SELECT ac.* FROM auth_credentials ac
-      WHERE ac.reference_id IN (
-        SELECT id FROM users WHERE contact = $1
-        UNION
-        SELECT id FROM partners WHERE contact = $1
-        UNION
-        SELECT id FROM organizations WHERE contact = $1
+      SELECT DISTINCT ac.* FROM auth_credentials ac
+      WHERE (
+        (ac.user_type = 'user' AND ac.reference_id IN (
+          SELECT id FROM users WHERE contact = $1 OR contact = $2
+        ))
+        OR
+        (ac.user_type = 'partner' AND ac.reference_id IN (
+          SELECT id FROM partners WHERE contact = $1 OR contact = $2
+        ))
+        OR
+        (ac.user_type = 'organization' AND ac.reference_id IN (
+          SELECT id FROM organizations WHERE contact = $1 OR contact = $2
+        ))
       )
-      AND ac.user_type = CASE
-        WHEN EXISTS (SELECT 1 FROM users WHERE contact = $1 AND id = ac.reference_id) THEN 'user'
-        WHEN EXISTS (SELECT 1 FROM partners WHERE contact = $1 AND id = ac.reference_id) THEN 'partner'
-        WHEN EXISTS (SELECT 1 FROM organizations WHERE contact = $1 AND id = ac.reference_id) THEN 'organization'
-      END
+      LIMIT 1
     `;
-    const phoneResult = await db.query(phoneQuery, [identifier]);
+    
+    const phoneResult = await db.query(phoneQuery, [identifier, phoneNumber]);
+    
+    if (phoneResult.rows[0]) {
+      console.log(`[AUTH] Found user by phone - Type: ${phoneResult.rows[0].user_type}, ID: ${phoneResult.rows[0].reference_id}`);
+    } else {
+      console.log(`[AUTH] No user found with phone: ${identifier} or ${phoneNumber}`);
+    }
+    
     return phoneResult.rows[0];
   }
 

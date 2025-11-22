@@ -187,11 +187,16 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Email or phone number and password are required' });
     }
 
+    console.log(`[LOGIN] Attempting login with identifier: ${email}`);
+
     // Find auth credentials by email or phone
     const authRecord = await Auth.findByEmailOrPhone(email);
     if (!authRecord) {
+      console.log(`[LOGIN] No auth record found for: ${email}`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    console.log(`[LOGIN] Found auth record - Type: ${authRecord.user_type}, ID: ${authRecord.reference_id}`);
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, authRecord.password_hash);
