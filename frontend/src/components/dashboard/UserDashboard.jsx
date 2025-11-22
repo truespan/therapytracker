@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { userAPI, appointmentAPI } from '../../services/api';
-import RadarChartComponent from '../charts/RadarChart';
-import ProgressComparison from '../charts/ProgressComparison';
+import { userAPI, appointmentAPI, chartAPI } from '../../services/api';
 import SessionList from '../sessions/SessionList';
 import SessionDetail from '../sessions/SessionDetail';
 import ProfileQuestionnaire from '../profile/ProfileQuestionnaire';
 import SessionFeedback from '../sessions/SessionFeedback';
 import CustomFieldManager from '../profile/CustomFieldManager';
 import AssessmentQuestionnaire from '../profile/AssessmentQuestionnaire';
-import { Activity, TrendingUp, List, ClipboardList, Calendar } from 'lucide-react';
+import SharedChartViewer from '../charts/SharedChartViewer';
+import { Activity, List, ClipboardList, Calendar, BarChart3 } from 'lucide-react';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -17,6 +16,7 @@ const UserDashboard = () => {
   const [sessions, setSessions] = useState([]);
   const [partners, setPartners] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [sharedCharts, setSharedCharts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [showNewSession, setShowNewSession] = useState(false);
@@ -31,15 +31,17 @@ const UserDashboard = () => {
 
   const loadData = async () => {
     try {
-      const [profileResponse, sessionsResponse, partnersResponse] = await Promise.all([
+      const [profileResponse, sessionsResponse, partnersResponse, chartsResponse] = await Promise.all([
         userAPI.getProfile(user.id),
         userAPI.getSessions(user.id),
-        userAPI.getPartners(user.id)
+        userAPI.getPartners(user.id),
+        chartAPI.getUserCharts(user.id)
       ]);
 
       setProfileHistory(profileResponse.data.profileHistory || []);
       setSessions(sessionsResponse.data.sessions || []);
       setPartners(partnersResponse.data.partners || []);
+      setSharedCharts(chartsResponse.data.charts || []);
       setLoading(false);
     } catch (err) {
       console.error('Failed to load user data:', err);
@@ -152,15 +154,15 @@ const UserDashboard = () => {
             Overview
           </button>
           <button
-            onClick={() => setActiveTab('comparison')}
+            onClick={() => setActiveTab('charts')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'comparison'
+              activeTab === 'charts'
                 ? 'border-primary-600 text-primary-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            <TrendingUp className="inline h-5 w-5 mr-2" />
-            Compare Progress
+            <BarChart3 className="inline h-5 w-5 mr-2" />
+            Charts & Insights
           </button>
           <button
             onClick={() => setActiveTab('assessments')}
@@ -315,20 +317,16 @@ const UserDashboard = () => {
                     </div>
                   ))}
               </div>
-
-              {/* Mind & Body Profile - Full Width at Bottom */}
-              {profileHistory.length > 0 && (
-                <div className="mt-8">
-                  <RadarChartComponent profileHistory={profileHistory} />
-                </div>
-              )}
             </>
           )}
         </div>
       )}
 
-      {activeTab === 'comparison' && (
-        <ProgressComparison profileHistory={profileHistory} />
+      {activeTab === 'charts' && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Charts from Your Therapist</h2>
+          <SharedChartViewer charts={sharedCharts} profileHistory={profileHistory} />
+        </div>
       )}
 
       {activeTab === 'assessments' && (

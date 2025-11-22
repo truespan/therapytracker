@@ -118,5 +118,13 @@ export const appointmentAPI = {
   delete: (id) => api.delete(`/appointments/${id}`)
 };
 
+// Chart APIs
+export const chartAPI = {
+  shareChart: (data) => api.post('/charts/share', data),
+  getUserCharts: (userId) => api.get(`/charts/user/${userId}`),
+  getPartnerUserCharts: (partnerId, userId) => api.get(`/charts/partner/${partnerId}/user/${userId}`),
+  deleteChart: (id) => api.delete(`/charts/${id}`)
+};
+
 export default api;
 

@@ -198,3 +198,4 @@ The issue is that your `.env` file has placeholder email credentials. Follow the
 Once you complete these steps, the forgot password feature will work perfectly!
 
 
+

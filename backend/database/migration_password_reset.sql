@@ -19,3 +19,4 @@ CREATE INDEX idx_password_reset_email ON password_reset_tokens(email);
 COMMENT ON TABLE password_reset_tokens IS 'Stores temporary tokens for password reset requests with 1-hour expiry';
 
 
+

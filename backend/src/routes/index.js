@@ -11,6 +11,7 @@ const sessionController = require('../controllers/sessionController');
 const profileController = require('../controllers/profileController');
 const adminController = require('../controllers/adminController');
 const appointmentController = require('../controllers/appointmentController');
+const chartController = require('../controllers/chartController');
 
 const router = express.Router();
 
@@ -64,6 +65,12 @@ router.get('/partners/:partnerId/appointments', authenticateToken, appointmentCo
 router.get('/users/:userId/appointments', authenticateToken, appointmentController.getUserAppointments);
 router.put('/appointments/:id', authenticateToken, appointmentController.updateAppointment);
 router.delete('/appointments/:id', authenticateToken, appointmentController.deleteAppointment);
+
+// ==================== CHART ROUTES ====================
+router.post('/charts/share', authenticateToken, checkRole('partner'), chartController.shareChart);
+router.get('/charts/user/:userId', authenticateToken, chartController.getUserCharts);
+router.get('/charts/partner/:partnerId/user/:userId', authenticateToken, checkRole('partner'), chartController.getPartnerUserCharts);
+router.delete('/charts/:id', authenticateToken, checkRole('partner'), chartController.deleteChart);
 
 // ==================== ADMIN ROUTES ====================
 // Admin management routes - require admin role

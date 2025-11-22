@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { partnerAPI, userAPI, sessionAPI } from '../../services/api';
+import { partnerAPI, userAPI, sessionAPI, chartAPI } from '../../services/api';
 import RadarChartComponent from '../charts/RadarChart';
+import ProgressComparison from '../charts/ProgressComparison';
 import SessionList from '../sessions/SessionList';
 import PartnerCalendar from '../calendar/PartnerCalendar';
-import { Users, Activity, User, Calendar, Copy, Check } from 'lucide-react';
+import { Users, Activity, User, Calendar, Copy, Check, BarChart3, CheckCircle } from 'lucide-react';
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
@@ -12,6 +13,7 @@ const PartnerDashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [userSessions, setUserSessions] = useState([]);
+  const [sentCharts, setSentCharts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('clients');
@@ -34,14 +36,16 @@ const PartnerDashboard = () => {
   const handleUserSelect = async (selectedUserId) => {
     try {
       setLoading(true);
-      const [profileResponse, sessionsResponse] = await Promise.all([
+      const [profileResponse, sessionsResponse, chartsResponse] = await Promise.all([
         partnerAPI.getUserProfile(user.id, selectedUserId),
-        userAPI.getSessions(selectedUserId)
+        userAPI.getSessions(selectedUserId),
+        chartAPI.getPartnerUserCharts(user.id, selectedUserId)
       ]);
 
       setSelectedUser(profileResponse.data.user);
       setUserProfile(profileResponse.data.profileHistory || []);
       setUserSessions(sessionsResponse.data.sessions || []);
+      setSentCharts(chartsResponse.data.charts || []);
       setLoading(false);
     } catch (err) {
       console.error('Failed to load user data:', err);
@@ -99,6 +103,28 @@ const PartnerDashboard = () => {
     }
   };
 
+  const handleSendChart = async (chartType, selectedSessions) => {
+    if (!selectedUser) return;
+
+    try {
+      await chartAPI.shareChart({
+        partner_id: user.id,
+        user_id: selectedUser.id,
+        chart_type: chartType,
+        selected_sessions: selectedSessions
+      });
+
+      alert('Chart sent successfully to client!');
+      
+      // Reload sent charts
+      const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUser.id);
+      setSentCharts(chartsResponse.data.charts || []);
+    } catch (err) {
+      console.error('Failed to send chart:', err);
+      alert('Failed to send chart. Please try again.');
+    }
+  };
+
   if (loading && users.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -151,6 +177,17 @@ const PartnerDashboard = () => {
           >
             <Users className="inline h-5 w-5 mr-2" />
             Clients
+          </button>
+          <button
+            onClick={() => setActiveTab('charts')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'charts'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <BarChart3 className="inline h-5 w-5 mr-2" />
+            Charts & Insights
           </button>
           <button
             onClick={() => setActiveTab('calendar')}
@@ -259,6 +296,125 @@ const PartnerDashboard = () => {
           )}
         </div>
       </div>
+      )}
+
+      {/* Charts & Insights Tab */}
+      {activeTab === 'charts' && (
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Users List */}
+          <div className="lg:col-span-1">
+            <div className="card sticky top-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold flex items-center">
+                  <Users className="h-5 w-5 mr-2" />
+                  Your Clients ({users.length})
+                </h2>
+              </div>
+              
+              {users.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                  <p>No clients assigned yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {users.map((client) => (
+                    <button
+                      key={client.id}
+                      onClick={() => handleUserSelect(client.id)}
+                      className={`w-full text-left p-3 rounded-lg border-2 transition ${
+                        selectedUser?.id === client.id
+                          ? 'border-primary-600 bg-primary-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <User className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="font-medium text-gray-900">{client.name}</p>
+                          <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Charts Section */}
+          <div className="lg:col-span-2">
+            {selectedUser ? (
+              <div className="space-y-6">
+                {/* User Info Card */}
+                <div className="card">
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedUser.name}</h2>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Create and send custom charts to your client
+                  </p>
+                </div>
+
+                {/* Progress Comparison with Send Button */}
+                {userProfile && userProfile.length > 0 ? (
+                  <ProgressComparison 
+                    profileHistory={userProfile}
+                    onSendChart={handleSendChart}
+                    showSendButton={true}
+                  />
+                ) : (
+                  <div className="card text-center py-12 text-gray-500">
+                    <p>No profile data available for this client yet</p>
+                  </div>
+                )}
+
+                {/* Sent Charts List */}
+                {sentCharts.length > 0 && (
+                  <div className="card">
+                    <h3 className="text-lg font-semibold mb-4">Charts Sent to {selectedUser.name}</h3>
+                    <div className="space-y-3">
+                      {sentCharts.map((chart) => {
+                        const chartDate = new Date(chart.sent_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+
+                        return (
+                          <div key={chart.id} className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {chart.chart_type === 'radar_default' ? 'Progress Overview' : 'Session Comparison'}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {chart.chart_type === 'comparison' && chart.selected_sessions && (
+                                    <span>Sessions: {chart.selected_sessions.join(', ')} • </span>
+                                  )}
+                                  Sent on {chartDate}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Sent
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="card text-center py-16">
+                <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg">Select a client to create and send charts</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Calendar Tab */}

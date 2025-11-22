@@ -105,3 +105,4 @@ Check `FIX_EMAIL_ISSUE.md` for detailed troubleshooting including:
 **Next Step:** Follow Step 1 above to get your Gmail App Password, then update your .env file!
 
 
+

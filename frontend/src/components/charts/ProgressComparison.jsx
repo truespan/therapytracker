@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import RadarChartComponent from './RadarChart';
+import { Send } from 'lucide-react';
 
-const ProgressComparison = ({ profileHistory }) => {
+const ProgressComparison = ({ profileHistory, onSendChart, showSendButton = false }) => {
   const [selectedSessions, setSelectedSessions] = useState([]);
+  const [sendingChart, setSendingChart] = useState(false);
 
   if (!profileHistory || profileHistory.length === 0) {
     return null;
@@ -27,13 +29,43 @@ const ProgressComparison = ({ profileHistory }) => {
     }
   };
 
+  const handleSendDefaultChart = async () => {
+    if (onSendChart) {
+      setSendingChart(true);
+      await onSendChart('radar_default', null);
+      setSendingChart(false);
+    }
+  };
+
+  const handleSendComparisonChart = async () => {
+    if (onSendChart && selectedSessions.length > 0) {
+      setSendingChart(true);
+      await onSendChart('comparison', selectedSessions);
+      setSendingChart(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="card">
-        <h3 className="text-lg font-semibold mb-4">Compare Sessions</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          Select up to 4 sessions to compare (currently {selectedSessions.length} selected)
-        </p>
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-lg font-semibold">Compare Sessions</h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Select up to 4 sessions to compare (currently {selectedSessions.length} selected)
+            </p>
+          </div>
+          {showSendButton && (
+            <button
+              onClick={handleSendDefaultChart}
+              disabled={sendingChart}
+              className="btn btn-primary flex items-center space-x-2"
+            >
+              <Send className="h-4 w-4" />
+              <span>{sendingChart ? 'Sending...' : 'Send Default Chart'}</span>
+            </button>
+          )}
+        </div>
         
         <div className="flex flex-wrap gap-2 mb-4">
           <button
@@ -63,11 +95,25 @@ const ProgressComparison = ({ profileHistory }) => {
       </div>
 
       {selectedSessions.length > 0 ? (
-        <RadarChartComponent 
-          profileHistory={profileHistory}
-          selectedSessions={selectedSessions}
-          title="Session Comparison"
-        />
+        <div className="space-y-4">
+          <RadarChartComponent 
+            profileHistory={profileHistory}
+            selectedSessions={selectedSessions}
+            title="Session Comparison"
+          />
+          {showSendButton && (
+            <div className="flex justify-center">
+              <button
+                onClick={handleSendComparisonChart}
+                disabled={sendingChart}
+                className="btn btn-primary flex items-center space-x-2"
+              >
+                <Send className="h-4 w-4" />
+                <span>{sendingChart ? 'Sending...' : 'Send This Comparison'}</span>
+              </button>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="card text-center py-8 text-gray-500">
           <p>Select sessions above to compare your progress</p>
