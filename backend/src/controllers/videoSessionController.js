@@ -1,0 +1,238 @@
+const VideoSession = require('../models/VideoSession');
+
+const createVideoSession = async (req, res) => {
+  try {
+    const { 
+      partner_id, 
+      user_id, 
+      title, 
+      session_date, 
+      end_date, 
+      duration_minutes, 
+      password_enabled,
+      notes 
+    } = req.body;
+
+    if (!partner_id || !user_id || !title || !session_date || !end_date) {
+      return res.status(400).json({ 
+        error: 'partner_id, user_id, title, session_date, and end_date are required' 
+      });
+    }
+
+    // Check for conflicts
+    const hasConflict = await VideoSession.checkConflict(partner_id, session_date, end_date);
+    if (hasConflict) {
+      return res.status(409).json({ 
+        error: 'Time slot conflicts with existing video session' 
+      });
+    }
+
+    const newSession = await VideoSession.create({
+      partner_id,
+      user_id,
+      title,
+      session_date,
+      end_date,
+      duration_minutes,
+      password_enabled,
+      notes
+    });
+
+    res.status(201).json({
+      message: 'Video session created successfully',
+      session: newSession
+    });
+  } catch (error) {
+    console.error('Create video session error:', error);
+    res.status(500).json({ 
+      error: 'Failed to create video session', 
+      details: error.message 
+    });
+  }
+};
+
+const getVideoSessionById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const session = await VideoSession.findById(id);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Video session not found' });
+    }
+
+    // Don't send password hash to client
+    const { password, ...sessionData } = session;
+
+    res.json({ session: sessionData });
+  } catch (error) {
+    console.error('Get video session error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch video session', 
+      details: error.message 
+    });
+  }
+};
+
+const getPartnerVideoSessions = async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+    const { start_date, end_date } = req.query;
+
+    const sessions = await VideoSession.findByPartner(partnerId, start_date, end_date);
+    
+    // Remove password hashes from response
+    const sanitizedSessions = sessions.map(({ password, ...session }) => session);
+
+    res.json({ sessions: sanitizedSessions });
+  } catch (error) {
+    console.error('Get partner video sessions error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch video sessions', 
+      details: error.message 
+    });
+  }
+};
+
+const getUserVideoSessions = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const sessions = await VideoSession.findByUser(userId);
+    
+    // Remove password hashes from response
+    const sanitizedSessions = sessions.map(({ password, ...session }) => session);
+
+    res.json({ sessions: sanitizedSessions });
+  } catch (error) {
+    console.error('Get user video sessions error:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch video sessions', 
+      details: error.message 
+    });
+  }
+};
+
+const updateVideoSession = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      title, 
+      session_date, 
+      end_date, 
+      duration_minutes, 
+      status, 
+      notes,
+      password_enabled,
+      partner_id 
+    } = req.body;
+
+    const session = await VideoSession.findById(id);
+    if (!session) {
+      return res.status(404).json({ error: 'Video session not found' });
+    }
+
+    // Check for conflicts if dates are being updated
+    if (session_date && end_date && partner_id) {
+      const hasConflict = await VideoSession.checkConflict(
+        partner_id,
+        session_date,
+        end_date,
+        id
+      );
+      if (hasConflict) {
+        return res.status(409).json({ 
+          error: 'Time slot conflicts with existing video session' 
+        });
+      }
+    }
+
+    const updatedSession = await VideoSession.update(id, {
+      title,
+      session_date,
+      end_date,
+      duration_minutes,
+      status,
+      notes,
+      password_enabled
+    });
+
+    // Don't send password hash to client
+    const { password, ...sessionData } = updatedSession;
+
+    res.json({
+      message: 'Video session updated successfully',
+      session: sessionData
+    });
+  } catch (error) {
+    console.error('Update video session error:', error);
+    res.status(500).json({ 
+      error: 'Failed to update video session', 
+      details: error.message 
+    });
+  }
+};
+
+const deleteVideoSession = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const session = await VideoSession.findById(id);
+    if (!session) {
+      return res.status(404).json({ error: 'Video session not found' });
+    }
+
+    await VideoSession.delete(id);
+
+    res.json({ message: 'Video session deleted successfully' });
+  } catch (error) {
+    console.error('Delete video session error:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete video session', 
+      details: error.message 
+    });
+  }
+};
+
+const verifySessionPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    const session = await VideoSession.findById(id);
+    if (!session) {
+      return res.status(404).json({ error: 'Video session not found' });
+    }
+
+    if (!session.password_enabled) {
+      return res.json({ verified: true, message: 'No password required' });
+    }
+
+    const isValid = await VideoSession.verifyPassword(password, session.password);
+    
+    if (isValid) {
+      res.json({ verified: true, message: 'Password verified successfully' });
+    } else {
+      res.status(401).json({ verified: false, error: 'Invalid password' });
+    }
+  } catch (error) {
+    console.error('Verify session password error:', error);
+    res.status(500).json({ 
+      error: 'Failed to verify password', 
+      details: error.message 
+    });
+  }
+};
+
+module.exports = {
+  createVideoSession,
+  getVideoSessionById,
+  getPartnerVideoSessions,
+  getUserVideoSessions,
+  updateVideoSession,
+  deleteVideoSession,
+  verifySessionPassword
+};
+

@@ -2,41 +2,60 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { appointmentAPI } from '../../services/api';
+import { appointmentAPI, videoSessionAPI } from '../../services/api';
 import AppointmentModal from './AppointmentModal';
-import { AlertCircle, Calendar as CalendarIcon } from 'lucide-react';
+import VideoSessionModal from '../video/VideoSessionModal';
+import { AlertCircle, Calendar as CalendarIcon, Video } from 'lucide-react';
 
 const localizer = momentLocalizer(moment);
 
 const PartnerCalendar = ({ partnerId, users }) => {
   const [appointments, setAppointments] = useState([]);
+  const [videoSessions, setVideoSessions] = useState([]);
+  const [allEvents, setAllEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showModal, setShowModal] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [selectedVideoSession, setSelectedVideoSession] = useState(null);
   const [view, setView] = useState('week');
   const [date, setDate] = useState(new Date());
 
   const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await appointmentAPI.getByPartner(partnerId);
+      const [appointmentsResponse, videoSessionsResponse] = await Promise.all([
+        appointmentAPI.getByPartner(partnerId),
+        videoSessionAPI.getByPartner(partnerId)
+      ]);
       
       // Transform appointments for react-big-calendar
-      const events = response.data.appointments.map(apt => ({
-        id: apt.id,
+      const appointmentEvents = appointmentsResponse.data.appointments.map(apt => ({
+        id: `apt-${apt.id}`,
         title: `${apt.user_name} - ${apt.title}`,
         start: new Date(apt.appointment_date),
         end: new Date(apt.end_date),
-        resource: apt
+        resource: { ...apt, type: 'appointment' }
       }));
       
-      setAppointments(events);
+      // Transform video sessions for react-big-calendar
+      const videoEvents = videoSessionsResponse.data.sessions.map(session => ({
+        id: `video-${session.id}`,
+        title: `🎥 ${session.user_name} - ${session.title}`,
+        start: new Date(session.session_date),
+        end: new Date(session.end_date),
+        resource: { ...session, type: 'video' }
+      }));
+      
+      setAppointments(appointmentEvents);
+      setVideoSessions(videoEvents);
+      setAllEvents([...appointmentEvents, ...videoEvents]);
       setError('');
     } catch (err) {
-      console.error('Failed to load appointments:', err);
-      setError('Failed to load appointments');
+      console.error('Failed to load calendar data:', err);
+      setError('Failed to load calendar data');
     } finally {
       setLoading(false);
     }
@@ -52,24 +71,45 @@ const PartnerCalendar = ({ partnerId, users }) => {
       end: slotInfo.end
     });
     setSelectedAppointment(null);
-    setShowModal(true);
+    setSelectedVideoSession(null);
+    // Show appointment modal by default (could add a menu to choose)
+    setShowAppointmentModal(true);
   };
 
   const handleSelectEvent = (event) => {
-    setSelectedAppointment(event.resource);
-    setSelectedSlot(null);
-    setShowModal(true);
+    if (event.resource.type === 'video') {
+      setSelectedVideoSession(event.resource);
+      setSelectedAppointment(null);
+      setSelectedSlot(null);
+      setShowVideoModal(true);
+    } else {
+      setSelectedAppointment(event.resource);
+      setSelectedVideoSession(null);
+      setSelectedSlot(null);
+      setShowAppointmentModal(true);
+    }
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
+  const handleCloseAppointmentModal = () => {
+    setShowAppointmentModal(false);
     setSelectedSlot(null);
     setSelectedAppointment(null);
   };
 
+  const handleCloseVideoModal = () => {
+    setShowVideoModal(false);
+    setSelectedSlot(null);
+    setSelectedVideoSession(null);
+  };
+
   const handleSaveAppointment = async () => {
     await loadAppointments();
-    handleCloseModal();
+    handleCloseAppointmentModal();
+  };
+
+  const handleSaveVideoSession = async () => {
+    await loadAppointments();
+    handleCloseVideoModal();
   };
 
   const eventStyleGetter = (event) => {
@@ -82,6 +122,11 @@ const PartnerCalendar = ({ partnerId, users }) => {
       display: 'block'
     };
     
+    // Video sessions have different color
+    if (event.resource.type === 'video') {
+      style.backgroundColor = '#9333ea'; // Purple for video sessions
+    }
+    
     if (event.resource.status === 'completed') {
       style.backgroundColor = '#10b981';
     } else if (event.resource.status === 'cancelled') {
@@ -92,7 +137,7 @@ const PartnerCalendar = ({ partnerId, users }) => {
     return { style };
   };
 
-  if (loading && appointments.length === 0) {
+  if (loading && allEvents.length === 0) {
     return (
       <div className="card">
         <div className="text-center py-8">
@@ -108,7 +153,17 @@ const PartnerCalendar = ({ partnerId, users }) => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <CalendarIcon className="h-6 w-6 text-primary-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Appointment Calendar</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Calendar</h2>
+          </div>
+          <div className="flex items-center space-x-4 text-sm">
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-sky-500 rounded"></div>
+              <span className="text-gray-600">Appointments</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-purple-600 rounded"></div>
+              <span className="text-gray-600">Video Sessions</span>
+            </div>
           </div>
         </div>
 
@@ -122,7 +177,7 @@ const PartnerCalendar = ({ partnerId, users }) => {
         <div style={{ height: '600px' }}>
           <Calendar
             localizer={localizer}
-            events={appointments}
+            events={allEvents}
             startAccessor="start"
             endAccessor="end"
             view={view}
@@ -141,14 +196,25 @@ const PartnerCalendar = ({ partnerId, users }) => {
         </div>
       </div>
 
-      {showModal && (
+      {showAppointmentModal && (
         <AppointmentModal
           partnerId={partnerId}
           users={users}
           selectedSlot={selectedSlot}
           appointment={selectedAppointment}
-          onClose={handleCloseModal}
+          onClose={handleCloseAppointmentModal}
           onSave={handleSaveAppointment}
+        />
+      )}
+
+      {showVideoModal && (
+        <VideoSessionModal
+          partnerId={partnerId}
+          users={users}
+          selectedSlot={selectedSlot}
+          session={selectedVideoSession}
+          onClose={handleCloseVideoModal}
+          onSave={handleSaveVideoSession}
         />
       )}
     </div>

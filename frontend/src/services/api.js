@@ -126,5 +126,21 @@ export const chartAPI = {
   deleteChart: (id) => api.delete(`/charts/${id}`)
 };
 
+// Video Session APIs
+export const videoSessionAPI = {
+  create: (data) => api.post('/video-sessions', data),
+  getById: (id) => api.get(`/video-sessions/${id}`),
+  getByPartner: (partnerId, startDate, endDate) => {
+    const params = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+    return api.get(`/partners/${partnerId}/video-sessions`, { params });
+  },
+  getByUser: (userId) => api.get(`/users/${userId}/video-sessions`),
+  update: (id, data) => api.put(`/video-sessions/${id}`, data),
+  delete: (id) => api.delete(`/video-sessions/${id}`),
+  verifyPassword: (id, password) => api.post(`/video-sessions/${id}/verify-password`, { password })
+};
+
 export default api;
 

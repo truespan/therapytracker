@@ -5,7 +5,8 @@ import RadarChartComponent from '../charts/RadarChart';
 import ProgressComparison from '../charts/ProgressComparison';
 import SessionList from '../sessions/SessionList';
 import PartnerCalendar from '../calendar/PartnerCalendar';
-import { Users, Activity, User, Calendar, Copy, Check, BarChart3, CheckCircle } from 'lucide-react';
+import VideoSessionsTab from '../video/VideoSessionsTab';
+import { Users, Activity, User, Calendar, Copy, Check, BarChart3, CheckCircle, Video } from 'lucide-react';
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
@@ -188,6 +189,17 @@ const PartnerDashboard = () => {
           >
             <BarChart3 className="inline h-5 w-5 mr-2" />
             Charts & Insights
+          </button>
+          <button
+            onClick={() => setActiveTab('video')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'video'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Video className="inline h-5 w-5 mr-2" />
+            Video Sessions
           </button>
           <button
             onClick={() => setActiveTab('calendar')}
@@ -415,6 +427,14 @@ const PartnerDashboard = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Video Sessions Tab */}
+      {activeTab === 'video' && (
+        <VideoSessionsTab
+          partnerId={user.id}
+          users={users}
+        />
       )}
 
       {/* Calendar Tab */}

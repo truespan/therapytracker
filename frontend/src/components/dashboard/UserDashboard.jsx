@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { userAPI, appointmentAPI, chartAPI } from '../../services/api';
+import { userAPI, appointmentAPI, chartAPI, videoSessionAPI } from '../../services/api';
 import SessionList from '../sessions/SessionList';
 import SessionDetail from '../sessions/SessionDetail';
 import ProfileQuestionnaire from '../profile/ProfileQuestionnaire';
@@ -8,7 +8,9 @@ import SessionFeedback from '../sessions/SessionFeedback';
 import CustomFieldManager from '../profile/CustomFieldManager';
 import AssessmentQuestionnaire from '../profile/AssessmentQuestionnaire';
 import SharedChartViewer from '../charts/SharedChartViewer';
-import { Activity, List, ClipboardList, Calendar, BarChart3 } from 'lucide-react';
+import VideoSessionJoin from '../video/VideoSessionJoin';
+import { Activity, List, ClipboardList, Calendar, BarChart3, Video, Clock, User as UserIcon } from 'lucide-react';
+import { generateMeetingUrl, canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -17,6 +19,8 @@ const UserDashboard = () => {
   const [partners, setPartners] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [sharedCharts, setSharedCharts] = useState([]);
+  const [videoSessions, setVideoSessions] = useState([]);
+  const [selectedVideoSession, setSelectedVideoSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [showNewSession, setShowNewSession] = useState(false);
@@ -27,6 +31,7 @@ const UserDashboard = () => {
   useEffect(() => {
     loadData();
     loadAppointments();
+    loadVideoSessions();
   }, [user.id]);
 
   const loadData = async () => {
@@ -58,6 +63,15 @@ const UserDashboard = () => {
     }
   };
 
+  const loadVideoSessions = async () => {
+    try {
+      const response = await videoSessionAPI.getByUser(user.id);
+      setVideoSessions(response.data.sessions || []);
+    } catch (err) {
+      console.error('Failed to load video sessions:', err);
+    }
+  };
+
 
   const handleSessionComplete = () => {
     setShowNewSession(false);
@@ -80,6 +94,16 @@ const UserDashboard = () => {
           <p className="text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
+    );
+  }
+
+  if (selectedVideoSession) {
+    return (
+      <VideoSessionJoin
+        sessionId={selectedVideoSession.id}
+        userName={user.name}
+        onLeave={() => setSelectedVideoSession(null)}
+      />
     );
   }
 
@@ -154,6 +178,17 @@ const UserDashboard = () => {
             Overview
           </button>
           <button
+            onClick={() => setActiveTab('video')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'video'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Video className="inline h-5 w-5 mr-2" />
+            Video Sessions
+          </button>
+          <button
             onClick={() => setActiveTab('charts')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'charts'
@@ -192,6 +227,64 @@ const UserDashboard = () => {
       {/* Content */}
       {activeTab === 'overview' && (
         <div>
+          {/* Upcoming Video Sessions Widget */}
+          {videoSessions.length > 0 && (
+            <div className="card mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Video className="h-5 w-5 mr-2 text-primary-600" />
+                Upcoming Video Sessions
+              </h3>
+              <div className="space-y-3">
+                {videoSessions.slice(0, 3).map(session => {
+                  const canJoin = canJoinSession(session.session_date);
+                  const timeUntil = formatTimeUntilSession(session.session_date);
+                  
+                  return (
+                    <div key={session.id} className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Video className="h-5 w-5 text-purple-600" />
+                          <p className="font-medium text-gray-900">{session.title}</p>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {new Date(session.session_date).toLocaleString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                        <div className="flex items-center space-x-4 mt-1">
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <UserIcon className="h-4 w-4 mr-1" />
+                            with {session.partner_name}
+                          </p>
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {session.duration_minutes} min
+                          </p>
+                        </div>
+                        {!canJoin && (
+                          <p className="text-xs text-purple-600 font-medium mt-1">
+                            Starts in: {timeUntil}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setSelectedVideoSession(session)}
+                        className={`btn ${canJoin ? 'btn-primary' : 'btn-secondary'} ml-4`}
+                      >
+                        {canJoin ? 'Join Now' : 'View Details'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Upcoming Appointments Widget */}
           {appointments.length > 0 && (
             <div className="card mb-6">
@@ -318,6 +411,81 @@ const UserDashboard = () => {
                   ))}
               </div>
             </>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'video' && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Video Sessions</h2>
+          {videoSessions.length === 0 ? (
+            <div className="card text-center py-12">
+              <Video className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Video Sessions Scheduled</h3>
+              <p className="text-gray-600">
+                Your therapist will schedule video sessions with you. They will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {videoSessions.map(session => {
+                const canJoin = canJoinSession(session.session_date);
+                const timeUntil = formatTimeUntilSession(session.session_date);
+                
+                return (
+                  <div key={session.id} className="card">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <Video className="h-6 w-6 text-primary-600" />
+                          <h3 className="text-xl font-semibold text-gray-900">{session.title}</h3>
+                        </div>
+                        
+                        <div className="space-y-2 text-sm text-gray-600 ml-9">
+                          <div className="flex items-center space-x-2">
+                            <UserIcon className="h-4 w-4" />
+                            <span>with {session.partner_name}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>{new Date(session.session_date).toLocaleString('en-US', {
+                              weekday: 'long',
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4" />
+                            <span>{session.duration_minutes} minutes</span>
+                          </div>
+                          {!canJoin && (
+                            <div className="text-primary-600 font-medium">
+                              Starts in: {timeUntil}
+                            </div>
+                          )}
+                        </div>
+
+                        {session.notes && (
+                          <p className="text-sm text-gray-600 mt-3 ml-9 italic bg-gray-50 p-3 rounded-lg">
+                            {session.notes}
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => setSelectedVideoSession(session)}
+                        className={`btn ${canJoin ? 'btn-primary' : 'btn-secondary'} ml-4`}
+                      >
+                        {canJoin ? 'Join Now' : 'View Details'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       )}

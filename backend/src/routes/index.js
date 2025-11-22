@@ -12,6 +12,7 @@ const profileController = require('../controllers/profileController');
 const adminController = require('../controllers/adminController');
 const appointmentController = require('../controllers/appointmentController');
 const chartController = require('../controllers/chartController');
+const videoSessionController = require('../controllers/videoSessionController');
 
 const router = express.Router();
 
@@ -71,6 +72,15 @@ router.post('/charts/share', authenticateToken, checkRole('partner'), chartContr
 router.get('/charts/user/:userId', authenticateToken, chartController.getUserCharts);
 router.get('/charts/partner/:partnerId/user/:userId', authenticateToken, checkRole('partner'), chartController.getPartnerUserCharts);
 router.delete('/charts/:id', authenticateToken, checkRole('partner'), chartController.deleteChart);
+
+// ==================== VIDEO SESSION ROUTES ====================
+router.post('/video-sessions', authenticateToken, checkRole('partner'), videoSessionController.createVideoSession);
+router.get('/video-sessions/:id', authenticateToken, videoSessionController.getVideoSessionById);
+router.get('/partners/:partnerId/video-sessions', authenticateToken, videoSessionController.getPartnerVideoSessions);
+router.get('/users/:userId/video-sessions', authenticateToken, videoSessionController.getUserVideoSessions);
+router.put('/video-sessions/:id', authenticateToken, videoSessionController.updateVideoSession);
+router.delete('/video-sessions/:id', authenticateToken, videoSessionController.deleteVideoSession);
+router.post('/video-sessions/:id/verify-password', videoSessionController.verifySessionPassword);
 
 // ==================== ADMIN ROUTES ====================
 // Admin management routes - require admin role
