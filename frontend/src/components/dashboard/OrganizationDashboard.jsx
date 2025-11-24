@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { organizationAPI, partnerAPI, userAPI } from '../../services/api';
-import RadarChartComponent from '../charts/RadarChart';
-import SessionList from '../sessions/SessionList';
-import { Building2, Users, UserCheck, Activity, TrendingUp } from 'lucide-react';
+import { organizationAPI, partnerAPI } from '../../services/api';
+import { Building2, Users, UserCheck, Activity } from 'lucide-react';
 
 const OrganizationDashboard = () => {
   const { user } = useAuth();
@@ -11,14 +9,10 @@ const OrganizationDashboard = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [partnerUsers, setPartnerUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [userSessions, setUserSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalPartners: 0,
-    totalUsers: 0,
-    totalSessions: 0
+    totalUsers: 0
   });
 
   useEffect(() => {
@@ -38,21 +32,9 @@ const OrganizationDashboard = () => {
       setPartners(partnersData);
       setAllUsers(usersData);
 
-      // Calculate stats
-      let totalSessions = 0;
-      for (const u of usersData) {
-        try {
-          const sessionsResponse = await userAPI.getSessions(u.id);
-          totalSessions += (sessionsResponse.data.sessions || []).length;
-        } catch (err) {
-          console.error(`Failed to load sessions for user ${u.id}:`, err);
-        }
-      }
-
       setStats({
         totalPartners: partnersData.length,
-        totalUsers: usersData.length,
-        totalSessions
+        totalUsers: usersData.length
       });
 
       setLoading(false);
@@ -69,30 +51,9 @@ const OrganizationDashboard = () => {
       const partner = partners.find(p => p.id === partnerId);
       setSelectedPartner(partner);
       setPartnerUsers(response.data.users || []);
-      setSelectedUser(null);
-      setUserProfile(null);
       setLoading(false);
     } catch (err) {
       console.error('Failed to load partner users:', err);
-      setLoading(false);
-    }
-  };
-
-  const handleUserSelect = async (userId) => {
-    try {
-      setLoading(true);
-      const [profileResponse, sessionsResponse] = await Promise.all([
-        userAPI.getProfile(userId),
-        userAPI.getSessions(userId)
-      ]);
-
-      const userObj = allUsers.find(u => u.id === userId) || partnerUsers.find(u => u.id === userId);
-      setSelectedUser(userObj);
-      setUserProfile(profileResponse.data.profileHistory || []);
-      setUserSessions(sessionsResponse.data.sessions || []);
-      setLoading(false);
-    } catch (err) {
-      console.error('Failed to load user data:', err);
       setLoading(false);
     }
   };
@@ -119,7 +80,7 @@ const OrganizationDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
@@ -140,15 +101,6 @@ const OrganizationDashboard = () => {
           </div>
         </div>
 
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Sessions</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalSessions}</p>
-            </div>
-            <TrendingUp className="h-12 w-12 text-primary-600" />
-          </div>
-        </div>
       </div>
 
       <div className="grid lg:grid-cols-4 gap-6">
@@ -191,35 +143,9 @@ const OrganizationDashboard = () => {
           </div>
         </div>
 
-        {/* Partner's Users or Selected User Details */}
+        {/* Partner's Users */}
         <div className="lg:col-span-3">
-          {selectedUser && userProfile ? (
-            <div className="space-y-6">
-              <div className="card">
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="text-primary-600 hover:text-primary-700 mb-4"
-                >
-                  ← Back to clients
-                </button>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedUser.name}</h2>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <span>{selectedUser.sex}, {selectedUser.age} years</span>
-                  {selectedUser.email && <span>{selectedUser.email}</span>}
-                </div>
-              </div>
-
-              <RadarChartComponent 
-                profileHistory={userProfile}
-                title={`${selectedUser.name}'s Progress`}
-              />
-
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Session History</h3>
-                <SessionList sessions={userSessions} />
-              </div>
-            </div>
-          ) : selectedPartner ? (
+          {selectedPartner ? (
             <div className="card">
               <div className="mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
@@ -240,15 +166,14 @@ const OrganizationDashboard = () => {
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   {partnerUsers.map((client) => (
-                    <button
+                    <div
                       key={client.id}
-                      onClick={() => handleUserSelect(client.id)}
-                      className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition text-left"
+                      className="p-4 border-2 border-gray-200 rounded-lg"
                     >
                       <p className="font-medium text-gray-900">{client.name}</p>
                       <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
                       {client.email && <p className="text-sm text-gray-600 mt-1">{client.email}</p>}
-                    </button>
+                    </div>
                   ))}
                 </div>
               )}

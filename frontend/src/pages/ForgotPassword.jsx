@@ -66,9 +66,12 @@ const ForgotPassword = () => {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className="input"
-                placeholder="email@example.com or +919876543210"
+                placeholder="email@example.com or 9876543210"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Enter phone number without country code (e.g., 9876543210)
+              </p>
             </div>
 
             <button

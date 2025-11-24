@@ -1,23 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { partnerAPI, userAPI, sessionAPI, chartAPI } from '../../services/api';
-import RadarChartComponent from '../charts/RadarChart';
-import ProgressComparison from '../charts/ProgressComparison';
-import SessionList from '../sessions/SessionList';
+import { partnerAPI, chartAPI, questionnaireAPI } from '../../services/api';
+import QuestionnaireComparison from '../charts/QuestionnaireComparison';
 import PartnerCalendar from '../calendar/PartnerCalendar';
 import VideoSessionsTab from '../video/VideoSessionsTab';
-import { Users, Activity, User, Calendar, Copy, Check, BarChart3, CheckCircle, Video } from 'lucide-react';
+import QuestionnaireList from '../questionnaires/QuestionnaireList';
+import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
+import AssignQuestionnaireModal from '../questionnaires/AssignQuestionnaireModal';
+import LatestChartDisplay from '../charts/LatestChartDisplay';
+import { Users, Activity, User, Calendar, Copy, Check, BarChart3, CheckCircle, Video, ClipboardList } from 'lucide-react';
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [userSessions, setUserSessions] = useState([]);
   const [sentCharts, setSentCharts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('clients');
+
+  // Questionnaire state
+  const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
+  const [editingQuestionnaireId, setEditingQuestionnaireId] = useState(null);
+  const [assigningQuestionnaire, setAssigningQuestionnaire] = useState(null);
 
   useEffect(() => {
     loadPartnerUsers();
@@ -37,15 +42,12 @@ const PartnerDashboard = () => {
   const handleUserSelect = async (selectedUserId) => {
     try {
       setLoading(true);
-      const [profileResponse, sessionsResponse, chartsResponse] = await Promise.all([
-        partnerAPI.getUserProfile(user.id, selectedUserId),
-        userAPI.getSessions(selectedUserId),
-        chartAPI.getPartnerUserCharts(user.id, selectedUserId)
-      ]);
+      // Find the selected user from the users list
+      const selected = users.find(u => u.id === selectedUserId);
+      setSelectedUser(selected);
 
-      setSelectedUser(profileResponse.data.user);
-      setUserProfile(profileResponse.data.profileHistory || []);
-      setUserSessions(sessionsResponse.data.sessions || []);
+      // Load charts sent to this user
+      const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUserId);
       setSentCharts(chartsResponse.data.charts || []);
       setLoading(false);
     } catch (err) {
@@ -54,47 +56,6 @@ const PartnerDashboard = () => {
     }
   };
 
-  const handleCreateSession = async (userId) => {
-    try {
-      await sessionAPI.create({
-        user_id: userId,
-        partner_id: user.id
-      });
-      
-      alert('Session created successfully! The user can now complete their assessment.');
-      
-      // Reload user data
-      if (selectedUser && selectedUser.id === userId) {
-        handleUserSelect(userId);
-      }
-    } catch (err) {
-      console.error('Failed to create session:', err);
-      const errorMessage = err.response?.data?.error || 'Failed to create session';
-      if (errorMessage.includes('incomplete session') || errorMessage.includes('in progress')) {
-        alert('Cannot create a new session because an existing session is still in progress');
-      } else {
-        alert(errorMessage);
-      }
-    }
-  };
-
-  const handleDeleteSession = async (sessionId) => {
-    if (!window.confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
-      return;
-    }
-    
-    try {
-      await sessionAPI.delete(sessionId);
-      alert('Session deleted successfully');
-      // Reload user sessions
-      if (selectedUser) {
-        handleUserSelect(selectedUser.id);
-      }
-    } catch (err) {
-      console.error('Failed to delete session:', err);
-      alert('Failed to delete session');
-    }
-  };
 
   const copyPartnerIdToClipboard = () => {
     if (user.partner_id) {
@@ -202,6 +163,20 @@ const PartnerDashboard = () => {
             Video Sessions
           </button>
           <button
+            onClick={() => {
+              setActiveTab('questionnaires');
+              setQuestionnaireView('list');
+            }}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'questionnaires'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <ClipboardList className="inline h-5 w-5 mr-2" />
+            Questionnaires
+          </button>
+          <button
             onClick={() => setActiveTab('calendar')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'calendar'
@@ -274,31 +249,14 @@ const PartnerDashboard = () => {
                       {selectedUser.contact && <span>{selectedUser.contact}</span>}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleCreateSession(selectedUser.id)}
-                    className="btn btn-primary flex items-center space-x-2"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    <span>New Session</span>
-                  </button>
                 </div>
               </div>
 
-              {/* Progress Chart */}
-              <RadarChartComponent 
-                profileHistory={userProfile}
-                title={`${selectedUser.name}'s Progress`}
+              {/* Latest Chart Sent to Client */}
+              <LatestChartDisplay
+                sentCharts={sentCharts}
+                userName={selectedUser.name}
               />
-
-              {/* Sessions */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Session History</h3>
-                <SessionList 
-                  sessions={userSessions} 
-                  onDeleteSession={handleDeleteSession}
-                  canDelete={true}
-                />
-              </div>
             </div>
           ) : (
             <div className="card text-center py-16">
@@ -322,7 +280,7 @@ const PartnerDashboard = () => {
                   Your Clients ({users.length})
                 </h2>
               </div>
-              
+
               {users.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Users className="h-12 w-12 mx-auto mb-3 text-gray-400" />
@@ -357,72 +315,26 @@ const PartnerDashboard = () => {
           {/* Charts Section */}
           <div className="lg:col-span-2">
             {selectedUser ? (
-              <div className="space-y-6">
-                {/* User Info Card */}
-                <div className="card">
-                  <h2 className="text-2xl font-bold text-gray-900">{selectedUser.name}</h2>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Create and send custom charts to your client
-                  </p>
-                </div>
-
-                {/* Progress Comparison with Send Button */}
-                {userProfile && userProfile.length > 0 ? (
-                  <ProgressComparison 
-                    profileHistory={userProfile}
-                    onSendChart={handleSendChart}
-                    showSendButton={true}
-                  />
-                ) : (
-                  <div className="card text-center py-12 text-gray-500">
-                    <p>No profile data available for this client yet</p>
-                  </div>
-                )}
-
-                {/* Sent Charts List */}
-                {sentCharts.length > 0 && (
-                  <div className="card">
-                    <h3 className="text-lg font-semibold mb-4">Charts Sent to {selectedUser.name}</h3>
-                    <div className="space-y-3">
-                      {sentCharts.map((chart) => {
-                        const chartDate = new Date(chart.sent_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        });
-
-                        return (
-                          <div key={chart.id} className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <CheckCircle className="h-5 w-5 text-green-600" />
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {chart.chart_type === 'radar_default' ? 'Progress Overview' : 'Session Comparison'}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  {chart.chart_type === 'comparison' && chart.selected_sessions && (
-                                    <span>Sessions: {chart.selected_sessions.join(', ')} • </span>
-                                  )}
-                                  Sent on {chartDate}
-                                </p>
-                              </div>
-                            </div>
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Sent
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <QuestionnaireComparison
+                userId={selectedUser.id}
+                partnerId={user.id}
+                userName={selectedUser.name}
+                sentCharts={sentCharts}
+                onChartSent={async () => {
+                  // Reload sent charts
+                  const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUser.id);
+                  setSentCharts(chartsResponse.data.charts || []);
+                }}
+                onChartDeleted={async () => {
+                  // Reload sent charts
+                  const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUser.id);
+                  setSentCharts(chartsResponse.data.charts || []);
+                }}
+              />
             ) : (
               <div className="card text-center py-16">
                 <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">Select a client to create and send charts</p>
+                <p className="text-gray-600 text-lg">Select a client to create and send questionnaire comparison charts</p>
               </div>
             )}
           </div>
@@ -435,6 +347,53 @@ const PartnerDashboard = () => {
           partnerId={user.id}
           users={users}
         />
+      )}
+
+      {/* Questionnaires Tab */}
+      {activeTab === 'questionnaires' && (
+        <div>
+          {questionnaireView === 'list' && (
+            <QuestionnaireList
+              partnerId={user.id}
+              onCreateNew={() => {
+                setQuestionnaireView('create');
+                setEditingQuestionnaireId(null);
+              }}
+              onEdit={(questionnaireId) => {
+                setQuestionnaireView('edit');
+                setEditingQuestionnaireId(questionnaireId);
+              }}
+              onAssign={(questionnaire) => {
+                setAssigningQuestionnaire(questionnaire);
+              }}
+            />
+          )}
+
+          {(questionnaireView === 'create' || questionnaireView === 'edit') && (
+            <QuestionnaireBuilder
+              questionnaireId={editingQuestionnaireId}
+              onSave={() => {
+                setQuestionnaireView('list');
+                setEditingQuestionnaireId(null);
+              }}
+              onCancel={() => {
+                setQuestionnaireView('list');
+                setEditingQuestionnaireId(null);
+              }}
+            />
+          )}
+
+          {assigningQuestionnaire && (
+            <AssignQuestionnaireModal
+              questionnaire={assigningQuestionnaire}
+              partnerId={user.id}
+              onClose={() => setAssigningQuestionnaire(null)}
+              onSuccess={() => {
+                setAssigningQuestionnaire(null);
+              }}
+            />
+          )}
+        </div>
       )}
 
       {/* Calendar Tab */}

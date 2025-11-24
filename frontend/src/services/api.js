@@ -13,6 +13,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log('[API Debug] Request to:', config.url, '| Token present:', !!token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -52,7 +53,6 @@ export const userAPI = {
   getProfile: (id) => api.get(`/users/${id}/profile`),
   getPartners: (id) => api.get(`/users/${id}/partners`),
   assignToPartner: (userId, partnerId) => api.post('/users/assign-partner', { userId, partnerId }),
-  getSessions: (userId) => api.get(`/users/${userId}/sessions`),
 };
 
 // Partner APIs
@@ -60,7 +60,6 @@ export const partnerAPI = {
   getById: (id) => api.get(`/partners/${id}`),
   update: (id, data) => api.put(`/partners/${id}`, data),
   getUsers: (id) => api.get(`/partners/${id}/users`),
-  getUserProfile: (partnerId, userId) => api.get(`/partners/${partnerId}/users/${userId}/profile`),
 };
 
 // Organization APIs
@@ -70,15 +69,6 @@ export const organizationAPI = {
   update: (id, data) => api.put(`/organizations/${id}`, data),
   getPartners: (id) => api.get(`/organizations/${id}/partners`),
   getUsers: (id) => api.get(`/organizations/${id}/users`),
-};
-
-// Session APIs
-export const sessionAPI = {
-  create: (data) => api.post('/sessions', data),
-  getById: (id) => api.get(`/sessions/${id}`),
-  update: (id, data) => api.put(`/sessions/${id}`, data),
-  delete: (id) => api.delete(`/sessions/${id}`),
-  saveProfile: (sessionId, ratings) => api.post(`/sessions/${sessionId}/profile`, { ratings }),
 };
 
 // Profile APIs
@@ -121,6 +111,7 @@ export const appointmentAPI = {
 // Chart APIs
 export const chartAPI = {
   shareChart: (data) => api.post('/charts/share', data),
+  shareQuestionnaireChart: (data) => api.post('/charts/share-questionnaire', data),
   getUserCharts: (userId) => api.get(`/charts/user/${userId}`),
   getPartnerUserCharts: (partnerId, userId) => api.get(`/charts/partner/${partnerId}/user/${userId}`),
   deleteChart: (id) => api.delete(`/charts/${id}`)
@@ -140,6 +131,40 @@ export const videoSessionAPI = {
   update: (id, data) => api.put(`/video-sessions/${id}`, data),
   delete: (id) => api.delete(`/video-sessions/${id}`),
   verifyPassword: (id, password) => api.post(`/video-sessions/${id}/verify-password`, { password })
+};
+
+// Questionnaire APIs
+export const questionnaireAPI = {
+  // Questionnaire management
+  create: (data) => api.post('/questionnaires', data),
+  getByPartner: (partnerId) => api.get(`/questionnaires/partner/${partnerId}`),
+  getById: (id) => api.get(`/questionnaires/${id}`),
+  update: (id, data) => api.put(`/questionnaires/${id}`, data),
+  delete: (id) => api.delete(`/questionnaires/${id}`),
+  getStats: (id) => api.get(`/questionnaires/${id}/stats`),
+
+  // Assignment management
+  assign: (data) => api.post('/questionnaires/assign', data),
+  getUserAssignments: (userId) => api.get(`/questionnaires/assignments/user/${userId}`),
+  getPartnerAssignments: (partnerId) => api.get(`/questionnaires/assignments/partner/${partnerId}`),
+  getAssignment: (id) => api.get(`/questionnaires/assignments/${id}`),
+  deleteAssignment: (id) => api.delete(`/questionnaires/assignments/${id}`),
+
+  // Response management
+  saveResponses: (assignmentId, responses, sessionId = null, textResponse = null) =>
+    api.post(`/questionnaires/assignments/${assignmentId}/responses`, {
+      responses,
+      session_id: sessionId,
+      text_response: textResponse
+    }),
+  getResponses: (assignmentId) => api.get(`/questionnaires/assignments/${assignmentId}/responses`),
+  getUserHistory: (userId, questionnaireId) => api.get(`/questionnaires/user/${userId}/history/${questionnaireId}`),
+  getAggregatedResponses: (questionnaireId, userId) =>
+    api.get(`/questionnaires/${questionnaireId}/user/${userId}/aggregated`),
+
+  // Comparison chart helpers
+  getCompletedByTypeForUser: (userId) => api.get(`/questionnaires/completed-by-type/user/${userId}`),
+  getResponsesForComparison: (assignmentIds) => api.post('/questionnaires/responses-for-comparison', { assignmentIds })
 };
 
 export default api;

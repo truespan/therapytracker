@@ -141,16 +141,16 @@ class Organization {
         WHERE p.organization_id = $1
       ),
       session_stats AS (
-        SELECT 
+        SELECT
           COUNT(*)::int as total_sessions,
-          COUNT(*) FILTER (WHERE completed = TRUE)::int as completed_sessions,
-          COUNT(*) FILTER (WHERE completed = FALSE)::int as active_sessions,
+          COUNT(*) FILTER (WHERE status = 'completed')::int as completed_sessions,
+          COUNT(*) FILTER (WHERE status IN ('scheduled', 'in_progress'))::int as active_sessions,
           COUNT(*) FILTER (WHERE DATE_TRUNC('month', session_date) = DATE_TRUNC('month', CURRENT_TIMESTAMP))::int as sessions_this_month
-        FROM sessions s
-        JOIN partners p ON s.partner_id = p.id
+        FROM video_sessions vs
+        JOIN partners p ON vs.partner_id = p.id
         WHERE p.organization_id = $1
       )
-      SELECT 
+      SELECT
         pc.total_partners,
         cc.total_clients,
         ss.total_sessions,
@@ -177,7 +177,7 @@ class Organization {
   static async getAllWithMetrics() {
     const query = `
       WITH org_metrics AS (
-        SELECT 
+        SELECT
           o.id,
           o.name,
           o.email,
@@ -191,20 +191,20 @@ class Organization {
           o.created_at,
           COUNT(DISTINCT p.id)::int as total_partners,
           COUNT(DISTINCT u.id)::int as total_clients,
-          COUNT(DISTINCT s.id)::int as total_sessions,
-          COUNT(DISTINCT s.id) FILTER (WHERE s.completed = TRUE)::int as completed_sessions,
-          COUNT(DISTINCT s.id) FILTER (WHERE s.completed = FALSE)::int as active_sessions,
-          COUNT(DISTINCT s.id) FILTER (WHERE DATE_TRUNC('month', s.session_date) = DATE_TRUNC('month', CURRENT_TIMESTAMP))::int as sessions_this_month
+          COUNT(DISTINCT vs.id)::int as total_sessions,
+          COUNT(DISTINCT vs.id) FILTER (WHERE vs.status = 'completed')::int as completed_sessions,
+          COUNT(DISTINCT vs.id) FILTER (WHERE vs.status IN ('scheduled', 'in_progress'))::int as active_sessions,
+          COUNT(DISTINCT vs.id) FILTER (WHERE DATE_TRUNC('month', vs.session_date) = DATE_TRUNC('month', CURRENT_TIMESTAMP))::int as sessions_this_month
         FROM organizations o
         LEFT JOIN partners p ON o.id = p.organization_id
         LEFT JOIN user_partner_assignments upa ON p.id = upa.partner_id
         LEFT JOIN users u ON upa.user_id = u.id
-        LEFT JOIN sessions s ON p.id = s.partner_id
-        GROUP BY o.id, o.name, o.email, o.contact, o.address, o.gst_no, 
-                 o.subscription_plan, o.is_active, o.deactivated_at, 
+        LEFT JOIN video_sessions vs ON p.id = vs.partner_id
+        GROUP BY o.id, o.name, o.email, o.contact, o.address, o.gst_no,
+                 o.subscription_plan, o.is_active, o.deactivated_at,
                  o.deactivated_by, o.created_at
       )
-      SELECT 
+      SELECT
         om.*,
         a.name as deactivated_by_name
       FROM org_metrics om
@@ -222,18 +222,18 @@ class Organization {
    */
   static async getPartnerBreakdown(id) {
     const query = `
-      SELECT 
+      SELECT
         p.id,
         p.name,
         p.partner_id,
         p.email,
         COUNT(DISTINCT upa.user_id)::int as total_clients,
-        COUNT(DISTINCT s.id)::int as total_sessions,
-        COUNT(DISTINCT s.id) FILTER (WHERE s.completed = TRUE)::int as completed_sessions,
-        COUNT(DISTINCT s.id) FILTER (WHERE DATE_TRUNC('month', s.session_date) = DATE_TRUNC('month', CURRENT_TIMESTAMP))::int as sessions_this_month
+        COUNT(DISTINCT vs.id)::int as total_sessions,
+        COUNT(DISTINCT vs.id) FILTER (WHERE vs.status = 'completed')::int as completed_sessions,
+        COUNT(DISTINCT vs.id) FILTER (WHERE DATE_TRUNC('month', vs.session_date) = DATE_TRUNC('month', CURRENT_TIMESTAMP))::int as sessions_this_month
       FROM partners p
       LEFT JOIN user_partner_assignments upa ON p.id = upa.partner_id
-      LEFT JOIN sessions s ON p.id = s.partner_id
+      LEFT JOIN video_sessions vs ON p.id = vs.partner_id
       WHERE p.organization_id = $1
       GROUP BY p.id, p.name, p.partner_id, p.email
       ORDER BY p.name

@@ -7,12 +7,12 @@ const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
 const partnerController = require('../controllers/partnerController');
 const organizationController = require('../controllers/organizationController');
-const sessionController = require('../controllers/sessionController');
 const profileController = require('../controllers/profileController');
 const adminController = require('../controllers/adminController');
 const appointmentController = require('../controllers/appointmentController');
 const chartController = require('../controllers/chartController');
 const videoSessionController = require('../controllers/videoSessionController');
+const questionnaireController = require('../controllers/questionnaireController');
 
 const router = express.Router();
 
@@ -48,14 +48,6 @@ router.put('/organizations/:id', authenticateToken, organizationController.updat
 router.get('/organizations/:id/partners', authenticateToken, checkRole('organization'), organizationController.getOrganizationPartners);
 router.get('/organizations/:id/users', authenticateToken, checkRole('organization'), organizationController.getOrganizationUsers);
 
-// ==================== SESSION ROUTES ====================
-router.post('/sessions', authenticateToken, checkRole('partner'), sessionController.createSession);
-router.get('/sessions/:id', authenticateToken, sessionController.getSessionById);
-router.get('/users/:userId/sessions', authenticateToken, sessionController.getUserSessions);
-router.put('/sessions/:id', authenticateToken, sessionController.updateSession);
-router.delete('/sessions/:id', authenticateToken, checkRole('partner'), sessionController.deleteSession);
-router.post('/sessions/:sessionId/profile', authenticateToken, sessionController.saveSessionProfile);
-
 // ==================== PROFILE DATA ROUTES ====================
 router.get('/profile-data/users/:userId', authenticateToken, profileController.getUserProfileData);
 
@@ -69,6 +61,7 @@ router.delete('/appointments/:id', authenticateToken, appointmentController.dele
 
 // ==================== CHART ROUTES ====================
 router.post('/charts/share', authenticateToken, checkRole('partner'), chartController.shareChart);
+router.post('/charts/share-questionnaire', authenticateToken, checkRole('partner'), chartController.shareQuestionnaireChart);
 router.get('/charts/user/:userId', authenticateToken, chartController.getUserCharts);
 router.get('/charts/partner/:partnerId/user/:userId', authenticateToken, checkRole('partner'), chartController.getPartnerUserCharts);
 router.delete('/charts/:id', authenticateToken, checkRole('partner'), chartController.deleteChart);
@@ -81,6 +74,32 @@ router.get('/users/:userId/video-sessions', authenticateToken, videoSessionContr
 router.put('/video-sessions/:id', authenticateToken, videoSessionController.updateVideoSession);
 router.delete('/video-sessions/:id', authenticateToken, videoSessionController.deleteVideoSession);
 router.post('/video-sessions/:id/verify-password', videoSessionController.verifySessionPassword);
+
+// ==================== QUESTIONNAIRE ROUTES ====================
+// Questionnaire management
+router.post('/questionnaires', authenticateToken, checkRole('partner'), questionnaireController.createQuestionnaire);
+router.get('/questionnaires/partner/:partnerId', authenticateToken, questionnaireController.getPartnerQuestionnaires);
+router.get('/questionnaires/:id', authenticateToken, questionnaireController.getQuestionnaire);
+router.put('/questionnaires/:id', authenticateToken, checkRole('partner'), questionnaireController.updateQuestionnaire);
+router.delete('/questionnaires/:id', authenticateToken, checkRole('partner'), questionnaireController.deleteQuestionnaire);
+router.get('/questionnaires/:id/stats', authenticateToken, checkRole('partner'), questionnaireController.getQuestionnaireStats);
+
+// Questionnaire assignments
+router.post('/questionnaires/assign', authenticateToken, checkRole('partner'), questionnaireController.assignQuestionnaire);
+router.get('/questionnaires/assignments/user/:userId', authenticateToken, questionnaireController.getUserAssignments);
+router.get('/questionnaires/assignments/partner/:partnerId', authenticateToken, checkRole('partner'), questionnaireController.getPartnerAssignments);
+router.get('/questionnaires/assignments/:id', authenticateToken, questionnaireController.getAssignment);
+router.delete('/questionnaires/assignments/:id', authenticateToken, checkRole('partner'), questionnaireController.deleteAssignment);
+
+// Questionnaire responses
+router.post('/questionnaires/assignments/:id/responses', authenticateToken, questionnaireController.saveResponses);
+router.get('/questionnaires/assignments/:id/responses', authenticateToken, questionnaireController.getResponses);
+router.get('/questionnaires/user/:userId/history/:questionnaireId', authenticateToken, questionnaireController.getUserHistory);
+router.get('/questionnaires/:questionnaireId/user/:userId/aggregated', authenticateToken, questionnaireController.getAggregatedResponses);
+
+// Questionnaire comparison routes (for Charts & Insights)
+router.get('/questionnaires/completed-by-type/user/:userId', authenticateToken, checkRole('partner'), questionnaireController.getCompletedByTypeForUser);
+router.post('/questionnaires/responses-for-comparison', authenticateToken, questionnaireController.getResponsesForComparison);
 
 // ==================== ADMIN ROUTES ====================
 // Admin management routes - require admin role

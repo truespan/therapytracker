@@ -313,7 +313,7 @@ const getDashboardStats = async (req, res) => {
   try {
     const query = `
       WITH org_stats AS (
-        SELECT 
+        SELECT
           COUNT(*)::int as total_organizations,
           COUNT(*) FILTER (WHERE is_active = TRUE)::int as active_organizations,
           COUNT(*) FILTER (WHERE is_active = FALSE)::int as inactive_organizations
@@ -328,14 +328,14 @@ const getDashboardStats = async (req, res) => {
         FROM users
       ),
       session_stats AS (
-        SELECT 
+        SELECT
           COUNT(*)::int as total_sessions,
-          COUNT(*) FILTER (WHERE completed = TRUE)::int as completed_sessions,
-          COUNT(*) FILTER (WHERE completed = FALSE)::int as active_sessions,
+          COUNT(*) FILTER (WHERE status = 'completed')::int as completed_sessions,
+          COUNT(*) FILTER (WHERE status IN ('scheduled', 'in_progress'))::int as active_sessions,
           COUNT(*) FILTER (WHERE DATE_TRUNC('month', session_date) = DATE_TRUNC('month', CURRENT_TIMESTAMP))::int as sessions_this_month
-        FROM sessions
+        FROM video_sessions
       )
-      SELECT 
+      SELECT
         os.total_organizations,
         os.active_organizations,
         os.inactive_organizations,
@@ -357,9 +357,9 @@ const getDashboardStats = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch dashboard statistics', 
-      details: error.message 
+    res.status(500).json({
+      error: 'Failed to fetch dashboard statistics',
+      details: error.message
     });
   }
 };
