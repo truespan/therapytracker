@@ -431,9 +431,9 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
                       onMouseEnter={() => !viewOnly && setHoveredOption(option.id)}
                       onMouseLeave={() => !viewOnly && setHoveredOption(null)}
                       style={colorStyle}
-                      className={`relative px-8 py-2.5 rounded-full font-medium text-sm transition-all duration-200 text-center shadow-md flex-shrink-0 ${
+                      className={`relative px-3 py-2.5 rounded-full font-medium text-sm transition-all duration-200 text-center shadow-md flex-shrink-0 ${
                         viewOnly ? 'cursor-default opacity-75' : 'cursor-pointer hover:shadow-lg transform hover:-translate-y-0.5'
-                      } min-w-[160px] h-12 flex items-center justify-center whitespace-nowrap`}
+                      } w-24 h-12 flex items-center justify-center whitespace-nowrap`}
                     >
                       <input
                         type="radio"

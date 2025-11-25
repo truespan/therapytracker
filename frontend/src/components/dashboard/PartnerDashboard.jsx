@@ -8,6 +8,7 @@ import QuestionnaireList from '../questionnaires/QuestionnaireList';
 import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import AssignQuestionnaireModal from '../questionnaires/AssignQuestionnaireModal';
 import LatestChartDisplay from '../charts/LatestChartDisplay';
+import UserAssignmentsSection from '../questionnaires/UserAssignmentsSection';
 import { Users, Activity, User, Calendar, Copy, Check, BarChart3, CheckCircle, Video, ClipboardList } from 'lucide-react';
 
 const PartnerDashboard = () => {
@@ -255,6 +256,12 @@ const PartnerDashboard = () => {
               {/* Latest Chart Sent to Client */}
               <LatestChartDisplay
                 sentCharts={sentCharts}
+                userName={selectedUser.name}
+              />
+
+              {/* Questionnaires Assigned to Client */}
+              <UserAssignmentsSection
+                userId={selectedUser.id}
                 userName={selectedUser.name}
               />
             </div>
