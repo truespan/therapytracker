@@ -9,14 +9,29 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar
+  ResponsiveContainer
 } from 'recharts';
+import { Radar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip as ChartTooltip,
+  Legend as ChartLegend
+} from 'chart.js';
 import { questionnaireAPI } from '../../services/api';
+
+// Register Chart.js components
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  ChartTooltip,
+  ChartLegend
+);
 
 const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
   const [chartData, setChartData] = useState([]);
@@ -272,24 +287,69 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
           </ResponsiveContainer>
         )}
 
-        {chartType === 'radar' && (
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={getLatestData()}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="question" />
-              <PolarRadiusAxis />
-              <Radar
-                name="Latest Responses"
-                dataKey="value"
-                stroke={colors[0]}
-                fill={colors[0]}
-                fillOpacity={0.6}
-              />
-              <Tooltip />
-              <Legend />
-            </RadarChart>
-          </ResponsiveContainer>
-        )}
+        {chartType === 'radar' && (() => {
+          const latestData = getLatestData();
+          // Calculate max value for domain
+          const maxValue = Math.max(...latestData.map(d => d.value || 0));
+          const domainMax = Math.max(10, Math.ceil(maxValue * 1.2));
+
+          // Prepare data for Chart.js
+          const radarLabels = latestData.map(d => d.question);
+          const radarData = {
+            labels: radarLabels,
+            datasets: [{
+              label: 'Latest Responses',
+              data: latestData.map(d => d.value),
+              backgroundColor: `${colors[0]}40`,
+              borderColor: colors[0],
+              borderWidth: 3,
+              pointBackgroundColor: colors[0],
+              pointBorderColor: '#fff',
+              pointHoverBackgroundColor: '#fff',
+              pointHoverBorderColor: colors[0],
+              pointRadius: 5,
+              pointHoverRadius: 7
+            }]
+          };
+
+          const radarOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                beginAtZero: true,
+                max: domainMax,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  font: {
+                    size: 12
+                  }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.dataset.label}: ${context.parsed.r}`;
+                  }
+                }
+              }
+            }
+          };
+
+          return (
+            <div style={{ height: '100%', width: '100%' }}>
+              <Radar data={radarData} options={radarOptions} />
+            </div>
+          );
+        })()}
       </div>
 
       {/* Summary Stats */}

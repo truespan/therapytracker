@@ -1,13 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { questionnaireAPI } from '../../services/api';
 import {
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar, ResponsiveContainer
 } from 'recharts';
+import { Radar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip as ChartTooltip,
+  Legend as ChartLegend
+} from 'chart.js';
 import { Calendar, User, BarChart3 } from 'lucide-react';
 
-const CHART_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
+// Register Chart.js components
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  ChartTooltip,
+  ChartLegend
+);
+
+// Highly contrasting colors with maximum visibility
+const CHART_COLORS = [
+  '#0000FF', // Pure Blue - Submission 1
+  '#FF0000', // Pure Red - Submission 2
+  '#00FF00', // Pure Green - Submission 3
+  '#FF8800'  // Pure Orange - Submission 4
+];
 
 const SharedChartViewer = ({ charts }) => {
   const [chartDataMap, setChartDataMap] = useState({});
@@ -48,6 +73,7 @@ const SharedChartViewer = ({ charts }) => {
     // Group by question
     const questionMap = new Map();
     const assignmentDates = new Map();
+    const submissionNumbers = new Map();
 
     rawData.forEach(row => {
       if (!questionMap.has(row.question_id)) {
@@ -66,6 +92,11 @@ const SharedChartViewer = ({ charts }) => {
       if (!assignmentDates.has(Number(row.assignment_id))) {
         assignmentDates.set(Number(row.assignment_id), new Date(row.completed_at));
       }
+
+      // Store submission number from API response
+      if (!submissionNumbers.has(Number(row.assignment_id)) && row.submission_number) {
+        submissionNumbers.set(Number(row.assignment_id), row.submission_number);
+      }
     });
 
     // Sort questions by order
@@ -82,8 +113,12 @@ const SharedChartViewer = ({ charts }) => {
       };
 
       normalizedAssignments.forEach((assignmentId, index) => {
-        const label = `Submission ${index + 1}`;
-        dataPoint[label] = q.responses[assignmentId] || 0;
+        // Use actual submission number from API if available, otherwise fall back to index + 1
+        const submissionNum = submissionNumbers.get(assignmentId) || (index + 1);
+        const label = `Submission #${submissionNum}`;
+        const value = q.responses[assignmentId];
+        // Ensure numeric value
+        dataPoint[label] = value !== undefined && value !== null ? Number(value) : 0;
       });
 
       return dataPoint;
@@ -92,8 +127,10 @@ const SharedChartViewer = ({ charts }) => {
     // Get assignment labels with dates
     const labels = normalizedAssignments.map((assignmentId, index) => {
       const date = assignmentDates.get(assignmentId);
+      // Use actual submission number from API if available, otherwise fall back to index + 1
+      const submissionNum = submissionNumbers.get(assignmentId) || (index + 1);
       return {
-        key: `Submission ${index + 1}`,
+        key: `Submission #${submissionNum}`,
         date: date ? date.toLocaleDateString() : 'Unknown'
       };
     });
@@ -113,27 +150,84 @@ const SharedChartViewer = ({ charts }) => {
     const { chartData, labels } = data;
     const chartType = chart.chart_display_type || 'radar';
 
+    // Debug logging - Check actual data values
+    console.log('SharedChartViewer - Chart Type:', chartType);
+    console.log('SharedChartViewer - Chart Data:', chartData);
+    console.log('SharedChartViewer - Labels:', labels);
+    console.log('SharedChartViewer - Colors:', CHART_COLORS);
+
+    // Calculate max value from data for proper domain
+    let maxDataValue = 0;
+    chartData.forEach(point => {
+      labels.forEach(label => {
+        const value = point[label.key];
+        if (value > maxDataValue) maxDataValue = value;
+      });
+    });
+    console.log('SharedChartViewer - Max Data Value:', maxDataValue);
+
+    // Set domain based on data, with a buffer
+    const domainMax = Math.max(10, Math.ceil(maxDataValue * 1.2));
+    console.log('SharedChartViewer - Domain Max:', domainMax);
+
     if (chartType === 'radar') {
+      // Prepare data for Chart.js
+      const radarLabels = chartData.map(d => d.question);
+      const datasets = labels.map((label, index) => ({
+        label: `${label.key} (${label.date})`,
+        data: chartData.map(d => d[label.key]),
+        backgroundColor: `${CHART_COLORS[index]}40`, // 25% opacity
+        borderColor: CHART_COLORS[index],
+        borderWidth: 3,
+        pointBackgroundColor: CHART_COLORS[index],
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: CHART_COLORS[index],
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }));
+
+      const radarData = {
+        labels: radarLabels,
+        datasets: datasets
+      };
+
+      const radarOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: domainMax,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.dataset.label}: ${context.parsed.r}`;
+              }
+            }
+          }
+        }
+      };
+
       return (
-        <ResponsiveContainer width="100%" height={400}>
-          <RadarChart data={chartData}>
-            <PolarGrid />
-            <PolarAngleAxis dataKey="question" tick={{ fontSize: 10 }} />
-            <PolarRadiusAxis domain={[0, 'auto']} />
-            {labels.map((label, index) => (
-              <Radar
-                key={label.key}
-                name={`${label.key} (${label.date})`}
-                dataKey={label.key}
-                stroke={CHART_COLORS[index]}
-                fill={CHART_COLORS[index]}
-                fillOpacity={0.3}
-              />
-            ))}
-            <Legend />
-            <Tooltip />
-          </RadarChart>
-        </ResponsiveContainer>
+        <div style={{ height: '500px', width: '100%' }}>
+          <Radar data={radarData} options={radarOptions} />
+        </div>
       );
     }
 

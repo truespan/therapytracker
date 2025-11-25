@@ -336,6 +336,33 @@ class QuestionnaireAssignment {
   // Get responses for multiple assignments (for chart comparison)
   static async getResponsesForAssignments(assignmentIds) {
     try {
+      // First get questionnaire_id, user_id, and partner_id from the first assignment
+      const assignmentInfo = await db.query(
+        `SELECT questionnaire_id, user_id, partner_id FROM user_questionnaire_assignments WHERE id = $1`,
+        [assignmentIds[0]]
+      );
+
+      if (assignmentInfo.rows.length === 0) {
+        throw new Error('Assignment not found');
+      }
+
+      const { questionnaire_id, user_id, partner_id } = assignmentInfo.rows[0];
+
+      // Get all completed assignments for this questionnaire/user/partner to calculate submission numbers
+      const allAssignmentsResult = await db.query(
+        `SELECT id as assignment_id FROM user_questionnaire_assignments
+         WHERE questionnaire_id = $1 AND user_id = $2 AND partner_id = $3 AND status = 'completed'
+         ORDER BY completed_at ASC`,
+        [questionnaire_id, user_id, partner_id]
+      );
+
+      // Create a map of assignment_id to submission_number
+      const submissionNumberMap = {};
+      allAssignmentsResult.rows.forEach((row, index) => {
+        submissionNumberMap[row.assignment_id] = index + 1;
+      });
+
+      // Get responses with all fields including submission numbers
       const result = await db.query(
         `SELECT uqa.id as assignment_id, uqa.completed_at,
          qq.id as question_id, qq.question_text, qq.question_order, qq.sub_heading,
@@ -348,7 +375,14 @@ class QuestionnaireAssignment {
          ORDER BY uqa.completed_at ASC, qq.question_order ASC`,
         [assignmentIds]
       );
-      return result.rows;
+
+      // Add submission_number to each row
+      const rowsWithSubmissionNumbers = result.rows.map(row => ({
+        ...row,
+        submission_number: submissionNumberMap[row.assignment_id]
+      }));
+
+      return rowsWithSubmissionNumbers;
     } catch (error) {
       throw new Error(`Error getting responses for assignments: ${error.message}`);
     }
