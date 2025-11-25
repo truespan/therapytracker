@@ -11,6 +11,7 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
   const [success, setSuccess] = useState('');
   const [previousResponses, setPreviousResponses] = useState([]);
   const [showPrevious, setShowPrevious] = useState(viewOnly); // Auto-show if view only
+  const [hoveredOption, setHoveredOption] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -158,6 +159,76 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
     const total = getTotalQuestions();
     if (total === 0) return 0;
     return Math.round((getAnsweredCount() / total) * 100);
+  };
+
+  // Get option color based on color coding scheme
+  const getOptionColor = (questionnaire, questionOptions, optionIndex, isSelected, isHovered) => {
+    const scheme = questionnaire?.color_coding_scheme;
+    const optionCount = questionOptions?.length || 0;
+
+    // Only apply colors if scheme matches option count
+    if (!scheme ||
+        (scheme === '5-point' && optionCount !== 5) ||
+        (scheme === '4-point' && optionCount !== 4)) {
+      // Default gray colors when no color coding
+      if (isSelected) {
+        return {
+          backgroundColor: '#475569', // slate-600
+          color: '#ffffff'
+        };
+      }
+      return {
+        backgroundColor: isHovered ? '#9ca3af' : '#d1d5db', // gray-400 : gray-300
+        color: '#374151' // gray-700
+      };
+    }
+
+    // Color schemes
+    const colors5Point = [
+      { base: '#00c951', hover: '#00a842' },
+      { base: '#7ccf00', hover: '#66af00' },
+      { base: '#f0b100', hover: '#d19800' },
+      { base: '#ff6900', hover: '#dd5500' },
+      { base: '#fb2c36', hover: '#d9232d' }
+    ];
+
+    const colors4Point = [
+      { base: '#00c951', hover: '#00a842' },
+      { base: '#7ccf00', hover: '#66af00' },
+      { base: '#ff6900', hover: '#dd5500' },
+      { base: '#fb2c36', hover: '#d9232d' }
+    ];
+
+    const colorSet = scheme === '5-point' ? colors5Point : colors4Point;
+    const color = colorSet[optionIndex];
+
+    if (!color) {
+      // Fallback if index out of range
+      return {
+        backgroundColor: '#d1d5db',
+        color: '#374151'
+      };
+    }
+
+    if (isSelected) {
+      return {
+        backgroundColor: color.base,
+        color: '#ffffff'
+      };
+    }
+
+    if (isHovered) {
+      return {
+        backgroundColor: color.hover,
+        color: '#ffffff'
+      };
+    }
+
+    // Unselected: lighter/muted version
+    return {
+      backgroundColor: '#e5e7eb', // gray-200
+      color: '#6b7280' // gray-500
+    };
   };
 
   if (loading) {
@@ -342,33 +413,43 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
                         {!viewOnly && <span className="text-red-500 ml-1">*</span>}
                       </h3>
               
-              <div className="space-y-2">
-                {question.options.map((option) => (
-                  <label
-                    key={option.id}
-                    className={`flex items-center p-3 border rounded-md transition-colors ${
-                      responses[question.id]?.answer_option_id === option.id
-                        ? 'bg-blue-50 border-blue-500'
-                        : 'bg-white border-gray-300'
-                    } ${viewOnly ? 'cursor-default' : 'cursor-pointer hover:bg-gray-50'}`}
-                  >
-                    <input
-                      type="radio"
-                      name={`question-${question.id}`}
-                      value={option.id}
-                      checked={responses[question.id]?.answer_option_id === option.id}
-                      onChange={() => !viewOnly && handleResponseChange(question.id, option.id, option.option_value)}
-                      disabled={viewOnly}
-                      className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                    <span className={`ml-3 ${viewOnly ? 'text-gray-600' : 'text-gray-700'}`}>
-                      {option.option_text}
-                    </span>
-                    <span className="ml-auto text-sm text-gray-500">
-                      (Value: {option.option_value})
-                    </span>
-                  </label>
-                ))}
+              <div className="flex flex-nowrap gap-3 overflow-x-auto pb-2">
+                {question.options.map((option, optionIndex) => {
+                  const isSelected = responses[question.id]?.answer_option_id === option.id;
+                  const isHovered = hoveredOption === option.id;
+                  const colorStyle = getOptionColor(
+                    assignment.questionnaire,
+                    question.options,
+                    optionIndex,
+                    isSelected,
+                    isHovered
+                  );
+
+                  return (
+                    <label
+                      key={option.id}
+                      onMouseEnter={() => !viewOnly && setHoveredOption(option.id)}
+                      onMouseLeave={() => !viewOnly && setHoveredOption(null)}
+                      style={colorStyle}
+                      className={`relative px-8 py-2.5 rounded-full font-medium text-sm transition-all duration-200 text-center shadow-md flex-shrink-0 ${
+                        viewOnly ? 'cursor-default opacity-75' : 'cursor-pointer hover:shadow-lg transform hover:-translate-y-0.5'
+                      } min-w-[160px] h-12 flex items-center justify-center whitespace-nowrap`}
+                    >
+                      <input
+                        type="radio"
+                        name={`question-${question.id}`}
+                        value={option.id}
+                        checked={isSelected}
+                        onChange={() => !viewOnly && handleResponseChange(question.id, option.id, option.option_value)}
+                        disabled={viewOnly}
+                        className="sr-only"
+                      />
+                      <span className="leading-tight">
+                        {option.option_text}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
                     </div>
                   ))}

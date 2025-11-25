@@ -93,7 +93,14 @@ const LatestChartDisplay = ({ sentCharts, userName }) => {
       const date = assignmentDates.get(assignmentId);
       return {
         key: `Submission ${index + 1}`,
-        date: date ? date.toLocaleDateString() : 'Unknown'
+        date: date ? date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }) : 'Unknown'
       };
     });
 
@@ -192,10 +199,13 @@ const LatestChartDisplay = ({ sentCharts, userName }) => {
     );
   }
 
-  const chartDate = new Date(latestChart.sent_at).toLocaleDateString('en-US', {
+  const chartDate = new Date(latestChart.sent_at).toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
   });
 
   return (
@@ -210,7 +220,7 @@ const LatestChartDisplay = ({ sentCharts, userName }) => {
         <div className="flex items-center text-sm text-gray-500">
           <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
           <Calendar className="h-4 w-4 mr-1 ml-2" />
-          <span>Sent {chartDate}</span>
+          <span>Sent on {chartDate}</span>
         </div>
       </div>
 

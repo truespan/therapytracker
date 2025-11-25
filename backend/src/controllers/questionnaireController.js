@@ -4,7 +4,7 @@ const QuestionnaireAssignment = require('../models/QuestionnaireAssignment');
 // Create a new questionnaire
 exports.createQuestionnaire = async (req, res) => {
   try {
-    const { name, description, questions, has_text_field, text_field_label, text_field_placeholder } = req.body;
+    const { name, description, questions, has_text_field, text_field_label, text_field_placeholder, color_coding_scheme } = req.body;
     const partnerId = req.user.id;
 
     if (!name || !questions || questions.length === 0) {
@@ -13,12 +13,13 @@ exports.createQuestionnaire = async (req, res) => {
 
     // Create questionnaire
     const questionnaireId = await Questionnaire.create(
-      partnerId, 
-      name, 
-      description, 
+      partnerId,
+      name,
+      description,
       has_text_field || false,
       text_field_label || null,
-      text_field_placeholder || null
+      text_field_placeholder || null,
+      color_coding_scheme || null
     );
 
     // Add questions and answer options
@@ -96,7 +97,7 @@ exports.getQuestionnaire = async (req, res) => {
 exports.updateQuestionnaire = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, questions, has_text_field, text_field_label, text_field_placeholder } = req.body;
+    const { name, description, questions, has_text_field, text_field_label, text_field_placeholder, color_coding_scheme } = req.body;
     const partnerId = req.user.id;
 
     // Verify ownership
@@ -107,12 +108,13 @@ exports.updateQuestionnaire = async (req, res) => {
 
     // Update questionnaire basic info
     await Questionnaire.update(
-      id, 
-      name, 
+      id,
+      name,
       description,
       has_text_field || false,
       text_field_label || null,
-      text_field_placeholder || null
+      text_field_placeholder || null,
+      color_coding_scheme || null
     );
 
     // If questions are provided, update them

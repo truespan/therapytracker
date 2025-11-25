@@ -125,7 +125,14 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
       const date = assignmentDates.get(assignmentId);
       return {
         key: `Submission ${index + 1}`,
-        date: date ? date.toLocaleDateString() : 'Unknown'
+        date: date ? date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }) : 'Unknown'
       };
     });
 
@@ -451,7 +458,14 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
                       <span className="ml-3">
                         <span className="font-medium">Submission #{completion.submission_number}</span>
                         <span className="text-gray-500 text-sm ml-2">
-                          ({new Date(completion.completed_at).toLocaleDateString()})
+                          ({new Date(completion.completed_at).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          })})
                         </span>
                       </span>
                     </label>
@@ -533,7 +547,14 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
                       {' '}&bull;{' '}
                       {chart.selected_assignments?.length || 0} submissions compared
                       {' '}&bull;{' '}
-                      Sent {new Date(chart.sent_at).toLocaleDateString()}
+                      Sent on {new Date(chart.sent_at).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
                     </p>
                   </div>
                 </div>
@@ -595,7 +616,14 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
                   {' '}&bull;{' '}
                   {viewingChart.selected_assignments?.length || 0} submissions compared
                   {' '}&bull;{' '}
-                  Sent {new Date(viewingChart.sent_at).toLocaleDateString()}
+                  Sent on {new Date(viewingChart.sent_at).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
                 </p>
               </div>
               <button

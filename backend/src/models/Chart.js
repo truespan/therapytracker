@@ -57,6 +57,7 @@ class Chart {
       JOIN partners p ON sc.partner_id = p.id
       LEFT JOIN questionnaires q ON sc.questionnaire_id = q.id
       WHERE sc.user_id = $1
+        AND sc.chart_type = 'questionnaire_comparison'
       ORDER BY sc.sent_at DESC
     `;
     const result = await db.query(query, [userId]);

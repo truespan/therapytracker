@@ -2,11 +2,11 @@ const db = require('../config/database');
 
 class Questionnaire {
   // Create a new questionnaire
-  static async create(partnerId, name, description, hasTextField = false, textFieldLabel = null, textFieldPlaceholder = null) {
+  static async create(partnerId, name, description, hasTextField = false, textFieldLabel = null, textFieldPlaceholder = null, colorCodingScheme = null) {
     try {
       const result = await db.query(
-        'INSERT INTO questionnaires (partner_id, name, description, has_text_field, text_field_label, text_field_placeholder) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-        [partnerId, name, description, hasTextField, textFieldLabel, textFieldPlaceholder]
+        'INSERT INTO questionnaires (partner_id, name, description, has_text_field, text_field_label, text_field_placeholder, color_coding_scheme) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+        [partnerId, name, description, hasTextField, textFieldLabel, textFieldPlaceholder, colorCodingScheme]
       );
       return result.rows[0].id;
     } catch (error) {
@@ -50,11 +50,11 @@ class Questionnaire {
   }
 
   // Update questionnaire
-  static async update(id, name, description, hasTextField = false, textFieldLabel = null, textFieldPlaceholder = null) {
+  static async update(id, name, description, hasTextField = false, textFieldLabel = null, textFieldPlaceholder = null, colorCodingScheme = null) {
     try {
       const result = await db.query(
-        'UPDATE questionnaires SET name = $1, description = $2, has_text_field = $3, text_field_label = $4, text_field_placeholder = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6',
-        [name, description, hasTextField, textFieldLabel, textFieldPlaceholder, id]
+        'UPDATE questionnaires SET name = $1, description = $2, has_text_field = $3, text_field_label = $4, text_field_placeholder = $5, color_coding_scheme = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7',
+        [name, description, hasTextField, textFieldLabel, textFieldPlaceholder, colorCodingScheme, id]
       );
       return result.rowCount > 0;
     } catch (error) {

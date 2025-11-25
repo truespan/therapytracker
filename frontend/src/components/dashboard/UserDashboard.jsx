@@ -397,7 +397,14 @@ const UserDashboard = () => {
                               </div>
                               <div className="text-sm text-gray-500 mb-3">
                                 <p>Assigned by: {assignment.partner_name}</p>
-                                <p>Date: {new Date(assignment.assigned_at).toLocaleDateString()}</p>
+                                <p>Date: {new Date(assignment.assigned_at).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  hour12: true
+                                })}</p>
                               </div>
                               <div className="flex justify-center">
                                 <button
@@ -435,7 +442,14 @@ const UserDashboard = () => {
                               </div>
                               <div className="text-sm text-gray-500 mb-3">
                                 <p>Assigned by: {assignment.partner_name}</p>
-                                <p>Completed: {new Date(assignment.completed_at || assignment.assigned_at).toLocaleDateString()}</p>
+                                <p>Completed: {new Date(assignment.completed_at || assignment.assigned_at).toLocaleString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  hour12: true
+                                })}</p>
                                 <p>Responses: {assignment.response_count || 0}</p>
                               </div>
                               <div className="flex justify-center">

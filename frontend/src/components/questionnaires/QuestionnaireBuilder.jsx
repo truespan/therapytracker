@@ -8,6 +8,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
     has_text_field: false,
     text_field_label: '',
     text_field_placeholder: '',
+    color_coding_scheme: null,
     questions: []
   });
   const [loading, setLoading] = useState(false);
@@ -118,7 +119,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
 
     for (let i = 0; i < questionnaire.questions.length; i++) {
       const question = questionnaire.questions[i];
-      
+
       if (!question.question_text.trim()) {
         setError(`Question ${i + 1} text is required`);
         return false;
@@ -134,6 +135,19 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
           setError(`Question ${i + 1}, Option ${j + 1} text is required`);
           return false;
         }
+      }
+    }
+
+    // Validate color coding scheme consistency
+    if (questionnaire.color_coding_scheme) {
+      const targetCount = questionnaire.color_coding_scheme === '5-point' ? 5 : 4;
+      const mismatchedQuestions = questionnaire.questions.filter(
+        q => q.options.length !== targetCount
+      );
+
+      if (mismatchedQuestions.length > 0) {
+        setError(`Color coding requires all questions to have exactly ${targetCount} options. ${mismatchedQuestions.length} question(s) don't match. Please adjust the number of options or disable color coding.`);
+        return false;
       }
     }
 
@@ -230,8 +244,8 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
             type="checkbox"
             id="has_text_field"
             checked={questionnaire.has_text_field}
-            onChange={(e) => setQuestionnaire({ 
-              ...questionnaire, 
+            onChange={(e) => setQuestionnaire({
+              ...questionnaire,
               has_text_field: e.target.checked,
               text_field_label: e.target.checked ? questionnaire.text_field_label : '',
               text_field_placeholder: e.target.checked ? questionnaire.text_field_placeholder : ''
@@ -271,6 +285,69 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Color Coding Option */}
+      <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gradient-to-r from-green-50 to-red-50">
+        <label className="block text-sm font-semibold text-gray-800 mb-3">
+          🎨 Color Coding for Answer Options (Optional)
+        </label>
+        <p className="text-xs text-gray-600 mb-4">
+          Color code answer options from green (best) to red (worst) to help visualize responses. All questions must have the same number of options when color coding is enabled.
+        </p>
+        <div className="space-y-2">
+          <label className="flex items-center p-3 border-2 rounded-md cursor-pointer transition-colors bg-white hover:bg-gray-50">
+            <input
+              type="radio"
+              name="color_coding"
+              checked={!questionnaire.color_coding_scheme}
+              onChange={() => setQuestionnaire({ ...questionnaire, color_coding_scheme: null })}
+              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="ml-3 text-sm font-medium text-gray-700">No Color Coding</span>
+          </label>
+
+          <label className="flex items-center p-3 border-2 rounded-md cursor-pointer transition-colors bg-white hover:bg-gray-50">
+            <input
+              type="radio"
+              name="color_coding"
+              checked={questionnaire.color_coding_scheme === '4-point'}
+              onChange={() => setQuestionnaire({ ...questionnaire, color_coding_scheme: '4-point' })}
+              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="ml-3 flex-1">
+              <span className="text-sm font-medium text-gray-700 block">4-Point Color Scale</span>
+              <div className="flex gap-1 mt-2">
+                <div className="w-12 h-6 rounded-full" style={{ backgroundColor: '#00c951' }}></div>
+                <div className="w-12 h-6 rounded-full" style={{ backgroundColor: '#7ccf00' }}></div>
+                <div className="w-12 h-6 rounded-full" style={{ backgroundColor: '#ff6900' }}></div>
+                <div className="w-12 h-6 rounded-full" style={{ backgroundColor: '#fb2c36' }}></div>
+              </div>
+              <span className="text-xs text-gray-500 mt-1 block">For questions with 4 answer options</span>
+            </div>
+          </label>
+
+          <label className="flex items-center p-3 border-2 rounded-md cursor-pointer transition-colors bg-white hover:bg-gray-50">
+            <input
+              type="radio"
+              name="color_coding"
+              checked={questionnaire.color_coding_scheme === '5-point'}
+              onChange={() => setQuestionnaire({ ...questionnaire, color_coding_scheme: '5-point' })}
+              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="ml-3 flex-1">
+              <span className="text-sm font-medium text-gray-700 block">5-Point Color Scale</span>
+              <div className="flex gap-1 mt-2">
+                <div className="w-10 h-6 rounded-full" style={{ backgroundColor: '#00c951' }}></div>
+                <div className="w-10 h-6 rounded-full" style={{ backgroundColor: '#7ccf00' }}></div>
+                <div className="w-10 h-6 rounded-full" style={{ backgroundColor: '#f0b100' }}></div>
+                <div className="w-10 h-6 rounded-full" style={{ backgroundColor: '#ff6900' }}></div>
+                <div className="w-10 h-6 rounded-full" style={{ backgroundColor: '#fb2c36' }}></div>
+              </div>
+              <span className="text-xs text-gray-500 mt-1 block">For questions with 5 answer options</span>
+            </div>
+          </label>
+        </div>
       </div>
 
       {/* Questions */}
