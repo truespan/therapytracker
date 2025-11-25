@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { questionnaireAPI } from '../../services/api';
+import { calculatePillDisplay } from '../../utils/textMeasurement';
 
 const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onCancel }) => {
   const [assignment, setAssignment] = useState(null);
@@ -378,7 +379,7 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
             // Group questions by sub-heading
             const groupedQuestions = [];
             let currentGroup = { sub_heading: null, questions: [] };
-            
+
             questionnaire.questions.forEach((question, index) => {
               if (question.sub_heading && question.sub_heading !== currentGroup.sub_heading) {
                 if (currentGroup.questions.length > 0) {
@@ -388,10 +389,27 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
               }
               currentGroup.questions.push({ ...question, originalIndex: index });
             });
-            
+
             if (currentGroup.questions.length > 0) {
               groupedQuestions.push(currentGroup);
             }
+
+            // Calculate pill display configuration for all questions (before rendering)
+            const pillConfigs = {};
+            questionnaire.questions.forEach((question) => {
+              if (question.options && question.options.length > 0) {
+                const optionTexts = question.options.map(opt => opt.option_text || '');
+                // calculatePillDisplay returns { width, useScroll, useMultiline, needsTruncation }
+                pillConfigs[question.id] = calculatePillDisplay(
+                  optionTexts,
+                  848, // container width
+                  question.options.length,
+                  { min: 96, max: 280, padding: 24, gap: 12 }
+                );
+              } else {
+                pillConfigs[question.id] = { width: 96, useScroll: false, useMultiline: false, needsTruncation: false };
+              }
+            });
             
             return groupedQuestions.map((group, groupIndex) => (
               <div key={groupIndex}>
@@ -406,53 +424,64 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
                 
                 {/* Questions in this group */}
                 <div className="space-y-4">
-                  {group.questions.map((question) => (
-                    <div key={question.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                      <h3 className="font-medium text-gray-800 mb-3">
-                        {question.originalIndex + 1}. {question.question_text}
-                        {!viewOnly && <span className="text-red-500 ml-1">*</span>}
-                      </h3>
-              
-              <div className="flex flex-nowrap gap-3 overflow-x-auto pb-2">
-                {question.options.map((option, optionIndex) => {
-                  const isSelected = responses[question.id]?.answer_option_id === option.id;
-                  const isHovered = hoveredOption === option.id;
-                  const colorStyle = getOptionColor(
-                    assignment.questionnaire,
-                    question.options,
-                    optionIndex,
-                    isSelected,
-                    isHovered
-                  );
+                  {group.questions.map((question) => {
+                    // Get the pre-calculated pill config (width, scroll, multiline, truncation) for this question
+                    const pillConfig = pillConfigs[question.id] || { width: 96, useScroll: false, useMultiline: false, needsTruncation: false };
 
-                  return (
-                    <label
-                      key={option.id}
-                      onMouseEnter={() => !viewOnly && setHoveredOption(option.id)}
-                      onMouseLeave={() => !viewOnly && setHoveredOption(null)}
-                      style={colorStyle}
-                      className={`relative px-3 py-2.5 rounded-full font-medium text-sm transition-all duration-200 text-center shadow-md flex-shrink-0 ${
-                        viewOnly ? 'cursor-default opacity-75' : 'cursor-pointer hover:shadow-lg transform hover:-translate-y-0.5'
-                      } w-24 h-12 flex items-center justify-center whitespace-nowrap`}
-                    >
-                      <input
-                        type="radio"
-                        name={`question-${question.id}`}
-                        value={option.id}
-                        checked={isSelected}
-                        onChange={() => !viewOnly && handleResponseChange(question.id, option.id, option.option_value)}
-                        disabled={viewOnly}
-                        className="sr-only"
-                      />
-                      <span className="leading-tight">
-                        {option.option_text}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-                    </div>
-                  ))}
+                    return (
+                      <div key={question.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <h3 className="font-medium text-gray-800 mb-3">
+                          {question.originalIndex + 1}. {question.question_text}
+                          {!viewOnly && <span className="text-red-500 ml-1">*</span>}
+                        </h3>
+
+                        <div className={`flex flex-nowrap gap-3 pb-2 scrollbar-thin ${pillConfig.useScroll ? 'overflow-x-auto' : 'overflow-x-visible'}`}>
+                          {question.options.map((option, optionIndex) => {
+                            const isSelected = responses[question.id]?.answer_option_id === option.id;
+                            const isHovered = hoveredOption === option.id;
+                            const colorStyle = getOptionColor(
+                              assignment.questionnaire,
+                              question.options,
+                              optionIndex,
+                              isSelected,
+                              isHovered
+                            );
+
+                            return (
+                              <label
+                                key={option.id}
+                                onMouseEnter={() => !viewOnly && setHoveredOption(option.id)}
+                                onMouseLeave={() => !viewOnly && setHoveredOption(null)}
+                                title={option.option_text}
+                                style={{
+                                  ...colorStyle,
+                                  width: `${pillConfig.width}px`,
+                                  minWidth: `${pillConfig.width}px`,
+                                  maxWidth: `${pillConfig.width}px`,
+                                }}
+                                className={`relative px-3 rounded-full font-medium text-sm transition-all duration-200 text-center shadow-md flex-shrink-0 flex items-center justify-center ${
+                                  pillConfig.useMultiline ? 'py-2 min-h-[48px] h-auto' : 'py-2.5 h-12'
+                                } ${viewOnly ? 'cursor-default opacity-75' : 'cursor-pointer hover:shadow-lg transform hover:-translate-y-0.5'}`}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`question-${question.id}`}
+                                  value={option.id}
+                                  checked={isSelected}
+                                  onChange={() => !viewOnly && handleResponseChange(question.id, option.id, option.option_value)}
+                                  disabled={viewOnly}
+                                  className="sr-only"
+                                />
+                                <span className={`px-1 ${pillConfig.useMultiline ? 'whitespace-normal leading-snug' : `leading-tight whitespace-nowrap ${pillConfig.needsTruncation ? 'truncate' : ''}`}`}>
+                                  {option.option_text}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ));
