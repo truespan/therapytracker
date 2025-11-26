@@ -6,7 +6,8 @@
       "Bash(npm start)",
       "Bash(taskkill:*)",
       "Bash(npx kill-port:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(ls -la \"D:\\cursor\\therapy-tracker\\backend\\src\\models\"\" 2>&1 | grep -i \"session|appointment \")"
     ],
     "deny": [],
     "ask": []

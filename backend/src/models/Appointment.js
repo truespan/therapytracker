@@ -87,14 +87,35 @@ class Appointment {
       )
     `;
     const values = [partnerId, appointmentDate, endDate];
-    
+
     if (excludeId) {
       query += ` AND id != $4`;
       values.push(excludeId);
     }
-    
+
     const result = await db.query(query, values);
     return result.rows.length > 0;
+  }
+
+  static async findUpcomingByPartner(partnerId, daysAhead = 7) {
+    const query = `
+      SELECT
+        a.*,
+        u.name as user_name,
+        u.email as user_email,
+        ts.id as session_id,
+        CASE WHEN ts.id IS NOT NULL THEN true ELSE false END as has_session
+      FROM appointments a
+      JOIN users u ON a.user_id = u.id
+      LEFT JOIN therapy_sessions ts ON a.id = ts.appointment_id
+      WHERE a.partner_id = $1
+        AND a.appointment_date >= CURRENT_TIMESTAMP
+        AND a.appointment_date < CURRENT_TIMESTAMP + INTERVAL '${daysAhead} days'
+        AND a.status != 'cancelled'
+      ORDER BY a.appointment_date ASC
+    `;
+    const result = await db.query(query, [partnerId]);
+    return result.rows;
   }
 }
 

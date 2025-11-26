@@ -9,7 +9,9 @@ import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import AssignQuestionnaireModal from '../questionnaires/AssignQuestionnaireModal';
 import LatestChartDisplay from '../charts/LatestChartDisplay';
 import UserAssignmentsSection from '../questionnaires/UserAssignmentsSection';
-import { Users, Activity, User, Calendar, Copy, Check, BarChart3, CheckCircle, Video, ClipboardList } from 'lucide-react';
+import SessionsSection from '../sessions/SessionsSection';
+import AppointmentsTab from '../appointments/AppointmentsTab';
+import { Users, Activity, User, Calendar, Copy, Check, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays } from 'lucide-react';
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
@@ -18,7 +20,7 @@ const PartnerDashboard = () => {
   const [sentCharts, setSentCharts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState('clients');
+  const [activeTab, setActiveTab] = useState('appointments');
 
   // Questionnaire state
   const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
@@ -131,6 +133,17 @@ const PartnerDashboard = () => {
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
           <button
+            onClick={() => setActiveTab('appointments')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'appointments'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <CalendarDays className="inline h-5 w-5 mr-2" />
+            Appointments
+          </button>
+          <button
             onClick={() => setActiveTab('clients')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'clients'
@@ -190,6 +203,11 @@ const PartnerDashboard = () => {
           </button>
         </nav>
       </div>
+
+      {/* Appointments Tab */}
+      {activeTab === 'appointments' && (
+        <AppointmentsTab partnerId={user.id} />
+      )}
 
       {/* Clients Tab */}
       {activeTab === 'clients' && (
@@ -252,6 +270,13 @@ const PartnerDashboard = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Therapy Sessions */}
+              <SessionsSection
+                partnerId={user.id}
+                userId={selectedUser.id}
+                userName={selectedUser.name}
+              />
 
               {/* Latest Chart Sent to Client */}
               <LatestChartDisplay

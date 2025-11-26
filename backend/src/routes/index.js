@@ -13,6 +13,7 @@ const appointmentController = require('../controllers/appointmentController');
 const chartController = require('../controllers/chartController');
 const videoSessionController = require('../controllers/videoSessionController');
 const questionnaireController = require('../controllers/questionnaireController');
+const therapySessionController = require('../controllers/therapySessionController');
 
 const router = express.Router();
 
@@ -55,9 +56,25 @@ router.get('/profile-data/users/:userId', authenticateToken, profileController.g
 router.post('/appointments', authenticateToken, appointmentController.createAppointment);
 router.get('/appointments/:id', authenticateToken, appointmentController.getAppointmentById);
 router.get('/partners/:partnerId/appointments', authenticateToken, appointmentController.getPartnerAppointments);
+router.get('/partners/:partnerId/upcoming-appointments', authenticateToken, appointmentController.getUpcomingAppointments);
 router.get('/users/:userId/appointments', authenticateToken, appointmentController.getUserAppointments);
 router.put('/appointments/:id', authenticateToken, appointmentController.updateAppointment);
 router.delete('/appointments/:id', authenticateToken, appointmentController.deleteAppointment);
+
+// ==================== THERAPY SESSION ROUTES ====================
+router.post('/therapy-sessions', authenticateToken, checkRole('partner'), therapySessionController.createTherapySession);
+router.post('/therapy-sessions/standalone', authenticateToken, checkRole('partner'), therapySessionController.createStandaloneSession);
+router.get('/therapy-sessions/:id', authenticateToken, therapySessionController.getTherapySessionById);
+router.get('/partners/:partnerId/therapy-sessions', authenticateToken, therapySessionController.getPartnerTherapySessions);
+router.get('/partners/:partnerId/users/:userId/therapy-sessions', authenticateToken, therapySessionController.getPartnerUserSessions);
+router.get('/users/:userId/therapy-sessions', authenticateToken, therapySessionController.getUserTherapySessions);
+router.put('/therapy-sessions/:id', authenticateToken, checkRole('partner'), therapySessionController.updateTherapySession);
+router.delete('/therapy-sessions/:id', authenticateToken, checkRole('partner'), therapySessionController.deleteTherapySession);
+
+// Session-questionnaire management
+router.post('/therapy-sessions/:sessionId/assign-questionnaire', authenticateToken, checkRole('partner'), therapySessionController.assignQuestionnaireToSession);
+router.get('/therapy-sessions/:sessionId/questionnaires', authenticateToken, therapySessionController.getSessionQuestionnaires);
+router.delete('/therapy-sessions/:sessionId/questionnaires/:assignmentId', authenticateToken, checkRole('partner'), therapySessionController.removeQuestionnaireFromSession);
 
 // ==================== CHART ROUTES ====================
 router.post('/charts/share', authenticateToken, checkRole('partner'), chartController.shareChart);

@@ -103,6 +103,11 @@ export const appointmentAPI = {
     if (endDate) params.end_date = endDate;
     return api.get(`/partners/${partnerId}/appointments`, { params });
   },
+  getUpcoming: (partnerId, days = 7) => {
+    return api.get(`/partners/${partnerId}/upcoming-appointments`, {
+      params: { days }
+    });
+  },
   getByUser: (userId) => api.get(`/users/${userId}/appointments`),
   update: (id, data) => api.put(`/appointments/${id}`, data),
   delete: (id) => api.delete(`/appointments/${id}`)
@@ -115,6 +120,29 @@ export const chartAPI = {
   getUserCharts: (userId) => api.get(`/charts/user/${userId}`),
   getPartnerUserCharts: (partnerId, userId) => api.get(`/charts/partner/${partnerId}/user/${userId}`),
   deleteChart: (id) => api.delete(`/charts/${id}`)
+};
+
+// Therapy Session APIs
+export const therapySessionAPI = {
+  create: (data) => api.post('/therapy-sessions', data),
+  createStandalone: (data) => api.post('/therapy-sessions/standalone', data),
+  getById: (id) => api.get(`/therapy-sessions/${id}`),
+  getByPartner: (partnerId, startDate, endDate) => {
+    const params = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+    return api.get(`/partners/${partnerId}/therapy-sessions`, { params });
+  },
+  getByPartnerAndUser: (partnerId, userId) => api.get(`/partners/${partnerId}/users/${userId}/therapy-sessions`),
+  getByUser: (userId) => api.get(`/users/${userId}/therapy-sessions`),
+  update: (id, data) => api.put(`/therapy-sessions/${id}`, data),
+  delete: (id) => api.delete(`/therapy-sessions/${id}`),
+
+  // Session-questionnaire management
+  assignQuestionnaire: (sessionId, data) => api.post(`/therapy-sessions/${sessionId}/assign-questionnaire`, data),
+  getSessionQuestionnaires: (sessionId) => api.get(`/therapy-sessions/${sessionId}/questionnaires`),
+  removeQuestionnaireFromSession: (sessionId, assignmentId) =>
+    api.delete(`/therapy-sessions/${sessionId}/questionnaires/${assignmentId}`)
 };
 
 // Video Session APIs

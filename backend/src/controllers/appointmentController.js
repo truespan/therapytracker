@@ -134,12 +134,31 @@ const deleteAppointment = async (req, res) => {
   }
 };
 
+const getUpcomingAppointments = async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+    const { days } = req.query; // Optional: number of days to look ahead (default 7)
+
+    const daysAhead = days ? parseInt(days) : 7;
+    const appointments = await Appointment.findUpcomingByPartner(partnerId, daysAhead);
+
+    res.json({ appointments });
+  } catch (error) {
+    console.error('Get upcoming appointments error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch upcoming appointments',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   createAppointment,
   getAppointmentById,
   getPartnerAppointments,
   getUserAppointments,
   updateAppointment,
-  deleteAppointment
+  deleteAppointment,
+  getUpcomingAppointments
 };
 
