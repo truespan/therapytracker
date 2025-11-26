@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { videoSessionAPI } from '../../services/api';
 import VideoSessionModal from './VideoSessionModal';
-import { Video, Calendar, Clock, User, Lock, Unlock, Copy, Check, Edit, Trash2, AlertCircle } from 'lucide-react';
+import StartSessionFromVideoModal from './StartSessionFromVideoModal';
+import { Video, Calendar, Clock, User, Lock, Unlock, Copy, Check, Edit, Trash2, AlertCircle, FileText, CheckCircle } from 'lucide-react';
 import { generateMeetingUrl, formatTimeUntilSession, canJoinSession } from '../../utils/jitsiHelper';
 
 const VideoSessionsTab = ({ partnerId, users }) => {
@@ -11,6 +12,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [copied, setCopied] = useState(null);
+  const [showStartSessionModal, setShowStartSessionModal] = useState(false);
+  const [selectedVideoSession, setSelectedVideoSession] = useState(null);
 
   useEffect(() => {
     loadSessions();
@@ -75,6 +78,21 @@ const VideoSessionsTab = ({ partnerId, users }) => {
   const handleSaveSession = () => {
     loadSessions();
     handleCloseModal();
+  };
+
+  const handleStartSession = (videoSession) => {
+    setSelectedVideoSession(videoSession);
+    setShowStartSessionModal(true);
+  };
+
+  const handleCloseStartSessionModal = () => {
+    setShowStartSessionModal(false);
+    setSelectedVideoSession(null);
+  };
+
+  const handleSessionCreated = () => {
+    loadSessions();
+    handleCloseStartSessionModal();
   };
 
   const getStatusBadge = (session) => {
@@ -226,6 +244,25 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           >
                             Join Now
                           </a>
+                          {session.has_therapy_session ? (
+                            <button
+                              disabled
+                              className="btn btn-secondary text-sm flex items-center space-x-1 opacity-60 cursor-not-allowed"
+                              title="Session already created"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              <span>Session Created</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleStartSession(session)}
+                              className="btn btn-secondary text-sm flex items-center space-x-1"
+                              title="Create therapy session"
+                            >
+                              <FileText className="h-4 w-4" />
+                              <span>Create Session</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => handleCopyLink(session)}
                             className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg"
@@ -313,6 +350,25 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           >
                             Join Now
                           </a>
+                          {session.has_therapy_session ? (
+                            <button
+                              disabled
+                              className="btn btn-secondary text-sm flex items-center space-x-1 opacity-60 cursor-not-allowed"
+                              title="Session already created"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              <span>Session Created</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleStartSession(session)}
+                              className="btn btn-secondary text-sm flex items-center space-x-1"
+                              title="Create therapy session"
+                            >
+                              <FileText className="h-4 w-4" />
+                              <span>Create Session</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => handleCopyLink(session)}
                             className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg"
@@ -349,6 +405,15 @@ const VideoSessionsTab = ({ partnerId, users }) => {
           session={selectedSession}
           onClose={handleCloseModal}
           onSave={handleSaveSession}
+        />
+      )}
+
+      {showStartSessionModal && selectedVideoSession && (
+        <StartSessionFromVideoModal
+          videoSession={selectedVideoSession}
+          partnerId={partnerId}
+          onClose={handleCloseStartSessionModal}
+          onSuccess={handleSessionCreated}
         />
       )}
     </div>

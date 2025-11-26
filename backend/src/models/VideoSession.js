@@ -86,19 +86,25 @@ class VideoSession {
 
   static async findByPartner(partnerId, startDate = null, endDate = null) {
     let query = `
-      SELECT vs.*, u.name as user_name, u.email as user_email
+      SELECT
+        vs.*,
+        u.name as user_name,
+        u.email as user_email,
+        ts.id as therapy_session_id,
+        CASE WHEN ts.id IS NOT NULL THEN true ELSE false END as has_therapy_session
       FROM video_sessions vs
       JOIN users u ON vs.user_id = u.id
+      LEFT JOIN therapy_sessions ts ON vs.id = ts.video_session_id
       WHERE vs.partner_id = $1
     `;
     const values = [partnerId];
-    
+
     if (startDate && endDate) {
       query += ` AND vs.session_date >= $2 AND vs.session_date <= $3`;
       values.push(startDate, endDate);
     }
-    
-    query += ` ORDER BY vs.session_date ASC`;
+
+    query += ` ORDER BY vs.session_date DESC`;
     const result = await db.query(query, values);
     return result.rows;
   }

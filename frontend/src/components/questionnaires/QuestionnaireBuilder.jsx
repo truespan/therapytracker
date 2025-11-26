@@ -14,6 +14,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showColorCodingWarning, setShowColorCodingWarning] = useState(false);
 
   useEffect(() => {
     if (questionnaireId) {
@@ -97,13 +98,66 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
   const handleMoveQuestion = (questionIndex, direction) => {
     const newQuestions = [...questionnaire.questions];
     const targetIndex = direction === 'up' ? questionIndex - 1 : questionIndex + 1;
-    
+
     if (targetIndex < 0 || targetIndex >= newQuestions.length) return;
-    
-    [newQuestions[questionIndex], newQuestions[targetIndex]] = 
+
+    [newQuestions[questionIndex], newQuestions[targetIndex]] =
       [newQuestions[targetIndex], newQuestions[questionIndex]];
-    
+
     setQuestionnaire({ ...questionnaire, questions: newQuestions });
+  };
+
+  // Get the most common number of options across all questions
+  const getMostCommonOptionCount = () => {
+    if (questionnaire.questions.length === 0) return 0;
+
+    const optionCounts = questionnaire.questions.map(q => q.options.length);
+    const countMap = {};
+
+    optionCounts.forEach(count => {
+      countMap[count] = (countMap[count] || 0) + 1;
+    });
+
+    let maxCount = 0;
+    let mostCommon = 0;
+
+    Object.keys(countMap).forEach(count => {
+      if (countMap[count] > maxCount) {
+        maxCount = countMap[count];
+        mostCommon = parseInt(count);
+      }
+    });
+
+    return mostCommon;
+  };
+
+  // Check if option ordering seems incorrect for color coding
+  const checkColorCodingOrder = () => {
+    // Keywords that indicate severity (lower index = better/less severe)
+    const positiveKeywords = ['excellent', 'very good', 'good', 'great', 'always', 'never', 'not at all', 'rarely', 'none', 'no'];
+    const negativeKeywords = ['poor', 'very poor', 'bad', 'terrible', 'severe', 'extremely', 'very much', 'all the time', 'constantly'];
+
+    for (const question of questionnaire.questions) {
+      if (question.options.length < 2) continue;
+
+      const firstOption = question.options[0].option_text.toLowerCase();
+      const lastOption = question.options[question.options.length - 1].option_text.toLowerCase();
+
+      // Check if first option contains negative keywords (wrong order)
+      const firstIsNegative = negativeKeywords.some(keyword => firstOption.includes(keyword));
+      // Check if last option contains positive keywords (wrong order)
+      const lastIsPositive = positiveKeywords.some(keyword => lastOption.includes(keyword));
+
+      // Also check point values - first should have higher points than last
+      const firstValue = question.options[0].option_value;
+      const lastValue = question.options[question.options.length - 1].option_value;
+
+      if (firstIsNegative || lastIsPositive || firstValue < lastValue) {
+        return false; // Order seems incorrect
+      }
+    }
+
+    return true; // Order seems correct
   };
 
   const validateQuestionnaire = () => {
@@ -147,6 +201,12 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
 
       if (mismatchedQuestions.length > 0) {
         setError(`Color coding requires all questions to have exactly ${targetCount} options. ${mismatchedQuestions.length} question(s) don't match. Please adjust the number of options or disable color coding.`);
+        return false;
+      }
+
+      // Check if option ordering seems incorrect for color coding
+      if (!checkColorCodingOrder()) {
+        setShowColorCodingWarning(true);
         return false;
       }
     }
@@ -307,13 +367,18 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
             <span className="ml-3 text-sm font-medium text-gray-700">No Color Coding</span>
           </label>
 
-          <label className="flex items-center p-3 border-2 rounded-md cursor-pointer transition-colors bg-white hover:bg-gray-50">
+          <label className={`flex items-center p-3 border-2 rounded-md transition-colors ${
+            getMostCommonOptionCount() === 4 || getMostCommonOptionCount() === 0
+              ? 'cursor-pointer bg-white hover:bg-gray-50'
+              : 'cursor-not-allowed bg-gray-100 opacity-50'
+          }`}>
             <input
               type="radio"
               name="color_coding"
               checked={questionnaire.color_coding_scheme === '4-point'}
               onChange={() => setQuestionnaire({ ...questionnaire, color_coding_scheme: '4-point' })}
-              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              disabled={getMostCommonOptionCount() !== 4 && getMostCommonOptionCount() !== 0}
+              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
             <div className="ml-3 flex-1">
               <span className="text-sm font-medium text-gray-700 block">4-Point Color Scale</span>
@@ -323,17 +388,27 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
                 <div className="w-12 h-6 rounded-full" style={{ backgroundColor: '#ff6900' }}></div>
                 <div className="w-12 h-6 rounded-full" style={{ backgroundColor: '#fb2c36' }}></div>
               </div>
-              <span className="text-xs text-gray-500 mt-1 block">For questions with 4 answer options</span>
+              <span className="text-xs text-gray-500 mt-1 block">
+                For questions with 4 answer options
+                {getMostCommonOptionCount() !== 4 && getMostCommonOptionCount() !== 0 &&
+                  ` (Currently ${getMostCommonOptionCount()} options)`
+                }
+              </span>
             </div>
           </label>
 
-          <label className="flex items-center p-3 border-2 rounded-md cursor-pointer transition-colors bg-white hover:bg-gray-50">
+          <label className={`flex items-center p-3 border-2 rounded-md transition-colors ${
+            getMostCommonOptionCount() === 5 || getMostCommonOptionCount() === 0
+              ? 'cursor-pointer bg-white hover:bg-gray-50'
+              : 'cursor-not-allowed bg-gray-100 opacity-50'
+          }`}>
             <input
               type="radio"
               name="color_coding"
               checked={questionnaire.color_coding_scheme === '5-point'}
               onChange={() => setQuestionnaire({ ...questionnaire, color_coding_scheme: '5-point' })}
-              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              disabled={getMostCommonOptionCount() !== 5 && getMostCommonOptionCount() !== 0}
+              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
             <div className="ml-3 flex-1">
               <span className="text-sm font-medium text-gray-700 block">5-Point Color Scale</span>
@@ -344,7 +419,12 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
                 <div className="w-10 h-6 rounded-full" style={{ backgroundColor: '#ff6900' }}></div>
                 <div className="w-10 h-6 rounded-full" style={{ backgroundColor: '#fb2c36' }}></div>
               </div>
-              <span className="text-xs text-gray-500 mt-1 block">For questions with 5 answer options</span>
+              <span className="text-xs text-gray-500 mt-1 block">
+                For questions with 5 answer options
+                {getMostCommonOptionCount() !== 5 && getMostCommonOptionCount() !== 0 &&
+                  ` (Currently ${getMostCommonOptionCount()} options)`
+                }
+              </span>
             </div>
           </label>
         </div>
@@ -486,6 +566,55 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
           {loading ? 'Saving...' : 'Save Questionnaire'}
         </button>
       </div>
+
+      {/* Color Coding Warning Dialog */}
+      {showColorCodingWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-red-600 mb-2">
+                ⚠️ Color Coding Order Warning
+              </h3>
+              <div className="text-gray-700 space-y-3">
+                <p>
+                  Please check whether the order of the answer options matches the color coding pattern as well as the points assigned to them.
+                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="font-semibold mb-2">Important Guidelines:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>Color coding starts from <span className="text-green-600 font-semibold">Green</span> and ends with <span className="text-red-600 font-semibold">Red</span></li>
+                    <li>Users selecting <span className="text-green-600 font-semibold">Green</span> options means they are healthier</li>
+                    <li>Users selecting <span className="text-red-600 font-semibold">Red</span> options means they have severe issues</li>
+                    <li>Positive answers (e.g., "Excellent", "Good", "Fair") should be listed first</li>
+                    <li>Negative answers (e.g., "Poor", "Very Poor") should be listed last</li>
+                    <li>Higher points should be assigned to healthier/positive options</li>
+                  </ul>
+                </div>
+                <p className="text-sm text-gray-600">
+                  <strong>Example:</strong> If options are "Excellent", "Good", "Fair", "Poor", "Very Poor" - they are correctly ordered because "Excellent" (healthiest) is first and "Very Poor" (most severe) is last.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowColorCodingWarning(false);
+                  setQuestionnaire({ ...questionnaire, color_coding_scheme: null });
+                }}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Disable Color Coding
+              </button>
+              <button
+                onClick={() => setShowColorCodingWarning(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                I'll Fix the Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -208,7 +208,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
                 name="payment_notes"
                 value={formData.payment_notes}
                 onChange={handleChange}
-                placeholder="Payment status, amount, method, etc..."
+                placeholder="₹5000 paid..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>

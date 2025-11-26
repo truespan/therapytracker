@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { therapySessionAPI } from '../../services/api';
-import { X, FileText, DollarSign, User, Calendar, Clock } from 'lucide-react';
+import { X, FileText, DollarSign, User, Calendar, Clock, Video } from 'lucide-react';
 
-const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
+const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
-    session_title: appointment.title || '',
+    session_title: videoSession.title || '',
     session_notes: '',
     payment_notes: ''
   });
@@ -31,13 +31,15 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
     setLoading(true);
 
     try {
-      await therapySessionAPI.create({
-        appointment_id: appointment.id,
+      await therapySessionAPI.createStandalone({
         partner_id: partnerId,
-        user_id: appointment.user_id,
+        user_id: videoSession.user_id,
         session_title: formData.session_title,
+        session_date: videoSession.session_date,
+        session_duration: videoSession.duration_minutes,
         session_notes: formData.session_notes || null,
-        payment_notes: formData.payment_notes || null
+        payment_notes: formData.payment_notes || null,
+        video_session_id: videoSession.id
       });
 
       if (onSuccess) {
@@ -58,34 +60,34 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
-                <FileText className="h-6 w-6 text-primary-600" />
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Video className="h-6 w-6 text-purple-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Start Session</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Start Session from Video</h2>
             </div>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <X className="h-6 w-6" />
             </button>
           </div>
 
-          {/* Appointment Info Display */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-semibold text-gray-900 mb-3">Appointment Details</h3>
+          {/* Video Session Info Display */}
+          <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-3">Video Session Details</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center text-gray-700">
-                <User className="h-4 w-4 mr-2 text-blue-600" />
+                <User className="h-4 w-4 mr-2 text-purple-600" />
                 <span className="font-medium mr-2">Client:</span>
-                <span>{appointment.user_name}</span>
+                <span>{videoSession.user_name}</span>
               </div>
               <div className="flex items-center text-gray-700">
-                <Calendar className="h-4 w-4 mr-2 text-blue-600" />
+                <Calendar className="h-4 w-4 mr-2 text-purple-600" />
                 <span className="font-medium mr-2">Date:</span>
-                <span>{new Date(appointment.appointment_date).toLocaleDateString()}</span>
+                <span>{new Date(videoSession.session_date).toLocaleDateString()}</span>
               </div>
               <div className="flex items-center text-gray-700">
-                <Clock className="h-4 w-4 mr-2 text-blue-600" />
+                <Clock className="h-4 w-4 mr-2 text-purple-600" />
                 <span className="font-medium mr-2">Time:</span>
-                <span>{new Date(appointment.appointment_date).toLocaleTimeString([], {
+                <span>{new Date(videoSession.session_date).toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit'
                 })}</span>
@@ -176,4 +178,4 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
   );
 };
 
-export default StartSessionModal;
+export default StartSessionFromVideoModal;

@@ -191,7 +191,7 @@ const deleteTherapySession = async (req, res) => {
 // Create standalone session (without appointment)
 const createStandaloneSession = async (req, res) => {
   try {
-    const { partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes } = req.body;
+    const { partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id } = req.body;
 
     if (!partner_id || !user_id || !session_title || !session_date) {
       return res.status(400).json({
@@ -206,7 +206,8 @@ const createStandaloneSession = async (req, res) => {
       session_date,
       session_duration,
       session_notes,
-      payment_notes
+      payment_notes,
+      video_session_id
     });
 
     res.status(201).json({

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { therapySessionAPI } from '../../services/api';
-import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList } from 'lucide-react';
+import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList, Video } from 'lucide-react';
 
 const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
   const [showFullNotes, setShowFullNotes] = useState(false);
@@ -71,12 +71,20 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
               <h4 className="text-lg font-semibold text-gray-900 mb-1">{session.session_title}</h4>
-              {session.from_appointment && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  <Tag className="h-3 w-3 mr-1" />
-                  From Appointment
-                </span>
-              )}
+              <div className="flex items-center space-x-2">
+                {session.from_appointment && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <Tag className="h-3 w-3 mr-1" />
+                    From Appointment
+                  </span>
+                )}
+                {session.from_video_session && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    <Video className="h-3 w-3 mr-1" />
+                    Session type - Video
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center space-x-2 ml-4">
               <button

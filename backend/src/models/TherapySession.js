@@ -39,14 +39,14 @@ class TherapySession {
 
   // Create standalone session (no appointment required)
   static async createStandalone(sessionData) {
-    const { partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes } = sessionData;
+    const { partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id } = sessionData;
 
     const query = `
-      INSERT INTO therapy_sessions (partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO therapy_sessions (partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
-    const values = [partner_id, user_id, session_title, session_date, session_duration || null, session_notes || null, payment_notes || null];
+    const values = [partner_id, user_id, session_title, session_date, session_duration || null, session_notes || null, payment_notes || null, video_session_id || null];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -96,6 +96,7 @@ class TherapySession {
       SELECT
         ts.id,
         ts.appointment_id,
+        ts.video_session_id,
         ts.partner_id,
         ts.user_id,
         ts.session_title,
@@ -109,6 +110,7 @@ class TherapySession {
         a.appointment_date,
         a.title as appointment_title,
         CASE WHEN ts.appointment_id IS NOT NULL THEN true ELSE false END as from_appointment,
+        CASE WHEN ts.video_session_id IS NOT NULL THEN true ELSE false END as from_video_session,
         COALESCE(
           json_agg(
             json_build_object(
@@ -126,7 +128,7 @@ class TherapySession {
       LEFT JOIN user_questionnaire_assignments uqa ON sqa.user_questionnaire_assignment_id = uqa.id
       LEFT JOIN questionnaires q ON uqa.questionnaire_id = q.id
       WHERE ts.partner_id = $1 AND ts.user_id = $2
-      GROUP BY ts.id, ts.appointment_id, ts.partner_id, ts.user_id, ts.session_title,
+      GROUP BY ts.id, ts.appointment_id, ts.video_session_id, ts.partner_id, ts.user_id, ts.session_title,
                ts.session_date, ts.session_duration, ts.session_notes, ts.payment_notes,
                ts.created_at, ts.updated_at, u.name, a.appointment_date, a.title
       ORDER BY ts.session_date DESC

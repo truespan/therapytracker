@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { appointmentAPI } from '../../services/api';
+import { appointmentAPI, videoSessionAPI } from '../../services/api';
 import StartSessionModal from './StartSessionModal';
-import { Calendar, Clock, User, AlertCircle, CheckCircle, PlayCircle } from 'lucide-react';
+import StartSessionFromVideoModal from '../video/StartSessionFromVideoModal';
+import { Calendar, Clock, User, AlertCircle, CheckCircle, PlayCircle, Video } from 'lucide-react';
 
 const AppointmentsTab = ({ partnerId }) => {
   const [appointments, setAppointments] = useState([]);
+  const [videoSessions, setVideoSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showStartSessionModal, setShowStartSessionModal] = useState(false);
+  const [selectedVideoSession, setSelectedVideoSession] = useState(null);
+  const [showStartVideoSessionModal, setShowStartVideoSessionModal] = useState(false);
 
   // Generate array of next 7 days starting from today
   const getNext7Days = () => {
@@ -27,8 +31,26 @@ const AppointmentsTab = ({ partnerId }) => {
   const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await appointmentAPI.getUpcoming(partnerId, 7);
-      setAppointments(response.data.appointments || []);
+      const [appointmentsResponse, videoSessionsResponse] = await Promise.all([
+        appointmentAPI.getUpcoming(partnerId, 7),
+        videoSessionAPI.getByPartner(partnerId)
+      ]);
+
+      setAppointments(appointmentsResponse.data.appointments || []);
+
+      // Filter video sessions to only show upcoming ones (next 7 days, including all of today)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      const sevenDaysLater = new Date(today);
+      sevenDaysLater.setDate(today.getDate() + 7);
+
+      const upcomingVideoSessions = (videoSessionsResponse.data.sessions || []).filter(session => {
+        const sessionDate = new Date(session.session_date);
+        sessionDate.setHours(0, 0, 0, 0); // Compare date only, not time
+        return sessionDate >= today && sessionDate < sevenDaysLater && session.status !== 'cancelled';
+      });
+
+      setVideoSessions(upcomingVideoSessions);
       setError('');
     } catch (err) {
       console.error('Failed to load appointments:', err);
@@ -47,16 +69,26 @@ const AppointmentsTab = ({ partnerId }) => {
     setShowStartSessionModal(true);
   };
 
+  const handleStartVideoSession = (videoSession) => {
+    setSelectedVideoSession(videoSession);
+    setShowStartVideoSessionModal(true);
+  };
+
   const handleCloseModal = () => {
     setShowStartSessionModal(false);
     setSelectedAppointment(null);
+  };
+
+  const handleCloseVideoModal = () => {
+    setShowStartVideoSessionModal(false);
+    setSelectedVideoSession(null);
   };
 
   const handleSessionCreated = () => {
     loadAppointments(); // Reload appointments to update status
   };
 
-  // Group appointments by date
+  // Group appointments and video sessions by date
   const groupAppointmentsByDate = () => {
     const days = getNext7Days();
     const grouped = {};
@@ -69,10 +101,11 @@ const AppointmentsTab = ({ partnerId }) => {
       const dateKey = `${year}-${month}-${dayNum}`;
       grouped[dateKey] = {
         date: day,
-        appointments: []
+        items: []
       };
     });
 
+    // Add appointments
     appointments.forEach(apt => {
       const aptDate = new Date(apt.appointment_date);
       // Use local date without timezone conversion
@@ -81,8 +114,30 @@ const AppointmentsTab = ({ partnerId }) => {
       const dayNum = String(aptDate.getDate()).padStart(2, '0');
       const dateKey = `${year}-${month}-${dayNum}`;
       if (grouped[dateKey]) {
-        grouped[dateKey].appointments.push(apt);
+        grouped[dateKey].items.push({ ...apt, itemType: 'appointment' });
       }
+    });
+
+    // Add video sessions
+    videoSessions.forEach(session => {
+      const sessionDate = new Date(session.session_date);
+      // Use local date without timezone conversion
+      const year = sessionDate.getFullYear();
+      const month = String(sessionDate.getMonth() + 1).padStart(2, '0');
+      const dayNum = String(sessionDate.getDate()).padStart(2, '0');
+      const dateKey = `${year}-${month}-${dayNum}`;
+      if (grouped[dateKey]) {
+        grouped[dateKey].items.push({ ...session, itemType: 'video' });
+      }
+    });
+
+    // Sort items by time within each day
+    Object.keys(grouped).forEach(key => {
+      grouped[key].items.sort((a, b) => {
+        const timeA = new Date(a.appointment_date || a.session_date);
+        const timeB = new Date(b.appointment_date || b.session_date);
+        return timeA - timeB;
+      });
     });
 
     return grouped;
@@ -122,7 +177,7 @@ const AppointmentsTab = ({ partnerId }) => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <Calendar className="h-6 w-6 text-primary-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Upcoming Appointments</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Upcoming Appointments & Video Sessions</h2>
           </div>
           <div className="text-sm text-gray-600">
             Next 7 Days
@@ -161,40 +216,41 @@ const AppointmentsTab = ({ partnerId }) => {
                   {formatDayHeader(dayData.date)}
                 </div>
 
-                {/* Appointments for this day */}
+                {/* Appointments and Video Sessions for this day */}
                 <div className="p-2 space-y-2 min-h-[200px] bg-white">
-                  {dayData.appointments.length === 0 ? (
+                  {dayData.items.length === 0 ? (
                     <div className="text-center text-gray-400 text-xs py-4">
-                      No appointments
+                      Nothing scheduled
                     </div>
                   ) : (
-                    dayData.appointments.map(apt => (
+                    dayData.items.map(item => (item.itemType === 'appointment' ? (
+                      // Appointment Card
                       <div
-                        key={apt.id}
+                        key={`apt-${item.id}`}
                         className={`p-2 rounded border text-xs ${
-                          apt.has_session
+                          item.has_session
                             ? 'bg-green-50 border-green-200'
                             : 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer'
                         }`}
-                        onClick={() => !apt.has_session && handleStartSession(apt)}
+                        onClick={() => !item.has_session && handleStartSession(item)}
                       >
                         <div className="flex items-center space-x-1 mb-1 text-gray-600">
                           <Clock className="h-3 w-3" />
-                          <span className="font-medium">{formatTime(apt.appointment_date)}</span>
+                          <span className="font-medium">{formatTime(item.appointment_date)}</span>
                         </div>
 
                         <div className="flex items-center space-x-1 mb-1">
                           <User className="h-3 w-3 text-gray-500" />
                           <span className="font-semibold text-gray-900 truncate">
-                            {apt.user_name}
+                            {item.user_name}
                           </span>
                         </div>
 
                         <div className="text-gray-700 truncate mb-1">
-                          {apt.title}
+                          {item.title}
                         </div>
 
-                        {apt.has_session ? (
+                        {item.has_session ? (
                           <div className="flex items-center space-x-1 text-green-700 mt-2">
                             <CheckCircle className="h-3 w-3" />
                             <span className="font-medium">Session Completed</span>
@@ -203,7 +259,7 @@ const AppointmentsTab = ({ partnerId }) => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleStartSession(apt);
+                              handleStartSession(item);
                             }}
                             className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
                           >
@@ -212,7 +268,49 @@ const AppointmentsTab = ({ partnerId }) => {
                           </button>
                         )}
                       </div>
-                    ))
+                    ) : (
+                      // Video Session Card
+                      <div
+                        key={`video-${item.id}`}
+                        className="p-2 rounded border text-xs bg-purple-50 border-purple-200"
+                      >
+                        <div className="flex items-center space-x-1 mb-1 text-purple-700">
+                          <Video className="h-3 w-3" />
+                          <span className="font-medium">Video Session</span>
+                        </div>
+
+                        <div className="flex items-center space-x-1 mb-1 text-gray-600">
+                          <Clock className="h-3 w-3" />
+                          <span className="font-medium">{formatTime(item.session_date)}</span>
+                        </div>
+
+                        <div className="flex items-center space-x-1 mb-1">
+                          <User className="h-3 w-3 text-gray-500" />
+                          <span className="font-semibold text-gray-900 truncate">
+                            {item.user_name}
+                          </span>
+                        </div>
+
+                        <div className="text-gray-700 truncate mb-1">
+                          {item.title}
+                        </div>
+
+                        {item.has_therapy_session ? (
+                          <div className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-gray-400 text-white rounded cursor-not-allowed">
+                            <CheckCircle className="h-3 w-3" />
+                            <span className="font-medium">Session Created</span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleStartVideoSession(item)}
+                            className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                          >
+                            <PlayCircle className="h-3 w-3" />
+                            <span className="font-medium">Start Session</span>
+                          </button>
+                        )}
+                      </div>
+                    )))
                   )}
                 </div>
               </div>
@@ -226,6 +324,10 @@ const AppointmentsTab = ({ partnerId }) => {
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-blue-50 border border-blue-200 rounded"></div>
               <span className="text-gray-600">Scheduled</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-purple-50 border border-purple-200 rounded"></div>
+              <span className="text-gray-600">Video Session</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-green-50 border border-green-200 rounded"></div>
@@ -245,6 +347,16 @@ const AppointmentsTab = ({ partnerId }) => {
           appointment={selectedAppointment}
           partnerId={partnerId}
           onClose={handleCloseModal}
+          onSuccess={handleSessionCreated}
+        />
+      )}
+
+      {/* Start Session from Video Modal */}
+      {showStartVideoSessionModal && selectedVideoSession && (
+        <StartSessionFromVideoModal
+          videoSession={selectedVideoSession}
+          partnerId={partnerId}
+          onClose={handleCloseVideoModal}
           onSuccess={handleSessionCreated}
         />
       )}

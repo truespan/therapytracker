@@ -109,8 +109,8 @@ class Appointment {
       JOIN users u ON a.user_id = u.id
       LEFT JOIN therapy_sessions ts ON a.id = ts.appointment_id
       WHERE a.partner_id = $1
-        AND a.appointment_date >= CURRENT_TIMESTAMP
-        AND a.appointment_date < CURRENT_TIMESTAMP + INTERVAL '${daysAhead} days'
+        AND a.appointment_date >= CURRENT_DATE
+        AND a.appointment_date < CURRENT_DATE + INTERVAL '${daysAhead} days'
         AND a.status != 'cancelled'
       ORDER BY a.appointment_date ASC
     `;

@@ -4,6 +4,16 @@ import { X, Calendar, Clock, User, Lock, Unlock, Copy, Check, Video } from 'luci
 import { generateMeetingUrl } from '../../utils/jitsiHelper';
 
 const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, onSave }) => {
+  // Helper function to format date for datetime-local input without timezone conversion
+  const formatDateTimeLocal = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const [formData, setFormData] = useState({
     user_id: '',
     title: '',
@@ -24,13 +34,13 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
       const sessionDate = new Date(session.session_date);
       const endDate = new Date(session.end_date);
       
-      // Validate dates before converting to ISO string
+      // Validate dates before formatting
       if (!isNaN(sessionDate.getTime()) && !isNaN(endDate.getTime())) {
         setFormData({
           user_id: session.user_id,
           title: session.title,
-          session_date: sessionDate.toISOString().slice(0, 16),
-          end_date: endDate.toISOString().slice(0, 16),
+          session_date: formatDateTimeLocal(sessionDate),
+          end_date: formatDateTimeLocal(endDate),
           duration_minutes: session.duration_minutes,
           password_enabled: session.password_enabled,
           notes: session.notes || ''
@@ -41,14 +51,14 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
       const start = new Date(selectedSlot.start);
       const end = new Date(selectedSlot.end);
       
-      // Validate dates before converting to ISO string
+      // Validate dates before formatting
       if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
         const duration = Math.round((end - start) / (1000 * 60));
 
         setFormData(prev => ({
           ...prev,
-          session_date: start.toISOString().slice(0, 16),
-          end_date: end.toISOString().slice(0, 16),
+          session_date: formatDateTimeLocal(start),
+          end_date: formatDateTimeLocal(end),
           duration_minutes: duration > 0 ? duration : 60
         }));
       }
@@ -67,12 +77,12 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
       if (startDate && !isNaN(startDate.getTime()) && duration && !isNaN(duration)) {
         const endDate = new Date(startDate.getTime() + duration * 60000);
         
-        // Check if endDate is valid before calling toISOString
+        // Check if endDate is valid before formatting
         if (!isNaN(endDate.getTime())) {
           setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
-            end_date: endDate.toISOString().slice(0, 16)
+            end_date: formatDateTimeLocal(endDate)
           }));
           return;
         }
