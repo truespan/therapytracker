@@ -1,13 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node:*)",
-      "Bash(psql:*)",
-      "Bash(npm start)",
-      "Bash(taskkill:*)",
-      "Bash(npx kill-port:*)",
-      "Bash(npm install:*)",
-      "Bash(ls -la \"D:\\cursor\\therapy-tracker\\backend\\src\\models\"\" 2>&1 | grep -i \"session|appointment \")"
+      "Bash(cat:*)",
+      "Bash(node -e:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout 3 sleep:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

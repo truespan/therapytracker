@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, CreditCard, Lock } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Lock, Calendar, Users } from 'lucide-react';
+import CountryCodeSelect from '../common/CountryCodeSelect';
 
-const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
+const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
     name: '',
+    sex: 'Male',
+    age: '',
     email: '',
+    countryCode: '+91',
     contact: '',
     address: '',
-    gst_no: '',
-    subscription_plan: '',
-    video_sessions_enabled: true,
     password: '',
+    photo_url: '',
   });
 
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
     // Clear error when user starts typing
     if (errors[name]) {
@@ -34,7 +36,17 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Organization name is required';
+      newErrors.name = 'Name is required';
+    }
+
+    if (!formData.sex) {
+      newErrors.sex = 'Sex is required';
+    }
+
+    if (!formData.age) {
+      newErrors.age = 'Age is required';
+    } else if (formData.age < 18 || formData.age > 100) {
+      newErrors.age = 'Age must be between 18 and 100';
     }
 
     if (!formData.email.trim()) {
@@ -45,12 +57,8 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
     if (!formData.contact.trim()) {
       newErrors.contact = 'Contact number is required';
-    } else if (!/^\d{10}$/.test(formData.contact.replace(/\D/g, ''))) {
-      newErrors.contact = 'Contact number must be 10 digits';
-    }
-
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
+    } else if (!/^\d{7,15}$/.test(formData.contact)) {
+      newErrors.contact = 'Contact number must be 7-15 digits';
     }
 
     if (!formData.password) {
@@ -66,20 +74,27 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit(formData);
+      // Combine country code with contact number
+      const submitData = {
+        ...formData,
+        contact: `${formData.countryCode}${formData.contact}`,
+      };
+      delete submitData.countryCode;
+      onSubmit(submitData);
     }
   };
 
   const handleClose = () => {
     setFormData({
       name: '',
+      sex: 'Male',
+      age: '',
       email: '',
+      countryCode: '+91',
       contact: '',
       address: '',
-      gst_no: '',
-      subscription_plan: '',
-      video_sessions_enabled: true,
       password: '',
+      photo_url: '',
     });
     setErrors({});
     onClose();
@@ -93,8 +108,8 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <Building2 className="h-6 w-6 mr-2 text-indigo-600" />
-            Create New Organization
+            <Users className="h-6 w-6 mr-2 text-primary-600" />
+            Add New Therapist
           </h2>
           <button
             onClick={handleClose}
@@ -107,26 +122,72 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Organization Name */}
+          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Organization Name <span className="text-red-500">*</span>
+              Full Name <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="Enter organization name"
+                placeholder="Enter therapist's full name"
                 disabled={isLoading}
               />
             </div>
             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+          </div>
+
+          {/* Sex and Age */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sex <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="sex"
+                value={formData.sex}
+                onChange={handleChange}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                  errors.sex ? 'border-red-500' : 'border-gray-300'
+                }`}
+                disabled={isLoading}
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Others">Others</option>
+              </select>
+              {errors.sex && <p className="mt-1 text-sm text-red-500">{errors.sex}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Age <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="number"
+                  name="age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.age ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Age"
+                  min="18"
+                  max="100"
+                  disabled={isLoading}
+                />
+              </div>
+              {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
+            </div>
           </div>
 
           {/* Email */}
@@ -141,14 +202,17 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="organization@example.com"
+                placeholder="therapist@example.com"
                 disabled={isLoading}
               />
             </div>
             {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+            <p className="mt-1 text-xs text-gray-500">
+              A verification email will be sent to this address
+            </p>
           </div>
 
           {/* Contact Number */}
@@ -156,19 +220,26 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Contact Number <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="tel"
-                name="contact"
-                value={formData.contact}
+            <div className="flex space-x-2">
+              <CountryCodeSelect
+                value={formData.countryCode}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                  errors.contact ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="1234567890"
-                disabled={isLoading}
+                name="countryCode"
               />
+              <div className="relative flex-1">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="tel"
+                  name="contact"
+                  value={formData.contact}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.contact ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="1234567890"
+                  disabled={isLoading}
+                />
+              </div>
             </div>
             {errors.contact && <p className="mt-1 text-sm text-red-500">{errors.contact}</p>}
           </div>
@@ -176,7 +247,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
           {/* Address */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address <span className="text-red-500">*</span>
+              Address (Optional)
             </label>
             <div className="relative">
               <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
@@ -185,80 +256,11 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 value={formData.address}
                 onChange={handleChange}
                 rows="3"
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                  errors.address ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Enter full address"
                 disabled={isLoading}
               />
             </div>
-            {errors.address && <p className="mt-1 text-sm text-red-500">{errors.address}</p>}
-          </div>
-
-          {/* GST Number (Optional) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              GST Number (Optional)
-            </label>
-            <div className="relative">
-              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                name="gst_no"
-                value={formData.gst_no}
-                onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="GST registration number"
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          {/* Subscription Plan */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Subscription Plan (Optional)
-            </label>
-            <div className="relative">
-              <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <select
-                name="subscription_plan"
-                value={formData.subscription_plan}
-                onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                disabled={isLoading}
-              >
-                <option value="">Select a plan</option>
-                <option value="basic">Basic - Up to 10 clients/month</option>
-                <option value="silver">Silver - 10-50 clients/month</option>
-                <option value="gold">Gold - 50+ clients/month</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Video Sessions Toggle */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <label className="flex items-start space-x-3 cursor-pointer">
-              <div className="flex items-center h-5">
-                <input
-                  type="checkbox"
-                  name="video_sessions_enabled"
-                  checked={formData.video_sessions_enabled}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="flex-1">
-                <span className="text-sm font-medium text-gray-900">
-                  Enable Video Sessions
-                </span>
-                <p className="text-xs text-gray-600 mt-1">
-                  Allow partners in this organization to create and manage video sessions with their clients.
-                  When disabled, existing sessions remain accessible via direct link but cannot be managed.
-                </p>
-              </div>
-            </label>
           </div>
 
           {/* Password */}
@@ -273,7 +275,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.password ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter initial password"
@@ -282,7 +284,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             </div>
             {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
             <p className="mt-1 text-xs text-gray-500">
-              The organization will use this password for initial login
+              The therapist will use this password for initial login after email verification
             </p>
           </div>
 
@@ -298,10 +300,10 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating...' : 'Create Organization'}
+              {isLoading ? 'Creating...' : 'Create Therapist'}
             </button>
           </div>
         </form>
@@ -310,5 +312,4 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   );
 };
 
-export default CreateOrganizationModal;
-
+export default CreatePartnerModal;

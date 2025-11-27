@@ -145,7 +145,6 @@ const Signup = () => {
       contact: `${formData.countryCode}${formData.contact}`, // Combine country code with phone number
       password: formData.password,
       name: formData.name,
-      contact: formData.contact,
       address: formData.address || null,
     };
 

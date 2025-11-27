@@ -9,6 +9,7 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     address: '',
     gst_no: '',
     subscription_plan: '',
+    video_sessions_enabled: true,
   });
 
   const [errors, setErrors] = useState({});
@@ -22,15 +23,16 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         address: organization.address || '',
         gst_no: organization.gst_no || '',
         subscription_plan: organization.subscription_plan || '',
+        video_sessions_enabled: organization.video_sessions_enabled ?? true,
       });
     }
   }, [organization]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
     // Clear error when user starts typing
     if (errors[name]) {
@@ -229,6 +231,31 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
                 <option value="gold">Gold - 50+ clients/month</option>
               </select>
             </div>
+          </div>
+
+          {/* Video Sessions Toggle */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <label className="flex items-start space-x-3 cursor-pointer">
+              <div className="flex items-center h-5">
+                <input
+                  type="checkbox"
+                  name="video_sessions_enabled"
+                  checked={formData.video_sessions_enabled}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-medium text-gray-900">
+                  Enable Video Sessions
+                </span>
+                <p className="text-xs text-gray-600 mt-1">
+                  Allow partners in this organization to create and manage video sessions with their clients.
+                  When disabled, existing sessions remain accessible via direct link but cannot be managed.
+                </p>
+              </div>
+            </label>
           </div>
 
           {/* Info Box */}

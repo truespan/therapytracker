@@ -10,7 +10,31 @@ const getUserById = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user });
+    // Get the user's partners to check organization video sessions access
+    const partners = await User.getPartners(id);
+    let videoSessionsEnabled = false;
+
+    if (partners && partners.length > 0) {
+      // Check if any of the user's partners have organizations with video sessions enabled
+      const db = require('../config/database');
+      const orgCheck = await db.query(`
+        SELECT DISTINCT o.video_sessions_enabled
+        FROM partners p
+        JOIN organizations o ON p.organization_id = o.id
+        JOIN user_partner_assignments upa ON p.id = upa.partner_id
+        WHERE upa.user_id = $1
+        LIMIT 1
+      `, [id]);
+
+      if (orgCheck.rows.length > 0) {
+        videoSessionsEnabled = orgCheck.rows[0].video_sessions_enabled || false;
+      }
+    }
+
+    res.json({
+      user,
+      videoSessionsEnabled
+    });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Failed to fetch user', details: error.message });

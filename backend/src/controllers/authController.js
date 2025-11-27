@@ -212,6 +212,28 @@ const login = async (req, res) => {
         break;
       case 'partner':
         userDetails = await Partner.findById(authRecord.reference_id);
+
+        // Check if partner account is active
+        if (!userDetails.is_active) {
+          return res.status(403).json({
+            error: 'Account deactivated',
+            message: 'Your account has been deactivated. Please contact your organization administrator.'
+          });
+        }
+
+        // Check if partner email is verified
+        if (!userDetails.email_verified) {
+          return res.status(403).json({
+            error: 'Email not verified',
+            message: 'Please verify your email address before logging in. Check your inbox for the verification link.'
+          });
+        }
+
+        // Fetch organization settings for the partner
+        if (userDetails && userDetails.organization_id) {
+          const org = await Organization.findById(userDetails.organization_id);
+          userDetails.organization_video_sessions_enabled = org?.video_sessions_enabled ?? true;
+        }
         break;
       case 'organization':
         userDetails = await Organization.findById(authRecord.reference_id);
@@ -225,10 +247,10 @@ const login = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { 
-        id: authRecord.reference_id, 
-        email: authRecord.email, 
-        userType: authRecord.user_type 
+      {
+        id: authRecord.reference_id,
+        email: authRecord.email,
+        userType: authRecord.user_type
       },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
@@ -261,6 +283,11 @@ const getCurrentUser = async (req, res) => {
         break;
       case 'partner':
         userDetails = await Partner.findById(id);
+        // Fetch organization settings for the partner
+        if (userDetails && userDetails.organization_id) {
+          const org = await Organization.findById(userDetails.organization_id);
+          userDetails.organization_video_sessions_enabled = org?.video_sessions_enabled ?? true;
+        }
         break;
       case 'organization':
         userDetails = await Organization.findById(id);
@@ -371,11 +398,54 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const verifyEmail = async (req, res) => {
+  try {
+    const { token, type } = req.query;
+
+    // Validate input
+    if (!token || !type) {
+      return res.status(400).json({ error: 'Token and type are required' });
+    }
+
+    // Only partners need email verification for now
+    if (type !== 'partner') {
+      return res.status(400).json({ error: 'Invalid verification type' });
+    }
+
+    // Verify the email using the token
+    const verifiedPartner = await Partner.verifyEmail(token);
+
+    if (!verifiedPartner) {
+      return res.status(400).json({
+        error: 'Invalid or expired verification link',
+        message: 'This verification link is invalid or has expired. Please contact your organization administrator to resend the verification email.'
+      });
+    }
+
+    console.log(`Email verified successfully for partner: ${verifiedPartner.email}`);
+
+    res.json({
+      message: 'Email verified successfully! You can now log in to your account.',
+      partner: {
+        id: verifiedPartner.id,
+        partner_id: verifiedPartner.partner_id,
+        name: verifiedPartner.name,
+        email: verifiedPartner.email,
+        email_verified: verifiedPartner.email_verified
+      }
+    });
+  } catch (error) {
+    console.error('Verify email error:', error);
+    res.status(500).json({ error: 'Failed to verify email', details: error.message });
+  }
+};
+
 module.exports = {
   signup,
   login,
   getCurrentUser,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  verifyEmail
 };
 

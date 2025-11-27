@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { appointmentAPI, chartAPI, videoSessionAPI, questionnaireAPI } from '../../services/api';
+import { appointmentAPI, chartAPI, videoSessionAPI, questionnaireAPI, userAPI } from '../../services/api';
 import SharedChartViewer from '../charts/SharedChartViewer';
 import VideoSessionJoin from '../video/VideoSessionJoin';
 import UserQuestionnaireView from '../questionnaires/UserQuestionnaireView';
@@ -19,13 +19,30 @@ const UserDashboard = () => {
   const [questionnaireAssignments, setQuestionnaireAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [viewingQuestionnaireChart, setViewingQuestionnaireChart] = useState(null);
+  const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(false);
 
   useEffect(() => {
     loadData();
     loadAppointments();
-    loadVideoSessions();
     loadQuestionnaireAssignments();
+    checkVideoSessionsAccess();
   }, [user.id]);
+
+  const checkVideoSessionsAccess = async () => {
+    try {
+      const response = await userAPI.getById(user.id);
+      const hasAccess = response.data.videoSessionsEnabled || false;
+      setVideoSessionsEnabled(hasAccess);
+
+      // Only load video sessions if access is granted
+      if (hasAccess) {
+        loadVideoSessions();
+      }
+    } catch (err) {
+      console.error('Failed to check video sessions access:', err);
+      setVideoSessionsEnabled(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -107,17 +124,19 @@ const UserDashboard = () => {
             <Activity className="inline h-5 w-5 mr-2" />
             Overview
           </button>
-          <button
-            onClick={() => setActiveTab('video')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'video'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Video className="inline h-5 w-5 mr-2" />
-            Video Sessions
-          </button>
+          {videoSessionsEnabled && (
+            <button
+              onClick={() => setActiveTab('video')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'video'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Video className="inline h-5 w-5 mr-2" />
+              Video Sessions
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('charts')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -147,7 +166,7 @@ const UserDashboard = () => {
       {activeTab === 'overview' && (
         <div>
           {/* Upcoming Video Sessions Widget */}
-          {videoSessions.length > 0 && (
+          {videoSessionsEnabled && videoSessions.length > 0 && (
             <div className="card mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <Video className="h-5 w-5 mr-2 text-primary-600" />
@@ -247,7 +266,7 @@ const UserDashboard = () => {
         </div>
       )}
 
-      {activeTab === 'video' && (
+      {activeTab === 'video' && videoSessionsEnabled && (
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Video Sessions</h2>
           {videoSessions.length === 0 ? (

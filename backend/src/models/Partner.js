@@ -50,17 +50,17 @@ class Partner {
   }
 
   static async create(partnerData, client = null) {
-    const { name, sex, age, email, contact, address, photo_url, organization_id } = partnerData;
-    
+    const { name, sex, age, email, contact, address, photo_url, organization_id, verification_token, verification_token_expires } = partnerData;
+
     // Generate unique Partner ID
     const partnerId = await this.generatePartnerId(organization_id);
-    
+
     const query = `
-      INSERT INTO partners (partner_id, name, sex, age, email, contact, address, photo_url, organization_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO partners (partner_id, name, sex, age, email, contact, address, photo_url, organization_id, verification_token, verification_token_expires)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `;
-    const values = [partnerId, name, sex, age, email, contact, address, photo_url, organization_id];
+    const values = [partnerId, name, sex, age, email, contact, address, photo_url, organization_id, verification_token, verification_token_expires];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
     return result.rows[0];
@@ -91,20 +91,21 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, address, photo_url } = partnerData;
+    const { name, sex, age, email, contact, address, photo_url, email_verified } = partnerData;
     const query = `
-      UPDATE partners 
+      UPDATE partners
       SET name = COALESCE($1, name),
           sex = COALESCE($2, sex),
           age = COALESCE($3, age),
           email = COALESCE($4, email),
           contact = COALESCE($5, contact),
           address = COALESCE($6, address),
-          photo_url = COALESCE($7, photo_url)
-      WHERE id = $8
+          photo_url = COALESCE($7, photo_url),
+          email_verified = COALESCE($8, email_verified)
+      WHERE id = $9
       RETURNING *
     `;
-    const values = [name, sex, age, email, contact, address, photo_url, id];
+    const values = [name, sex, age, email, contact, address, photo_url, email_verified, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -123,6 +124,137 @@ class Partner {
     `;
     const result = await db.query(query, [partnerId]);
     return result.rows;
+  }
+
+  /**
+   * Deactivate a partner account
+   * @param {number} id - Partner ID
+   * @param {number} organizationId - Organization ID that is deactivating
+   * @returns {Object} Updated partner record
+   */
+  static async deactivate(id, organizationId) {
+    const query = `
+      UPDATE partners
+      SET is_active = FALSE,
+          deactivated_at = CURRENT_TIMESTAMP,
+          deactivated_by = $2
+      WHERE id = $1
+      RETURNING *
+    `;
+    const result = await db.query(query, [id, organizationId]);
+    return result.rows[0];
+  }
+
+  /**
+   * Activate a partner account
+   * @param {number} id - Partner ID
+   * @returns {Object} Updated partner record
+   */
+  static async activate(id) {
+    const query = `
+      UPDATE partners
+      SET is_active = TRUE,
+          deactivated_at = NULL,
+          deactivated_by = NULL
+      WHERE id = $1
+      RETURNING *
+    `;
+    const result = await db.query(query, [id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Set email verification token for a partner
+   * @param {number} id - Partner ID
+   * @param {string} token - Verification token
+   * @param {Date} expiresAt - Token expiration timestamp
+   * @returns {Object} Updated partner record
+   */
+  static async setVerificationToken(id, token, expiresAt) {
+    const query = `
+      UPDATE partners
+      SET verification_token = $2,
+          verification_token_expires = $3
+      WHERE id = $1
+      RETURNING *
+    `;
+    const result = await db.query(query, [id, token, expiresAt]);
+    return result.rows[0];
+  }
+
+  /**
+   * Verify partner email using token
+   * @param {string} token - Verification token
+   * @returns {Object} Updated partner record or null if token invalid/expired
+   *
+   * This method is idempotent - calling it multiple times with the same valid token
+   * will return success. This handles cases where:
+   * - User clicks the verification link multiple times
+   * - React StrictMode causes double API calls in development
+   * - Network issues cause retries
+   */
+  static async verifyEmail(token) {
+    // Check if token exists and verify email
+    // We don't clear the token to make this operation idempotent
+    const query = `
+      UPDATE partners
+      SET email_verified = TRUE
+      WHERE verification_token = $1
+        AND (
+          verification_token_expires > NOW()
+          OR email_verified = TRUE
+        )
+      RETURNING *
+    `;
+    const result = await db.query(query, [token]);
+
+    // Return the partner if found, null otherwise
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Get all clients (users) assigned to a partner
+   * @param {number} partnerId - Partner ID
+   * @returns {Array} Array of users with assignment info
+   */
+  static async getClients(partnerId) {
+    const query = `
+      SELECT u.*, upa.assigned_at
+      FROM users u
+      JOIN user_partner_assignments upa ON u.id = upa.user_id
+      WHERE upa.partner_id = $1
+      ORDER BY u.name
+    `;
+    const result = await db.query(query, [partnerId]);
+    return result.rows;
+  }
+
+  /**
+   * Reassign a client from one partner to another
+   * @param {number} userId - User/Client ID
+   * @param {number} fromPartnerId - Source partner ID
+   * @param {number} toPartnerId - Target partner ID
+   * @param {Object} client - Optional database client for transactions
+   * @returns {Object} New assignment record
+   */
+  static async reassignClient(userId, fromPartnerId, toPartnerId, client = null) {
+    const dbClient = client || db;
+
+    // Remove old assignment
+    await dbClient.query(
+      'DELETE FROM user_partner_assignments WHERE user_id = $1 AND partner_id = $2',
+      [userId, fromPartnerId]
+    );
+
+    // Create new assignment
+    const query = `
+      INSERT INTO user_partner_assignments (user_id, partner_id)
+      VALUES ($1, $2)
+      ON CONFLICT (user_id, partner_id) DO NOTHING
+      RETURNING *
+    `;
+    const result = await dbClient.query(query, [userId, toPartnerId]);
+    return result.rows[0];
   }
 }
 

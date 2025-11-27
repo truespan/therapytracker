@@ -30,27 +30,32 @@ const getAllOrganizations = async (req, res) => {
  */
 const createOrganization = async (req, res) => {
   try {
-    const { 
-      name, 
-      email, 
-      contact, 
-      address, 
-      gst_no, 
-      subscription_plan, 
-      password 
+    let {
+      name,
+      email,
+      contact,
+      address,
+      gst_no,
+      subscription_plan,
+      video_sessions_enabled,
+      password
     } = req.body;
 
     // Validate required fields
     if (!name || !email || !contact || !password) {
-      return res.status(400).json({ 
-        error: 'Name, email, contact, and password are required' 
+      return res.status(400).json({
+        error: 'Name, email, contact, and password are required'
       });
     }
 
+    // Convert empty strings to null for optional fields
+    if (gst_no === '') gst_no = null;
+    if (subscription_plan === '') subscription_plan = null;
+
     // Validate subscription plan if provided
     if (subscription_plan && !['basic', 'silver', 'gold'].includes(subscription_plan)) {
-      return res.status(400).json({ 
-        error: 'Invalid subscription plan. Must be basic, silver, or gold' 
+      return res.status(400).json({
+        error: 'Invalid subscription plan. Must be basic, silver, or gold'
       });
     }
 
@@ -74,7 +79,8 @@ const createOrganization = async (req, res) => {
         address: address || null,
         photo_url: null,
         gst_no: gst_no || null,
-        subscription_plan: subscription_plan || null
+        subscription_plan: subscription_plan || null,
+        video_sessions_enabled: video_sessions_enabled !== undefined ? video_sessions_enabled : true
       }, client);
 
       // Create auth credentials
@@ -112,11 +118,15 @@ const updateOrganization = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
+    // Convert empty strings to null for optional fields
+    if (updateData.gst_no === '') updateData.gst_no = null;
+    if (updateData.subscription_plan === '') updateData.subscription_plan = null;
+
     // Validate subscription plan if provided
-    if (updateData.subscription_plan && 
+    if (updateData.subscription_plan &&
         !['basic', 'silver', 'gold'].includes(updateData.subscription_plan)) {
-      return res.status(400).json({ 
-        error: 'Invalid subscription plan. Must be basic, silver, or gold' 
+      return res.status(400).json({
+        error: 'Invalid subscription plan. Must be basic, silver, or gold'
       });
     }
 
@@ -245,15 +255,30 @@ const deleteOrganization = async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    // Use transaction to delete organization and auth credentials
+    // Use transaction to delete organization and all related auth credentials
     await db.transaction(async (client) => {
-      // Delete auth credentials
+      // First, get all partner IDs for this organization
+      const partnersResult = await client.query(
+        'SELECT id FROM partners WHERE organization_id = $1',
+        [id]
+      );
+      const partnerIds = partnersResult.rows.map(row => row.id);
+
+      // Delete auth credentials for all partners in this organization
+      if (partnerIds.length > 0) {
+        await client.query(
+          'DELETE FROM auth_credentials WHERE user_type = $1 AND reference_id = ANY($2)',
+          ['partner', partnerIds]
+        );
+      }
+
+      // Delete auth credentials for the organization itself
       await client.query(
         'DELETE FROM auth_credentials WHERE user_type = $1 AND reference_id = $2',
         ['organization', id]
       );
 
-      // Delete organization (cascade will handle partners, users, etc.)
+      // Delete organization (cascade will handle partners and their related data)
       await client.query('DELETE FROM organizations WHERE id = $1', [id]);
     });
 
@@ -265,9 +290,9 @@ const deleteOrganization = async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting organization:', error);
-    res.status(500).json({ 
-      error: 'Failed to delete organization', 
-      details: error.message 
+    res.status(500).json({
+      error: 'Failed to delete organization',
+      details: error.message
     });
   }
 };

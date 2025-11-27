@@ -44,6 +44,7 @@ export const authAPI = {
   getCurrentUser: () => api.get('/auth/me'),
   forgotPassword: (identifier) => api.post('/auth/forgot-password', { identifier }),
   resetPassword: (token, newPassword) => api.post('/auth/reset-password', { token, newPassword }),
+  verifyEmail: (token, type) => api.get('/auth/verify-email', { params: { token, type } }),
 };
 
 // User APIs
@@ -69,6 +70,16 @@ export const organizationAPI = {
   update: (id, data) => api.put(`/organizations/${id}`, data),
   getPartners: (id) => api.get(`/organizations/${id}/partners`),
   getUsers: (id) => api.get(`/organizations/${id}/users`),
+
+  // Partner management
+  createPartner: (organizationId, data) => api.post(`/organizations/${organizationId}/partners`, data),
+  updatePartner: (organizationId, partnerId, data) => api.put(`/organizations/${organizationId}/partners/${partnerId}`, data),
+  deactivatePartner: (organizationId, partnerId, data) => api.post(`/organizations/${organizationId}/partners/${partnerId}/deactivate`, data),
+  activatePartner: (organizationId, partnerId) => api.post(`/organizations/${organizationId}/partners/${partnerId}/activate`),
+  deletePartner: (organizationId, partnerId) => api.delete(`/organizations/${organizationId}/partners/${partnerId}`),
+  resendVerificationEmail: (organizationId, partnerId) => api.post(`/organizations/${organizationId}/partners/${partnerId}/resend-verification`),
+  getPartnerClients: (organizationId, partnerId) => api.get(`/organizations/${organizationId}/partners/${partnerId}/clients`),
+  reassignClients: (organizationId, data) => api.post(`/organizations/${organizationId}/reassign-clients`, data),
 };
 
 // Profile APIs

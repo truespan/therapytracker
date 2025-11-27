@@ -21,6 +21,7 @@ const PartnerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('appointments');
+  const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(true);
 
   // Questionnaire state
   const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
@@ -30,6 +31,13 @@ const PartnerDashboard = () => {
   useEffect(() => {
     loadPartnerUsers();
   }, [user.id]);
+
+  useEffect(() => {
+    // Check if video sessions are enabled for this partner's organization
+    if (user && user.organization_video_sessions_enabled !== undefined) {
+      setVideoSessionsEnabled(user.organization_video_sessions_enabled);
+    }
+  }, [user]);
 
   const loadPartnerUsers = async () => {
     try {
@@ -165,17 +173,19 @@ const PartnerDashboard = () => {
             <BarChart3 className="inline h-5 w-5 mr-2" />
             Charts & Insights
           </button>
-          <button
-            onClick={() => setActiveTab('video')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'video'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <Video className="inline h-5 w-5 mr-2" />
-            Video Sessions
-          </button>
+          {videoSessionsEnabled && (
+            <button
+              onClick={() => setActiveTab('video')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'video'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Video className="inline h-5 w-5 mr-2" />
+              Video Sessions
+            </button>
+          )}
           <button
             onClick={() => {
               setActiveTab('questionnaires');
@@ -374,7 +384,7 @@ const PartnerDashboard = () => {
       )}
 
       {/* Video Sessions Tab */}
-      {activeTab === 'video' && (
+      {activeTab === 'video' && videoSessionsEnabled && (
         <VideoSessionsTab
           partnerId={user.id}
           users={users}

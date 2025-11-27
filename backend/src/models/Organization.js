@@ -2,22 +2,23 @@ const db = require('../config/database');
 
 class Organization {
   static async create(orgData, client = null) {
-    const { name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan } = orgData;
+    const { name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, video_sessions_enabled } = orgData;
     const query = `
-      INSERT INTO organizations (name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO organizations (name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, is_active, video_sessions_enabled)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
     `;
     const values = [
-      name, 
-      date_of_creation || new Date(), 
-      email, 
-      contact, 
-      address, 
-      photo_url, 
+      name,
+      date_of_creation || new Date(),
+      email,
+      contact,
+      address,
+      photo_url,
       gst_no || null,
       subscription_plan || null,
-      true
+      true,
+      video_sessions_enabled !== undefined ? video_sessions_enabled : true
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
@@ -37,26 +38,65 @@ class Organization {
   }
 
   static async getAll() {
-    const query = 'SELECT id, name, email, contact, address FROM organizations ORDER BY name';
+    const query = 'SELECT id, name, email, contact, address, photo_url, gst_no, subscription_plan, is_active, video_sessions_enabled, created_at FROM organizations ORDER BY name';
     const result = await db.query(query);
     return result.rows;
   }
 
   static async update(id, orgData) {
-    const { name, email, contact, address, photo_url, gst_no, subscription_plan } = orgData;
+    const { name, email, contact, address, photo_url, gst_no, subscription_plan, video_sessions_enabled } = orgData;
+
+    // Build dynamic update query to handle undefined vs explicit values
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (email !== undefined) {
+      updates.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+    if (contact !== undefined) {
+      updates.push(`contact = $${paramIndex++}`);
+      values.push(contact);
+    }
+    if (address !== undefined) {
+      updates.push(`address = $${paramIndex++}`);
+      values.push(address);
+    }
+    if (photo_url !== undefined) {
+      updates.push(`photo_url = $${paramIndex++}`);
+      values.push(photo_url);
+    }
+    if (gst_no !== undefined) {
+      updates.push(`gst_no = $${paramIndex++}`);
+      values.push(gst_no);
+    }
+    if (subscription_plan !== undefined) {
+      updates.push(`subscription_plan = $${paramIndex++}`);
+      values.push(subscription_plan);
+    }
+    if (video_sessions_enabled !== undefined) {
+      updates.push(`video_sessions_enabled = $${paramIndex++}`);
+      values.push(video_sessions_enabled);
+    }
+
+    if (updates.length === 0) {
+      // No fields to update, just return the current record
+      return this.findById(id);
+    }
+
+    values.push(id);
     const query = `
-      UPDATE organizations 
-      SET name = COALESCE($1, name),
-          email = COALESCE($2, email),
-          contact = COALESCE($3, contact),
-          address = COALESCE($4, address),
-          photo_url = COALESCE($5, photo_url),
-          gst_no = COALESCE($6, gst_no),
-          subscription_plan = COALESCE($7, subscription_plan)
-      WHERE id = $8
+      UPDATE organizations
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
       RETURNING *
     `;
-    const values = [name, email, contact, address, photo_url, gst_no, subscription_plan, id];
+
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -186,6 +226,7 @@ class Organization {
           o.gst_no,
           o.subscription_plan,
           o.is_active,
+          o.video_sessions_enabled,
           o.deactivated_at,
           o.deactivated_by,
           o.created_at,
@@ -201,7 +242,7 @@ class Organization {
         LEFT JOIN users u ON upa.user_id = u.id
         LEFT JOIN video_sessions vs ON p.id = vs.partner_id
         GROUP BY o.id, o.name, o.email, o.contact, o.address, o.gst_no,
-                 o.subscription_plan, o.is_active, o.deactivated_at,
+                 o.subscription_plan, o.is_active, o.video_sessions_enabled, o.deactivated_at,
                  o.deactivated_by, o.created_at
       )
       SELECT
@@ -240,6 +281,37 @@ class Organization {
     `;
     const result = await db.query(query, [id]);
     return result.rows;
+  }
+
+  /**
+   * Check if video sessions are enabled for an organization
+   * @param {number} organizationId - Organization ID
+   * @returns {Promise<boolean>} Whether video sessions are enabled
+   */
+  static async areVideoSessionsEnabled(organizationId) {
+    const query = `
+      SELECT video_sessions_enabled
+      FROM organizations
+      WHERE id = $1
+    `;
+    const result = await db.query(query, [organizationId]);
+    return result.rows[0]?.video_sessions_enabled ?? false;
+  }
+
+  /**
+   * Check if video sessions are enabled for a partner's organization
+   * @param {number} partnerId - Partner ID
+   * @returns {Promise<boolean>} Whether video sessions are enabled
+   */
+  static async areVideoSessionsEnabledForPartner(partnerId) {
+    const query = `
+      SELECT o.video_sessions_enabled
+      FROM organizations o
+      JOIN partners p ON p.organization_id = o.id
+      WHERE p.id = $1
+    `;
+    const result = await db.query(query, [partnerId]);
+    return result.rows[0]?.video_sessions_enabled ?? false;
   }
 }
 

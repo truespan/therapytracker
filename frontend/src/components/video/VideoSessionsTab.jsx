@@ -27,7 +27,13 @@ const VideoSessionsTab = ({ partnerId, users }) => {
       setError('');
     } catch (err) {
       console.error('Failed to load video sessions:', err);
-      setError('Failed to load video sessions');
+
+      // Check if feature is disabled
+      if (err.response?.data?.featureDisabled) {
+        setError(err.response.data.message || 'Video sessions are not available for your organization');
+      } else {
+        setError('Failed to load video sessions');
+      }
     } finally {
       setLoading(false);
     }

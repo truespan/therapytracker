@@ -1,6 +1,7 @@
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const { checkRole } = require('../middleware/roleCheck');
+const { checkVideoSessionAccess, checkVideoSessionAccessByPartnerId } = require('../middleware/videoSessionAccess');
 
 // Controllers
 const authController = require('../controllers/authController');
@@ -23,6 +24,7 @@ router.post('/auth/login', authController.login);
 router.get('/auth/me', authenticateToken, authController.getCurrentUser);
 router.post('/auth/forgot-password', authController.forgotPassword);
 router.post('/auth/reset-password', authController.resetPassword);
+router.get('/auth/verify-email', authController.verifyEmail);
 
 // ==================== PROFILE FIELDS ROUTES ====================
 router.get('/profile-fields', authenticateToken, profileController.getAllFields);
@@ -48,6 +50,16 @@ router.get('/organizations/:id', authenticateToken, organizationController.getOr
 router.put('/organizations/:id', authenticateToken, organizationController.updateOrganization);
 router.get('/organizations/:id/partners', authenticateToken, checkRole('organization'), organizationController.getOrganizationPartners);
 router.get('/organizations/:id/users', authenticateToken, checkRole('organization'), organizationController.getOrganizationUsers);
+
+// Organization partner management
+router.post('/organizations/:id/partners', authenticateToken, checkRole('organization'), organizationController.createPartner);
+router.put('/organizations/:id/partners/:partnerId', authenticateToken, checkRole('organization'), organizationController.updatePartner);
+router.post('/organizations/:id/partners/:partnerId/deactivate', authenticateToken, checkRole('organization'), organizationController.deactivatePartner);
+router.post('/organizations/:id/partners/:partnerId/activate', authenticateToken, checkRole('organization'), organizationController.activatePartner);
+router.delete('/organizations/:id/partners/:partnerId', authenticateToken, checkRole('organization'), organizationController.deletePartner);
+router.post('/organizations/:id/partners/:partnerId/resend-verification', authenticateToken, checkRole('organization'), organizationController.resendVerificationEmail);
+router.get('/organizations/:id/partners/:partnerId/clients', authenticateToken, checkRole('organization'), organizationController.getPartnerClients);
+router.post('/organizations/:id/reassign-clients', authenticateToken, checkRole('organization'), organizationController.reassignClients);
 
 // ==================== PROFILE DATA ROUTES ====================
 router.get('/profile-data/users/:userId', authenticateToken, profileController.getUserProfileData);
@@ -84,12 +96,12 @@ router.get('/charts/partner/:partnerId/user/:userId', authenticateToken, checkRo
 router.delete('/charts/:id', authenticateToken, checkRole('partner'), chartController.deleteChart);
 
 // ==================== VIDEO SESSION ROUTES ====================
-router.post('/video-sessions', authenticateToken, checkRole('partner'), videoSessionController.createVideoSession);
+router.post('/video-sessions', authenticateToken, checkRole('partner'), checkVideoSessionAccess, videoSessionController.createVideoSession);
 router.get('/video-sessions/:id', authenticateToken, videoSessionController.getVideoSessionById);
-router.get('/partners/:partnerId/video-sessions', authenticateToken, videoSessionController.getPartnerVideoSessions);
+router.get('/partners/:partnerId/video-sessions', authenticateToken, checkVideoSessionAccessByPartnerId, videoSessionController.getPartnerVideoSessions);
 router.get('/users/:userId/video-sessions', authenticateToken, videoSessionController.getUserVideoSessions);
-router.put('/video-sessions/:id', authenticateToken, videoSessionController.updateVideoSession);
-router.delete('/video-sessions/:id', authenticateToken, videoSessionController.deleteVideoSession);
+router.put('/video-sessions/:id', authenticateToken, checkVideoSessionAccess, videoSessionController.updateVideoSession);
+router.delete('/video-sessions/:id', authenticateToken, checkVideoSessionAccess, videoSessionController.deleteVideoSession);
 router.post('/video-sessions/:id/verify-password', videoSessionController.verifySessionPassword);
 
 // ==================== QUESTIONNAIRE ROUTES ====================

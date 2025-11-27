@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import UserDashboardPage from './pages/UserDashboardPage';
 import PartnerDashboardPage from './pages/PartnerDashboardPage';
 import OrganizationDashboardPage from './pages/OrganizationDashboardPage';
@@ -50,6 +51,7 @@ function AppRoutes() {
       <Route path="/signup" element={user ? <Navigate to={getRedirectPath()} /> : <Signup />} />
       <Route path="/forgot-password" element={user ? <Navigate to={getRedirectPath()} /> : <ForgotPassword />} />
       <Route path="/reset-password" element={user ? <Navigate to={getRedirectPath()} /> : <ResetPassword />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       
       {/* Admin Routes - Use AdminLayout instead of Navbar */}
       <Route
