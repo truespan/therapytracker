@@ -223,6 +223,68 @@ const UserDashboard = () => {
             </div>
           )}
 
+          {/* Pending Questionnaires Widget */}
+          {questionnaireAssignments.filter(a => a.status === 'pending').length > 0 && (
+            <div className="card mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-primary-600" />
+                Pending Questionnaires
+              </h3>
+              <div className="space-y-3">
+                {questionnaireAssignments
+                  .filter(a => a.status === 'pending')
+                  .slice(0, 3)
+                  .map(assignment => (
+                    <div key={assignment.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <FileText className="h-5 w-5 text-yellow-600" />
+                            <h4 className="font-semibold text-gray-900">{assignment.name}</h4>
+                          </div>
+                          {assignment.description && (
+                            <p className="text-sm text-gray-600 mb-2 ml-7">{assignment.description}</p>
+                          )}
+                          <div className="text-xs text-gray-500 ml-7 space-y-1">
+                            <p>Assigned by: {assignment.partner_name}</p>
+                            <p>Date: {new Date(assignment.assigned_at).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true
+                            })}</p>
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-2">
+                          Pending
+                        </span>
+                      </div>
+                      <div className="flex justify-end mt-3">
+                        <button
+                          onClick={() => setSelectedAssignment(assignment)}
+                          className="px-4 py-2 btn btn-primary text-sm"
+                        >
+                          Complete Now
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+              {questionnaireAssignments.filter(a => a.status === 'pending').length > 3 && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setActiveTab('questionnaires')}
+                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    View all {questionnaireAssignments.filter(a => a.status === 'pending').length} pending questionnaires →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Upcoming Appointments Widget */}
           {appointments.length > 0 && (
             <div className="card mb-6">
@@ -254,12 +316,12 @@ const UserDashboard = () => {
           )}
 
           {/* Empty State */}
-          {videoSessions.length === 0 && appointments.length === 0 && (
+          {videoSessions.length === 0 && appointments.length === 0 && questionnaireAssignments.filter(a => a.status === 'pending').length === 0 && (
             <div className="card text-center py-12">
               <Activity className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome to Your Dashboard</h3>
               <p className="text-gray-600">
-                Your upcoming video sessions and appointments will appear here.
+                Your upcoming video sessions, appointments, and questionnaires will appear here.
               </p>
             </div>
           )}

@@ -17,8 +17,21 @@ const signup = async (req, res) => {
 
     // Validate required fields
     if (!userType || !email || !password) {
-      return res.status(400).json({ 
-        error: 'User type, email, and password are required' 
+      return res.status(400).json({
+        error: 'User type, email, and password are required'
+      });
+    }
+
+    // Prevent partner and organization signups through public endpoint
+    if (userType === 'partner') {
+      return res.status(403).json({
+        error: 'Therapists cannot sign up directly. Please contact your organization administrator to create your account.'
+      });
+    }
+
+    if (userType === 'organization') {
+      return res.status(403).json({
+        error: 'Organizations cannot sign up directly. Please contact the system administrator.'
       });
     }
 
@@ -82,50 +95,29 @@ const signup = async (req, res) => {
 
     // Use transaction to ensure atomicity
     const result = await db.transaction(async (client) => {
-      // Create user record based on type
-      switch (userType) {
-        case 'user':
-          // Create user
-          newRecord = await User.create({ ...userData, email }, client);
-          referenceId = newRecord.id;
-          
-          console.log(`[SIGNUP] Created user with ID: ${referenceId}`);
-          
-          // Automatically assign user to partner
-          try {
-            const assignment = await User.assignToPartner(referenceId, partnerToAssign.id, client);
-            console.log(`[SIGNUP] Successfully assigned user ${referenceId} to partner ${partnerToAssign.id}`);
-            console.log(`[SIGNUP] Assignment result:`, assignment);
-            
-            if (!assignment) {
-              throw new Error('Partner assignment returned no result');
-            }
-          } catch (assignError) {
-            console.error(`[SIGNUP ERROR] Failed to assign user to partner:`, assignError);
-            throw new Error(`Failed to link user to partner: ${assignError.message}`);
-          }
-          break;
+      // Create user record (only user type is allowed through public signup)
+      if (userType !== 'user') {
+        throw new Error('Invalid user type for public signup');
+      }
 
-        case 'partner':
-          if (!userData.name || !userData.sex || !userData.age || !userData.contact || !userData.organization_id) {
-            throw new Error('Name, sex, age, contact, and organization_id are required for partners');
-          }
-          newRecord = await Partner.create({ ...userData, email }, client);
-          referenceId = newRecord.id;
-          console.log(`[SIGNUP] Created partner with ID: ${referenceId}`);
-          break;
+      // Create user
+      newRecord = await User.create({ ...userData, email }, client);
+      referenceId = newRecord.id;
 
-        case 'organization':
-          if (!userData.name || !userData.contact) {
-            throw new Error('Name and contact are required for organizations');
-          }
-          newRecord = await Organization.create({ ...userData, email }, client);
-          referenceId = newRecord.id;
-          console.log(`[SIGNUP] Created organization with ID: ${referenceId}`);
-          break;
+      console.log(`[SIGNUP] Created user with ID: ${referenceId}`);
 
-        default:
-          throw new Error('Invalid user type. Must be user, partner, or organization');
+      // Automatically assign user to partner
+      try {
+        const assignment = await User.assignToPartner(referenceId, partnerToAssign.id, client);
+        console.log(`[SIGNUP] Successfully assigned user ${referenceId} to partner ${partnerToAssign.id}`);
+        console.log(`[SIGNUP] Assignment result:`, assignment);
+
+        if (!assignment) {
+          throw new Error('Partner assignment returned no result');
+        }
+      } catch (assignError) {
+        console.error(`[SIGNUP ERROR] Failed to assign user to partner:`, assignError);
+        throw new Error(`Failed to link user to partner: ${assignError.message}`);
       }
 
       // Create auth credentials
