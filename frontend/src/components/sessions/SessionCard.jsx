@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { therapySessionAPI } from '../../services/api';
 import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList, Video } from 'lucide-react';
+import QuestionnaireViewModal from '../questionnaires/QuestionnaireViewModal';
 
 const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
   const [showFullNotes, setShowFullNotes] = useState(false);
   const [showPaymentNotes, setShowPaymentNotes] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
 
   // Parse assigned questionnaires (they come as JSON from backend)
   const assignedQuestionnaires = session.assigned_questionnaires || [];
@@ -196,21 +198,47 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
               {assignedQuestionnaires.map((questionnaire, index) => (
                 <div
                   key={questionnaire.assignment_id}
-                  className="flex items-start space-x-2 text-sm"
+                  className="flex items-start space-x-2 text-sm group"
                   title={questionnaire.name}
                 >
-                  <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-primary-100 text-primary-700 rounded-full text-xs font-semibold">
-                    {index + 1}
-                  </span>
-                  <span className="text-gray-700 flex-1">
+                  {/* Status indicator or number */}
+                  {questionnaire.status === 'pending' ? (
+                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">
+                      P
+                    </span>
+                  ) : (
+                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-primary-100 text-primary-700 rounded-full text-xs font-semibold">
+                      {index + 1}
+                    </span>
+                  )}
+
+                  {/* Clickable questionnaire name */}
+                  <button
+                    onClick={() => setSelectedQuestionnaire(questionnaire)}
+                    className={`flex-1 text-left transition-colors ${
+                      questionnaire.status === 'pending'
+                        ? 'text-gray-500 cursor-not-allowed'
+                        : 'text-gray-700 hover:text-primary-600 hover:underline cursor-pointer'
+                    }`}
+                    disabled={questionnaire.status === 'pending'}
+                    title={questionnaire.status === 'pending' ? 'Waiting for client to complete' : 'Click to view'}
+                  >
                     {truncateQuestionnaireName(questionnaire.name)}
-                  </span>
+                  </button>
                 </div>
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {/* Questionnaire View Modal */}
+      <QuestionnaireViewModal
+        isOpen={!!selectedQuestionnaire}
+        onClose={() => setSelectedQuestionnaire(null)}
+        assignmentId={selectedQuestionnaire?.assignment_id}
+        questionnaireName={selectedQuestionnaire?.name}
+      />
     </div>
   );
 };

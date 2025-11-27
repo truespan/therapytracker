@@ -116,7 +116,8 @@ class TherapySession {
             json_build_object(
               'id', q.id,
               'name', q.name,
-              'assignment_id', uqa.id
+              'assignment_id', uqa.id,
+              'status', uqa.status
             ) ORDER BY sqa.assigned_at
           ) FILTER (WHERE q.id IS NOT NULL),
           '[]'::json
