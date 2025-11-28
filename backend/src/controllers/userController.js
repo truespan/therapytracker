@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const Profile = require('../models/Profile');
 
 const getUserById = async (req, res) => {
   try {
@@ -98,12 +97,11 @@ const getUserProfile = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get all profile history
-    const profileHistory = await Profile.getUserProfileHistory(id);
-
-    res.json({ 
-      user,
-      profileHistory 
+    // Return user data
+    // Note: The old profile_fields system has been removed
+    // Use questionnaires for assessments instead
+    res.json({
+      user
     });
   } catch (error) {
     console.error('Get user profile error:', error);

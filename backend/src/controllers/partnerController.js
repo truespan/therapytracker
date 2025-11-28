@@ -1,6 +1,5 @@
 const Partner = require('../models/Partner');
 const User = require('../models/User');
-const Profile = require('../models/Profile');
 
 const getPartnerById = async (req, res) => {
   try {
@@ -100,17 +99,18 @@ const getUserProfileForPartner = async (req, res) => {
     // Verify user is assigned to this partner
     const users = await Partner.getUsers(partnerId);
     const isAssigned = users.some(u => u.id === parseInt(userId));
-    
+
     if (!isAssigned) {
       return res.status(403).json({ error: 'User is not assigned to this partner' });
     }
 
     const user = await User.findById(userId);
-    const profileHistory = await Profile.getUserProfileHistory(userId);
 
-    res.json({ 
-      user,
-      profileHistory 
+    // Return user data
+    // Note: The old profile_fields system has been removed
+    // Use questionnaires for assessments instead
+    res.json({
+      user
     });
   } catch (error) {
     console.error('Get user profile for partner error:', error);

@@ -281,7 +281,7 @@ const deleteOrganization = async (req, res) => {
           );
           console.log(`[ADMIN] Deleted auth credentials for ${userIds.length} users`);
 
-          // Step 4: Delete the users themselves (cascade will handle sessions, profile_fields, user_partner_assignments)
+          // Step 4: Delete the users themselves (cascade will handle user_partner_assignments, etc.)
           await client.query(
             'DELETE FROM users WHERE id = ANY($1)',
             [userIds]
@@ -289,17 +289,7 @@ const deleteOrganization = async (req, res) => {
           console.log(`[ADMIN] Deleted ${userIds.length} user records`);
         }
 
-        // Step 5: Delete profile_fields created by these partners
-        // This handles custom fields created by partners that might not be tied to specific users
-        const deleteProfileFields = await client.query(
-          'DELETE FROM profile_fields WHERE created_by_partner_id = ANY($1) AND is_default = false',
-          [partnerIds]
-        );
-        if (deleteProfileFields.rowCount > 0) {
-          console.log(`[ADMIN] Deleted ${deleteProfileFields.rowCount} custom profile fields created by partners`);
-        }
-
-        // Step 6: Delete auth credentials for all partners in this organization
+        // Step 5: Delete auth credentials for all partners in this organization
         await client.query(
           'DELETE FROM auth_credentials WHERE user_type = $1 AND reference_id = ANY($2)',
           ['partner', partnerIds]
@@ -307,13 +297,13 @@ const deleteOrganization = async (req, res) => {
         console.log(`[ADMIN] Deleted auth credentials for ${partnerIds.length} partners`);
       }
 
-      // Step 7: Delete auth credentials for the organization itself
+      // Step 6: Delete auth credentials for the organization itself
       await client.query(
         'DELETE FROM auth_credentials WHERE user_type = $1 AND reference_id = $2',
         ['organization', id]
       );
 
-      // Step 8: Delete organization (cascade will handle partners and their related data)
+      // Step 7: Delete organization (cascade will handle partners and their related data)
       await client.query('DELETE FROM organizations WHERE id = $1', [id]);
     });
 

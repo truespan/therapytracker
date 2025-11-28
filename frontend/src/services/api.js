@@ -82,16 +82,6 @@ export const organizationAPI = {
   reassignClients: (organizationId, data) => api.post(`/organizations/${organizationId}/reassign-clients`, data),
 };
 
-// Profile APIs
-export const profileAPI = {
-  getAllFields: (sessionId = null) => {
-    const params = sessionId ? { params: { session_id: sessionId } } : {};
-    return api.get('/profile-fields', params);
-  },
-  createField: (data) => api.post('/profile-fields', data),
-  getUserProfileData: (userId) => api.get(`/profile-data/users/${userId}`),
-};
-
 // Admin APIs
 export const adminAPI = {
   getAllOrganizations: () => api.get('/admin/organizations'),

@@ -8,7 +8,6 @@ const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
 const partnerController = require('../controllers/partnerController');
 const organizationController = require('../controllers/organizationController');
-const profileController = require('../controllers/profileController');
 const adminController = require('../controllers/adminController');
 const appointmentController = require('../controllers/appointmentController');
 const chartController = require('../controllers/chartController');
@@ -25,10 +24,6 @@ router.get('/auth/me', authenticateToken, authController.getCurrentUser);
 router.post('/auth/forgot-password', authController.forgotPassword);
 router.post('/auth/reset-password', authController.resetPassword);
 router.get('/auth/verify-email', authController.verifyEmail);
-
-// ==================== PROFILE FIELDS ROUTES ====================
-router.get('/profile-fields', authenticateToken, profileController.getAllFields);
-router.post('/profile-fields', authenticateToken, checkRole('user', 'partner'), profileController.createCustomField);
 
 // ==================== USER ROUTES ====================
 router.get('/users/:id', authenticateToken, userController.getUserById);
@@ -60,9 +55,6 @@ router.delete('/organizations/:id/partners/:partnerId', authenticateToken, check
 router.post('/organizations/:id/partners/:partnerId/resend-verification', authenticateToken, checkRole('organization'), organizationController.resendVerificationEmail);
 router.get('/organizations/:id/partners/:partnerId/clients', authenticateToken, checkRole('organization'), organizationController.getPartnerClients);
 router.post('/organizations/:id/reassign-clients', authenticateToken, checkRole('organization'), organizationController.reassignClients);
-
-// ==================== PROFILE DATA ROUTES ====================
-router.get('/profile-data/users/:userId', authenticateToken, profileController.getUserProfileData);
 
 // ==================== APPOINTMENT ROUTES ====================
 router.post('/appointments', authenticateToken, appointmentController.createAppointment);

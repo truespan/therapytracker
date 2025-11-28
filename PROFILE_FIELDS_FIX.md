@@ -1,5 +1,7 @@
 # Profile Fields Fix - Complete Cleanup on Deletion
 
+> **⚠️ OBSOLETE**: This document is now obsolete as of 2025-01-29. The entire `user_profiles` and `profile_fields` system has been removed from the application. These tables and all related code have been deleted. See **PROFILE_SYSTEM_REMOVAL.md** for details.
+
 ## Issue Description
 
 **Problem**: When deleting organizations/partners, the `profile_fields` table still retains orphaned records. Profile fields created by partners remain in the database even after the partners are deleted.

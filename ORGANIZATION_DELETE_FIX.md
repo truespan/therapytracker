@@ -1,5 +1,7 @@
 # Organization Deletion Fix - Complete User Cleanup
 
+> **📝 UPDATE (2025-01-29)**: Step 5 regarding profile_fields deletion has been removed as the entire profile_fields/user_profiles system has been deprecated and removed from the application. See **PROFILE_SYSTEM_REMOVAL.md** for details.
+
 ## Issue Description
 
 **Problem**: When deleting an organization, the auth credentials for partners were properly deleted, but the **users/clients themselves** (along with their auth credentials) linked to those partners were NOT being deleted. This caused orphaned user records to remain in the database.
