@@ -73,6 +73,24 @@ const getUserCharts = async (req, res) => {
   }
 };
 
+const getLatestUserChart = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Verify user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const latestChart = await Chart.getLatestByUserId(userId);
+    res.json({ chart: latestChart });
+  } catch (error) {
+    console.error('Get latest user chart error:', error);
+    res.status(500).json({ error: 'Failed to fetch latest chart', details: error.message });
+  }
+};
+
 const getPartnerUserCharts = async (req, res) => {
   try {
     const { partnerId, userId } = req.params;
@@ -196,6 +214,7 @@ const shareQuestionnaireChart = async (req, res) => {
 module.exports = {
   shareChart,
   getUserCharts,
+  getLatestUserChart,
   getPartnerUserCharts,
   deleteChart,
   shareQuestionnaireChart

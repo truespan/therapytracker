@@ -129,6 +129,7 @@ export const chartAPI = {
   shareChart: (data) => api.post('/charts/share', data),
   shareQuestionnaireChart: (data) => api.post('/charts/share-questionnaire', data),
   getUserCharts: (userId) => api.get(`/charts/user/${userId}`),
+  getLatestUserChart: (userId) => api.get(`/charts/user/${userId}/latest`),
   getPartnerUserCharts: (partnerId, userId) => api.get(`/charts/partner/${partnerId}/user/${userId}`),
   deleteChart: (id) => api.delete(`/charts/${id}`)
 };

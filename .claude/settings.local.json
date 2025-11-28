@@ -7,7 +7,9 @@
       "Bash(timeout 3 sleep:*)",
       "Bash(tasklist:*)",
       "Bash(findstr:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(psql:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

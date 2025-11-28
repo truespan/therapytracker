@@ -256,30 +256,64 @@ const deleteOrganization = async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    // Use transaction to delete organization and all related auth credentials
+    // Use transaction to delete organization and all related data
     await db.transaction(async (client) => {
-      // First, get all partner IDs for this organization
+      // Step 1: Get all partner IDs for this organization
       const partnersResult = await client.query(
         'SELECT id FROM partners WHERE organization_id = $1',
         [id]
       );
       const partnerIds = partnersResult.rows.map(row => row.id);
 
-      // Delete auth credentials for all partners in this organization
       if (partnerIds.length > 0) {
+        // Step 2: Get all user IDs linked to these partners
+        const usersResult = await client.query(
+          'SELECT DISTINCT user_id FROM user_partner_assignments WHERE partner_id = ANY($1)',
+          [partnerIds]
+        );
+        const userIds = usersResult.rows.map(row => row.user_id);
+
+        if (userIds.length > 0) {
+          // Step 3: Delete auth credentials for all users/clients first
+          await client.query(
+            'DELETE FROM auth_credentials WHERE user_type = $1 AND reference_id = ANY($2)',
+            ['user', userIds]
+          );
+          console.log(`[ADMIN] Deleted auth credentials for ${userIds.length} users`);
+
+          // Step 4: Delete the users themselves (cascade will handle sessions, profile_fields, user_partner_assignments)
+          await client.query(
+            'DELETE FROM users WHERE id = ANY($1)',
+            [userIds]
+          );
+          console.log(`[ADMIN] Deleted ${userIds.length} user records`);
+        }
+
+        // Step 5: Delete profile_fields created by these partners
+        // This handles custom fields created by partners that might not be tied to specific users
+        const deleteProfileFields = await client.query(
+          'DELETE FROM profile_fields WHERE created_by_partner_id = ANY($1) AND is_default = false',
+          [partnerIds]
+        );
+        if (deleteProfileFields.rowCount > 0) {
+          console.log(`[ADMIN] Deleted ${deleteProfileFields.rowCount} custom profile fields created by partners`);
+        }
+
+        // Step 6: Delete auth credentials for all partners in this organization
         await client.query(
           'DELETE FROM auth_credentials WHERE user_type = $1 AND reference_id = ANY($2)',
           ['partner', partnerIds]
         );
+        console.log(`[ADMIN] Deleted auth credentials for ${partnerIds.length} partners`);
       }
 
-      // Delete auth credentials for the organization itself
+      // Step 7: Delete auth credentials for the organization itself
       await client.query(
         'DELETE FROM auth_credentials WHERE user_type = $1 AND reference_id = $2',
         ['organization', id]
       );
 
-      // Delete organization (cascade will handle partners and their related data)
+      // Step 8: Delete organization (cascade will handle partners and their related data)
       await client.query('DELETE FROM organizations WHERE id = $1', [id]);
     });
 

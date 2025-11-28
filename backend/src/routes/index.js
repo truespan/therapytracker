@@ -92,6 +92,7 @@ router.delete('/therapy-sessions/:sessionId/questionnaires/:assignmentId', authe
 router.post('/charts/share', authenticateToken, checkRole('partner'), chartController.shareChart);
 router.post('/charts/share-questionnaire', authenticateToken, checkRole('partner'), chartController.shareQuestionnaireChart);
 router.get('/charts/user/:userId', authenticateToken, chartController.getUserCharts);
+router.get('/charts/user/:userId/latest', authenticateToken, chartController.getLatestUserChart);
 router.get('/charts/partner/:partnerId/user/:userId', authenticateToken, checkRole('partner'), chartController.getPartnerUserCharts);
 router.delete('/charts/:id', authenticateToken, checkRole('partner'), chartController.deleteChart);
 

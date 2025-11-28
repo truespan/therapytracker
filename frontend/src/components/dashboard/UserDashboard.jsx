@@ -20,12 +20,14 @@ const UserDashboard = () => {
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [viewingQuestionnaireChart, setViewingQuestionnaireChart] = useState(null);
   const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(false);
+  const [latestSharedChart, setLatestSharedChart] = useState(null);
 
   useEffect(() => {
     loadData();
     loadAppointments();
     loadQuestionnaireAssignments();
     checkVideoSessionsAccess();
+    loadLatestChart();
   }, [user.id]);
 
   const checkVideoSessionsAccess = async () => {
@@ -79,6 +81,15 @@ const UserDashboard = () => {
       setQuestionnaireAssignments(response.data || []);
     } catch (err) {
       console.error('Failed to load questionnaire assignments:', err);
+    }
+  };
+
+  const loadLatestChart = async () => {
+    try {
+      const response = await chartAPI.getLatestUserChart(user.id);
+      setLatestSharedChart(response.data.chart || null);
+    } catch (err) {
+      console.error('Failed to load latest shared chart:', err);
     }
   };
 
@@ -165,6 +176,46 @@ const UserDashboard = () => {
       {/* Content */}
       {activeTab === 'overview' && (
         <div>
+          {/* Latest Shared Chart Notification */}
+          {latestSharedChart && (
+            <div className="card mb-6 border-l-4 border-l-blue-500 bg-blue-50">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                    New Chart Shared with You
+                  </h3>
+                  <div className="space-y-1 text-sm text-gray-700">
+                    <p>
+                      <span className="font-medium">{latestSharedChart.partner_name}</span> has shared a new comparison chart with you
+                    </p>
+                    {latestSharedChart.questionnaire_name && (
+                      <p className="text-gray-600">
+                        Questionnaire: {latestSharedChart.questionnaire_name}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-500">
+                      Shared on {new Date(latestSharedChart.sent_at).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab('charts')}
+                  className="btn btn-primary ml-4 whitespace-nowrap"
+                >
+                  View Chart →
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Upcoming Video Sessions Widget */}
           {videoSessionsEnabled && videoSessions.length > 0 && (
             <div className="card mb-6">

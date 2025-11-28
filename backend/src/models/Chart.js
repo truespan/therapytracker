@@ -74,6 +74,34 @@ class Chart {
     });
   }
 
+  // Get the latest shared chart for a user (for overview notification)
+  static async getLatestByUserId(userId) {
+    const query = `
+      SELECT sc.*, p.name as partner_name, q.name as questionnaire_name
+      FROM shared_charts sc
+      JOIN partners p ON sc.partner_id = p.id
+      LEFT JOIN questionnaires q ON sc.questionnaire_id = q.id
+      WHERE sc.user_id = $1
+        AND sc.chart_type = 'questionnaire_comparison'
+      ORDER BY sc.sent_at DESC
+      LIMIT 1
+    `;
+    const result = await db.query(query, [userId]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const chart = result.rows[0];
+    if (chart.selected_sessions) {
+      chart.selected_sessions = JSON.parse(chart.selected_sessions);
+    }
+    if (chart.selected_assignments) {
+      chart.selected_assignments = JSON.parse(chart.selected_assignments);
+    }
+    return chart;
+  }
+
   static async findByPartnerAndUser(partnerId, userId) {
     const query = `
       SELECT sc.*, u.name as user_name, q.name as questionnaire_name
