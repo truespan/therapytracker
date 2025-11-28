@@ -225,10 +225,13 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 disabled={isLoading}
               >
-                <option value="">No plan selected</option>
-                <option value="basic">Basic - Up to 10 clients/month</option>
-                <option value="silver">Silver - 10-50 clients/month</option>
-                <option value="gold">Gold - 50+ clients/month</option>
+                <option value="">No plan</option>
+                <option value="basic">Plan Basic</option>
+                <option value="basic_silver">Plan Basic - Silver</option>
+                <option value="basic_gold">Plan Basic - Gold</option>
+                <option value="pro_silver">Plan Pro - Silver</option>
+                <option value="pro_gold">Plan Pro - Gold</option>
+                <option value="pro_platinum">Plan Pro - Platinum</option>
               </select>
             </div>
           </div>

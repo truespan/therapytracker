@@ -53,9 +53,10 @@ const createOrganization = async (req, res) => {
     if (subscription_plan === '') subscription_plan = null;
 
     // Validate subscription plan if provided
-    if (subscription_plan && !['basic', 'silver', 'gold'].includes(subscription_plan)) {
+    const validPlans = ['basic', 'basic_silver', 'basic_gold', 'pro_silver', 'pro_gold', 'pro_platinum'];
+    if (subscription_plan && !validPlans.includes(subscription_plan)) {
       return res.status(400).json({
-        error: 'Invalid subscription plan. Must be basic, silver, or gold'
+        error: 'Invalid subscription plan. Must be one of: ' + validPlans.join(', ')
       });
     }
 
@@ -123,10 +124,10 @@ const updateOrganization = async (req, res) => {
     if (updateData.subscription_plan === '') updateData.subscription_plan = null;
 
     // Validate subscription plan if provided
-    if (updateData.subscription_plan &&
-        !['basic', 'silver', 'gold'].includes(updateData.subscription_plan)) {
+    const validPlans = ['basic', 'basic_silver', 'basic_gold', 'pro_silver', 'pro_gold', 'pro_platinum'];
+    if (updateData.subscription_plan && !validPlans.includes(updateData.subscription_plan)) {
       return res.status(400).json({
-        error: 'Invalid subscription plan. Must be basic, silver, or gold'
+        error: 'Invalid subscription plan. Must be one of: ' + validPlans.join(', ')
       });
     }
 

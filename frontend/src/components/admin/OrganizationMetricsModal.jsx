@@ -4,6 +4,19 @@ import { X, Users, UserCheck, Activity, CheckCircle, Clock, Calendar, TrendingUp
 const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
   if (!isOpen) return null;
 
+  // Helper function to format plan display names
+  const getPlanDisplayName = (plan) => {
+    const planMap = {
+      'basic': 'Plan Basic',
+      'basic_silver': 'Plan Basic - Silver',
+      'basic_gold': 'Plan Basic - Gold',
+      'pro_silver': 'Plan Pro - Silver',
+      'pro_gold': 'Plan Pro - Gold',
+      'pro_platinum': 'Plan Pro - Platinum'
+    };
+    return planMap[plan] || plan;
+  };
+
   const StatCard = ({ icon: Icon, label, value, color = 'indigo' }) => (
     <div className="bg-white rounded-lg border-2 border-gray-200 p-4 hover:border-indigo-300 transition-colors">
       <div className="flex items-center justify-between">
@@ -206,8 +219,8 @@ const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
                     {metrics.organization.subscription_plan && (
                       <div>
                         <p className="text-sm text-gray-600">Subscription Plan</p>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 capitalize">
-                          {metrics.organization.subscription_plan}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {getPlanDisplayName(metrics.organization.subscription_plan)}
                         </span>
                       </div>
                     )}

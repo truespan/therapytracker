@@ -26,13 +26,26 @@ const AdminDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, inactive
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [metricsData, setMetricsData] = useState(null);
-  
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showMetricsModal, setShowMetricsModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [metricsLoading, setMetricsLoading] = useState(false);
+
+  // Helper function to format plan display names
+  const getPlanDisplayName = (plan) => {
+    const planMap = {
+      'basic': 'Plan Basic',
+      'basic_silver': 'Plan Basic - Silver',
+      'basic_gold': 'Plan Basic - Gold',
+      'pro_silver': 'Plan Pro - Silver',
+      'pro_gold': 'Plan Pro - Gold',
+      'pro_platinum': 'Plan Pro - Platinum'
+    };
+    return planMap[plan] || plan;
+  };
 
   useEffect(() => {
     loadDashboardData();
@@ -350,8 +363,8 @@ const AdminDashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {org.subscription_plan ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 capitalize">
-                          {org.subscription_plan}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {getPlanDisplayName(org.subscription_plan)}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">No plan</span>
