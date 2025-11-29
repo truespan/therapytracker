@@ -8,6 +8,11 @@ const createTransporter = () => {
     return null;
   }
 
+  // Parse timeout values from environment or use defaults
+  const connectionTimeout = parseInt(process.env.EMAIL_CONNECTION_TIMEOUT || '10000'); // 10 seconds
+  const greetingTimeout = parseInt(process.env.EMAIL_GREETING_TIMEOUT || '5000'); // 5 seconds
+  const socketTimeout = parseInt(process.env.EMAIL_SOCKET_TIMEOUT || '30000'); // 30 seconds
+
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT || '587'),
@@ -16,6 +21,18 @@ const createTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
+    // Connection timeout options
+    connectionTimeout: connectionTimeout, // How long to wait for initial connection
+    greetingTimeout: greetingTimeout, // How long to wait for SMTP greeting
+    socketTimeout: socketTimeout, // How long to wait for socket operations
+    // Additional connection options
+    pool: true, // Use connection pooling
+    maxConnections: 1, // Maximum number of concurrent connections
+    maxMessages: 3, // Maximum number of messages per connection
+    // TLS options for better compatibility
+    tls: {
+      rejectUnauthorized: process.env.NODE_ENV === 'production' ? true : false
+    }
   });
 };
 
@@ -97,8 +114,30 @@ const sendPasswordResetEmail = async (email, token) => {
     console.log('Password reset email sent:', info.messageId);
     return info;
   } catch (error) {
-    console.error('Error sending password reset email:', error);
-    throw error;
+    // Provide more helpful error messages
+    let errorMessage = 'Failed to send password reset email';
+    
+    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET' || error.code === 'ESOCKETTIMEDOUT') {
+      errorMessage = 'Connection timeout: Unable to connect to email server. Please check your EMAIL_HOST and network connectivity.';
+      console.error('Error sending password reset email:', errorMessage);
+      console.error('Connection error details:', {
+        code: error.command || error.code,
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT || '587',
+        message: error.message
+      });
+    } else if (error.code === 'EAUTH') {
+      errorMessage = 'Authentication failed: Invalid email credentials. Please check EMAIL_USER and EMAIL_PASSWORD.';
+      console.error('Error sending password reset email:', errorMessage);
+    } else if (error.code === 'ENOTFOUND' || error.code === 'EAI_AGAIN') {
+      errorMessage = `DNS error: Cannot resolve email server hostname "${process.env.EMAIL_HOST}". Please check EMAIL_HOST.`;
+      console.error('Error sending password reset email:', errorMessage);
+    } else {
+      console.error('Error sending password reset email:', error);
+      errorMessage = error.message || 'Unknown error occurred while sending email';
+    }
+    
+    throw new Error(errorMessage);
   }
 };
 
@@ -180,8 +219,30 @@ const sendPartnerVerificationEmail = async (email, token) => {
     console.log('Partner verification email sent:', info.messageId);
     return info;
   } catch (error) {
-    console.error('Error sending partner verification email:', error);
-    throw error;
+    // Provide more helpful error messages
+    let errorMessage = 'Failed to send partner verification email';
+    
+    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET' || error.code === 'ESOCKETTIMEDOUT') {
+      errorMessage = 'Connection timeout: Unable to connect to email server. Please check your EMAIL_HOST and network connectivity.';
+      console.error('Error sending partner verification email:', errorMessage);
+      console.error('Connection error details:', {
+        code: error.command || error.code,
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT || '587',
+        message: error.message
+      });
+    } else if (error.code === 'EAUTH') {
+      errorMessage = 'Authentication failed: Invalid email credentials. Please check EMAIL_USER and EMAIL_PASSWORD.';
+      console.error('Error sending partner verification email:', errorMessage);
+    } else if (error.code === 'ENOTFOUND' || error.code === 'EAI_AGAIN') {
+      errorMessage = `DNS error: Cannot resolve email server hostname "${process.env.EMAIL_HOST}". Please check EMAIL_HOST.`;
+      console.error('Error sending partner verification email:', errorMessage);
+    } else {
+      console.error('Error sending partner verification email:', error);
+      errorMessage = error.message || 'Unknown error occurred while sending email';
+    }
+    
+    throw new Error(errorMessage);
   }
 };
 

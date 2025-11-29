@@ -183,15 +183,27 @@ const createPartner = async (req, res) => {
     });
 
     // Send verification email
+    let emailSent = false;
     try {
       await sendPartnerVerificationEmail(email, verificationToken);
+      emailSent = true;
     } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
+      console.error('Error sending partner verification email:', emailError.message || emailError);
+      console.error('Partner created but verification email failed to send. Partner ID:', result.partner_id);
+      console.error('Email error details:', {
+        email: email,
+        error: emailError.message || emailError.toString(),
+        code: emailError.code || 'UNKNOWN'
+      });
       // Don't fail the request if email fails - partner is still created
+      // The verification email can be resent using the resend-verification endpoint
     }
 
     res.status(201).json({
-      message: 'Partner created successfully. Verification email sent.',
+      message: emailSent 
+        ? 'Partner created successfully. Verification email sent.' 
+        : 'Partner created successfully, but verification email could not be sent. Please use "Resend Verification Email" option.',
+      emailSent: emailSent,
       partner: {
         id: result.id,
         partner_id: result.partner_id,
@@ -284,13 +296,26 @@ const updatePartner = async (req, res) => {
       });
 
       // Send new verification email
+      let emailSent = false;
       try {
         await sendPartnerVerificationEmail(updates.email, verificationToken);
+        emailSent = true;
       } catch (emailError) {
-        console.error('Failed to send verification email:', emailError);
+        console.error('Error sending partner verification email after update:', emailError.message || emailError);
+        console.error('Email error details:', {
+          email: updates.email,
+          partnerId: partnerId,
+          error: emailError.message || emailError.toString(),
+          code: emailError.code || 'UNKNOWN'
+        });
       }
 
-      res.json({ message: 'Partner updated successfully. New verification email sent.' });
+      res.json({ 
+        message: emailSent
+          ? 'Partner updated successfully. New verification email sent.'
+          : 'Partner updated successfully, but verification email could not be sent. Please use "Resend Verification Email" option.',
+        emailSent: emailSent
+      });
     } else {
       // Normal update without email change
       const updatedPartner = await Partner.update(partnerId, updates);
@@ -518,8 +543,21 @@ const resendVerificationEmail = async (req, res) => {
       await sendPartnerVerificationEmail(partner.email, verificationToken);
       res.json({ message: 'Verification email sent successfully' });
     } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
-      return res.status(500).json({ error: 'Failed to send verification email' });
+      console.error('Error sending partner verification email:', emailError.message || emailError);
+      console.error('Email error details:', {
+        email: partner.email,
+        partnerId: partnerId,
+        error: emailError.message || emailError.toString(),
+        code: emailError.code || 'UNKNOWN'
+      });
+      
+      // Provide more helpful error message to the client
+      const errorMessage = emailError.message || 'Failed to send verification email. Please check email configuration.';
+      return res.status(500).json({ 
+        error: 'Failed to send verification email',
+        details: errorMessage,
+        hint: 'Check EMAIL_HOST, EMAIL_USER, and EMAIL_PASSWORD configuration. For connection timeout errors, verify network connectivity to the email server.'
+      });
     }
   } catch (error) {
     console.error('Resend verification email error:', error);
