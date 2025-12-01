@@ -154,15 +154,8 @@ const sendPartnerVerificationEmail = async (email, token) => {
     throw new Error('Email service not configured');
   }
 
-  // Use backend URL in production, frontend URL in development
-  const baseUrl = process.env.NODE_ENV === 'production' 
-    ? (process.env.BACKEND_URL || process.env.API_URL || process.env.FRONTEND_URL || 'http://localhost:5000')
-    : (process.env.FRONTEND_URL || 'http://localhost:3000');
-  
-  // In production (using backend URL), include /api prefix; in development (frontend), use frontend route
-  const verificationUrl = process.env.NODE_ENV === 'production'
-    ? `${baseUrl}/api/auth/verify-email?token=${token}&type=partner`
-    : `${baseUrl}/verify-email?token=${token}&type=partner`;
+  // Always use frontend URL so users see the UI, not raw JSON
+  const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${token}&type=partner`;
 
   const htmlContent = `
     <!DOCTYPE html>

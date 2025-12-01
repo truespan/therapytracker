@@ -26,6 +26,19 @@ const VerifyEmail = () => {
         setStatus('success');
         setMessage(response.data.message);
         setPartnerInfo(response.data.partner);
+        
+        // Check if email was verified successfully
+        if (response.data.partner?.email_verified) {
+          // Navigate to organization dashboard after a short delay to show success message
+          setTimeout(() => {
+            navigate('/organization/dashboard', { 
+              state: { 
+                message: 'Email verified successfully!',
+                partnerVerified: true 
+              } 
+            });
+          }, 2000); // 2 second delay to show success message
+        }
       } catch (error) {
         setStatus('error');
         setMessage(
@@ -37,7 +50,7 @@ const VerifyEmail = () => {
     };
 
     verifyEmail();
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   const handleLoginRedirect = () => {
     navigate('/login');
