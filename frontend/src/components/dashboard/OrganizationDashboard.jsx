@@ -328,19 +328,19 @@ const OrganizationDashboard = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <Building2 className="h-8 w-8 mr-3" />
-              {user.name}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center">
+              <Building2 className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mr-2 sm:mr-3" />
+              <span className="break-words">{user.name}</span>
             </h1>
-            <p className="text-gray-600 mt-1">Organization Overview and Management</p>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Organization Overview and Management</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn btn-primary flex items-center space-x-2"
+            className="btn btn-primary flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2 whitespace-nowrap"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
             <span>Add Therapist</span>
           </button>
         </div>
@@ -364,45 +364,45 @@ const OrganizationDashboard = () => {
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
-        <div className="card">
+      {/* Stats Cards - Stacked on mobile, grid on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-8">
+        <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Therapists</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalPartners}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total Therapists</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">{stats.totalPartners}</p>
             </div>
-            <UserCheck className="h-12 w-12 text-primary-600" />
+            <UserCheck className="h-10 w-10 sm:h-12 sm:w-12 text-primary-600" />
           </div>
         </div>
 
-        <div className="card">
+        <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">{stats.activePartners}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Active</p>
+              <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-1">{stats.activePartners}</p>
             </div>
-            <CheckCircle className="h-12 w-12 text-green-600" />
+            <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-green-600" />
           </div>
         </div>
 
-        <div className="card">
+        <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Inactive</p>
-              <p className="text-3xl font-bold text-red-600 mt-1">{stats.inactivePartners}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Inactive</p>
+              <p className="text-2xl sm:text-3xl font-bold text-red-600 mt-1">{stats.inactivePartners}</p>
             </div>
-            <XCircle className="h-12 w-12 text-red-600" />
+            <XCircle className="h-10 w-10 sm:h-12 sm:w-12 text-red-600" />
           </div>
         </div>
 
-        <div className="card">
+        <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Clients</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalUsers}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Total Clients</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">{stats.totalUsers}</p>
             </div>
-            <Users className="h-12 w-12 text-primary-600" />
+            <Users className="h-10 w-10 sm:h-12 sm:w-12 text-primary-600" />
           </div>
         </div>
       </div>
