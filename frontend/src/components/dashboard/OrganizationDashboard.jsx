@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { organizationAPI } from '../../services/api';
 import {
   Building2, Users, UserCheck, Activity, Plus, Edit, UserX,
-  UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail, Filter,
+  UserPlus, ArrowRightLeft, CheckCircle, Mail,
   AlertCircle, Send, Trash2
 } from 'lucide-react';
 import CreatePartnerModal from '../organization/CreatePartnerModal';
@@ -24,10 +24,6 @@ const OrganizationDashboard = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Filters
-  const [statusFilter, setStatusFilter] = useState('all'); // all, active, inactive
-  const [verificationFilter, setVerificationFilter] = useState('all'); // all, verified, unverified
-
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -47,28 +43,9 @@ const OrganizationDashboard = () => {
   }, [user.id]);
 
   useEffect(() => {
-    applyFilters();
-  }, [partners, statusFilter, verificationFilter]);
-
-  const applyFilters = () => {
-    let filtered = [...partners];
-
-    // Status filter
-    if (statusFilter === 'active') {
-      filtered = filtered.filter(p => p.is_active);
-    } else if (statusFilter === 'inactive') {
-      filtered = filtered.filter(p => !p.is_active);
-    }
-
-    // Verification filter
-    if (verificationFilter === 'verified') {
-      filtered = filtered.filter(p => p.email_verified);
-    } else if (verificationFilter === 'unverified') {
-      filtered = filtered.filter(p => !p.email_verified);
-    }
-
-    setFilteredPartners(filtered);
-  };
+    // Show all partners without filtering
+    setFilteredPartners(partners);
+  }, [partners]);
 
   const loadOrganizationData = async () => {
     try {
@@ -463,41 +440,11 @@ const OrganizationDashboard = () => {
         {/* Partners List - Appears first on mobile, sidebar on desktop */}
         <div className="order-1 lg:col-span-1">
           <div className="card lg:sticky lg:top-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4">
               <h2 className="text-lg font-semibold flex items-center">
                 <UserCheck className="h-5 w-5 mr-2" />
                 Therapists
               </h2>
-              <button
-                onClick={() => {}}
-                className="p-1 hover:bg-gray-100 rounded"
-                title="Filters"
-              >
-                <Filter className="h-5 w-5 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Filters */}
-            <div className="mb-4 space-y-2">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
-              </select>
-
-              <select
-                value={verificationFilter}
-                onChange={(e) => setVerificationFilter(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="all">All Verification</option>
-                <option value="verified">Verified Only</option>
-                <option value="unverified">Unverified Only</option>
-              </select>
             </div>
 
             {filteredPartners.length === 0 ? (
@@ -534,11 +481,10 @@ const OrganizationDashboard = () => {
                           </p>
                         </div>
                         <div className="flex flex-col items-end space-y-1">
-                          {partner.is_active ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" title="Active" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-red-600" title="Inactive" />
-                          )}
+                          <CheckCircle
+                            className={`h-4 w-4 ${partner.is_active ? 'text-green-600' : 'text-red-600'}`}
+                            title={partner.is_active ? 'Active' : 'Inactive'}
+                          />
                           {partner.email_verified ? (
                             <Mail className="h-4 w-4 text-green-600" title="Email Verified" />
                           ) : (
