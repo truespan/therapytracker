@@ -36,6 +36,18 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
   };
 
   const handleAddQuestion = () => {
+    const colorCoding = questionnaire.color_coding_scheme;
+    let initialValue;
+
+    // Set initial value based on color coding
+    if (colorCoding === '4_point') {
+      initialValue = 4; // First option gets highest value
+    } else if (colorCoding === '5_point') {
+      initialValue = 5; // First option gets highest value
+    } else {
+      initialValue = 1; // No color coding: start at 1
+    }
+
     setQuestionnaire({
       ...questionnaire,
       questions: [
@@ -44,7 +56,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
           question_text: '',
           sub_heading: '',
           options: [
-            { option_text: '', option_value: 1, option_order: 0 }
+            { option_text: '', option_value: initialValue, option_order: 0 }
           ]
         }
       ]
@@ -65,14 +77,39 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
   const handleAddOption = (questionIndex) => {
     const newQuestions = [...questionnaire.questions];
     const currentOptions = newQuestions[questionIndex].options;
-    const nextValue = currentOptions.length + 1;
-    
+
+    // Check color coding limits
+    const colorCoding = questionnaire.color_coding_scheme;
+    if (colorCoding === '4_point' && currentOptions.length >= 4) {
+      setError('Cannot add more than 4 options for 4-point color coding');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    if (colorCoding === '5_point' && currentOptions.length >= 5) {
+      setError('Cannot add more than 5 options for 5-point color coding');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    // Determine option value based on color coding
+    let nextValue;
+    if (colorCoding === '4_point') {
+      // Values should be: 4, 3, 2, 1
+      nextValue = 4 - currentOptions.length;
+    } else if (colorCoding === '5_point') {
+      // Values should be: 5, 4, 3, 2, 1
+      nextValue = 5 - currentOptions.length;
+    } else {
+      // No color coding: use sequential values 1, 2, 3, ...
+      nextValue = currentOptions.length + 1;
+    }
+
     newQuestions[questionIndex].options.push({
       option_text: '',
       option_value: nextValue,
       option_order: currentOptions.length
     });
-    
+
     setQuestionnaire({ ...questionnaire, questions: newQuestions });
   };
 
@@ -81,11 +118,23 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
     newQuestions[questionIndex].options = newQuestions[questionIndex].options.filter(
       (_, index) => index !== optionIndex
     );
-    // Reorder remaining options
+
+    const colorCoding = questionnaire.color_coding_scheme;
+
+    // Reorder remaining options and recalculate values
     newQuestions[questionIndex].options.forEach((option, index) => {
       option.option_order = index;
-      option.option_value = index + 1;
+
+      // Recalculate option_value based on color coding
+      if (colorCoding === '4_point') {
+        option.option_value = 4 - index; // 4, 3, 2, 1
+      } else if (colorCoding === '5_point') {
+        option.option_value = 5 - index; // 5, 4, 3, 2, 1
+      } else {
+        option.option_value = index + 1; // 1, 2, 3, ...
+      }
     });
+
     setQuestionnaire({ ...questionnaire, questions: newQuestions });
   };
 

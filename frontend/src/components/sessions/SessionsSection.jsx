@@ -70,11 +70,9 @@ const SessionsSection = ({ partnerId, userId, userName }) => {
   return (
     <div className="card">
       {/* Header - Always Visible */}
-      <div className="flex items-center justify-between p-4">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex-1 flex items-center justify-between hover:bg-gray-50 transition-colors rounded-lg -m-2 p-2"
-        >
+      <div className="p-4">
+        {/* Mobile: Top row with title and button */}
+        <div className="lg:hidden flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
             <FileText className="h-6 w-6 text-primary-600" />
             <div className="text-left">
@@ -89,28 +87,76 @@ const SessionsSection = ({ partnerId, userId, userName }) => {
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            {sessions.length > 0 && (
-              <span className="text-sm text-gray-500 mr-2">
-                {isExpanded ? 'Hide' : 'Show'} sessions
-              </span>
-            )}
+          {/* Create Session Button - Mobile (Small) */}
+          <button
+            onClick={handleCreateSession}
+            className="flex items-center space-x-1 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Create</span>
+          </button>
+        </div>
+
+        {/* Mobile: Show sessions toggle */}
+        {sessions.length > 0 && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="lg:hidden w-full flex items-center justify-between px-2 py-2 hover:bg-gray-50 transition-colors rounded-lg"
+          >
+            <span className="text-sm text-gray-500">
+              {isExpanded ? 'Hide' : 'Show'} sessions
+            </span>
             {isExpanded ? (
               <ChevronUp className="h-5 w-5 text-gray-500" />
             ) : (
               <ChevronDown className="h-5 w-5 text-gray-500" />
             )}
-          </div>
-        </button>
+          </button>
+        )}
 
-        {/* Create Session Button */}
-        <button
-          onClick={handleCreateSession}
-          className="ml-4 flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Create Session</span>
-        </button>
+        {/* Desktop: Original layout */}
+        <div className="hidden lg:flex items-center justify-between">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex-1 flex items-center justify-between hover:bg-gray-50 transition-colors rounded-lg -m-2 p-2"
+          >
+            <div className="flex items-center space-x-3">
+              <FileText className="h-6 w-6 text-primary-600" />
+              <div className="text-left">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Therapy Sessions
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {sessions.length === 0
+                    ? 'No sessions recorded yet'
+                    : `${sessions.length} session${sessions.length !== 1 ? 's' : ''} recorded`
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {sessions.length > 0 && (
+                <span className="text-sm text-gray-500 mr-2">
+                  {isExpanded ? 'Hide' : 'Show'} sessions
+                </span>
+              )}
+              {isExpanded ? (
+                <ChevronUp className="h-5 w-5 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-gray-500" />
+              )}
+            </div>
+          </button>
+
+          {/* Create Session Button - Desktop */}
+          <button
+            onClick={handleCreateSession}
+            className="ml-4 flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Session</span>
+          </button>
+        </div>
       </div>
 
       {/* Collapsible Content */}
