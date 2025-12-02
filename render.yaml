@@ -63,9 +63,9 @@ services:
 
   # Frontend Static Site
   - type: web
-    name: therapy-tracker-frontend
+    name: therapytracker-frontend
     runtime: static
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npm run build && echo "/* /index.html 200" > build/_redirects
     staticPublishPath: build
     rootDir: frontend
     pullRequestPreviewsEnabled: true # Enable PR previews
@@ -86,8 +86,4 @@ services:
     envVars:
       # API URL - Points to backend service
       - key: REACT_APP_API_URL
-        fromService:
-          type: web
-          name: therapy-tracker-api
-          envVarKey: RENDER_EXTERNAL_URL
-        value: https://therapy-tracker-api.onrender.com/api
+        value: https://therapytracker-backend.onrender.com/api
