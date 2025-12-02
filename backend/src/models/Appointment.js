@@ -5,7 +5,7 @@ class Appointment {
     const { partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes } = appointmentData;
     const query = `
       INSERT INTO appointments (partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      VALUES ($1, $2, $3, $4::timestamp, $5::timestamp, $6, $7)
       RETURNING *
     `;
     const values = [partner_id, user_id, title, appointment_date, end_date, duration_minutes || 60, notes];
@@ -53,10 +53,10 @@ class Appointment {
   static async update(id, appointmentData) {
     const { title, appointment_date, end_date, duration_minutes, status, notes } = appointmentData;
     const query = `
-      UPDATE appointments 
+      UPDATE appointments
       SET title = COALESCE($1, title),
-          appointment_date = COALESCE($2, appointment_date),
-          end_date = COALESCE($3, end_date),
+          appointment_date = COALESCE($2::timestamp, appointment_date),
+          end_date = COALESCE($3::timestamp, end_date),
           duration_minutes = COALESCE($4, duration_minutes),
           status = COALESCE($5, status),
           notes = COALESCE($6, notes),

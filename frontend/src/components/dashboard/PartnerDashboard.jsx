@@ -102,11 +102,39 @@ const PartnerDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Welcome Section - Hidden on mobile, visible on desktop */}
-      <div className="hidden lg:block mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
-        <p className="text-gray-600 mt-1">Manage your clients and track their progress</p>
+      {/* Welcome Section & Partner ID - Hidden on mobile, visible on desktop/tablet */}
+      <div className="hidden lg:flex lg:items-center lg:justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
+          <p className="text-gray-600 mt-1">Manage your clients and track their progress</p>
+        </div>
+        {user.partner_id && (
+          <div className="card bg-primary-50 border-2 border-primary-200 ml-6">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Your Partner ID</p>
+              <p className="text-2xl font-bold text-primary-700 tracking-wider">
+                {user.partner_id}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Partner ID Section - Tablet only (mobile shows in hamburger, desktop shows above) */}
+      {user.partner_id && (
+        <div className="hidden sm:block lg:hidden mb-6">
+          <div className="card bg-primary-50 border-2 border-primary-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Your Partner ID</p>
+                <p className="text-2xl font-bold text-primary-700 tracking-wider">
+                  {user.partner_id}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Scrollable Tabs - Mobile & Tablet */}
       <div className="lg:hidden border-b border-gray-200 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
