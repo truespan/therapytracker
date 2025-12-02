@@ -24,34 +24,45 @@ const VerifyEmail = () => {
       }
 
       try {
+        console.log('🔵 Calling backend API to verify email...');
+        console.log('🔵 Token:', token?.substring(0, 10) + '...');
+        console.log('🔵 Type:', type);
+
         const response = await authAPI.verifyEmail(token, type);
+
+        console.log('✅ Verification API response:', response.data);
+
         setStatus('success');
         setMessage(response.data.message);
         setPartnerInfo(response.data.partner);
-        
+
         // Check if email was verified successfully
         if (response.data.partner?.email_verified) {
-          console.log('Email verified successfully in VerifyEmail.jsx!');
-          console.log('Partner info:', response.data.partner);
-          // Navigate to organization dashboard after a short delay to show success message
+          console.log('✅ Email verified successfully! Partner:', response.data.partner.name);
+          console.log('✅ Redirecting to login page in 3 seconds...');
+
+          // Navigate to login page after a short delay to show success message
           setTimeout(() => {
-            navigate('/organization/dashboard', { 
-              state: { 
-                message: 'Email verified successfully!',
-                partnerVerified: true 
-              } 
+            navigate('/login', {
+              state: {
+                message: 'Email verified successfully! You can now log in with your credentials.',
+                emailVerified: true
+              }
             });
-          }, 2000); // 2 second delay to show success message
+          }, 3000); // 3 second delay to show success message
         }
       } catch (error) {
+        console.error('❌ Email verification error:', error);
+        console.error('❌ Error response:', error.response?.data);
+        console.error('❌ Error status:', error.response?.status);
+        console.error('❌ Error details:', error.message);
+
         setStatus('error');
         setMessage(
           error.response?.data?.message ||
           error.response?.data?.error ||
           'Email verification failed. The link may be invalid or expired.'
         );
-        console.log('Email verification error in VerifyEmail.jsx:', error);
-        console.log('Error response in VerifyEmail.jsx:', error.response?.data);
       }
     };
 

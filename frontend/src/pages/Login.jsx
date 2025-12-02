@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Activity, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -9,9 +9,27 @@ const Login = () => {
     password: '',
   });
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for success message from email verification
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the state to prevent message from showing on page refresh
+      navigate(location.pathname, { replace: true, state: {} });
+
+      // Auto-dismiss success message after 10 seconds
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 10000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [location, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -51,6 +69,13 @@ const Login = () => {
             <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
             <p className="text-gray-600 mt-2">Sign in to your account</p>
           </div>
+
+          {successMessage && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2 text-green-700">
+              <CheckCircle className="h-5 w-5 flex-shrink-0" />
+              <span className="text-sm">{successMessage}</span>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
