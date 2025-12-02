@@ -15,7 +15,7 @@ class Auth {
   }
 
   static async findByEmail(email) {
-    const query = 'SELECT * FROM auth_credentials WHERE email = $1';
+    const query = 'SELECT * FROM auth_credentials WHERE LOWER(email) = LOWER($1)';
     const result = await db.query(query, [email]);
     return result.rows[0];
   }
@@ -76,9 +76,9 @@ class Auth {
 
   static async updatePassword(email, newPasswordHash) {
     const query = `
-      UPDATE auth_credentials 
+      UPDATE auth_credentials
       SET password_hash = $1
-      WHERE email = $2
+      WHERE LOWER(email) = LOWER($2)
       RETURNING id, user_type, reference_id, email
     `;
     const result = await db.query(query, [newPasswordHash, email]);
@@ -86,7 +86,7 @@ class Auth {
   }
 
   static async delete(email) {
-    const query = 'DELETE FROM auth_credentials WHERE email = $1 RETURNING *';
+    const query = 'DELETE FROM auth_credentials WHERE LOWER(email) = LOWER($1) RETURNING *';
     const result = await db.query(query, [email]);
     return result.rows[0];
   }
