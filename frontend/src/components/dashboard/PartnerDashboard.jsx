@@ -117,14 +117,14 @@ const PartnerDashboard = () => {
         
         {/* Partner ID Display */}
         {user.partner_id && (
-          <div className="mt-4 inline-flex items-center bg-primary-50 border-2 border-primary-200 rounded-lg px-4 py-3">
-            <div className="mr-3">
+          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center bg-primary-50 border-2 border-primary-200 rounded-lg px-3 sm:px-4 py-3 gap-2 sm:gap-3">
+            <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-600 font-medium">Your Partner ID</p>
-              <p className="text-2xl font-bold text-primary-700 tracking-wider">{user.partner_id}</p>
+              <p className="text-xl sm:text-2xl font-bold text-primary-700 tracking-wider break-all sm:break-normal">{user.partner_id}</p>
             </div>
             <button
               onClick={copyPartnerIdToClipboard}
-              className="p-2 hover:bg-primary-100 rounded-md transition-colors"
+              className="p-2 hover:bg-primary-100 rounded-md transition-colors flex-shrink-0"
               title="Copy Partner ID"
             >
               {copied ? (
@@ -137,8 +137,29 @@ const PartnerDashboard = () => {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
+      {/* Mobile Dropdown */}
+      <div className="md:hidden mb-6">
+        <select
+          value={activeTab}
+          onChange={(e) => {
+            setActiveTab(e.target.value);
+            if (e.target.value === 'questionnaires') {
+              setQuestionnaireView('list');
+            }
+          }}
+          className="w-full input text-sm"
+        >
+          <option value="appointments">📅 Appointments</option>
+          <option value="clients">👥 Clients</option>
+          <option value="charts">📊 Charts & Insights</option>
+          {videoSessionsEnabled && <option value="video">🎥 Video Sessions</option>}
+          <option value="questionnaires">📋 Questionnaires</option>
+          <option value="calendar">📆 Calendar</option>
+        </select>
+      </div>
+
+      {/* Desktop Tabs */}
+      <div className="hidden md:block border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('appointments')}
@@ -221,39 +242,39 @@ const PartnerDashboard = () => {
 
       {/* Clients Tab */}
       {activeTab === 'clients' && (
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Users List */}
         <div className="lg:col-span-1">
-          <div className="card sticky top-4">
+          <div className="card lg:sticky lg:top-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center">
-                <Users className="h-5 w-5 mr-2" />
+              <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Your Clients ({users.length})
               </h2>
             </div>
-            
+
             {users.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <Users className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                <p>No clients assigned yet</p>
+                <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-gray-400" />
+                <p className="text-sm sm:text-base">No clients assigned yet</p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div className="space-y-2 max-h-64 sm:max-h-80 lg:max-h-96 overflow-y-auto">
                 {users.map((client) => (
                   <button
                     key={client.id}
                     onClick={() => handleUserSelect(client.id)}
-                    className={`w-full text-left p-3 rounded-lg border-2 transition ${
+                    className={`w-full text-left p-2 sm:p-3 rounded-lg border-2 transition ${
                       selectedUser?.id === client.id
                         ? 'border-primary-600 bg-primary-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex items-center space-x-3">
-                      <User className="h-5 w-5 text-gray-400" />
-                      <div>
-                        <p className="font-medium text-gray-900">{client.name}</p>
-                        <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm sm:text-base text-gray-900 truncate">{client.name}</p>
+                        <p className="text-xs sm:text-sm text-gray-600">{client.sex}, {client.age} years</p>
                       </div>
                     </div>
                   </button>
@@ -270,11 +291,11 @@ const PartnerDashboard = () => {
               {/* User Info Card */}
               <div className="card">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{selectedUser.name}</h2>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{selectedUser.name}</h2>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-xs sm:text-sm text-gray-600 space-y-1 sm:space-y-0">
                       <span>{selectedUser.sex}, {selectedUser.age} years</span>
-                      {selectedUser.email && <span>{selectedUser.email}</span>}
+                      {selectedUser.email && <span className="truncate">{selectedUser.email}</span>}
                       {selectedUser.contact && <span>{selectedUser.contact}</span>}
                     </div>
                   </div>
@@ -312,39 +333,39 @@ const PartnerDashboard = () => {
 
       {/* Charts & Insights Tab */}
       {activeTab === 'charts' && (
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Users List */}
           <div className="lg:col-span-1">
-            <div className="card sticky top-4">
+            <div className="card lg:sticky lg:top-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
+                <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Your Clients ({users.length})
                 </h2>
               </div>
 
               {users.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  <Users className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                  <p>No clients assigned yet</p>
+                  <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-gray-400" />
+                  <p className="text-sm sm:text-base">No clients assigned yet</p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
+                <div className="space-y-2 max-h-64 sm:max-h-80 lg:max-h-96 overflow-y-auto">
                   {users.map((client) => (
                     <button
                       key={client.id}
                       onClick={() => handleUserSelect(client.id)}
-                      className={`w-full text-left p-3 rounded-lg border-2 transition ${
+                      className={`w-full text-left p-2 sm:p-3 rounded-lg border-2 transition ${
                         selectedUser?.id === client.id
                           ? 'border-primary-600 bg-primary-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-center space-x-3">
-                        <User className="h-5 w-5 text-gray-400" />
-                        <div>
-                          <p className="font-medium text-gray-900">{client.name}</p>
-                          <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
+                      <div className="flex items-center space-x-2 sm:space-x-3">
+                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm sm:text-base text-gray-900 truncate">{client.name}</p>
+                          <p className="text-xs sm:text-sm text-gray-600">{client.sex}, {client.age} years</p>
                         </div>
                       </div>
                     </button>

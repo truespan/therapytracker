@@ -302,7 +302,11 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
             beginAtZero: true,
             max: domainMax,
             ticks: {
-              stepSize: 1
+              stepSize: 1,
+              font: { size: window.innerWidth < 640 ? 8 : 10 }
+            },
+            pointLabels: {
+              font: { size: window.innerWidth < 640 ? 8 : 10 }
             }
           }
         },
@@ -310,13 +314,14 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
           legend: {
             position: 'bottom',
             labels: {
-              padding: 15,
-              font: {
-                size: 12
-              }
+              padding: window.innerWidth < 640 ? 8 : 15,
+              font: { size: window.innerWidth < 640 ? 9 : 12 },
+              boxWidth: window.innerWidth < 640 ? 10 : 15
             }
           },
           tooltip: {
+            titleFont: { size: window.innerWidth < 640 ? 10 : 12 },
+            bodyFont: { size: window.innerWidth < 640 ? 9 : 11 },
             callbacks: {
               label: function(context) {
                 return `${context.dataset.label}: ${context.parsed.r}`;
@@ -327,21 +332,29 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
       };
 
       return (
-        <div style={{ height: '500px', width: '100%' }}>
+        <div className="h-[300px] sm:h-[400px] lg:h-[500px] w-full">
           <Radar data={radarData} options={radarOptions} />
         </div>
       );
     }
 
     if (chartType === 'line') {
+      const isMobile = window.innerWidth < 640;
       return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : 400} className="sm:!h-[350px] lg:!h-[400px]">
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="question" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
-            <YAxis />
-            <Tooltip />
-            <Legend />
+            <XAxis
+              dataKey="question"
+              tick={{ fontSize: isMobile ? 8 : 10 }}
+              angle={-45}
+              textAnchor="end"
+              height={isMobile ? 80 : 100}
+              interval={isMobile ? 'preserveStartEnd' : 0}
+            />
+            <YAxis tick={{ fontSize: isMobile ? 8 : 10 }} />
+            <Tooltip contentStyle={{ fontSize: '0.75rem' }} />
+            <Legend wrapperStyle={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }} />
             {labels.map((label, index) => (
               <Line
                 key={label.key}
@@ -359,14 +372,22 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
     }
 
     if (chartType === 'bar') {
+      const isMobile = window.innerWidth < 640;
       return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : 400} className="sm:!h-[350px] lg:!h-[400px]">
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="question" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
-            <YAxis />
-            <Tooltip />
-            <Legend />
+            <XAxis
+              dataKey="question"
+              tick={{ fontSize: isMobile ? 8 : 10 }}
+              angle={-45}
+              textAnchor="end"
+              height={isMobile ? 80 : 100}
+              interval={isMobile ? 'preserveStartEnd' : 0}
+            />
+            <YAxis tick={{ fontSize: isMobile ? 8 : 10 }} />
+            <Tooltip contentStyle={{ fontSize: '0.75rem' }} />
+            <Legend wrapperStyle={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }} />
             {labels.map((label, index) => (
               <Bar
                 key={label.key}
@@ -430,7 +451,11 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
             beginAtZero: true,
             max: domainMax,
             ticks: {
-              stepSize: 1
+              stepSize: 1,
+              font: { size: window.innerWidth < 640 ? 8 : 10 }
+            },
+            pointLabels: {
+              font: { size: window.innerWidth < 640 ? 8 : 10 }
             }
           }
         },
@@ -438,13 +463,14 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
           legend: {
             position: 'bottom',
             labels: {
-              padding: 15,
-              font: {
-                size: 12
-              }
+              padding: window.innerWidth < 640 ? 8 : 15,
+              font: { size: window.innerWidth < 640 ? 9 : 12 },
+              boxWidth: window.innerWidth < 640 ? 10 : 15
             }
           },
           tooltip: {
+            titleFont: { size: window.innerWidth < 640 ? 10 : 12 },
+            bodyFont: { size: window.innerWidth < 640 ? 9 : 11 },
             callbacks: {
               label: function(context) {
                 return `${context.dataset.label}: ${context.parsed.r}`;
@@ -455,21 +481,29 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
       };
 
       return (
-        <div style={{ height: '500px', width: '100%' }}>
+        <div className="h-[300px] sm:h-[400px] lg:h-[500px] w-full">
           <Radar data={radarData} options={radarOptions} />
         </div>
       );
     }
 
     if (chartDisplayType === 'line') {
+      const isMobile = window.innerWidth < 640;
       return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : 400} className="sm:!h-[350px] lg:!h-[400px]">
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="question" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
-            <YAxis />
-            <Tooltip />
-            <Legend />
+            <XAxis
+              dataKey="question"
+              tick={{ fontSize: isMobile ? 8 : 10 }}
+              angle={-45}
+              textAnchor="end"
+              height={isMobile ? 80 : 100}
+              interval={isMobile ? 'preserveStartEnd' : 0}
+            />
+            <YAxis tick={{ fontSize: isMobile ? 8 : 10 }} />
+            <Tooltip contentStyle={{ fontSize: '0.75rem' }} />
+            <Legend wrapperStyle={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }} />
             {labels.map((label, index) => (
               <Line
                 key={label.key}
@@ -487,14 +521,22 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
     }
 
     if (chartDisplayType === 'bar') {
+      const isMobile = window.innerWidth < 640;
       return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : 400} className="sm:!h-[350px] lg:!h-[400px]">
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="question" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
-            <YAxis />
-            <Tooltip />
-            <Legend />
+            <XAxis
+              dataKey="question"
+              tick={{ fontSize: isMobile ? 8 : 10 }}
+              angle={-45}
+              textAnchor="end"
+              height={isMobile ? 80 : 100}
+              interval={isMobile ? 'preserveStartEnd' : 0}
+            />
+            <YAxis tick={{ fontSize: isMobile ? 8 : 10 }} />
+            <Tooltip contentStyle={{ fontSize: '0.75rem' }} />
+            <Legend wrapperStyle={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }} />
             {labels.map((label, index) => (
               <Bar
                 key={label.key}
@@ -736,7 +778,7 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
       {/* Chart View Popup Modal */}
       {viewingChart && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-full sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
             <div className="p-6 border-b border-gray-200 flex justify-between items-start">
               <div>

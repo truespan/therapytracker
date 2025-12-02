@@ -20,8 +20,20 @@ const PartnerCalendar = ({ partnerId, users }) => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [selectedVideoSession, setSelectedVideoSession] = useState(null);
-  const [view, setView] = useState('week');
+  const [view, setView] = useState(() => {
+    return window.innerWidth < 768 ? 'month' : 'week';
+  });
   const [date, setDate] = useState(new Date());
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768 && view === 'week') {
+        setView('month');
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [view]);
 
   const loadAppointments = useCallback(async () => {
     try {
@@ -150,18 +162,18 @@ const PartnerCalendar = ({ partnerId, users }) => {
   return (
     <div className="space-y-4">
       <div className="card">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 space-y-3">
           <div className="flex items-center space-x-2">
-            <CalendarIcon className="h-6 w-6 text-primary-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Calendar</h2>
+            <CalendarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Calendar</h2>
           </div>
-          <div className="flex items-center space-x-4 text-sm">
+          <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-sky-500 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-sky-500 rounded"></div>
               <span className="text-gray-600">Appointments</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-purple-600 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-600 rounded"></div>
               <span className="text-gray-600">Video Sessions</span>
             </div>
           </div>
@@ -174,7 +186,7 @@ const PartnerCalendar = ({ partnerId, users }) => {
           </div>
         )}
 
-        <div style={{ height: '600px' }}>
+        <div className="h-[400px] sm:h-[500px] lg:h-[600px]">
           <Calendar
             localizer={localizer}
             events={allEvents}

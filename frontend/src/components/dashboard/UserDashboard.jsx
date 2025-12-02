@@ -121,8 +121,22 @@ const UserDashboard = () => {
         <p className="text-gray-600 mt-1">Track your therapy progress</p>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
+      {/* Mobile Dropdown */}
+      <div className="md:hidden mb-6">
+        <select
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value)}
+          className="w-full input text-sm"
+        >
+          <option value="overview">📊 Overview</option>
+          {videoSessionsEnabled && <option value="video">🎥 Video Sessions</option>}
+          <option value="charts">📈 Charts & Insights</option>
+          <option value="questionnaires">📋 Questionnaires</option>
+        </select>
+      </div>
+
+      {/* Desktop Tabs */}
+      <div className="hidden md:block border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}

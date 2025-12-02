@@ -184,7 +184,11 @@ const LatestChartDisplay = ({ sentCharts, userName }) => {
             beginAtZero: true,
             max: domainMax,
             ticks: {
-              stepSize: 1
+              stepSize: 1,
+              font: { size: window.innerWidth < 640 ? 8 : 10 }
+            },
+            pointLabels: {
+              font: { size: window.innerWidth < 640 ? 8 : 10 }
             }
           }
         },
@@ -192,13 +196,14 @@ const LatestChartDisplay = ({ sentCharts, userName }) => {
           legend: {
             position: 'bottom',
             labels: {
-              padding: 15,
-              font: {
-                size: 12
-              }
+              padding: window.innerWidth < 640 ? 8 : 15,
+              font: { size: window.innerWidth < 640 ? 9 : 12 },
+              boxWidth: window.innerWidth < 640 ? 10 : 15
             }
           },
           tooltip: {
+            titleFont: { size: window.innerWidth < 640 ? 10 : 12 },
+            bodyFont: { size: window.innerWidth < 640 ? 9 : 11 },
             callbacks: {
               label: function(context) {
                 return `${context.dataset.label}: ${context.parsed.r}`;
@@ -209,7 +214,7 @@ const LatestChartDisplay = ({ sentCharts, userName }) => {
       };
 
       return (
-        <div style={{ height: '450px', width: '100%' }}>
+        <div className="h-[280px] sm:h-[380px] lg:h-[450px] w-full">
           <Radar data={radarData} options={radarOptions} />
         </div>
       );

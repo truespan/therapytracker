@@ -120,16 +120,16 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          <div className="text-center mb-8">
-            <Activity className="h-12 w-12 text-primary-600 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold text-gray-900">Create Patient Account</h2>
-            <p className="text-gray-600 mt-2">Join Therapy Tracker today</p>
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="bg-white rounded-lg shadow-xl p-4 sm:p-8">
+          <div className="text-center mb-6 sm:mb-8">
+            <Activity className="h-10 w-10 sm:h-12 sm:w-12 text-primary-600 mx-auto mb-4" />
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Patient Account</h2>
+            <p className="text-sm sm:text-base text-gray-600 mt-2">Join Therapy Tracker today</p>
           </div>
 
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs sm:text-sm text-blue-800">
               <strong>Note:</strong> This signup is for patients/clients only. Therapists are added by their organization administrators.
             </p>
           </div>
@@ -142,9 +142,9 @@ const Signup = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Name */}
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <label className="label">Name *</label>
                 <input
                   type="text"
@@ -204,7 +204,7 @@ const Signup = () => {
                     name="countryCode"
                     value={formData.countryCode}
                     onChange={handleChange}
-                    className="input w-24 text-sm px-2"
+                    className="input w-20 sm:w-24 text-xs sm:text-sm px-1 sm:px-2"
                   >
                     <option value="+91">🇮🇳 +91</option>
                     <option value="+1">🇺🇸 +1</option>
