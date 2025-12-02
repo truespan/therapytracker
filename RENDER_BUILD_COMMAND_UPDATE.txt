@@ -1,0 +1,193 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     RENDER.COM BUILD COMMAND UPDATE                          ║
+║                          CRITICAL ACTION REQUIRED                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+🚨 THE PROBLEM: Your Render service is NOT using render.yaml configuration.
+                You get 404 on every route because _redirects file is missing.
+
+🎯 THE SOLUTION: Manually update Build Command in Render dashboard.
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          STEP-BY-STEP INSTRUCTIONS                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+Step 1: Open Render
+━━━━━━━━━━━━━━━━━━━━
+→ Go to: https://dashboard.render.com
+→ Login with your credentials
+
+
+Step 2: Select Your Service
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+→ Find: "therapytracker-frontend"
+→ Click on it
+
+
+Step 3: Go to Settings
+━━━━━━━━━━━━━━━━━━━━━━━
+→ Left sidebar → Click "Settings"
+
+
+Step 4: Find Build Command
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+→ Scroll down to build configuration
+→ Look for: "Build Command" field
+→ Current value: npm install && npm run build
+
+
+Step 5: Update Build Command
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+→ Click in the Build Command field
+→ Select all text (Ctrl+A)
+→ Delete it
+→ Paste this EXACT command:
+
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ npm install && npm run build && echo "/* /index.html 200" > build/_redirects │
+   └────────────────────────────────────────────────────────────────────────┘
+
+→ Verify no extra spaces or line breaks
+
+
+Step 6: Verify Other Settings
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Root Directory:     frontend
+Publish Directory:  build
+
+
+Step 7: Save Changes
+━━━━━━━━━━━━━━━━━━━━
+→ Scroll to bottom
+→ Click "Save Changes" button
+→ Wait for confirmation
+
+
+Step 8: Deploy
+━━━━━━━━━━━━━━
+→ Click "Manual Deploy" (top of page)
+→ Select "Deploy latest commit"
+→ Wait for deployment to start
+
+
+Step 9: Watch Logs
+━━━━━━━━━━━━━━━━━
+→ Monitor build progress
+→ Look for: "Build successful"
+→ Look for: "Your service is live 🎉"
+→ Wait 3-5 minutes
+
+
+Step 10: Test
+━━━━━━━━━━━━
+→ Dashboard: https://therapytracker-frontend.onrender.com/organization/dashboard
+  Press Ctrl+Shift+R to hard refresh
+  Should load (not 404) ✅
+
+→ Email Verification: Click link from email
+  Should load VerifyEmail page ✅
+  Should verify email in database ✅
+  Should redirect to login ✅
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        WHAT THE BUILD COMMAND DOES                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+npm install
+    ↓
+  Installs dependencies
+
+npm run build
+    ↓
+  Builds React app → creates build/ folder
+
+echo "/* /index.html 200" > build/_redirects
+    ↓
+  Creates _redirects file that tells Render:
+  "For ANY route, serve index.html"
+    ↓
+  React Router can now handle all routing!
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              EXPECTED RESULT                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+BEFORE:
+❌ /organization/dashboard → 404 Not Found
+❌ /verify-email?token=... → 404 Not Found
+❌ Email not verified in database
+
+AFTER:
+✅ /organization/dashboard → Loads correctly
+✅ /verify-email?token=... → Loads correctly
+✅ Email verified in database
+✅ Redirect to login with success message
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          TROUBLESHOOTING                                     │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+Problem: Can't find Build Command field
+Solution: Look under "Build & Deploy" section, or try Environment tab
+
+Problem: Build fails
+Solution: Check logs for error message, share with me
+
+Problem: Still getting 404 after deploy
+Solution: Hard refresh (Ctrl+Shift+R), wait 5 minutes for CDN cache
+
+Problem: Build command reverts after saving
+Solution: Make sure you clicked "Save Changes" at the bottom
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          VERIFICATION CHECKLIST                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+After deployment completes, verify:
+
+□ Build logs show: "echo "/* /index.html 200" > build/_redirects"
+□ Build logs show: "Build successful"
+□ Service status shows: "Live" (green)
+□ Dashboard refresh works (no 404)
+□ Verification link loads page (no 404)
+□ Console shows debug logs when verifying
+□ Database email_verified = true
+□ Redirect to login works
+□ Login page shows success message
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                       COPY THIS BUILD COMMAND                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+npm install && npm run build && echo "/* /index.html 200" > build/_redirects
+
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            DO THIS NOW!                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+This is the ONLY thing blocking your email verification from working.
+The code changes are already done and committed.
+You just need to update the Build Command in Render's dashboard.
+
+Estimated time: 10 minutes
+Difficulty: Easy
+Impact: Fixes EVERYTHING
+
+═══════════════════════════════════════════════════════════════════════════════
+
+After you complete this, reply with:
+
+1. ✅ Build command updated: YES/NO
+2. ✅ Changes saved: YES/NO
+3. ✅ Deployment triggered: YES/NO
+4. ✅ Deployment is Live: YES/NO
+5. ✅ Dashboard refresh works: YES/NO
+6. ✅ Email verification works: YES/NO
+
+═══════════════════════════════════════════════════════════════════════════════

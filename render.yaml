@@ -65,7 +65,7 @@ services:
   - type: web
     name: therapytracker-frontend
     runtime: static
-    buildCommand: npm install && npm run build && echo "/* /index.html 200" > build/_redirects
+    buildCommand: npm install && npm run build
     staticPublishPath: build
     rootDir: frontend
     pullRequestPreviewsEnabled: true # Enable PR previews
