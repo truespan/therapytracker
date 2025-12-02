@@ -206,11 +206,13 @@ const AdminDashboard = () => {
 
     return (
       <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${borderClass} flex-shrink-0 w-full lg:w-auto`}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between h-full min-h-[120px]">
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-600">{label}</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-            {subValue && <p className="text-sm text-gray-500 mt-1">{subValue}</p>}
+            <div className="h-6">
+              {subValue && <p className="text-sm text-gray-500 mt-1">{subValue}</p>}
+            </div>
           </div>
           <div className={`${iconBgClass} p-4 rounded-full`}>
             <Icon className={`h-8 w-8 ${iconColorClass}`} />

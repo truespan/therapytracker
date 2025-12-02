@@ -315,42 +315,79 @@ const AppointmentsTab = ({ partnerId }) => {
                         key={`video-${item.id}`}
                         className="p-3 sm:p-2 rounded border text-sm sm:text-xs bg-purple-50 border-purple-200"
                       >
-                        {/* Video Session label - Desktop only */}
-                        <div className="hidden sm:flex items-center space-x-1 mb-1 text-purple-700">
-                          <Video className="h-3 w-3 flex-shrink-0" />
-                          <span className="font-medium">Video Session</span>
-                        </div>
-
-                        <div className="flex items-center space-x-2 sm:space-x-1 mb-2 sm:mb-1 text-gray-600">
-                          <Clock className="h-4 w-4 sm:h-3 sm:w-3 flex-shrink-0" />
-                          <span className="font-medium">{formatTime(item.session_date)}</span>
-                        </div>
-
-                        <div className="flex items-center space-x-2 sm:space-x-1 mb-2 sm:mb-1">
-                          <User className="h-4 w-4 sm:h-3 sm:w-3 text-gray-500 flex-shrink-0" />
-                          <span className="font-semibold text-gray-900 truncate">
-                            {item.user_name}
-                          </span>
-                        </div>
-
-                        <div className="text-gray-700 mb-2 sm:mb-1 line-clamp-2">
-                          {item.title}
-                        </div>
-
-                        {item.has_therapy_session ? (
-                          <div className="w-full mt-2 flex items-center justify-center space-x-2 sm:space-x-1 py-2 sm:py-1 px-3 sm:px-2 bg-gray-400 text-white rounded cursor-not-allowed">
-                            <CheckCircle className="h-4 w-4 sm:h-3 sm:w-3" />
-                            <span className="font-medium">Session Created</span>
+                        {/* Desktop: Original vertical layout */}
+                        <div className="hidden sm:block">
+                          {/* Video Session label - Desktop only */}
+                          <div className="flex items-center space-x-1 mb-1 text-purple-700">
+                            <Video className="h-3 w-3 flex-shrink-0" />
+                            <span className="font-medium">Video Session</span>
                           </div>
-                        ) : (
-                          <button
-                            onClick={() => handleStartVideoSession(item)}
-                            className="w-full mt-2 flex items-center justify-center space-x-2 sm:space-x-1 py-2 sm:py-1 px-3 sm:px-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
-                          >
-                            <PlayCircle className="h-4 w-4 sm:h-3 sm:w-3" />
-                            <span className="font-medium">Start Session</span>
-                          </button>
-                        )}
+
+                          <div className="flex items-center space-x-1 mb-1 text-gray-600">
+                            <Clock className="h-3 w-3 flex-shrink-0" />
+                            <span className="font-medium">{formatTime(item.session_date)}</span>
+                          </div>
+
+                          <div className="flex items-center space-x-1 mb-1">
+                            <User className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                            <span className="font-semibold text-gray-900 truncate">
+                              {item.user_name}
+                            </span>
+                          </div>
+
+                          <div className="text-gray-700 mb-1 line-clamp-2">
+                            {item.title}
+                          </div>
+
+                          {item.has_therapy_session ? (
+                            <div className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-gray-400 text-white rounded cursor-not-allowed">
+                              <CheckCircle className="h-3 w-3" />
+                              <span className="font-medium">Session Created</span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleStartVideoSession(item)}
+                              className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                            >
+                              <PlayCircle className="h-3 w-3" />
+                              <span className="font-medium">Start Session</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Mobile: Compact horizontal layout */}
+                        <div className="sm:hidden">
+                          {/* Time and Title on same line */}
+                          <div className="flex items-center space-x-2 mb-2 text-gray-600">
+                            <Clock className="h-4 w-4 flex-shrink-0" />
+                            <span className="font-medium">{formatTime(item.session_date)}</span>
+                            <span className="text-gray-700 truncate flex-1">{item.title}</span>
+                          </div>
+
+                          {/* User name */}
+                          <div className="flex items-center space-x-2 mb-2">
+                            <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                            <span className="font-semibold text-gray-900 truncate">
+                              {item.user_name}
+                            </span>
+                          </div>
+
+                          {/* Button or status - moved up with reduced margin */}
+                          {item.has_therapy_session ? (
+                            <div className="flex items-center space-x-2 text-gray-600">
+                              <CheckCircle className="h-4 w-4" />
+                              <span className="font-medium text-sm">Session Created</span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleStartVideoSession(item)}
+                              className="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                            >
+                              <PlayCircle className="h-4 w-4" />
+                              <span className="font-medium">Start Session</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )))
                   )}
