@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Activity, AlertCircle } from 'lucide-react';
+import { Activity, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +19,8 @@ const Signup = () => {
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
 
@@ -94,14 +96,14 @@ const Signup = () => {
 
     setLoading(true);
 
-    // Prepare data for user signup
+    // Prepare data for user signup - trim email and contact
     const submitData = {
       userType: 'user',
-      email: formData.email,
-      contact: `${formData.countryCode}${formData.contact}`, // Combine country code with phone number
+      email: formData.email.trim(),
+      contact: `${formData.countryCode}${formData.contact.trim()}`, // Combine country code with phone number
       password: formData.password,
-      name: formData.name,
-      address: formData.address || null,
+      name: formData.name.trim(),
+      address: formData.address ? formData.address.trim() : null,
       sex: formData.sex,
       age: parseInt(formData.age),
       partner_id: formData.partner_id.trim().toUpperCase(),
@@ -275,28 +277,54 @@ const Signup = () => {
               {/* Password */}
               <div>
                 <label className="label">Password *</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="input"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="input pr-10"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
                 {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
               </div>
 
               {/* Confirm Password */}
               <div>
                 <label className="label">Confirm Password *</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="input"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="input pr-10"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className="text-red-600 text-sm mt-1">{errors.confirmPassword}</p>
                 )}

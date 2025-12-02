@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, User, Activity, Menu, X } from 'lucide-react';
+import { LogOut, User, Activity, Menu, X, Copy, Check } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleCopyPartnerId = () => {
+    if (user?.partner_id) {
+      navigator.clipboard.writeText(user.partner_id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const getDashboardLink = () => {
@@ -82,6 +91,33 @@ const Navbar = () => {
                 </div>
               </div>
             </div>
+
+            {/* Partner ID Section - Only for partners */}
+            {user.userType === 'partner' && user.partner_id && (
+              <div className="px-4 py-3 bg-primary-50 border-2 border-primary-200 rounded-lg">
+                <p className="text-xs text-gray-600 mb-1">Your Partner ID</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-lg font-bold text-primary-700 tracking-wider">
+                    {user.partner_id}
+                  </p>
+                  <button
+                    onClick={handleCopyPartnerId}
+                    className="p-2 hover:bg-primary-100 rounded transition-colors"
+                    title="Copy Partner ID"
+                  >
+                    {copied ? (
+                      <Check className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <Copy className="h-5 w-5 text-primary-600" />
+                    )}
+                  </button>
+                </div>
+                {copied && (
+                  <p className="text-xs text-green-600 mt-1">Copied to clipboard!</p>
+                )}
+              </div>
+            )}
+
             <button
               onClick={() => {
                 handleLogout();

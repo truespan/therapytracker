@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Activity, Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +11,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,8 +45,14 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    const result = await login(formData);
-    
+    // Trim email/phone before sending
+    const trimmedData = {
+      email: formData.email.trim(),
+      password: formData.password,
+    };
+
+    const result = await login(trimmedData);
+
     if (result.success) {
       // Route based on user type
       if (result.user.userType === 'admin') {
@@ -56,7 +63,7 @@ const Login = () => {
     } else {
       setError(result.error);
     }
-    
+
     setLoading(false);
   };
 
@@ -110,22 +117,35 @@ const Login = () => {
                   <Lock className="inline h-4 w-4 mr-1" />
                   Password
                 </label>
-                <Link 
-                  to="/forgot-password" 
+                <Link
+                  to="/forgot-password"
                   className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                 >
                   Forgot Password?
                 </Link>
               </div>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="input"
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="input pr-10"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <button

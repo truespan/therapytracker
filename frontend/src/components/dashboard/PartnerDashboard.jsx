@@ -11,7 +11,7 @@ import LatestChartDisplay from '../charts/LatestChartDisplay';
 import UserAssignmentsSection from '../questionnaires/UserAssignmentsSection';
 import SessionsSection from '../sessions/SessionsSection';
 import AppointmentsTab from '../appointments/AppointmentsTab';
-import { Users, Activity, User, Calendar, Copy, Check, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays } from 'lucide-react';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays } from 'lucide-react';
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
@@ -19,7 +19,6 @@ const PartnerDashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [sentCharts, setSentCharts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('appointments');
   const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(true);
 
@@ -68,14 +67,6 @@ const PartnerDashboard = () => {
   };
 
 
-  const copyPartnerIdToClipboard = () => {
-    if (user.partner_id) {
-      navigator.clipboard.writeText(user.partner_id);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   const handleSendChart = async (chartType, selectedSessions) => {
     if (!selectedUser) return;
 
@@ -114,27 +105,6 @@ const PartnerDashboard = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
         <p className="text-gray-600 mt-1">Manage your clients and track their progress</p>
-        
-        {/* Partner ID Display */}
-        {user.partner_id && (
-          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center bg-primary-50 border-2 border-primary-200 rounded-lg px-3 sm:px-4 py-3 gap-2 sm:gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-600 font-medium">Your Partner ID</p>
-              <p className="text-xl sm:text-2xl font-bold text-primary-700 tracking-wider break-all sm:break-normal">{user.partner_id}</p>
-            </div>
-            <button
-              onClick={copyPartnerIdToClipboard}
-              className="p-2 hover:bg-primary-100 rounded-md transition-colors flex-shrink-0"
-              title="Copy Partner ID"
-            >
-              {copied ? (
-                <Check className="h-5 w-5 text-green-600" />
-              ) : (
-                <Copy className="h-5 w-5 text-primary-600" />
-              )}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Mobile Dropdown */}
