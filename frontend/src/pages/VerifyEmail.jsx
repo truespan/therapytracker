@@ -4,6 +4,8 @@ import { CheckCircle, XCircle, Loader, Activity, ArrowRight } from 'lucide-react
 import { authAPI } from '../services/api';
 
 const VerifyEmail = () => {
+  console.log('VerifyEmail component rendered!');
+  console.log('🔵 Current URL:', window.location.href);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState('verifying'); // verifying, success, error
@@ -29,6 +31,8 @@ const VerifyEmail = () => {
         
         // Check if email was verified successfully
         if (response.data.partner?.email_verified) {
+          console.log('Email verified successfully in VerifyEmail.jsx!');
+          console.log('Partner info:', response.data.partner);
           // Navigate to organization dashboard after a short delay to show success message
           setTimeout(() => {
             navigate('/organization/dashboard', { 
@@ -46,6 +50,8 @@ const VerifyEmail = () => {
           error.response?.data?.error ||
           'Email verification failed. The link may be invalid or expired.'
         );
+        console.log('Email verification error in VerifyEmail.jsx:', error);
+        console.log('Error response in VerifyEmail.jsx:', error.response?.data);
       }
     };
 

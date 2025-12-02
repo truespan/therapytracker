@@ -408,6 +408,7 @@ const verifyEmail = async (req, res) => {
     const verifiedPartner = await Partner.verifyEmail(token);
 
     if (!verifiedPartner) {
+      console.log('Invalid or expired verification link');
       return res.status(400).json({
         error: 'Invalid or expired verification link',
         message: 'This verification link is invalid or has expired. Please contact your organization administrator to resend the verification email.'
@@ -428,6 +429,7 @@ const verifyEmail = async (req, res) => {
     });
   } catch (error) {
     console.error('Verify email error:', error);
+    console.error('Error response:', error.response?.data);
     res.status(500).json({ error: 'Failed to verify email', details: error.message });
   }
 };
