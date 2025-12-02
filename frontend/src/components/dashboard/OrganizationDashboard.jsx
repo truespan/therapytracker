@@ -327,8 +327,8 @@ const OrganizationDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="mb-6 lg:mb-8">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center">
               <Building2 className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mr-2 sm:mr-3" />
@@ -336,14 +336,24 @@ const OrganizationDashboard = () => {
             </h1>
             <p className="text-sm sm:text-base text-gray-600 mt-1">Organization Overview and Management</p>
           </div>
+          {/* Add Therapist Button - Hidden on mobile, visible on desktop */}
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn btn-primary flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-2 whitespace-nowrap"
+            className="hidden lg:flex items-center space-x-2 btn btn-primary whitespace-nowrap"
           >
-            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Plus className="h-5 w-5" />
             <span>Add Therapist</span>
           </button>
         </div>
+
+        {/* Add Therapist Button - Mobile Only (Floating Action Button style) */}
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-50 bg-primary-600 text-white p-4 rounded-full shadow-lg hover:bg-primary-700 transition-colors flex items-center justify-center"
+          title="Add Therapist"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
       </div>
 
       {/* Messages */}
@@ -364,53 +374,95 @@ const OrganizationDashboard = () => {
         </div>
       )}
 
-      {/* Stats Cards - Stacked on mobile, grid on desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-8">
-        <div className="card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs sm:text-sm text-gray-600">Total Therapists</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">{stats.totalPartners}</p>
+      {/* Stats Cards - Horizontal scroll on mobile, grid on desktop */}
+      <div className="mb-6 lg:mb-8">
+        {/* Mobile: Horizontal Scrollable */}
+        <div className="lg:hidden overflow-x-auto -mx-4 px-4 scrollbar-thin scroll-smooth">
+          <div className="flex gap-4 pb-2">
+            <div className="card p-5 flex-shrink-0 w-[200px]">
+              <div className="flex flex-col items-center text-center">
+                <p className="text-sm text-gray-600 mb-2">Total Therapists</p>
+                <UserCheck className="h-12 w-12 text-primary-600 mb-2" />
+                <p className="text-3xl font-bold text-gray-900">{stats.totalPartners}</p>
+              </div>
             </div>
-            <UserCheck className="h-10 w-10 sm:h-12 sm:w-12 text-primary-600" />
+
+            <div className="card p-5 flex-shrink-0 w-[200px]">
+              <div className="flex flex-col items-center text-center">
+                <p className="text-sm text-gray-600 mb-2">Active</p>
+                <CheckCircle className="h-12 w-12 text-green-600 mb-2" />
+                <p className="text-3xl font-bold text-green-600">{stats.activePartners}</p>
+              </div>
+            </div>
+
+            <div className="card p-5 flex-shrink-0 w-[200px]">
+              <div className="flex flex-col items-center text-center">
+                <p className="text-sm text-gray-600 mb-2">Inactive</p>
+                <XCircle className="h-12 w-12 text-red-600 mb-2" />
+                <p className="text-3xl font-bold text-red-600">{stats.inactivePartners}</p>
+              </div>
+            </div>
+
+            <div className="card p-5 flex-shrink-0 w-[200px]">
+              <div className="flex flex-col items-center text-center">
+                <p className="text-sm text-gray-600 mb-2">Total Clients</p>
+                <Users className="h-12 w-12 text-primary-600 mb-2" />
+                <p className="text-3xl font-bold text-gray-900">{stats.totalUsers}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs sm:text-sm text-gray-600">Active</p>
-              <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-1">{stats.activePartners}</p>
+        {/* Desktop: Grid Layout */}
+        <div className="hidden lg:grid grid-cols-4 gap-6">
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Therapists</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalPartners}</p>
+              </div>
+              <UserCheck className="h-12 w-12 text-primary-600" />
             </div>
-            <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-green-600" />
           </div>
-        </div>
 
-        <div className="card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs sm:text-sm text-gray-600">Inactive</p>
-              <p className="text-2xl sm:text-3xl font-bold text-red-600 mt-1">{stats.inactivePartners}</p>
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Active</p>
+                <p className="text-3xl font-bold text-green-600 mt-1">{stats.activePartners}</p>
+              </div>
+              <CheckCircle className="h-12 w-12 text-green-600" />
             </div>
-            <XCircle className="h-10 w-10 sm:h-12 sm:w-12 text-red-600" />
           </div>
-        </div>
 
-        <div className="card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs sm:text-sm text-gray-600">Total Clients</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">{stats.totalUsers}</p>
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Inactive</p>
+                <p className="text-3xl font-bold text-red-600 mt-1">{stats.inactivePartners}</p>
+              </div>
+              <XCircle className="h-12 w-12 text-red-600" />
             </div>
-            <Users className="h-10 w-10 sm:h-12 sm:w-12 text-primary-600" />
+          </div>
+
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Clients</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalUsers}</p>
+              </div>
+              <Users className="h-12 w-12 text-primary-600" />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-4 gap-6">
-        {/* Partners List */}
-        <div className="lg:col-span-1">
-          <div className="card sticky top-4">
+      {/* Mobile: Therapist list first, then clients */}
+      {/* Desktop: Side by side layout */}
+      <div className="flex flex-col lg:grid lg:grid-cols-4 gap-6">
+        {/* Partners List - Appears first on mobile, sidebar on desktop */}
+        <div className="order-1 lg:col-span-1">
+          <div className="card lg:sticky lg:top-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold flex items-center">
                 <UserCheck className="h-5 w-5 mr-2" />
@@ -566,8 +618,8 @@ const OrganizationDashboard = () => {
           </div>
         </div>
 
-        {/* Partner's Clients */}
-        <div className="lg:col-span-3">
+        {/* Partner's Clients - Appears second on mobile, main content on desktop */}
+        <div className="order-2 lg:col-span-3">
           {selectedPartner ? (
             <div className="card">
               <div className="mb-4">
