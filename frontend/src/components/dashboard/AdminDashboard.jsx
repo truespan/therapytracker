@@ -181,20 +181,44 @@ const AdminDashboard = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const StatCard = ({ icon: Icon, label, value, subValue, color = 'indigo' }) => (
-    <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-600">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600">{label}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-          {subValue && <p className="text-sm text-gray-500 mt-1">{subValue}</p>}
-        </div>
-        <div className={`bg-${color}-100 p-4 rounded-full`}>
-          <Icon className={`h-8 w-8 text-${color}-600`} />
+  const StatCard = ({ icon: Icon, label, value, subValue, color = 'indigo' }) => {
+    // Icon color classes for dynamic colors
+    const iconBgClass = {
+      'indigo': 'bg-indigo-100',
+      'blue': 'bg-blue-100',
+      'green': 'bg-green-100',
+      'purple': 'bg-purple-100'
+    }[color] || 'bg-indigo-100';
+
+    const iconColorClass = {
+      'indigo': 'text-indigo-600',
+      'blue': 'text-blue-600',
+      'green': 'text-green-600',
+      'purple': 'text-purple-600'
+    }[color] || 'text-indigo-600';
+
+    const borderClass = {
+      'indigo': 'border-indigo-600',
+      'blue': 'border-blue-600',
+      'green': 'border-green-600',
+      'purple': 'border-purple-600'
+    }[color] || 'border-indigo-600';
+
+    return (
+      <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${borderClass} flex-shrink-0 w-full lg:w-auto`}>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600">{label}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+            {subValue && <p className="text-sm text-gray-500 mt-1">{subValue}</p>}
+          </div>
+          <div className={`${iconBgClass} p-4 rounded-full`}>
+            <Icon className={`h-8 w-8 ${iconColorClass}`} />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -223,34 +247,77 @@ const AdminDashboard = () => {
 
       {/* Stats Overview */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            icon={Building2}
-            label="Total Organizations"
-            value={stats.total_organizations || 0}
-            subValue={`${stats.active_organizations || 0} active`}
-            color="indigo"
-          />
-          <StatCard
-            icon={UserCheck}
-            label="Total Partners"
-            value={stats.total_partners || 0}
-            color="blue"
-          />
-          <StatCard
-            icon={Users}
-            label="Total Clients"
-            value={stats.total_users || 0}
-            color="green"
-          />
-          <StatCard
-            icon={Activity}
-            label="Total Sessions"
-            value={stats.total_sessions || 0}
-            subValue={`${stats.sessions_this_month || 0} this month`}
-            color="purple"
-          />
-        </div>
+        <>
+          {/* Mobile: Horizontal Scrollable Cards */}
+          <div className="lg:hidden overflow-x-auto -mx-4 px-4 scrollbar-thin scroll-smooth">
+            <div className="flex gap-4 pb-2">
+              <div className="w-[70%] flex-shrink-0">
+                <StatCard
+                  icon={Building2}
+                  label="Total Organizations"
+                  value={stats.total_organizations || 0}
+                  subValue={`${stats.active_organizations || 0} active`}
+                  color="indigo"
+                />
+              </div>
+              <div className="w-[70%] flex-shrink-0">
+                <StatCard
+                  icon={UserCheck}
+                  label="Total Partners"
+                  value={stats.total_partners || 0}
+                  color="blue"
+                />
+              </div>
+              <div className="w-[70%] flex-shrink-0">
+                <StatCard
+                  icon={Users}
+                  label="Total Clients"
+                  value={stats.total_users || 0}
+                  color="green"
+                />
+              </div>
+              <div className="w-[70%] flex-shrink-0">
+                <StatCard
+                  icon={Activity}
+                  label="Total Sessions"
+                  value={stats.total_sessions || 0}
+                  subValue={`${stats.sessions_this_month || 0} this month`}
+                  color="purple"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: Grid Layout */}
+          <div className="hidden lg:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard
+              icon={Building2}
+              label="Total Organizations"
+              value={stats.total_organizations || 0}
+              subValue={`${stats.active_organizations || 0} active`}
+              color="indigo"
+            />
+            <StatCard
+              icon={UserCheck}
+              label="Total Partners"
+              value={stats.total_partners || 0}
+              color="blue"
+            />
+            <StatCard
+              icon={Users}
+              label="Total Clients"
+              value={stats.total_users || 0}
+              color="green"
+            />
+            <StatCard
+              icon={Activity}
+              label="Total Sessions"
+              value={stats.total_sessions || 0}
+              subValue={`${stats.sessions_this_month || 0} this month`}
+              color="purple"
+            />
+          </div>
+        </>
       )}
 
       {/* Filters and Search */}
