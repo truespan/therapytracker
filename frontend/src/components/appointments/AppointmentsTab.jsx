@@ -204,7 +204,7 @@ const AppointmentsTab = ({ partnerId }) => {
               return (
                 <div
                   key={dateKey}
-                  className={`border rounded-lg overflow-hidden flex-shrink-0 w-[calc(43.5%-0.87rem)] sm:w-auto ${
+                  className={`border rounded-lg overflow-hidden flex-shrink-0 w-[70%] sm:w-auto ${
                     isToday ? 'border-primary-500 border-2' : 'border-gray-200'
                   }`}
                 >
@@ -275,8 +275,9 @@ const AppointmentsTab = ({ partnerId }) => {
                         key={`video-${item.id}`}
                         className="p-3 sm:p-2 rounded border text-sm sm:text-xs bg-purple-50 border-purple-200"
                       >
-                        <div className="flex items-center space-x-2 sm:space-x-1 mb-2 sm:mb-1 text-purple-700">
-                          <Video className="h-4 w-4 sm:h-3 sm:w-3 flex-shrink-0" />
+                        {/* Video Session label - Desktop only */}
+                        <div className="hidden sm:flex items-center space-x-1 mb-1 text-purple-700">
+                          <Video className="h-3 w-3 flex-shrink-0" />
                           <span className="font-medium">Video Session</span>
                         </div>
 
