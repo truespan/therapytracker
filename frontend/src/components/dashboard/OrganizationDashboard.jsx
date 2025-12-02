@@ -507,21 +507,21 @@ const OrganizationDashboard = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => openEditModal(selectedPartner)}
-                    className="p-3 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center space-x-2 transition"
+                    className="px-3 py-2 text-xs sm:text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>Edit</span>
                   </button>
 
                   {(partnerClientCounts[selectedPartner.id] === 0) && (
                     <button
                       onClick={() => handleDeletePartner(selectedPartner)}
-                      className="p-3 text-sm text-red-700 bg-red-50 hover:bg-red-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                      className="px-3 py-2 text-xs sm:text-sm text-red-700 bg-red-50 hover:bg-red-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span>Delete</span>
                     </button>
                   )}
@@ -529,36 +529,37 @@ const OrganizationDashboard = () => {
                   {!selectedPartner.email_verified && (
                     <button
                       onClick={() => handleResendVerification(selectedPartner)}
-                      className="p-3 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                      className="px-3 py-2 text-xs sm:text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                     >
-                      <Send className="h-4 w-4" />
-                      <span>Resend Email</span>
+                      <Send className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Resend Email</span>
+                      <span className="sm:hidden">Resend</span>
                     </button>
                   )}
 
                   {selectedPartner.is_active ? (
                     <button
                       onClick={() => openDeactivateModal(selectedPartner)}
-                      className="p-3 text-sm text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                      className="px-3 py-2 text-xs sm:text-sm text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                     >
-                      <UserX className="h-4 w-4" />
+                      <UserX className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span>Deactivate</span>
                     </button>
                   ) : (
                     <button
                       onClick={() => handleActivatePartner(selectedPartner)}
-                      className="p-3 text-sm text-green-700 bg-green-50 hover:bg-green-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                      className="px-3 py-2 text-xs sm:text-sm text-green-700 bg-green-50 hover:bg-green-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                     >
-                      <UserPlus className="h-4 w-4" />
+                      <UserPlus className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span>Activate</span>
                     </button>
                   )}
 
                   <button
                     onClick={() => openReassignModal(selectedPartner)}
-                    className="p-3 text-sm text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                    className="px-3 py-2 text-xs sm:text-sm text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                   >
-                    <ArrowRightLeft className="h-4 w-4" />
+                    <ArrowRightLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>Reassign</span>
                   </button>
                 </div>
