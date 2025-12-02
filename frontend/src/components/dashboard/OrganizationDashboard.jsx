@@ -434,18 +434,15 @@ const OrganizationDashboard = () => {
         </div>
       </div>
 
-      {/* Mobile: Therapist list first, then clients */}
-      {/* Desktop: Side by side layout */}
-      <div className="flex flex-col lg:grid lg:grid-cols-4 gap-6">
-        {/* Partners List - Appears first on mobile, sidebar on desktop */}
-        <div className="order-1 lg:col-span-1">
-          <div className="card lg:sticky lg:top-4">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold flex items-center">
-                <UserCheck className="h-5 w-5 mr-2" />
-                Therapists
-              </h2>
-            </div>
+      {/* Therapist Dropdown and Details */}
+      <div className="space-y-6">
+        {/* Therapist Selector */}
+        <div className="card">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold flex items-center mb-3">
+              <UserCheck className="h-5 w-5 mr-2" />
+              Select Therapist
+            </h2>
 
             {filteredPartners.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -453,179 +450,159 @@ const OrganizationDashboard = () => {
                 <p className="text-sm">No therapists found</p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              <select
+                value={selectedPartner?.id || ''}
+                onChange={(e) => {
+                  const partner = filteredPartners.find(p => p.id === parseInt(e.target.value));
+                  if (partner) {
+                    handlePartnerSelect(partner);
+                  } else {
+                    setSelectedPartner(null);
+                    setPartnerClients([]);
+                  }
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base"
+              >
+                <option value="">-- Select a therapist --</option>
                 {filteredPartners.map((partner) => (
-                  <div
-                    key={partner.id}
-                    className={`p-3 rounded-lg border-2 transition ${
-                      selectedPartner?.id === partner.id
-                        ? 'border-primary-600 bg-primary-50'
-                        : 'border-gray-200'
-                    }`}
-                  >
-                    <button
-                      onClick={() => handlePartnerSelect(partner)}
-                      className="w-full text-left"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">{partner.name}</p>
-                          {partner.partner_id && (
-                            <p className="text-xs font-mono text-primary-600 font-semibold mt-1">
-                              ID: {partner.partner_id}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-500 mt-1 flex items-center space-x-1">
-                            <Users className="h-3 w-3" />
-                            <span>{partnerClientCounts[partner.id] || 0} client{partnerClientCounts[partner.id] !== 1 ? 's' : ''}</span>
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end space-y-1">
-                          <CheckCircle
-                            className={`h-4 w-4 ${partner.is_active ? 'text-green-600' : 'text-red-600'}`}
-                            title={partner.is_active ? 'Active' : 'Inactive'}
-                          />
-                          {partner.email_verified ? (
-                            <Mail className="h-4 w-4 text-green-600" title="Email Verified" />
-                          ) : (
-                            <Mail className="h-4 w-4 text-amber-600" title="Email Not Verified" />
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">{partner.email}</p>
-                    </button>
+                  <option key={partner.id} value={partner.id}>
+                    {partner.name} - ID: {partner.partner_id} ({partnerClientCounts[partner.id] || 0} client{partnerClientCounts[partner.id] !== 1 ? 's' : ''})
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex items-center space-x-1 mt-2 pt-2 border-t border-gray-200">
-                      <button
-                        onClick={() => openEditModal(partner)}
-                        className="flex-1 p-2 text-xs text-gray-700 hover:bg-gray-100 rounded flex items-center justify-center space-x-1"
-                        title="Edit"
-                      >
-                        <Edit className="h-3 w-3" />
-                        <span>Edit</span>
-                      </button>
-
-                      {(partnerClientCounts[partner.id] === 0) && (
-                        <button
-                          onClick={() => handleDeletePartner(partner)}
-                          className="flex-1 p-2 text-xs text-red-700 hover:bg-red-50 rounded flex items-center justify-center space-x-1"
-                          title="Delete Therapist"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          <span>Delete</span>
-                        </button>
+          {/* Selected Therapist Details */}
+          {selectedPartner && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="space-y-4">
+                {/* Therapist Info */}
+                <div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900">{selectedPartner.name}</h3>
+                      {selectedPartner.partner_id && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          ID: <span className="font-mono font-semibold text-primary-600">{selectedPartner.partner_id}</span>
+                        </p>
                       )}
-
-                      {!partner.email_verified && (
-                        <button
-                          onClick={() => handleResendVerification(partner)}
-                          className="flex-1 p-2 text-xs text-blue-700 hover:bg-blue-50 rounded flex items-center justify-center space-x-1"
-                          title="Resend Verification Email"
-                        >
-                          <Send className="h-3 w-3" />
-                          <span>Resend</span>
-                        </button>
-                      )}
-
-                      {partner.is_active ? (
-                        <button
-                          onClick={() => openDeactivateModal(partner)}
-                          className="flex-1 p-2 text-xs text-orange-700 hover:bg-orange-50 rounded flex items-center justify-center space-x-1"
-                          title="Deactivate"
-                        >
-                          <UserX className="h-3 w-3" />
-                          <span>Deactivate</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleActivatePartner(partner)}
-                          className="flex-1 p-2 text-xs text-green-700 hover:bg-green-50 rounded flex items-center justify-center space-x-1"
-                          title="Activate"
-                        >
-                          <UserPlus className="h-3 w-3" />
-                          <span>Activate</span>
-                        </button>
-                      )}
-
-                      <button
-                        onClick={() => openReassignModal(partner)}
-                        className="flex-1 p-2 text-xs text-primary-700 hover:bg-primary-50 rounded flex items-center justify-center space-x-1"
-                        title="Reassign Clients"
-                      >
-                        <ArrowRightLeft className="h-3 w-3" />
-                        <span>Reassign</span>
-                      </button>
+                      <p className="text-sm text-gray-600 mt-1">{selectedPartner.email}</p>
+                      <p className="text-sm text-gray-500 mt-1 flex items-center space-x-1">
+                        <Users className="h-4 w-4" />
+                        <span>{partnerClientCounts[selectedPartner.id] || 0} client{partnerClientCounts[selectedPartner.id] !== 1 ? 's' : ''}</span>
+                      </p>
                     </div>
+                    <div className="flex flex-col items-end space-y-2">
+                      <span className={`flex items-center space-x-1 text-sm ${selectedPartner.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                        <CheckCircle className="h-4 w-4" />
+                        <span>{selectedPartner.is_active ? 'Active' : 'Inactive'}</span>
+                      </span>
+                      <span className={`flex items-center space-x-1 text-sm ${selectedPartner.email_verified ? 'text-green-600' : 'text-amber-600'}`}>
+                        <Mail className="h-4 w-4" />
+                        <span>{selectedPartner.email_verified ? 'Verified' : 'Pending'}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                  <button
+                    onClick={() => openEditModal(selectedPartner)}
+                    className="p-3 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center space-x-2 transition"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span>Edit</span>
+                  </button>
+
+                  {(partnerClientCounts[selectedPartner.id] === 0) && (
+                    <button
+                      onClick={() => handleDeletePartner(selectedPartner)}
+                      className="p-3 text-sm text-red-700 bg-red-50 hover:bg-red-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Delete</span>
+                    </button>
+                  )}
+
+                  {!selectedPartner.email_verified && (
+                    <button
+                      onClick={() => handleResendVerification(selectedPartner)}
+                      className="p-3 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                    >
+                      <Send className="h-4 w-4" />
+                      <span>Resend Email</span>
+                    </button>
+                  )}
+
+                  {selectedPartner.is_active ? (
+                    <button
+                      onClick={() => openDeactivateModal(selectedPartner)}
+                      className="p-3 text-sm text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                    >
+                      <UserX className="h-4 w-4" />
+                      <span>Deactivate</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleActivatePartner(selectedPartner)}
+                      className="p-3 text-sm text-green-700 bg-green-50 hover:bg-green-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      <span>Activate</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => openReassignModal(selectedPartner)}
+                    className="p-3 text-sm text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg flex items-center justify-center space-x-2 transition"
+                  >
+                    <ArrowRightLeft className="h-4 w-4" />
+                    <span>Reassign</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Therapist's Clients */}
+        {selectedPartner && (
+          <div className="card">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <Users className="h-6 w-6 mr-2" />
+                {selectedPartner.name}'s Clients ({partnerClients.length})
+              </h2>
+            </div>
+
+            {partnerClients.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                <p>No clients assigned to this therapist yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {partnerClients.map((client) => (
+                  <div
+                    key={client.id}
+                    className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-300 transition"
+                  >
+                    <p className="font-medium text-gray-900">{client.name}</p>
+                    <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
+                    {client.email && <p className="text-sm text-gray-600 mt-1">{client.email}</p>}
+                    {client.assigned_at && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Assigned: {new Date(client.assigned_at).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </div>
-
-        {/* Partner's Clients - Appears second on mobile, main content on desktop */}
-        <div className="order-2 lg:col-span-3">
-          {selectedPartner ? (
-            <div className="card">
-              <div className="mb-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">
-                      {selectedPartner.name}'s Clients ({partnerClients.length})
-                    </h2>
-                    <div className="flex items-center space-x-4 mt-2 text-sm">
-                      {selectedPartner.partner_id && (
-                        <span className="text-gray-600">
-                          ID: <span className="font-mono font-semibold text-primary-600">{selectedPartner.partner_id}</span>
-                        </span>
-                      )}
-                      <span className={`flex items-center space-x-1 ${selectedPartner.is_active ? 'text-green-600' : 'text-red-600'}`}>
-                        {selectedPartner.is_active ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                        <span>{selectedPartner.is_active ? 'Active' : 'Inactive'}</span>
-                      </span>
-                      <span className={`flex items-center space-x-1 ${selectedPartner.email_verified ? 'text-green-600' : 'text-amber-600'}`}>
-                        <Mail className="h-4 w-4" />
-                        <span>{selectedPartner.email_verified ? 'Email Verified' : 'Email Pending'}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {partnerClients.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                  <p>No clients assigned to this therapist yet</p>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {partnerClients.map((client) => (
-                    <div
-                      key={client.id}
-                      className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-300 transition"
-                    >
-                      <p className="font-medium text-gray-900">{client.name}</p>
-                      <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
-                      {client.email && <p className="text-sm text-gray-600 mt-1">{client.email}</p>}
-                      {client.assigned_at && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          Assigned: {new Date(client.assigned_at).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="card text-center py-16">
-              <UserCheck className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg">Select a therapist to view their clients</p>
-              <p className="text-gray-500 text-sm mt-2">Use the action buttons to manage therapists</p>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Modals */}
