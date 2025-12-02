@@ -192,8 +192,8 @@ const AppointmentsTab = ({ partnerId }) => {
         )}
 
         {/* Weekly Grid - Horizontal scroll on mobile, grid on desktop */}
-        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-          <div className="flex gap-3 sm:grid sm:grid-cols-7 sm:gap-2 min-w-max sm:min-w-0">
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-thin scroll-smooth">
+          <div className="flex gap-4 sm:grid sm:grid-cols-7 sm:gap-2">
             {Object.keys(groupedAppointments).map(dateKey => {
               const dayData = groupedAppointments[dateKey];
               // Use local date for "today" comparison
@@ -204,7 +204,7 @@ const AppointmentsTab = ({ partnerId }) => {
               return (
                 <div
                   key={dateKey}
-                  className={`border rounded-lg overflow-hidden flex-shrink-0 w-[280px] sm:w-auto ${
+                  className={`border rounded-lg overflow-hidden flex-shrink-0 w-[calc(43.5%-0.87rem)] sm:w-auto ${
                     isToday ? 'border-primary-500 border-2' : 'border-gray-200'
                   }`}
                 >
