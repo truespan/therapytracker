@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { organizationAPI } from '../../services/api';
 import {
   Building2, Users, UserCheck, Activity, Plus, Edit, UserX,
-  UserPlus, ArrowRightLeft, CheckCircle, Mail,
+  UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail,
   AlertCircle, Send, Trash2
 } from 'lucide-react';
 import CreatePartnerModal from '../organization/CreatePartnerModal';
