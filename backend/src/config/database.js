@@ -6,9 +6,11 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Test connection
-pool.on('connect', () => {
+// Test connection and set timezone
+pool.on('connect', (client) => {
   console.log('Connected to PostgreSQL database');
+  // Set timezone to UTC to prevent timezone conversion issues
+  client.query('SET timezone = "UTC"');
 });
 
 pool.on('error', (err) => {

@@ -50,18 +50,18 @@ const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">My Questionnaires</h2>
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Questionnaires</h2>
         <button
           onClick={onCreateNew}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 sm:px-6 sm:py-2 bg-primary-600 text-white text-sm sm:text-base rounded-lg hover:bg-primary-700 transition-colors"
         >
           + Create New Questionnaire
         </button>
@@ -80,7 +80,7 @@ const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search questionnaires..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
 
@@ -93,7 +93,7 @@ const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
           {!searchTerm && (
             <button
               onClick={onCreateNew}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
               Create Your First Questionnaire
             </button>
@@ -168,7 +168,7 @@ const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
                 </button>
                 <button
                   onClick={() => onEdit(questionnaire.id)}
-                  className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-3 py-2 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors"
                 >
                   Edit
                 </button>
