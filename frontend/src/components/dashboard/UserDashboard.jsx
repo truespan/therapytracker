@@ -121,22 +121,60 @@ const UserDashboard = () => {
         <p className="text-gray-600 mt-1">Track your therapy progress</p>
       </div>
 
-      {/* Mobile Dropdown */}
-      <div className="md:hidden mb-6">
-        <select
-          value={activeTab}
-          onChange={(e) => setActiveTab(e.target.value)}
-          className="w-full input text-sm"
-        >
-          <option value="overview">📊 Overview</option>
-          {videoSessionsEnabled && <option value="video">🎥 Video Sessions</option>}
-          <option value="charts">📈 Charts & Insights</option>
-          <option value="questionnaires">📋 Questionnaires</option>
-        </select>
+      {/* Scrollable Tabs - Mobile & Tablet */}
+      <div className="lg:hidden border-b border-gray-200 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <nav className="flex space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+              activeTab === 'overview'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            <Activity className="h-5 w-5" />
+            <span className="text-xs">Overview</span>
+          </button>
+          {videoSessionsEnabled && (
+            <button
+              onClick={() => setActiveTab('video')}
+              className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+                activeTab === 'video'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500'
+              }`}
+            >
+              <Video className="h-5 w-5" />
+              <span className="text-xs">Video</span>
+            </button>
+          )}
+          <button
+            onClick={() => setActiveTab('charts')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+              activeTab === 'charts'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            <BarChart3 className="h-5 w-5" />
+            <span className="text-xs">Charts</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('questionnaires')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+              activeTab === 'questionnaires'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            <FileText className="h-5 w-5" />
+            <span className="text-xs">Questionnaires</span>
+          </button>
+        </nav>
       </div>
 
       {/* Desktop Tabs */}
-      <div className="hidden md:block border-b border-gray-200 mb-6">
+      <div className="hidden lg:block border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}

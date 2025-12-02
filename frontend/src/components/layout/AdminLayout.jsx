@@ -64,8 +64,8 @@ const AdminLayout = ({ children }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Navigation Tabs */}
         <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px overflow-x-auto scrollbar-thin">
+          <div className="border-b border-gray-200 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <nav className="flex -mb-px space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
@@ -74,16 +74,16 @@ const AdminLayout = ({ children }) => {
                     key={item.path}
                     to={item.path}
                     className={`
-                      flex items-center space-x-2 px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-colors
+                      py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col lg:flex-row items-center gap-1 lg:gap-2 flex-shrink-0 transition-colors
                       ${
                         active
                           ? 'border-indigo-600 text-indigo-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
                       }
                     `}
                   >
-                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span>{item.label}</span>
+                    <Icon className="h-5 w-5" />
+                    <span className="text-xs lg:text-sm">{item.label}</span>
                   </Link>
                 );
               })}
