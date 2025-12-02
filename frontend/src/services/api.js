@@ -14,21 +14,48 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     console.log('[API Debug] Request to:', config.url, '| Token present:', !!token);
-    if (token) {
+    console.log('[API Debug] Full URL:', config.baseURL + config.url);
+    console.log('[API Debug] Method:', config.method);
+    console.log('[API Debug] Params:', config.params);
+
+    // Don't add auth token for public endpoints like email verification
+    const isPublicEndpoint = config.url.includes('/auth/verify-email') ||
+                             config.url.includes('/auth/signup') ||
+                             config.url.includes('/auth/login') ||
+                             config.url.includes('/auth/forgot-password') ||
+                             config.url.includes('/auth/reset-password');
+
+    if (token && !isPublicEndpoint) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
+    console.error('[API Debug] Request error:', error);
     return Promise.reject(error);
   }
 );
 
 // Handle response errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('[API Debug] Response success:', response.config.url, '| Status:', response.status);
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401) {
+    console.error('[API Debug] Response error:', error.config?.url);
+    console.error('[API Debug] Error status:', error.response?.status);
+    console.error('[API Debug] Error data:', error.response?.data);
+    console.error('[API Debug] Error message:', error.message);
+
+    // Don't auto-redirect to login for public endpoints
+    const isPublicEndpoint = error.config?.url?.includes('/auth/verify-email') ||
+                             error.config?.url?.includes('/auth/signup') ||
+                             error.config?.url?.includes('/auth/login') ||
+                             error.config?.url?.includes('/auth/forgot-password') ||
+                             error.config?.url?.includes('/auth/reset-password');
+
+    if (error.response?.status === 401 && !isPublicEndpoint) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
