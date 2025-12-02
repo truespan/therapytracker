@@ -174,12 +174,12 @@ const AppointmentsTab = ({ partnerId }) => {
   return (
     <div className="space-y-4">
       <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            <Calendar className="h-6 w-6 text-primary-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Upcoming Appointments & Video Sessions</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Upcoming Appointments & Video Sessions</h2>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-xs sm:text-sm text-gray-600">
             Next 7 Days
           </div>
         </div>
@@ -191,35 +191,36 @@ const AppointmentsTab = ({ partnerId }) => {
           </div>
         )}
 
-        {/* Weekly Grid */}
-        <div className="grid grid-cols-7 gap-2">
-          {Object.keys(groupedAppointments).map(dateKey => {
-            const dayData = groupedAppointments[dateKey];
-            // Use local date for "today" comparison
-            const today = new Date();
-            const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            const isToday = dateKey === todayKey;
+        {/* Weekly Grid - Horizontal scroll on mobile, grid on desktop */}
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-3 sm:grid sm:grid-cols-7 sm:gap-2 min-w-max sm:min-w-0">
+            {Object.keys(groupedAppointments).map(dateKey => {
+              const dayData = groupedAppointments[dateKey];
+              // Use local date for "today" comparison
+              const today = new Date();
+              const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+              const isToday = dateKey === todayKey;
 
-            return (
-              <div
-                key={dateKey}
-                className={`border rounded-lg overflow-hidden ${
-                  isToday ? 'border-primary-500 border-2' : 'border-gray-200'
-                }`}
-              >
-                {/* Day Header */}
-                <div className={`p-2 text-center text-sm font-semibold ${
-                  isToday
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700'
-                }`}>
-                  {formatDayHeader(dayData.date)}
-                </div>
+              return (
+                <div
+                  key={dateKey}
+                  className={`border rounded-lg overflow-hidden flex-shrink-0 w-[280px] sm:w-auto ${
+                    isToday ? 'border-primary-500 border-2' : 'border-gray-200'
+                  }`}
+                >
+                  {/* Day Header */}
+                  <div className={`p-3 sm:p-2 text-center text-base sm:text-sm font-semibold ${
+                    isToday
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {formatDayHeader(dayData.date)}
+                  </div>
 
-                {/* Appointments and Video Sessions for this day */}
-                <div className="p-2 space-y-2 min-h-[200px] bg-white">
+                  {/* Appointments and Video Sessions for this day */}
+                  <div className="p-3 sm:p-2 space-y-2 min-h-[200px] sm:min-h-[200px] bg-white">
                   {dayData.items.length === 0 ? (
-                    <div className="text-center text-gray-400 text-xs py-4">
+                    <div className="text-center text-gray-400 text-sm sm:text-xs py-8 sm:py-4">
                       Nothing scheduled
                     </div>
                   ) : (
@@ -227,32 +228,32 @@ const AppointmentsTab = ({ partnerId }) => {
                       // Appointment Card
                       <div
                         key={`apt-${item.id}`}
-                        className={`p-2 rounded border text-xs ${
+                        className={`p-3 sm:p-2 rounded border text-sm sm:text-xs ${
                           item.has_session
                             ? 'bg-green-50 border-green-200'
                             : 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer'
                         }`}
                         onClick={() => !item.has_session && handleStartSession(item)}
                       >
-                        <div className="flex items-center space-x-1 mb-1 text-gray-600">
-                          <Clock className="h-3 w-3" />
+                        <div className="flex items-center space-x-2 sm:space-x-1 mb-2 sm:mb-1 text-gray-600">
+                          <Clock className="h-4 w-4 sm:h-3 sm:w-3 flex-shrink-0" />
                           <span className="font-medium">{formatTime(item.appointment_date)}</span>
                         </div>
 
-                        <div className="flex items-center space-x-1 mb-1">
-                          <User className="h-3 w-3 text-gray-500" />
+                        <div className="flex items-center space-x-2 sm:space-x-1 mb-2 sm:mb-1">
+                          <User className="h-4 w-4 sm:h-3 sm:w-3 text-gray-500 flex-shrink-0" />
                           <span className="font-semibold text-gray-900 truncate">
                             {item.user_name}
                           </span>
                         </div>
 
-                        <div className="text-gray-700 truncate mb-1">
+                        <div className="text-gray-700 mb-2 sm:mb-1 line-clamp-2">
                           {item.title}
                         </div>
 
                         {item.has_session ? (
-                          <div className="flex items-center space-x-1 text-green-700 mt-2">
-                            <CheckCircle className="h-3 w-3" />
+                          <div className="flex items-center space-x-2 sm:space-x-1 text-green-700 mt-2">
+                            <CheckCircle className="h-4 w-4 sm:h-3 sm:w-3" />
                             <span className="font-medium">Session Completed</span>
                           </div>
                         ) : (
@@ -261,9 +262,9 @@ const AppointmentsTab = ({ partnerId }) => {
                               e.stopPropagation();
                               handleStartSession(item);
                             }}
-                            className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
+                            className="w-full mt-2 flex items-center justify-center space-x-2 sm:space-x-1 py-2 sm:py-1 px-3 sm:px-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
                           >
-                            <PlayCircle className="h-3 w-3" />
+                            <PlayCircle className="h-4 w-4 sm:h-3 sm:w-3" />
                             <span className="font-medium">Start Session</span>
                           </button>
                         )}
@@ -272,40 +273,40 @@ const AppointmentsTab = ({ partnerId }) => {
                       // Video Session Card
                       <div
                         key={`video-${item.id}`}
-                        className="p-2 rounded border text-xs bg-purple-50 border-purple-200"
+                        className="p-3 sm:p-2 rounded border text-sm sm:text-xs bg-purple-50 border-purple-200"
                       >
-                        <div className="flex items-center space-x-1 mb-1 text-purple-700">
-                          <Video className="h-3 w-3" />
+                        <div className="flex items-center space-x-2 sm:space-x-1 mb-2 sm:mb-1 text-purple-700">
+                          <Video className="h-4 w-4 sm:h-3 sm:w-3 flex-shrink-0" />
                           <span className="font-medium">Video Session</span>
                         </div>
 
-                        <div className="flex items-center space-x-1 mb-1 text-gray-600">
-                          <Clock className="h-3 w-3" />
+                        <div className="flex items-center space-x-2 sm:space-x-1 mb-2 sm:mb-1 text-gray-600">
+                          <Clock className="h-4 w-4 sm:h-3 sm:w-3 flex-shrink-0" />
                           <span className="font-medium">{formatTime(item.session_date)}</span>
                         </div>
 
-                        <div className="flex items-center space-x-1 mb-1">
-                          <User className="h-3 w-3 text-gray-500" />
+                        <div className="flex items-center space-x-2 sm:space-x-1 mb-2 sm:mb-1">
+                          <User className="h-4 w-4 sm:h-3 sm:w-3 text-gray-500 flex-shrink-0" />
                           <span className="font-semibold text-gray-900 truncate">
                             {item.user_name}
                           </span>
                         </div>
 
-                        <div className="text-gray-700 truncate mb-1">
+                        <div className="text-gray-700 mb-2 sm:mb-1 line-clamp-2">
                           {item.title}
                         </div>
 
                         {item.has_therapy_session ? (
-                          <div className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-gray-400 text-white rounded cursor-not-allowed">
-                            <CheckCircle className="h-3 w-3" />
+                          <div className="w-full mt-2 flex items-center justify-center space-x-2 sm:space-x-1 py-2 sm:py-1 px-3 sm:px-2 bg-gray-400 text-white rounded cursor-not-allowed">
+                            <CheckCircle className="h-4 w-4 sm:h-3 sm:w-3" />
                             <span className="font-medium">Session Created</span>
                           </div>
                         ) : (
                           <button
                             onClick={() => handleStartVideoSession(item)}
-                            className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                            className="w-full mt-2 flex items-center justify-center space-x-2 sm:space-x-1 py-2 sm:py-1 px-3 sm:px-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
                           >
-                            <PlayCircle className="h-3 w-3" />
+                            <PlayCircle className="h-4 w-4 sm:h-3 sm:w-3" />
                             <span className="font-medium">Start Session</span>
                           </button>
                         )}
@@ -315,26 +316,27 @@ const AppointmentsTab = ({ partnerId }) => {
                 </div>
               </div>
             );
-          })}
+            })}
+          </div>
         </div>
 
         {/* Legend */}
         <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="flex items-center justify-center space-x-6 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-blue-50 border border-blue-200 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-50 border border-blue-200 rounded"></div>
               <span className="text-gray-600">Scheduled</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-purple-50 border border-purple-200 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-50 border border-purple-200 rounded"></div>
               <span className="text-gray-600">Video Session</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-green-50 border border-green-200 rounded"></div>
-              <span className="text-gray-600">Session Completed</span>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-50 border border-green-200 rounded"></div>
+              <span className="text-gray-600">Completed</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-primary-600 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-primary-600 rounded"></div>
               <span className="text-gray-600">Today</span>
             </div>
           </div>
