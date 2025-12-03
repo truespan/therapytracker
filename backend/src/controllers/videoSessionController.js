@@ -2,28 +2,29 @@ const VideoSession = require('../models/VideoSession');
 
 const createVideoSession = async (req, res) => {
   try {
-    const { 
-      partner_id, 
-      user_id, 
-      title, 
-      session_date, 
-      end_date, 
-      duration_minutes, 
+    const {
+      partner_id,
+      user_id,
+      title,
+      session_date,
+      end_date,
+      duration_minutes,
       password_enabled,
-      notes 
+      notes,
+      timezone
     } = req.body;
 
     if (!partner_id || !user_id || !title || !session_date || !end_date) {
-      return res.status(400).json({ 
-        error: 'partner_id, user_id, title, session_date, and end_date are required' 
+      return res.status(400).json({
+        error: 'partner_id, user_id, title, session_date, and end_date are required'
       });
     }
 
     // Check for conflicts
     const hasConflict = await VideoSession.checkConflict(partner_id, session_date, end_date);
     if (hasConflict) {
-      return res.status(409).json({ 
-        error: 'Time slot conflicts with existing video session' 
+      return res.status(409).json({
+        error: 'Time slot conflicts with existing video session'
       });
     }
 
@@ -35,7 +36,8 @@ const createVideoSession = async (req, res) => {
       end_date,
       duration_minutes,
       password_enabled,
-      notes
+      notes,
+      timezone
     });
 
     res.status(201).json({
@@ -44,9 +46,9 @@ const createVideoSession = async (req, res) => {
     });
   } catch (error) {
     console.error('Create video session error:', error);
-    res.status(500).json({ 
-      error: 'Failed to create video session', 
-      details: error.message 
+    res.status(500).json({
+      error: 'Failed to create video session',
+      details: error.message
     });
   }
 };
@@ -114,15 +116,16 @@ const getUserVideoSessions = async (req, res) => {
 const updateVideoSession = async (req, res) => {
   try {
     const { id } = req.params;
-    const { 
-      title, 
-      session_date, 
-      end_date, 
-      duration_minutes, 
-      status, 
+    const {
+      title,
+      session_date,
+      end_date,
+      duration_minutes,
+      status,
       notes,
       password_enabled,
-      partner_id 
+      partner_id,
+      timezone
     } = req.body;
 
     const session = await VideoSession.findById(id);
@@ -139,8 +142,8 @@ const updateVideoSession = async (req, res) => {
         id
       );
       if (hasConflict) {
-        return res.status(409).json({ 
-          error: 'Time slot conflicts with existing video session' 
+        return res.status(409).json({
+          error: 'Time slot conflicts with existing video session'
         });
       }
     }
@@ -152,7 +155,8 @@ const updateVideoSession = async (req, res) => {
       duration_minutes,
       status,
       notes,
-      password_enabled
+      password_enabled,
+      timezone
     });
 
     // Don't send password hash to client
@@ -164,9 +168,9 @@ const updateVideoSession = async (req, res) => {
     });
   } catch (error) {
     console.error('Update video session error:', error);
-    res.status(500).json({ 
-      error: 'Failed to update video session', 
-      details: error.message 
+    res.status(500).json({
+      error: 'Failed to update video session',
+      details: error.message
     });
   }
 };

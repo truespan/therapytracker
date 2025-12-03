@@ -25,20 +25,21 @@ class VideoSession {
   }
 
   static async create(sessionData) {
-    const { 
-      partner_id, 
-      user_id, 
-      title, 
-      session_date, 
-      end_date, 
-      duration_minutes, 
+    const {
+      partner_id,
+      user_id,
+      title,
+      session_date,
+      end_date,
+      duration_minutes,
       password_enabled,
-      notes 
+      notes,
+      timezone
     } = sessionData;
 
     // Generate meeting room ID
     const meeting_room_id = this.generateMeetingRoomId(partner_id, user_id);
-    
+
     // Generate and hash password if enabled
     let password = null;
     let plainPassword = null;
@@ -49,28 +50,29 @@ class VideoSession {
 
     const query = `
       INSERT INTO video_sessions (
-        partner_id, user_id, title, session_date, end_date, 
-        duration_minutes, meeting_room_id, password, password_enabled, notes
+        partner_id, user_id, title, session_date, end_date,
+        duration_minutes, meeting_room_id, password, password_enabled, notes, timezone
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4::timestamptz, $5::timestamptz, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `;
     const values = [
-      partner_id, 
-      user_id, 
-      title, 
-      session_date, 
-      end_date, 
+      partner_id,
+      user_id,
+      title,
+      session_date,
+      end_date,
       duration_minutes || 60,
       meeting_room_id,
       password,
       password_enabled !== false, // Default to true
-      notes
+      notes,
+      timezone || 'UTC'
     ];
-    
+
     const result = await db.query(query, values);
     const session = result.rows[0];
-    
+
     // Return session with plain password (only on creation)
     return {
       ...session,
@@ -122,30 +124,32 @@ class VideoSession {
   }
 
   static async update(id, sessionData) {
-    const { 
-      title, 
-      session_date, 
-      end_date, 
-      duration_minutes, 
-      status, 
+    const {
+      title,
+      session_date,
+      end_date,
+      duration_minutes,
+      status,
       notes,
-      password_enabled 
+      password_enabled,
+      timezone
     } = sessionData;
-    
+
     const query = `
-      UPDATE video_sessions 
+      UPDATE video_sessions
       SET title = COALESCE($1, title),
-          session_date = COALESCE($2, session_date),
-          end_date = COALESCE($3, end_date),
+          session_date = COALESCE($2::timestamptz, session_date),
+          end_date = COALESCE($3::timestamptz, end_date),
           duration_minutes = COALESCE($4, duration_minutes),
           status = COALESCE($5, status),
           notes = COALESCE($6, notes),
           password_enabled = COALESCE($7, password_enabled),
+          timezone = COALESCE($8, timezone),
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $8
+      WHERE id = $9
       RETURNING *
     `;
-    const values = [title, session_date, end_date, duration_minutes, status, notes, password_enabled, id];
+    const values = [title, session_date, end_date, duration_minutes, status, notes, password_enabled, timezone, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }

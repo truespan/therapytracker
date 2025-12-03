@@ -251,9 +251,12 @@ WHERE timezone IS NULL;
 - `backend/database/migrations/add_timezone_support.sql` (new)
 - `backend/src/models/Appointment.js`
 - `backend/src/controllers/appointmentController.js`
+- `backend/src/models/VideoSession.js`
+- `backend/src/controllers/videoSessionController.js`
 
 ### Frontend
 - `frontend/src/components/calendar/AppointmentModal.jsx`
+- `frontend/src/components/video/VideoSessionModal.jsx`
 
 ## References
 
