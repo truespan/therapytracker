@@ -412,8 +412,9 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                   const meetingUrl = generateMeetingUrl(session.meeting_room_id);
                   
                   return (
-                    <div key={session.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-start justify-between">
+                    <div key={session.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 hover:shadow-md transition">
+                      {/* Desktop Layout */}
+                      <div className="hidden md:flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <Video className="h-5 w-5 text-gray-400" />
@@ -423,7 +424,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                               <Lock className="h-4 w-4 text-yellow-600" title="Password protected" />
                             )}
                           </div>
-                          
+
                           <div className="space-y-1 text-sm text-gray-600 ml-8">
                             <div className="flex items-center space-x-2">
                               <User className="h-4 w-4" />
@@ -489,6 +490,93 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           <button
                             onClick={() => handleDeleteSession(session.id)}
                             className="p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-lg"
+                            title="Delete session"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Mobile Layout */}
+                      <div className="md:hidden">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Video className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <h4 className="font-medium text-gray-700 text-sm">{session.title}</h4>
+                          {getStatusBadge(session)}
+                          {session.password_enabled && (
+                            <Lock className="h-3 w-3 text-yellow-600 flex-shrink-0" title="Password protected" />
+                          )}
+                        </div>
+
+                        <div className="space-y-1 text-xs text-gray-600 mb-3">
+                          <div className="flex items-center space-x-2">
+                            <User className="h-3 w-3 flex-shrink-0" />
+                            <span>{session.user_name}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            <span>{new Date(session.session_date).toLocaleString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-3 w-3 flex-shrink-0" />
+                            <span>{session.duration_minutes} minutes</span>
+                          </div>
+                        </div>
+
+                        {/* Mobile Buttons - Vertical Stack with smaller size */}
+                        <div className="flex flex-col space-y-2 mb-3">
+                          <a
+                            href={meetingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-1.5 px-3 bg-primary-600 text-white text-xs font-medium rounded-md hover:bg-primary-700 transition text-center"
+                          >
+                            Join Now
+                          </a>
+                          {session.has_therapy_session ? (
+                            <button
+                              disabled
+                              className="w-full py-1.5 px-3 bg-gray-300 text-gray-600 text-xs font-medium rounded-md opacity-60 cursor-not-allowed flex items-center justify-center space-x-1"
+                              title="Session already created"
+                            >
+                              <FileText className="h-3 w-3" />
+                              <span>Create Session</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleStartSession(session)}
+                              className="w-full py-1.5 px-3 bg-gray-200 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-300 transition flex items-center justify-center space-x-1"
+                              title="Create therapy session"
+                            >
+                              <FileText className="h-3 w-3" />
+                              <span>Create Session</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Mobile Action Icons - Bottom Row */}
+                        <div className="flex items-center justify-center space-x-8 pt-2 border-t border-gray-200">
+                          <button
+                            onClick={() => handleCopyLink(session)}
+                            className="p-1.5 text-gray-600 hover:text-primary-600 rounded-lg flex flex-col items-center"
+                            title="Copy session link"
+                          >
+                            {copied === session.id ? (
+                              <Check className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <Copy className="h-5 w-5" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSession(session.id)}
+                            className="p-1.5 text-gray-600 hover:text-red-600 rounded-lg flex flex-col items-center"
                             title="Delete session"
                           >
                             <Trash2 className="h-5 w-5" />
