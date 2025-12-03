@@ -2,13 +2,13 @@ const db = require('../config/database');
 
 class Appointment {
   static async create(appointmentData) {
-    const { partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes } = appointmentData;
+    const { partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes, timezone } = appointmentData;
     const query = `
-      INSERT INTO appointments (partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes)
-      VALUES ($1, $2, $3, $4::timestamp, $5::timestamp, $6, $7)
+      INSERT INTO appointments (partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes, timezone)
+      VALUES ($1, $2, $3, $4::timestamptz, $5::timestamptz, $6, $7, $8)
       RETURNING *
     `;
-    const values = [partner_id, user_id, title, appointment_date, end_date, duration_minutes || 60, notes];
+    const values = [partner_id, user_id, title, appointment_date, end_date, duration_minutes || 60, notes, timezone || 'UTC'];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -51,20 +51,21 @@ class Appointment {
   }
 
   static async update(id, appointmentData) {
-    const { title, appointment_date, end_date, duration_minutes, status, notes } = appointmentData;
+    const { title, appointment_date, end_date, duration_minutes, status, notes, timezone } = appointmentData;
     const query = `
       UPDATE appointments
       SET title = COALESCE($1, title),
-          appointment_date = COALESCE($2::timestamp, appointment_date),
-          end_date = COALESCE($3::timestamp, end_date),
+          appointment_date = COALESCE($2::timestamptz, appointment_date),
+          end_date = COALESCE($3::timestamptz, end_date),
           duration_minutes = COALESCE($4, duration_minutes),
           status = COALESCE($5, status),
           notes = COALESCE($6, notes),
+          timezone = COALESCE($7, timezone),
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $7
+      WHERE id = $8
       RETURNING *
     `;
-    const values = [title, appointment_date, end_date, duration_minutes, status, notes, id];
+    const values = [title, appointment_date, end_date, duration_minutes, status, notes, timezone, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }

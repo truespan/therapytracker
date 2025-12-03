@@ -2,7 +2,7 @@ const Appointment = require('../models/Appointment');
 
 const createAppointment = async (req, res) => {
   try {
-    const { partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes } = req.body;
+    const { partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes, timezone } = req.body;
 
     if (!partner_id || !user_id || !title || !appointment_date || !end_date) {
       return res.status(400).json({ error: 'partner_id, user_id, title, appointment_date, and end_date are required' });
@@ -21,7 +21,8 @@ const createAppointment = async (req, res) => {
       appointment_date,
       end_date,
       duration_minutes,
-      notes
+      notes,
+      timezone
     });
 
     res.status(201).json({
@@ -77,7 +78,7 @@ const getUserAppointments = async (req, res) => {
 const updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, appointment_date, end_date, duration_minutes, status, notes, partner_id } = req.body;
+    const { title, appointment_date, end_date, duration_minutes, status, notes, partner_id, timezone } = req.body;
 
     const appointment = await Appointment.findById(id);
     if (!appointment) {
@@ -103,7 +104,8 @@ const updateAppointment = async (req, res) => {
       end_date,
       duration_minutes,
       status,
-      notes
+      notes,
+      timezone
     });
 
     res.json({

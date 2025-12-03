@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { appointmentAPI } from '../../services/api';
 import { X, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -19,17 +19,23 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
 
   useEffect(() => {
     if (appointment) {
-      // Edit mode
+      // Edit mode - Convert UTC time back to user's local timezone
+      const userTimezone = moment.tz.guess();
+      const appointmentTimezone = appointment.timezone || userTimezone;
+
+      // Parse the UTC datetime and convert to user's timezone
+      const localDateTime = moment.utc(appointment.appointment_date).tz(userTimezone);
+
       setFormData({
         user_id: appointment.user_id,
         title: appointment.title,
-        appointment_date: moment(appointment.appointment_date).format('YYYY-MM-DD'),
-        appointment_time: moment(appointment.appointment_date).format('HH:mm'),
+        appointment_date: localDateTime.format('YYYY-MM-DD'),
+        appointment_time: localDateTime.format('HH:mm'),
         duration_minutes: appointment.duration_minutes,
         notes: appointment.notes || ''
       });
     } else if (selectedSlot) {
-      // Create mode
+      // Create mode - Use local time from calendar
       setFormData({
         user_id: '',
         title: '',
@@ -62,20 +68,29 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
     setSaving(true);
 
     try {
-      // Create datetime string in local timezone format (YYYY-MM-DD HH:mm:ss)
-      // This preserves the user's selected time without timezone conversion
-      const appointmentDateTime = `${formData.appointment_date} ${formData.appointment_time}:00`;
-      const endMoment = moment(`${formData.appointment_date} ${formData.appointment_time}`).add(formData.duration_minutes, 'minutes');
-      const endDateTime = endMoment.format('YYYY-MM-DD HH:mm:ss');
+      // Get user's timezone
+      const userTimezone = moment.tz.guess();
+
+      // Create datetime in user's local timezone
+      const localDateTime = moment.tz(
+        `${formData.appointment_date} ${formData.appointment_time}`,
+        'YYYY-MM-DD HH:mm',
+        userTimezone
+      );
+
+      // Convert to UTC for storage
+      const utcDateTime = localDateTime.clone().utc();
+      const utcEndDateTime = localDateTime.clone().add(formData.duration_minutes, 'minutes').utc();
 
       const appointmentData = {
         partner_id: partnerId,
         user_id: parseInt(formData.user_id),
         title: formData.title,
-        appointment_date: appointmentDateTime,
-        end_date: endDateTime,
+        appointment_date: utcDateTime.format('YYYY-MM-DD HH:mm:ss'),
+        end_date: utcEndDateTime.format('YYYY-MM-DD HH:mm:ss'),
         duration_minutes: parseInt(formData.duration_minutes),
-        notes: formData.notes
+        notes: formData.notes,
+        timezone: userTimezone
       };
 
       if (appointment) {
