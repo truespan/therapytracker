@@ -177,7 +177,7 @@ const AppointmentsTab = ({ partnerId }) => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
-            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Upcoming Appointments & Video Sessions</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Upcoming Appointments</h2>
           </div>
           <div className="text-xs sm:text-sm text-gray-600">
             Next 7 Days
@@ -264,7 +264,7 @@ const AppointmentsTab = ({ partnerId }) => {
                                 e.stopPropagation();
                                 handleStartSession(item);
                               }}
-                              className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
+                              className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
                             >
                               <PlayCircle className="h-3 w-3" />
                               <span className="font-medium">Start Session</span>
@@ -301,7 +301,7 @@ const AppointmentsTab = ({ partnerId }) => {
                                 e.stopPropagation();
                                 handleStartSession(item);
                               }}
-                              className="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
+                              className="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
                             >
                               <PlayCircle className="h-4 w-4" />
                               <span className="font-medium">Start Session</span>
@@ -333,6 +333,7 @@ const AppointmentsTab = ({ partnerId }) => {
                             <span className="font-semibold text-gray-900 truncate">
                               {item.user_name}
                             </span>
+                            <Video className="h-3 w-3 text-purple-600 flex-shrink-0" />
                           </div>
 
                           <div className="text-gray-700 mb-1 line-clamp-2">
@@ -340,14 +341,14 @@ const AppointmentsTab = ({ partnerId }) => {
                           </div>
 
                           {item.has_therapy_session ? (
-                            <div className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-gray-400 text-white rounded cursor-not-allowed">
+                            <div className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-gray-400 text-white rounded-full cursor-not-allowed">
                               <CheckCircle className="h-3 w-3" />
                               <span className="font-medium">Session Created</span>
                             </div>
                           ) : (
                             <button
                               onClick={() => handleStartVideoSession(item)}
-                              className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                              className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
                             >
                               <PlayCircle className="h-3 w-3" />
                               <span className="font-medium">Start Session</span>
@@ -370,6 +371,7 @@ const AppointmentsTab = ({ partnerId }) => {
                             <span className="font-semibold text-gray-900 truncate">
                               {item.user_name}
                             </span>
+                            <Video className="h-4 w-4 text-purple-600 flex-shrink-0" />
                           </div>
 
                           {/* Button or status - moved up with reduced margin */}
@@ -381,7 +383,7 @@ const AppointmentsTab = ({ partnerId }) => {
                           ) : (
                             <button
                               onClick={() => handleStartVideoSession(item)}
-                              className="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                              className="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
                             >
                               <PlayCircle className="h-4 w-4" />
                               <span className="font-medium">Start Session</span>
