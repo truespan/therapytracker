@@ -380,22 +380,22 @@ const PartnerDashboard = () => {
                 <p className="text-sm sm:text-base">No clients assigned yet</p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-64 sm:max-h-80 lg:max-h-96 overflow-y-auto">
+              <div className="space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style={{ minHeight: '240px', maxHeight: '500px' }}>
                 {users.map((client) => (
                   <button
                     key={client.id}
                     onClick={() => handleUserSelect(client.id)}
-                    className={`w-full text-left p-2 sm:p-3 rounded-lg border-2 transition ${
+                    className={`w-full text-left p-3 rounded-lg border-2 transition ${
                       selectedUser?.id === client.id
                         ? 'border-primary-600 bg-primary-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex items-center space-x-2 sm:space-x-3">
-                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                    <div className="flex items-center space-x-3">
+                      <User className="h-5 w-5 text-gray-400 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm sm:text-base text-gray-900 truncate">{client.name}</p>
-                        <p className="text-xs sm:text-sm text-gray-600">{client.sex}, {client.age} years</p>
+                        <p className="font-medium text-base text-gray-900 truncate">{client.name}</p>
+                        <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
                       </div>
                     </div>
                   </button>
@@ -498,22 +498,22 @@ const PartnerDashboard = () => {
                   <p className="text-sm sm:text-base">No clients assigned yet</p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-64 sm:max-h-80 lg:max-h-96 overflow-y-auto">
+                <div className="space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style={{ minHeight: '240px', maxHeight: '500px' }}>
                   {users.map((client) => (
                     <button
                       key={client.id}
                       onClick={() => handleUserSelect(client.id)}
-                      className={`w-full text-left p-2 sm:p-3 rounded-lg border-2 transition ${
+                      className={`w-full text-left p-3 rounded-lg border-2 transition ${
                         selectedUser?.id === client.id
                           ? 'border-primary-600 bg-primary-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-center space-x-2 sm:space-x-3">
-                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+                      <div className="flex items-center space-x-3">
+                        <User className="h-5 w-5 text-gray-400 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm sm:text-base text-gray-900 truncate">{client.name}</p>
-                          <p className="text-xs sm:text-sm text-gray-600">{client.sex}, {client.age} years</p>
+                          <p className="font-medium text-base text-gray-900 truncate">{client.name}</p>
+                          <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
                         </div>
                       </div>
                     </button>
