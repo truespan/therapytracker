@@ -11,7 +11,7 @@ import LatestChartDisplay from '../charts/LatestChartDisplay';
 import UserAssignmentsSection from '../questionnaires/UserAssignmentsSection';
 import SessionsSection from '../sessions/SessionsSection';
 import AppointmentsTab from '../appointments/AppointmentsTab';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays } from 'lucide-react';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown } from 'lucide-react';
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
@@ -298,8 +298,35 @@ const PartnerDashboard = () => {
       {/* Clients Tab */}
       {activeTab === 'clients' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-        {/* Users List */}
-        <div className="lg:col-span-1">
+        {/* Mobile Dropdown - Show only on mobile/tablet */}
+        <div className="lg:hidden mb-4">
+          {users.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Users className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+              <p className="text-sm">No clients assigned yet</p>
+            </div>
+          ) : (
+            <div className="relative">
+              <select
+                value={selectedUser?.id || ''}
+                onChange={(e) => handleUserSelect(parseInt(e.target.value))}
+                className="w-full px-4 py-3 text-base font-medium border-2 border-primary-600 rounded-lg appearance-none bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
+                style={{ paddingRight: '2.5rem' }}
+              >
+                <option value="">Select a Client</option>
+                {users.map((client) => (
+                  <option key={client.id} value={client.id} className="py-2">
+                    {client.name} - {client.sex}, {client.age} yrs
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-primary-600 pointer-events-none" />
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Users List - Hidden on mobile/tablet */}
+        <div className="hidden lg:block lg:col-span-1">
           <div className="card lg:sticky lg:top-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base sm:text-lg font-semibold flex items-center">
@@ -389,8 +416,35 @@ const PartnerDashboard = () => {
       {/* Charts & Insights Tab */}
       {activeTab === 'charts' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          {/* Users List */}
-          <div className="lg:col-span-1">
+          {/* Mobile Dropdown - Show only on mobile/tablet */}
+          <div className="lg:hidden mb-4">
+            {users.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Users className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+                <p className="text-sm">No clients assigned yet</p>
+              </div>
+            ) : (
+              <div className="relative">
+                <select
+                  value={selectedUser?.id || ''}
+                  onChange={(e) => handleUserSelect(parseInt(e.target.value))}
+                  className="w-full px-4 py-3 text-base font-medium border-2 border-primary-600 rounded-lg appearance-none bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
+                  style={{ paddingRight: '2.5rem' }}
+                >
+                  <option value="">Select a Client</option>
+                  {users.map((client) => (
+                    <option key={client.id} value={client.id} className="py-2">
+                      {client.name} - {client.sex}, {client.age} yrs
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-primary-600 pointer-events-none" />
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Users List - Hidden on mobile/tablet */}
+          <div className="hidden lg:block lg:col-span-1">
             <div className="card lg:sticky lg:top-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base sm:text-lg font-semibold flex items-center">
