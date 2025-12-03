@@ -14,6 +14,10 @@ const chartController = require('../controllers/chartController');
 const videoSessionController = require('../controllers/videoSessionController');
 const questionnaireController = require('../controllers/questionnaireController');
 const therapySessionController = require('../controllers/therapySessionController');
+const uploadController = require('../controllers/uploadController');
+
+// Upload middleware
+const upload = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -31,6 +35,10 @@ router.put('/users/:id', authenticateToken, userController.updateUser);
 router.get('/users/:id/profile', authenticateToken, userController.getUserProfile);
 router.get('/users/:id/partners', authenticateToken, userController.getUserPartners);
 router.post('/users/assign-partner', authenticateToken, checkRole('partner', 'organization'), userController.assignUserToPartner);
+
+// ==================== UPLOAD ROUTES ====================
+router.post('/upload/profile-picture', authenticateToken, upload.single('profilePicture'), uploadController.uploadProfilePicture);
+router.delete('/upload/profile-picture', authenticateToken, uploadController.deleteProfilePicture);
 
 // ==================== PARTNER ROUTES ====================
 router.get('/partners/:id', authenticateToken, partnerController.getPartnerById);

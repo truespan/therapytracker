@@ -5,7 +5,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { appointmentAPI, videoSessionAPI } from '../../services/api';
 import AppointmentModal from './AppointmentModal';
 import VideoSessionModal from '../video/VideoSessionModal';
-import { AlertCircle, Calendar as CalendarIcon, Video } from 'lucide-react';
+import { AlertCircle, Calendar as CalendarIcon, Video, Plus } from 'lucide-react';
 
 const localizer = momentLocalizer(moment);
 
@@ -88,6 +88,19 @@ const PartnerCalendar = ({ partnerId, users }) => {
     setShowAppointmentModal(true);
   };
 
+  const handleAddAppointment = () => {
+    // Create slot for current date/time
+    const now = new Date();
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    setSelectedSlot({
+      start: now,
+      end: oneHourLater
+    });
+    setSelectedAppointment(null);
+    setSelectedVideoSession(null);
+    setShowAppointmentModal(true);
+  };
+
   const handleSelectEvent = (event) => {
     if (event.resource.type === 'video') {
       setSelectedVideoSession(event.resource);
@@ -160,7 +173,7 @@ const PartnerCalendar = ({ partnerId, users }) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       <div className="card">
         <div className="mb-4 space-y-3">
           <div className="flex items-center space-x-2">
@@ -207,6 +220,15 @@ const PartnerCalendar = ({ partnerId, users }) => {
           />
         </div>
       </div>
+
+      {/* Floating Action Button - Mobile Only */}
+      <button
+        onClick={handleAddAppointment}
+        className="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg flex items-center justify-center transition-colors"
+        title="Add Appointment"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
 
       {showAppointmentModal && (
         <AppointmentModal

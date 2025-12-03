@@ -146,6 +146,23 @@ code {
   .rbc-date-cell {
     padding: 2px;
   }
+
+  /* Enable touch interaction for date cells */
+  .rbc-month-view .rbc-day-bg {
+    touch-action: manipulation;
+    cursor: pointer;
+    min-height: 60px;
+  }
+
+  .rbc-month-view .rbc-date-cell {
+    touch-action: manipulation;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .rbc-month-view .rbc-row {
+    touch-action: manipulation;
+  }
 }
 
 @media (min-width: 640px) and (max-width: 1024px) {

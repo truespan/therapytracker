@@ -4,12 +4,13 @@ import { organizationAPI } from '../../services/api';
 import {
   Building2, Users, UserCheck, Activity, Plus, Edit, UserX,
   UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail,
-  AlertCircle, Send, Trash2
+  AlertCircle, Send, Trash2, Settings
 } from 'lucide-react';
 import CreatePartnerModal from '../organization/CreatePartnerModal';
 import EditPartnerModal from '../organization/EditPartnerModal';
 import DeactivatePartnerModal from '../organization/DeactivatePartnerModal';
 import ReassignClientsModal from '../organization/ReassignClientsModal';
+import OrganizationSettings from '../organization/OrganizationSettings';
 
 const OrganizationDashboard = () => {
   const { user } = useAuth();
@@ -37,6 +38,8 @@ const OrganizationDashboard = () => {
     inactivePartners: 0,
     totalUsers: 0
   });
+
+  const [activeView, setActiveView] = useState('partners'); // 'partners' or 'settings'
 
   useEffect(() => {
     loadOrganizationData();
@@ -306,12 +309,27 @@ const OrganizationDashboard = () => {
       {/* Header */}
       <div className="mb-6 lg:mb-8">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center">
-              <Building2 className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mr-2 sm:mr-3" />
-              <span className="break-words">{user.name}</span>
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">Organization Overview and Management</p>
+          <div className="flex-1 flex items-center space-x-3 sm:space-x-4">
+            {/* Organization Logo */}
+            <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
+              {user.photo_url ? (
+                <img
+                  src={user.photo_url.startsWith('http') ? user.photo_url : `http://localhost:5000${user.photo_url}`}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-indigo-100">
+                  <Building2 className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-indigo-600" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
+                {user.name}
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Organization Overview and Management</p>
+            </div>
           </div>
           {/* Add Therapist Button - Hidden on mobile, visible on desktop */}
           <button
@@ -324,13 +342,43 @@ const OrganizationDashboard = () => {
         </div>
 
         {/* Add Therapist Button - Mobile Only (Floating Action Button style) */}
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-50 bg-primary-600 text-white p-4 rounded-full shadow-lg hover:bg-primary-700 transition-colors flex items-center justify-center"
-          title="Add Therapist"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
+        {activeView === 'partners' && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="lg:hidden fixed bottom-6 right-6 z-50 bg-primary-600 text-white p-4 rounded-full shadow-lg hover:bg-primary-700 transition-colors flex items-center justify-center"
+            title="Add Therapist"
+          >
+            <Plus className="h-6 w-6" />
+          </button>
+        )}
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="border-b border-gray-200 mb-6">
+        <nav className="flex space-x-8">
+          <button
+            onClick={() => setActiveView('partners')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeView === 'partners'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Users className="inline h-5 w-5 mr-2" />
+            Therapists Management
+          </button>
+          <button
+            onClick={() => setActiveView('settings')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeView === 'settings'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Settings className="inline h-5 w-5 mr-2" />
+            Settings
+          </button>
+        </nav>
       </div>
 
       {/* Messages */}
@@ -351,6 +399,9 @@ const OrganizationDashboard = () => {
         </div>
       )}
 
+      {/* Partners Management View */}
+      {activeView === 'partners' && (
+        <>
       {/* Stats Cards - Horizontal scroll on mobile, grid on desktop */}
       <div className="mb-6 lg:mb-8">
         {/* Mobile: Horizontal Scrollable */}
@@ -605,6 +656,13 @@ const OrganizationDashboard = () => {
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {/* Settings View */}
+      {activeView === 'settings' && (
+        <OrganizationSettings />
+      )}
 
       {/* Modals */}
       <CreatePartnerModal

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Mail, Phone, MapPin, Calendar, Users } from 'lucide-react';
 import CountryCodeSelect from '../common/CountryCodeSelect';
+import ImageUpload from '../common/ImageUpload';
 
 const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -141,6 +142,23 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
               <span className="text-sm font-medium text-gray-700">Partner ID: </span>
               <span className="text-sm font-bold text-primary-600">{partner.partner_id}</span>
             </div>
+          )}
+
+          {/* Profile Picture Upload */}
+          {partner && partner.id && (
+            <ImageUpload
+              currentImageUrl={formData.photo_url}
+              onUpload={(photoUrl) => {
+                setFormData(prev => ({ ...prev, photo_url: photoUrl }));
+              }}
+              onDelete={() => {
+                setFormData(prev => ({ ...prev, photo_url: null }));
+              }}
+              label="Profile Picture"
+              userType="partner"
+              userId={partner.id}
+              disabled={isLoading}
+            />
           )}
 
           {/* Name */}

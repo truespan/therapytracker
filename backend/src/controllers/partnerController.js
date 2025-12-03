@@ -22,6 +22,8 @@ const updatePartner = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
+    console.log('Update partner request:', { id, updates });
+
     // Check if partner exists
     const partner = await Partner.findById(id);
     if (!partner) {
@@ -37,18 +39,20 @@ const updatePartner = async (req, res) => {
     if (updates.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(updates.email)) {
-        return res.status(400).json({ 
-          error: 'Please provide a valid email address' 
+        return res.status(400).json({
+          error: 'Please provide a valid email address'
         });
       }
     }
 
     // Validate contact number format if provided
     if (updates.contact) {
+      console.log('Validating contact:', updates.contact);
       const phoneRegex = /^\+\d{1,4}\d{7,15}$/;
       if (!phoneRegex.test(updates.contact)) {
-        return res.status(400).json({ 
-          error: 'Please provide a valid contact number with country code (e.g., +919876543210)' 
+        console.log('Contact validation failed for:', updates.contact);
+        return res.status(400).json({
+          error: `Please provide a valid contact number with country code (e.g., +919876543210). Received: ${updates.contact}`
         });
       }
     }

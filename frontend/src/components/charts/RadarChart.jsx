@@ -18,7 +18,7 @@ const RadarChartComponent = ({ profileHistory, selectedSessions = null, title = 
     ? profileHistory.filter(s => selectedSessions.includes(s.session_number))
     : profileHistory.slice(-3); // Show last 3 sessions by default
 
-  const { fields, sessions } = transformMultipleSessionsForRadar(sessionsToShow);
+  const { fields, sessions, fieldMap } = transformMultipleSessionsForRadar(sessionsToShow);
 
   if (fields.length === 0 || sessions.length === 0) {
     return (
@@ -36,6 +36,37 @@ const RadarChartComponent = ({ profileHistory, selectedSessions = null, title = 
     });
     return dataPoint;
   });
+
+  // Calculate the maximum value dynamically from the actual data
+  let maxValue = 5; // Default fallback
+
+  // Method 1: Get from field types (legacy profile system)
+  if (fieldMap && fieldMap.size > 0) {
+    const fieldTypes = Array.from(fieldMap.values()).map(f => f.field_type);
+    const hasRating4 = fieldTypes.some(type => type === 'rating_4' || type === 'energy_levels');
+    const hasRating5 = fieldTypes.some(type => type === 'rating_5' || type === 'sleep_quality');
+
+    if (hasRating4 && !hasRating5) {
+      maxValue = 4;
+    }
+  }
+
+  // Method 2: Calculate from actual response values (questionnaire system)
+  // This handles custom questionnaires with any scale (e.g., 1-10, 1-4, etc.)
+  const allValues = [];
+  radarData.forEach(dataPoint => {
+    Object.keys(dataPoint).forEach(key => {
+      if (key !== 'field' && typeof dataPoint[key] === 'number') {
+        allValues.push(dataPoint[key]);
+      }
+    });
+  });
+
+  if (allValues.length > 0) {
+    const maxDataValue = Math.max(...allValues);
+    // Use the higher of calculated max or data max, rounded up to nearest integer
+    maxValue = Math.max(maxValue, Math.ceil(maxDataValue));
+  }
 
   const handlePrint = () => {
     window.print();
@@ -67,10 +98,11 @@ const RadarChartComponent = ({ profileHistory, selectedSessions = null, title = 
             tick={{ fill: '#374151', fontSize: 12 }}
             tickLine={false}
           />
-          <PolarRadiusAxis 
-            angle={90} 
-            domain={[0, 5]} 
+          <PolarRadiusAxis
+            angle={90}
+            domain={[0, maxValue]}
             tick={{ fill: '#6b7280', fontSize: 10 }}
+            tickCount={maxValue + 1}
           />
           <Tooltip 
             contentStyle={{ 

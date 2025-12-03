@@ -11,7 +11,8 @@ import LatestChartDisplay from '../charts/LatestChartDisplay';
 import UserAssignmentsSection from '../questionnaires/UserAssignmentsSection';
 import SessionsSection from '../sessions/SessionsSection';
 import AppointmentsTab from '../appointments/AppointmentsTab';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check } from 'lucide-react';
+import PartnerSettings from '../partner/PartnerSettings';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings } from 'lucide-react';
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
@@ -113,9 +114,25 @@ const PartnerDashboard = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Welcome Section & Partner ID - Hidden on mobile, visible on desktop/tablet */}
       <div className="hidden lg:flex lg:items-center lg:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
-          <p className="text-gray-600 mt-1">Manage your clients and track their progress</p>
+        <div className="flex items-center space-x-4">
+          {/* Profile Picture */}
+          <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
+            {user.photo_url ? (
+              <img
+                src={user.photo_url.startsWith('http') ? user.photo_url : `http://localhost:5000${user.photo_url}`}
+                alt={user.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-primary-100">
+                <User className="w-8 h-8 text-primary-600" />
+              </div>
+            )}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
+            <p className="text-gray-600 mt-1">Manage your clients and track their progress</p>
+          </div>
         </div>
         {user.partner_id && (
           <div className="card bg-primary-50 border-2 border-primary-200 ml-6">
@@ -249,6 +266,17 @@ const PartnerDashboard = () => {
             <Calendar className="h-5 w-5" />
             <span className="text-xs">Calendar</span>
           </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+              activeTab === 'settings'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            <Settings className="h-5 w-5" />
+            <span className="text-xs">Settings</span>
+          </button>
         </nav>
       </div>
 
@@ -325,6 +353,17 @@ const PartnerDashboard = () => {
           >
             <Calendar className="inline h-5 w-5 mr-2" />
             Calendar
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'settings'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Settings className="inline h-5 w-5 mr-2" />
+            Settings
           </button>
         </nav>
       </div>
@@ -613,6 +652,11 @@ const PartnerDashboard = () => {
           partnerId={user.id}
           users={users}
         />
+      )}
+
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <PartnerSettings />
       )}
     </div>
   );

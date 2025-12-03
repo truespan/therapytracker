@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Building2, Mail, Phone, MapPin, FileText, CreditCard } from 'lucide-react';
+import ImageUpload from '../common/ImageUpload';
 
 const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organization }) => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     gst_no: '',
     subscription_plan: '',
     video_sessions_enabled: true,
+    photo_url: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -24,6 +26,7 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         gst_no: organization.gst_no || '',
         subscription_plan: organization.subscription_plan || '',
         video_sessions_enabled: organization.video_sessions_enabled ?? true,
+        photo_url: organization.photo_url || '',
       });
     }
   }, [organization]);
@@ -104,6 +107,23 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Organization Logo Upload */}
+          {organization && organization.id && (
+            <ImageUpload
+              currentImageUrl={formData.photo_url}
+              onUpload={(photoUrl) => {
+                setFormData(prev => ({ ...prev, photo_url: photoUrl }));
+              }}
+              onDelete={() => {
+                setFormData(prev => ({ ...prev, photo_url: null }));
+              }}
+              label="Organization Logo"
+              userType="organization"
+              userId={organization.id}
+              disabled={isLoading}
+            />
+          )}
+
           {/* Organization Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
