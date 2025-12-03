@@ -199,7 +199,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                   return (
                     <div key={session.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
                       {/* Desktop Layout */}
-                      <div className="hidden lg:flex items-start justify-between">
+                      <div className="hidden md:flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <Video className="h-5 w-5 text-primary-600" />
@@ -299,7 +299,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                       </div>
 
                       {/* Mobile Layout */}
-                      <div className="lg:hidden">
+                      <div className="md:hidden">
                         <div className="flex items-center space-x-2 mb-2">
                           <Video className="h-4 w-4 text-primary-600 flex-shrink-0" />
                           <h4 className="font-medium text-gray-900 text-sm">{session.title}</h4>
