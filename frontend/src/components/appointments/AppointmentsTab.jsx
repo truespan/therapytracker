@@ -301,10 +301,10 @@ const AppointmentsTab = ({ partnerId }) => {
                                 e.stopPropagation();
                                 handleStartSession(item);
                               }}
-                              className="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
+                              className="inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors whitespace-nowrap text-sm font-medium"
                             >
-                              <PlayCircle className="h-4 w-4" />
-                              <span className="font-medium">Start Session</span>
+                              <PlayCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>Start Session</span>
                             </button>
                           )}
                         </div>
@@ -383,10 +383,10 @@ const AppointmentsTab = ({ partnerId }) => {
                           ) : (
                             <button
                               onClick={() => handleStartVideoSession(item)}
-                              className="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
+                              className="inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors whitespace-nowrap text-sm font-medium"
                             >
-                              <PlayCircle className="h-4 w-4" />
-                              <span className="font-medium">Start Session</span>
+                              <PlayCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span>Start Session</span>
                             </button>
                           )}
                         </div>
