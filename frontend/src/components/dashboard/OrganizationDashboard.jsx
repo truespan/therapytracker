@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { organizationAPI } from '../../services/api';
-
-// Use environment variable for API URL, fallback to localhost for development
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
 import {
   Building2, Users, UserCheck, Activity, Plus, Edit, UserX,
   UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail,
@@ -15,6 +11,10 @@ import EditPartnerModal from '../organization/EditPartnerModal';
 import DeactivatePartnerModal from '../organization/DeactivatePartnerModal';
 import ReassignClientsModal from '../organization/ReassignClientsModal';
 import OrganizationSettings from '../organization/OrganizationSettings';
+
+// Use environment variable for API URL, fallback to localhost for development
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
 
 const OrganizationDashboard = () => {
   const { user } = useAuth();

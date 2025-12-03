@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { partnerAPI, chartAPI, questionnaireAPI } from '../../services/api';
-
-// Use environment variable for API URL, fallback to localhost for development
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
 import QuestionnaireComparison from '../charts/QuestionnaireComparison';
 import PartnerCalendar from '../calendar/PartnerCalendar';
 import VideoSessionsTab from '../video/VideoSessionsTab';
@@ -17,6 +13,10 @@ import SessionsSection from '../sessions/SessionsSection';
 import AppointmentsTab from '../appointments/AppointmentsTab';
 import PartnerSettings from '../partner/PartnerSettings';
 import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings } from 'lucide-react';
+
+// Use environment variable for API URL, fallback to localhost for development
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
