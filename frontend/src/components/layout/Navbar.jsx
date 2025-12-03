@@ -94,26 +94,26 @@ const Navbar = () => {
 
             {/* Partner ID Section - Only for partners */}
             {user.userType === 'partner' && user.partner_id && (
-              <div className="px-4 py-3 bg-primary-50 border-2 border-primary-200 rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Your Partner ID</p>
+              <div className="px-4 py-4 bg-gray-800 border-2 border-cyan-500 rounded-lg">
+                <p className="text-sm text-gray-300 mb-2">Your Partner ID</p>
                 <div className="flex items-center justify-between">
-                  <p className="text-lg font-bold text-primary-700 tracking-wider">
+                  <p className="text-2xl font-bold text-cyan-400 tracking-wider">
                     {user.partner_id}
                   </p>
                   <button
                     onClick={handleCopyPartnerId}
-                    className="p-2 hover:bg-primary-100 rounded transition-colors"
+                    className="p-2 hover:bg-gray-700 rounded transition-colors"
                     title="Copy Partner ID"
                   >
                     {copied ? (
-                      <Check className="h-5 w-5 text-green-600" />
+                      <Check className="h-6 w-6 text-green-400" />
                     ) : (
-                      <Copy className="h-5 w-5 text-primary-600" />
+                      <Copy className="h-6 w-6 text-cyan-400" />
                     )}
                   </button>
                 </div>
                 {copied && (
-                  <p className="text-xs text-green-600 mt-1">Copied to clipboard!</p>
+                  <p className="text-xs text-green-400 mt-1">Copied to clipboard!</p>
                 )}
               </div>
             )}

@@ -162,19 +162,19 @@ const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
               <div className="flex gap-2">
                 <button
                   onClick={() => onAssign(questionnaire)}
-                  className="flex-1 px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-full hover:bg-green-700 transition-colors"
                 >
                   Assign
                 </button>
                 <button
                   onClick={() => onEdit(questionnaire.id)}
-                  className="flex-1 px-3 py-2 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-full hover:bg-primary-700 transition-colors"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => setDeleteConfirm(questionnaire.id)}
-                  className="px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-full hover:bg-red-700 transition-colors"
                 >
                   Delete
                 </button>

@@ -11,7 +11,7 @@ import LatestChartDisplay from '../charts/LatestChartDisplay';
 import UserAssignmentsSection from '../questionnaires/UserAssignmentsSection';
 import SessionsSection from '../sessions/SessionsSection';
 import AppointmentsTab from '../appointments/AppointmentsTab';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown } from 'lucide-react';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check } from 'lucide-react';
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
@@ -21,6 +21,7 @@ const PartnerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('appointments');
   const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(true);
+  const [copiedPartnerId, setCopiedPartnerId] = useState(false);
 
   // Questionnaire state
   const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
@@ -79,13 +80,21 @@ const PartnerDashboard = () => {
       });
 
       alert('Chart sent successfully to client!');
-      
+
       // Reload sent charts
       const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUser.id);
       setSentCharts(chartsResponse.data.charts || []);
     } catch (err) {
       console.error('Failed to send chart:', err);
       alert('Failed to send chart. Please try again.');
+    }
+  };
+
+  const handleCopyPartnerId = () => {
+    if (user?.partner_id) {
+      navigator.clipboard.writeText(user.partner_id);
+      setCopiedPartnerId(true);
+      setTimeout(() => setCopiedPartnerId(false), 2000);
     }
   };
 
@@ -112,9 +121,25 @@ const PartnerDashboard = () => {
           <div className="card bg-primary-50 border-2 border-primary-200 ml-6">
             <div>
               <p className="text-sm text-gray-600 mb-1">Your Partner ID</p>
-              <p className="text-2xl font-bold text-primary-700 tracking-wider">
-                {user.partner_id}
-              </p>
+              <div className="flex items-center space-x-3">
+                <p className="text-2xl font-bold text-primary-700 tracking-wider">
+                  {user.partner_id}
+                </p>
+                <button
+                  onClick={handleCopyPartnerId}
+                  className="p-2 hover:bg-primary-100 rounded-lg transition-colors"
+                  title="Copy Partner ID"
+                >
+                  {copiedPartnerId ? (
+                    <Check className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <Copy className="h-5 w-5 text-primary-600" />
+                  )}
+                </button>
+              </div>
+              {copiedPartnerId && (
+                <p className="text-xs text-green-600 mt-1">Copied!</p>
+              )}
             </div>
           </div>
         )}
@@ -124,13 +149,27 @@ const PartnerDashboard = () => {
       {user.partner_id && (
         <div className="hidden sm:block lg:hidden mb-6">
           <div className="card bg-primary-50 border-2 border-primary-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Your Partner ID</p>
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Your Partner ID</p>
+              <div className="flex items-center justify-between">
                 <p className="text-2xl font-bold text-primary-700 tracking-wider">
                   {user.partner_id}
                 </p>
+                <button
+                  onClick={handleCopyPartnerId}
+                  className="p-2 hover:bg-primary-100 rounded-lg transition-colors"
+                  title="Copy Partner ID"
+                >
+                  {copiedPartnerId ? (
+                    <Check className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <Copy className="h-5 w-5 text-primary-600" />
+                  )}
+                </button>
               </div>
+              {copiedPartnerId && (
+                <p className="text-xs text-green-600 mt-1">Copied!</p>
+              )}
             </div>
           </div>
         </div>

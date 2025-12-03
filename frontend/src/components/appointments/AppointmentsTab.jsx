@@ -296,16 +296,18 @@ const AppointmentsTab = ({ partnerId }) => {
                               <span className="font-medium text-sm">Session Completed</span>
                             </div>
                           ) : (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStartSession(item);
-                              }}
-                              className="inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors whitespace-nowrap text-sm font-medium"
-                            >
-                              <PlayCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span>Start Session</span>
-                            </button>
+                            <div className="flex justify-center">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStartSession(item);
+                                }}
+                                className="inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors whitespace-nowrap text-sm font-medium"
+                              >
+                                <PlayCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span>Start Session</span>
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -381,13 +383,15 @@ const AppointmentsTab = ({ partnerId }) => {
                               <span className="font-medium text-sm">Session Created</span>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => handleStartVideoSession(item)}
-                              className="inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors whitespace-nowrap text-sm font-medium"
-                            >
-                              <PlayCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span>Start Session</span>
-                            </button>
+                            <div className="flex justify-center">
+                              <button
+                                onClick={() => handleStartVideoSession(item)}
+                                className="inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors whitespace-nowrap text-sm font-medium"
+                              >
+                                <PlayCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span>Start Session</span>
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
