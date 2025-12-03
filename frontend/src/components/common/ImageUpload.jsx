@@ -1,5 +1,9 @@
 import React, { useState, useRef } from 'react';
 
+// Use environment variable for API URL, fallback to localhost for development
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
+
 const ImageUpload = ({
   currentImageUrl,
   onUpload,
@@ -48,7 +52,7 @@ const ImageUpload = ({
       formData.append('userId', userId);
 
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/upload/profile-picture', {
+      const response = await fetch(`${API_BASE_URL}/upload/profile-picture`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -86,7 +90,7 @@ const ImageUpload = ({
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/upload/profile-picture', {
+      const response = await fetch(`${API_BASE_URL}/upload/profile-picture`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -133,7 +137,7 @@ const ImageUpload = ({
           <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex items-center justify-center">
             {preview ? (
               <img
-                src={preview.startsWith('http') ? preview : `http://localhost:5000${preview}`}
+                src={preview.startsWith('http') ? preview : `${SERVER_BASE_URL}${preview}`}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />

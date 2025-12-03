@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { partnerAPI, chartAPI, questionnaireAPI } from '../../services/api';
+
+// Use environment variable for API URL, fallback to localhost for development
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
 import QuestionnaireComparison from '../charts/QuestionnaireComparison';
 import PartnerCalendar from '../calendar/PartnerCalendar';
 import VideoSessionsTab from '../video/VideoSessionsTab';
@@ -119,7 +123,7 @@ const PartnerDashboard = () => {
           <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
             {user.photo_url ? (
               <img
-                src={user.photo_url.startsWith('http') ? user.photo_url : `http://localhost:5000${user.photo_url}`}
+                src={user.photo_url.startsWith('http') ? user.photo_url : `${SERVER_BASE_URL}${user.photo_url}`}
                 alt={user.name}
                 className="w-full h-full object-cover"
               />
