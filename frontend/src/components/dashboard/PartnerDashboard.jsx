@@ -166,6 +166,30 @@ const PartnerDashboard = () => {
         )}
       </div>
 
+      {/* Mobile Welcome Section - Mobile only (hidden on desktop) */}
+      <div className="lg:hidden mb-6">
+        <div className="flex items-center space-x-3">
+          {/* Profile Picture */}
+          <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
+            {user.photo_url ? (
+              <img
+                src={user.photo_url.startsWith('http') ? user.photo_url : `${SERVER_BASE_URL}${user.photo_url}`}
+                alt={user.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-primary-100">
+                <User className="w-7 h-7 text-primary-600" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-gray-900">Welcome, {user.name}</h1>
+            <p className="text-sm text-gray-600">Manage your clients</p>
+          </div>
+        </div>
+      </div>
+
       {/* Partner ID Section - Tablet only (mobile shows in hamburger, desktop shows above) */}
       {user.partner_id && (
         <div className="hidden sm:block lg:hidden mb-6">
