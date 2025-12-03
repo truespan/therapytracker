@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { therapySessionAPI } from '../../services/api';
-import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList, Video } from 'lucide-react';
+import { therapySessionAPI, questionnaireAPI } from '../../services/api';
+import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList, Video, X } from 'lucide-react';
 import QuestionnaireViewModal from '../questionnaires/QuestionnaireViewModal';
 
-const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
+const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuestionnaireDeleted }) => {
   const [showFullNotes, setShowFullNotes] = useState(false);
   const [showPaymentNotes, setShowPaymentNotes] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
+  const [deleteConfirmQuestionnaire, setDeleteConfirmQuestionnaire] = useState(null);
+  const [deletingQuestionnaire, setDeletingQuestionnaire] = useState(false);
 
   // Parse assigned questionnaires (they come as JSON from backend)
   const assignedQuestionnaires = session.assigned_questionnaires || [];
@@ -30,6 +32,23 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
       console.error('Delete session error:', err);
       alert('Failed to delete session: ' + (err.response?.data?.error || 'Unknown error'));
       setDeleting(false);
+    }
+  };
+
+  const handleDeleteQuestionnaire = async (assignmentId) => {
+    try {
+      setDeletingQuestionnaire(true);
+      await questionnaireAPI.deleteAssignment(assignmentId);
+      setDeleteConfirmQuestionnaire(null);
+      // Notify parent to reload sessions/data
+      if (onQuestionnaireDeleted) {
+        onQuestionnaireDeleted();
+      }
+    } catch (err) {
+      console.error('Failed to delete questionnaire assignment:', err);
+      alert('Failed to delete questionnaire assignment. Please try again.');
+    } finally {
+      setDeletingQuestionnaire(false);
     }
   };
 
@@ -199,7 +218,7 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
               {assignedQuestionnaires.map((questionnaire, index) => (
                 <div
                   key={questionnaire.assignment_id}
-                  className="flex items-start space-x-2 text-sm group"
+                  className="flex items-center space-x-2 text-sm group"
                   title={questionnaire.name}
                 >
                   {/* Status indicator or number */}
@@ -225,6 +244,15 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
                     title={questionnaire.status === 'pending' ? 'Waiting for client to complete' : 'Click to view'}
                   >
                     {truncateQuestionnaireName(questionnaire.name)}
+                  </button>
+
+                  {/* Delete Icon */}
+                  <button
+                    onClick={() => setDeleteConfirmQuestionnaire(questionnaire.assignment_id)}
+                    className="flex-shrink-0 p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                    title="Delete assignment"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))}
@@ -358,7 +386,7 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
               {assignedQuestionnaires.map((questionnaire, index) => (
                 <div
                   key={questionnaire.assignment_id}
-                  className="flex items-start space-x-2 text-sm group"
+                  className="flex items-center space-x-2 text-sm group"
                   title={questionnaire.name}
                 >
                   {/* Status indicator or number */}
@@ -385,6 +413,15 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
                   >
                     {truncateQuestionnaireName(questionnaire.name)}
                   </button>
+
+                  {/* Delete Icon */}
+                  <button
+                    onClick={() => setDeleteConfirmQuestionnaire(questionnaire.assignment_id)}
+                    className="flex-shrink-0 p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                    title="Delete assignment"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -404,6 +441,37 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire }) => {
         assignmentId={selectedQuestionnaire?.assignment_id}
         questionnaireName={selectedQuestionnaire?.name}
       />
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmQuestionnaire && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Assignment</h3>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete this questionnaire assignment? This action cannot be undone.
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Note: This will not affect any charts already created using this questionnaire's data.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeleteConfirmQuestionnaire(null)}
+                disabled={deletingQuestionnaire}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteQuestionnaire(deleteConfirmQuestionnaire)}
+                disabled={deletingQuestionnaire}
+                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {deletingQuestionnaire ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

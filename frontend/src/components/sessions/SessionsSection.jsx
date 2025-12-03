@@ -182,6 +182,7 @@ const SessionsSection = ({ partnerId, userId, userName }) => {
                   onEdit={handleEditSession}
                   onDelete={handleDeleteSession}
                   onAssignQuestionnaire={handleAssignQuestionnaire}
+                  onQuestionnaireDeleted={loadSessions}
                 />
               ))}
             </div>
