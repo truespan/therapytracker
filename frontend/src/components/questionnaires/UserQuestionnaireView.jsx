@@ -499,11 +499,9 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
                                   className="sr-only"
                                 />
                                 <span className={`
-                                  px-1 text-center leading-tight
-                                  ${/* Mobile: Allow text wrapping */}
-                                  whitespace-normal
-                                  ${/* Desktop: Use config */}
-                                  lg:${pillConfig.useMultiline ? 'whitespace-normal leading-snug' : `whitespace-nowrap ${pillConfig.needsTruncation ? 'truncate' : ''}`}
+                                  px-1 text-center leading-tight whitespace-normal
+                                  ${pillConfig.useMultiline ? 'lg:whitespace-normal lg:leading-snug' : 'lg:whitespace-nowrap'}
+                                  ${!pillConfig.useMultiline && pillConfig.needsTruncation ? 'lg:truncate' : ''}
                                 `}>
                                   {option.option_text}
                                 </span>
