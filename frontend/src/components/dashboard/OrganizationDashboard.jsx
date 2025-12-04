@@ -15,7 +15,23 @@ import OrganizationSettings from '../organization/OrganizationSettings';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// For production: https://therapy-tracker-api.onrender.com/api -> https://therapy-tracker-api.onrender.com
+// For localhost: http://localhost:5000/api -> http://localhost:5000
 const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
+
+// Helper function to construct image URL
+const getImageUrl = (photoUrl) => {
+  if (!photoUrl) return null;
+  if (photoUrl.startsWith('http')) return photoUrl;
+
+  // If photoUrl starts with /, it's a relative path
+  if (photoUrl.startsWith('/')) {
+    return `${SERVER_BASE_URL}${photoUrl}`;
+  }
+
+  // Otherwise, prepend the base URL
+  return `${SERVER_BASE_URL}/${photoUrl}`;
+};
 
 const OrganizationDashboard = () => {
   const { user } = useAuth();
@@ -352,7 +368,7 @@ const OrganizationDashboard = () => {
             <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
               {user.photo_url ? (
                 <img
-                  src={user.photo_url.startsWith('http') ? user.photo_url : `${SERVER_BASE_URL}${user.photo_url}`}
+                  src={getImageUrl(user.photo_url)}
                   alt={user.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {

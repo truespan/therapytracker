@@ -6,6 +6,20 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api
 // For localhost: http://localhost:5000/api -> http://localhost:5000
 const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
 
+// Helper function to construct image URL
+const getImageUrl = (photoUrl) => {
+  if (!photoUrl) return null;
+  if (photoUrl.startsWith('http')) return photoUrl;
+
+  // If photoUrl starts with /, it's a relative path
+  if (photoUrl.startsWith('/')) {
+    return `${SERVER_BASE_URL}${photoUrl}`;
+  }
+
+  // Otherwise, prepend the base URL
+  return `${SERVER_BASE_URL}/${photoUrl}`;
+};
+
 const ImageUpload = ({
   currentImageUrl,
   onUpload,
@@ -139,7 +153,7 @@ const ImageUpload = ({
           <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex items-center justify-center">
             {preview ? (
               <img
-                src={preview.startsWith('http') ? preview : `${SERVER_BASE_URL}${preview}`}
+                src={getImageUrl(preview)}
                 alt="Profile"
                 className="w-full h-full object-cover"
                 onError={(e) => {
