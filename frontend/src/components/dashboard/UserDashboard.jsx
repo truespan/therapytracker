@@ -229,23 +229,43 @@ const UserDashboard = () => {
       {/* Content */}
       {activeTab === 'overview' && (
         <div>
-          {/* Upcoming Appointments Widget - MOVED TO TOP */}
+          {/* Upcoming Appointments & Video Sessions Widget - MOVED TO TOP */}
           {(() => {
             const now = new Date();
             const upcomingAppointments = appointments.filter(apt => new Date(apt.appointment_date) >= now);
-            const pastAppointments = appointments.filter(apt => new Date(apt.appointment_date) < now);
 
-            return upcomingAppointments.length > 0 ? (
+            // Include upcoming video sessions
+            const upcomingVideoSessions = videoSessionsEnabled
+              ? videoSessions.filter(session => {
+                  const sessionDate = new Date(session.session_date);
+                  return sessionDate >= now && session.status !== 'cancelled';
+                }).map(session => ({
+                  ...session,
+                  isVideoSession: true,
+                  appointment_date: session.session_date,
+                  title: session.title || 'Video Session',
+                  partner_name: session.partner_name
+                }))
+              : [];
+
+            // Combine and sort by date
+            const allUpcoming = [...upcomingAppointments, ...upcomingVideoSessions]
+              .sort((a, b) => new Date(a.appointment_date) - new Date(b.appointment_date));
+
+            return allUpcoming.length > 0 ? (
               <div className="card mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <Calendar className="h-5 w-5 mr-2 text-primary-600" />
                   Upcoming Appointments
                 </h3>
                 <div className="space-y-3">
-                  {upcomingAppointments.slice(0, 5).map(apt => (
-                    <div key={apt.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">{apt.title}</p>
+                  {allUpcoming.slice(0, 5).map((apt, index) => (
+                    <div key={apt.isVideoSession ? `video-${apt.id}` : `apt-${apt.id}`} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          {apt.isVideoSession && <Video className="h-4 w-4 text-blue-600" />}
+                          <p className="font-medium text-gray-900">{apt.title}</p>
+                        </div>
                         <p className="text-sm text-gray-600">
                           {new Date(apt.appointment_date).toLocaleString('en-US', {
                             weekday: 'short',
@@ -261,31 +281,52 @@ const UserDashboard = () => {
                     </div>
                   ))}
                 </div>
-                {upcomingAppointments.length > 5 && (
+                {allUpcoming.length > 5 && (
                   <div className="mt-4 text-center text-sm text-gray-500">
-                    + {upcomingAppointments.length - 5} more upcoming appointments
+                    + {allUpcoming.length - 5} more upcoming appointments
                   </div>
                 )}
               </div>
             ) : null;
           })()}
 
-          {/* Past Appointments Widget */}
+          {/* Past Appointments & Video Sessions Widget */}
           {(() => {
             const now = new Date();
             const pastAppointments = appointments.filter(apt => new Date(apt.appointment_date) < now);
 
-            return pastAppointments.length > 0 ? (
+            // Include past video sessions
+            const pastVideoSessions = videoSessionsEnabled
+              ? videoSessions.filter(session => {
+                  const sessionDate = new Date(session.session_date);
+                  return sessionDate < now;
+                }).map(session => ({
+                  ...session,
+                  isVideoSession: true,
+                  appointment_date: session.session_date,
+                  title: session.title || 'Video Session',
+                  partner_name: session.partner_name
+                }))
+              : [];
+
+            // Combine and sort by date (most recent first)
+            const allPast = [...pastAppointments, ...pastVideoSessions]
+              .sort((a, b) => new Date(b.appointment_date) - new Date(a.appointment_date));
+
+            return allPast.length > 0 ? (
               <div className="card mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <Calendar className="h-5 w-5 mr-2 text-gray-600" />
                   Past Appointments
                 </h3>
                 <div className="space-y-3">
-                  {pastAppointments.slice(0, 3).map(apt => (
-                    <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  {allPast.slice(0, 3).map((apt, index) => (
+                    <div key={apt.isVideoSession ? `video-${apt.id}` : `apt-${apt.id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
-                        <p className="font-medium text-gray-700">{apt.title}</p>
+                        <div className="flex items-center gap-2">
+                          {apt.isVideoSession && <Video className="h-4 w-4 text-gray-600" />}
+                          <p className="font-medium text-gray-700">{apt.title}</p>
+                        </div>
                         <p className="text-sm text-gray-500">
                           {new Date(apt.appointment_date).toLocaleString('en-US', {
                             weekday: 'short',
@@ -301,9 +342,9 @@ const UserDashboard = () => {
                     </div>
                   ))}
                 </div>
-                {pastAppointments.length > 3 && (
+                {allPast.length > 3 && (
                   <div className="mt-4 text-center text-sm text-gray-500">
-                    + {pastAppointments.length - 3} more past appointments
+                    + {allPast.length - 3} more past appointments
                   </div>
                 )}
               </div>

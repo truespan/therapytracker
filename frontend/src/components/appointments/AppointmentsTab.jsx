@@ -56,7 +56,16 @@ const AppointmentsTab = ({ partnerId }) => {
       setError('');
     } catch (err) {
       console.error('Failed to load appointments:', err);
-      setError('Failed to load appointments');
+      // Don't show error if it's just that there are no clients or appointments
+      // Only show error for actual failures (network errors, server errors, etc.)
+      if (err.response && err.response.status !== 404 && err.response.status !== 400) {
+        setError('Failed to load appointments');
+      } else {
+        // No error message for empty state - just show empty appointments
+        setAppointments([]);
+        setVideoSessions([]);
+        setError('');
+      }
     } finally {
       setLoading(false);
     }
