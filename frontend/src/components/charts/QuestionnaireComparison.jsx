@@ -99,6 +99,9 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
     // Ensure assignmentsToUse contains numbers for consistent comparison
     const normalizedAssignments = assignmentsToUse.map(id => Number(id));
 
+    // Extract max_scale from the first data point (all rows have the same value)
+    const maxScale = rawData.length > 0 && rawData[0].max_scale ? rawData[0].max_scale : 5;
+
     // Group by question
     const questionMap = new Map();
     const assignmentDates = new Map();
@@ -172,7 +175,7 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
       };
     });
 
-    return { chartData, labels };
+    return { chartData, labels, maxScale };
   };
 
   const handleTypeSelect = (type) => {
@@ -259,18 +262,11 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
   const renderPopupChart = (chart, data) => {
     if (!data || !data.chartData.length) return null;
 
-    const { chartData, labels } = data;
+    const { chartData, labels, maxScale } = data;
     const chartType = chart.chart_display_type || 'radar';
 
-    // Calculate max value from data for proper domain
-    let maxDataValue = 0;
-    chartData.forEach(point => {
-      labels.forEach(label => {
-        const value = point[label.key];
-        if (value > maxDataValue) maxDataValue = value;
-      });
-    });
-    const domainMax = Math.max(10, Math.ceil(maxDataValue * 1.2));
+    // Use maxScale from the questionnaire data
+    const domainMax = maxScale || 5;
 
     if (chartType === 'radar') {
       // Prepare data for Chart.js
@@ -407,19 +403,12 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
   const renderChart = () => {
     if (!comparisonData || !comparisonData.chartData.length) return null;
 
-    const { chartData, labels } = comparisonData;
+    const { chartData, labels, maxScale } = comparisonData;
 
-    // Calculate max value from data for proper domain
-    let maxDataValue = 0;
-    chartData.forEach(point => {
-      labels.forEach(label => {
-        const value = point[label.key];
-        if (value > maxDataValue) maxDataValue = value;
-      });
-    });
-    const domainMax = Math.max(10, Math.ceil(maxDataValue * 1.2));
+    // Use maxScale from the questionnaire data
+    const domainMax = maxScale || 5;
     console.log('QuestionnaireComparison - Chart Data:', chartData);
-    console.log('QuestionnaireComparison - Max Value:', maxDataValue, 'Domain:', domainMax);
+    console.log('QuestionnaireComparison - Max Scale:', maxScale, 'Domain:', domainMax);
 
     if (chartDisplayType === 'radar') {
       // Prepare data for Chart.js

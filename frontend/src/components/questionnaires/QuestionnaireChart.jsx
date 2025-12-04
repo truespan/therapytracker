@@ -40,6 +40,7 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
   const [chartType, setChartType] = useState('line');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [maxScale, setMaxScale] = useState(5);
 
   useEffect(() => {
     loadChartData();
@@ -57,6 +58,11 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
         return;
       }
 
+      // Extract max_scale from the first data point (all have the same value)
+      if (data.length > 0 && data[0].max_scale) {
+        setMaxScale(data[0].max_scale);
+      }
+
       // Extract unique questions
       const uniqueQuestions = [...new Map(
         data.map(item => [item.question_id, {
@@ -71,17 +77,17 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
       // Group responses by date
       const responsesByDate = {};
       data.forEach(response => {
-        const date = response.session_date 
+        const date = response.session_date
           ? new Date(response.session_date).toLocaleDateString()
           : new Date(response.responded_at).toLocaleDateString();
-        
+
         if (!responsesByDate[date]) {
           responsesByDate[date] = {
             date,
             timestamp: new Date(response.responded_at).getTime()
           };
         }
-        
+
         responsesByDate[date][`q${response.question_id}`] = response.response_value;
         responsesByDate[date][`q${response.question_id}_text`] = response.option_text;
       });
@@ -289,9 +295,6 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
 
         {chartType === 'radar' && (() => {
           const latestData = getLatestData();
-          // Calculate max value for domain
-          const maxValue = Math.max(...latestData.map(d => d.value || 0));
-          const domainMax = Math.max(10, Math.ceil(maxValue * 1.2));
 
           // Prepare data for Chart.js
           const radarLabels = latestData.map(d => d.question);
@@ -318,7 +321,7 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
             scales: {
               r: {
                 beginAtZero: true,
-                max: domainMax,
+                max: maxScale,
                 ticks: {
                   stepSize: 1
                 }

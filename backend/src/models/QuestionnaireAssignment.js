@@ -221,6 +221,19 @@ class QuestionnaireAssignment {
   // Get aggregated response data for charts
   static async getAggregatedResponses(questionnaireId, userId) {
     try {
+      // Get the maximum answer option value for this questionnaire
+      // All questions in a questionnaire have the same number of answer options
+      const maxOptionResult = await db.query(
+        `SELECT MAX(qao.option_value) as max_scale
+         FROM questionnaire_answer_options qao
+         JOIN questionnaire_questions qq ON qao.question_id = qq.id
+         WHERE qq.questionnaire_id = $1
+         LIMIT 1`,
+        [questionnaireId]
+      );
+
+      const maxScale = maxOptionResult.rows[0]?.max_scale || 5;
+
       const result = await db.query(
         `SELECT
           qq.id as question_id,
@@ -237,7 +250,14 @@ class QuestionnaireAssignment {
          ORDER BY uqr.responded_at, qq.question_order`,
         [questionnaireId, userId]
       );
-      return result.rows;
+
+      // Add max_scale to each row
+      const rowsWithMaxScale = result.rows.map(row => ({
+        ...row,
+        max_scale: maxScale
+      }));
+
+      return rowsWithMaxScale;
     } catch (error) {
       throw new Error(`Error getting aggregated responses: ${error.message}`);
     }
@@ -348,6 +368,19 @@ class QuestionnaireAssignment {
 
       const { questionnaire_id, user_id, partner_id } = assignmentInfo.rows[0];
 
+      // Get the maximum answer option value for this questionnaire
+      // All questions in a questionnaire have the same number of answer options
+      const maxOptionResult = await db.query(
+        `SELECT MAX(qao.option_value) as max_scale
+         FROM questionnaire_answer_options qao
+         JOIN questionnaire_questions qq ON qao.question_id = qq.id
+         WHERE qq.questionnaire_id = $1
+         LIMIT 1`,
+        [questionnaire_id]
+      );
+
+      const maxScale = maxOptionResult.rows[0]?.max_scale || 5;
+
       // Get all completed assignments for this questionnaire/user/partner to calculate submission numbers
       const allAssignmentsResult = await db.query(
         `SELECT id as assignment_id FROM user_questionnaire_assignments
@@ -376,10 +409,11 @@ class QuestionnaireAssignment {
         [assignmentIds]
       );
 
-      // Add submission_number to each row
+      // Add submission_number and max_scale to each row
       const rowsWithSubmissionNumbers = result.rows.map(row => ({
         ...row,
-        submission_number: submissionNumberMap[row.assignment_id]
+        submission_number: submissionNumberMap[row.assignment_id],
+        max_scale: maxScale
       }));
 
       return rowsWithSubmissionNumbers;
