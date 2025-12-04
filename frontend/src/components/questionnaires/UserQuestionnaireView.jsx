@@ -252,6 +252,15 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      <style>{`
+        @media (min-width: 1024px) {
+          .questionnaire-option-pill {
+            width: var(--desktop-width);
+            min-width: var(--desktop-width);
+            max-width: var(--desktop-width);
+          }
+        }
+      `}</style>
       <div className="bg-white rounded-lg shadow-md p-6">
         {/* Header */}
         <div className="mb-6">
@@ -435,7 +444,13 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
                           {!viewOnly && <span className="text-red-500 ml-1">*</span>}
                         </h3>
 
-                        <div className={`flex flex-nowrap gap-3 pb-2 scrollbar-thin ${pillConfig.useScroll ? 'overflow-x-auto' : 'overflow-x-visible'}`}>
+                        {/* Desktop: Horizontal scroll if needed, Mobile: Wrap to multiple rows */}
+                        <div className={`
+                          flex gap-2 pb-2
+                          lg:flex-nowrap lg:gap-3 lg:scrollbar-thin
+                          flex-wrap
+                          ${pillConfig.useScroll && 'lg:overflow-x-auto'}
+                        `}>
                           {question.options.map((option, optionIndex) => {
                             const isSelected = responses[question.id]?.answer_option_id === option.id;
                             const isHovered = hoveredOption === option.id;
@@ -455,13 +470,24 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
                                 title={option.option_text}
                                 style={{
                                   ...colorStyle,
-                                  width: `${pillConfig.width}px`,
-                                  minWidth: `${pillConfig.width}px`,
-                                  maxWidth: `${pillConfig.width}px`,
+                                  '--desktop-width': `${pillConfig.width}px`
                                 }}
-                                className={`relative px-3 rounded-full font-medium text-sm transition-all duration-200 text-center shadow-md flex-shrink-0 flex items-center justify-center ${
-                                  pillConfig.useMultiline ? 'py-2 min-h-[48px] h-auto' : 'py-2.5 h-12'
-                                } ${viewOnly ? 'cursor-default opacity-75' : 'cursor-pointer hover:shadow-lg transform hover:-translate-y-0.5'}`}
+                                className={`
+                                  questionnaire-option-pill
+                                  relative rounded-full font-medium transition-all duration-200 text-center shadow-md flex items-center justify-center
+
+                                  ${/* Mobile: Compact pills that wrap - 2 per row */}
+                                  px-3 py-2 text-xs min-h-[40px] flex-1 basis-[calc(50%-0.25rem)] min-w-0
+
+                                  ${/* Tablet: 3-4 per row */}
+                                  sm:px-4 sm:py-2.5 sm:text-sm sm:min-h-[44px] sm:basis-auto sm:flex-initial
+
+                                  ${/* Desktop: Use calculated width, no wrapping */}
+                                  lg:px-3 lg:text-sm lg:flex-shrink-0
+                                  ${pillConfig.useMultiline ? 'lg:py-2 lg:min-h-[48px] lg:h-auto' : 'lg:py-2.5 lg:h-12'}
+
+                                  ${viewOnly ? 'cursor-default opacity-75' : 'cursor-pointer hover:shadow-lg active:scale-95'}
+                                `}
                               >
                                 <input
                                   type="radio"
@@ -472,7 +498,13 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
                                   disabled={viewOnly}
                                   className="sr-only"
                                 />
-                                <span className={`px-1 ${pillConfig.useMultiline ? 'whitespace-normal leading-snug' : `leading-tight whitespace-nowrap ${pillConfig.needsTruncation ? 'truncate' : ''}`}`}>
+                                <span className={`
+                                  px-1 text-center leading-tight
+                                  ${/* Mobile: Allow text wrapping */}
+                                  whitespace-normal
+                                  ${/* Desktop: Use config */}
+                                  lg:${pillConfig.useMultiline ? 'whitespace-normal leading-snug' : `whitespace-nowrap ${pillConfig.needsTruncation ? 'truncate' : ''}`}
+                                `}>
                                   {option.option_text}
                                 </span>
                               </label>
