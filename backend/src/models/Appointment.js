@@ -77,7 +77,8 @@ class Appointment {
   }
 
   static async checkConflict(partnerId, appointmentDate, endDate, excludeId = null) {
-    let query = `
+    // Check conflicts with other appointments
+    let appointmentQuery = `
       SELECT * FROM appointments
       WHERE partner_id = $1
       AND status != 'cancelled'
@@ -87,15 +88,31 @@ class Appointment {
         OR (appointment_date >= $2 AND end_date <= $3)
       )
     `;
-    const values = [partnerId, appointmentDate, endDate];
+    const appointmentValues = [partnerId, appointmentDate, endDate];
 
     if (excludeId) {
-      query += ` AND id != $4`;
-      values.push(excludeId);
+      appointmentQuery += ` AND id != $4`;
+      appointmentValues.push(excludeId);
     }
 
-    const result = await db.query(query, values);
-    return result.rows.length > 0;
+    const appointmentResult = await db.query(appointmentQuery, appointmentValues);
+    if (appointmentResult.rows.length > 0) {
+      return true;
+    }
+
+    // Check conflicts with video sessions
+    const videoQuery = `
+      SELECT * FROM video_sessions
+      WHERE partner_id = $1
+      AND status != 'cancelled'
+      AND (
+        (session_date <= $2 AND end_date > $2)
+        OR (session_date < $3 AND end_date >= $3)
+        OR (session_date >= $2 AND end_date <= $3)
+      )
+    `;
+    const videoResult = await db.query(videoQuery, [partnerId, appointmentDate, endDate]);
+    return videoResult.rows.length > 0;
   }
 
   static async findUpcomingByPartner(partnerId, daysAhead = 7) {

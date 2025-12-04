@@ -9,7 +9,7 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
     title: '',
     appointment_date: '',
     appointment_time: '',
-    duration_minutes: 60,
+    duration_minutes: '60',
     notes: ''
   });
   const [saving, setSaving] = useState(false);
@@ -62,6 +62,11 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
 
     if (!formData.user_id || !formData.title || !formData.appointment_date || !formData.appointment_time) {
       setError('Please fill in all required fields');
+      return;
+    }
+
+    if (!formData.duration_minutes) {
+      setError('Duration is required');
       return;
     }
 
@@ -229,14 +234,16 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Duration (minutes)
+              Duration (minutes) <span className="text-red-500">*</span>
             </label>
             <select
               name="duration_minutes"
               value={formData.duration_minutes}
               onChange={handleChange}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
+              <option value="">Select duration</option>
               <option value="30">30 minutes</option>
               <option value="45">45 minutes</option>
               <option value="60">1 hour</option>

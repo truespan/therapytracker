@@ -41,6 +41,11 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
       return;
     }
 
+    if (!formData.session_duration) {
+      setError('Session duration is required');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -50,7 +55,7 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
       await therapySessionAPI.update(session.id, {
         session_title: formData.session_title,
         session_date: sessionDateTime,
-        session_duration: formData.session_duration ? parseInt(formData.session_duration) : null,
+        session_duration: parseInt(formData.session_duration),
         session_notes: formData.session_notes || null,
         payment_notes: formData.payment_notes || null
       });
@@ -150,17 +155,22 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <Clock className="inline h-4 w-4 mr-1" />
-                Duration (minutes) - Optional
+                Duration (minutes) *
               </label>
-              <input
-                type="number"
+              <select
                 name="session_duration"
                 value={formData.session_duration}
                 onChange={handleChange}
-                min="1"
-                placeholder="e.g., 60"
+                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
+              >
+                <option value="">Select duration</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">1 hour</option>
+                <option value="90">1.5 hours</option>
+                <option value="120">2 hours</option>
+              </select>
             </div>
 
             {/* Session Notes */}
