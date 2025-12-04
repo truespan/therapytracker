@@ -475,17 +475,10 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
                                 className={`
                                   questionnaire-option-pill
                                   relative rounded-full font-medium transition-all duration-200 text-center shadow-md flex items-center justify-center
-
-                                  ${/* Mobile: Compact pills that wrap - 2 per row */}
                                   px-3 py-2 text-xs min-h-[40px] flex-1 basis-[calc(50%-0.25rem)] min-w-0
-
-                                  ${/* Tablet: 3-4 per row */}
                                   sm:px-4 sm:py-2.5 sm:text-sm sm:min-h-[44px] sm:basis-auto sm:flex-initial
-
-                                  ${/* Desktop: Use calculated width, no wrapping */}
                                   lg:px-3 lg:text-sm lg:flex-shrink-0
                                   ${pillConfig.useMultiline ? 'lg:py-2 lg:min-h-[48px] lg:h-auto' : 'lg:py-2.5 lg:h-12'}
-
                                   ${viewOnly ? 'cursor-default opacity-75' : 'cursor-pointer hover:shadow-lg active:scale-95'}
                                 `}
                               >
