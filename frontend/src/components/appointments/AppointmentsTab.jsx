@@ -13,7 +13,7 @@ const AppointmentsTab = ({ partnerId }) => {
   const [showStartSessionModal, setShowStartSessionModal] = useState(false);
   const [selectedVideoSession, setSelectedVideoSession] = useState(null);
   const [showStartVideoSessionModal, setShowStartVideoSessionModal] = useState(false);
-  const [appointmentToDelete, setAppointmentToDelete] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null); // Can be appointment or video session
   const [deleting, setDeleting] = useState(false);
 
   // Generate array of next 7 days starting from today
@@ -90,18 +90,22 @@ const AppointmentsTab = ({ partnerId }) => {
     loadAppointments(); // Reload appointments to update status
   };
 
-  const handleDeleteAppointment = async () => {
-    if (!appointmentToDelete) return;
+  const handleDeleteItem = async () => {
+    if (!itemToDelete) return;
 
     setDeleting(true);
     try {
-      await appointmentAPI.delete(appointmentToDelete.id);
-      // Reload appointments to refresh the view
+      if (itemToDelete.itemType === 'appointment') {
+        await appointmentAPI.delete(itemToDelete.id);
+      } else if (itemToDelete.itemType === 'video') {
+        await videoSessionAPI.delete(itemToDelete.id);
+      }
+      // Reload appointments and video sessions to refresh the view
       await loadAppointments();
-      setAppointmentToDelete(null);
+      setItemToDelete(null);
     } catch (err) {
-      console.error('Failed to delete appointment:', err);
-      setError(err.response?.data?.error || 'Failed to delete appointment');
+      console.error('Failed to delete:', err);
+      setError(err.response?.data?.error || 'Failed to delete');
     } finally {
       setDeleting(false);
     }
@@ -255,22 +259,23 @@ const AppointmentsTab = ({ partnerId }) => {
                         onClick={() => !item.has_session && handleStartSession(item)}
                       >
                         {/* Desktop: Original vertical layout */}
-                        <div className="hidden sm:block relative">
-                          {/* Delete Icon - Top Right */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAppointmentToDelete(item);
-                            }}
-                            className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors z-10"
-                            title="Cancel Appointment"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-
-                          <div className="flex items-center space-x-1 mb-1 text-gray-600">
-                            <Clock className="h-3 w-3 flex-shrink-0" />
-                            <span className="font-medium">{formatTime(item.appointment_date)}</span>
+                        <div className="hidden sm:block">
+                          {/* Time and Delete Icon on same row */}
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center space-x-1 text-gray-600">
+                              <Clock className="h-3 w-3 flex-shrink-0" />
+                              <span className="font-medium text-xs">{formatTime(item.appointment_date)}</span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setItemToDelete(item);
+                              }}
+                              className="p-0.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                              title="Cancel Appointment"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
                           </div>
 
                           <div className="flex items-center space-x-1 mb-1">
@@ -304,24 +309,22 @@ const AppointmentsTab = ({ partnerId }) => {
                         </div>
 
                         {/* Mobile: Compact horizontal layout */}
-                        <div className="sm:hidden relative">
-                          {/* Delete Icon - Top Right */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAppointmentToDelete(item);
-                            }}
-                            className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors z-10"
-                            title="Cancel Appointment"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-
-                          {/* Time and Title on same line */}
-                          <div className="flex items-center space-x-2 mb-2 text-gray-600">
-                            <Clock className="h-4 w-4 flex-shrink-0" />
-                            <span className="font-medium">{formatTime(item.appointment_date)}</span>
-                            <span className="text-gray-700 truncate flex-1">{item.title}</span>
+                        <div className="sm:hidden">
+                          {/* Time, Title, and Delete Icon on same line */}
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Clock className="h-4 w-4 flex-shrink-0 text-gray-600" />
+                            <span className="font-medium text-gray-600 text-sm">{formatTime(item.appointment_date)}</span>
+                            <span className="text-gray-700 truncate flex-1 text-sm">{item.title}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setItemToDelete(item);
+                              }}
+                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                              title="Cancel Appointment"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
                           </div>
 
                           {/* User name */}
@@ -362,15 +365,27 @@ const AppointmentsTab = ({ partnerId }) => {
                       >
                         {/* Desktop: Original vertical layout */}
                         <div className="hidden sm:block">
-                          {/* Video Session label - Desktop only */}
-                          <div className="flex items-center space-x-1 mb-1 text-purple-700">
-                            <Video className="h-3 w-3 flex-shrink-0" />
-                            <span className="font-medium">Video Session</span>
+                          {/* Video Session label and Delete Icon */}
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center space-x-1 text-purple-700">
+                              <Video className="h-3 w-3 flex-shrink-0" />
+                              <span className="font-medium text-xs">Video Session</span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setItemToDelete(item);
+                              }}
+                              className="p-0.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                              title="Cancel Video Session"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
                           </div>
 
                           <div className="flex items-center space-x-1 mb-1 text-gray-600">
                             <Clock className="h-3 w-3 flex-shrink-0" />
-                            <span className="font-medium">{formatTime(item.session_date)}</span>
+                            <span className="font-medium text-xs">{formatTime(item.session_date)}</span>
                           </div>
 
                           <div className="flex items-center space-x-1 mb-1">
@@ -403,11 +418,21 @@ const AppointmentsTab = ({ partnerId }) => {
 
                         {/* Mobile: Compact horizontal layout */}
                         <div className="sm:hidden">
-                          {/* Time and Title on same line */}
-                          <div className="flex items-center space-x-2 mb-2 text-gray-600">
-                            <Clock className="h-4 w-4 flex-shrink-0" />
-                            <span className="font-medium">{formatTime(item.session_date)}</span>
-                            <span className="text-gray-700 truncate flex-1">{item.title}</span>
+                          {/* Time, Title, and Delete Icon on same line */}
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Clock className="h-4 w-4 flex-shrink-0 text-gray-600" />
+                            <span className="font-medium text-gray-600 text-sm">{formatTime(item.session_date)}</span>
+                            <span className="text-gray-700 truncate flex-1 text-sm">{item.title}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setItemToDelete(item);
+                              }}
+                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                              title="Cancel Video Session"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
                           </div>
 
                           {/* User name */}
@@ -491,25 +516,31 @@ const AppointmentsTab = ({ partnerId }) => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {appointmentToDelete && (
+      {itemToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-start space-x-3 mb-4">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                  <Trash2 className="h-5 w-5 text-red-600" />
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  itemToDelete.itemType === 'video' ? 'bg-purple-100' : 'bg-red-100'
+                }`}>
+                  {itemToDelete.itemType === 'video' ? (
+                    <Video className="h-5 w-5 text-purple-600" />
+                  ) : (
+                    <Trash2 className="h-5 w-5 text-red-600" />
+                  )}
                 </div>
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                  Cancel Appointment
+                  Cancel {itemToDelete.itemType === 'video' ? 'Video Session' : 'Appointment'}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Are you sure you want to cancel this appointment?
+                  Are you sure you want to cancel this {itemToDelete.itemType === 'video' ? 'video session' : 'appointment'}?
                 </p>
               </div>
               <button
-                onClick={() => setAppointmentToDelete(null)}
+                onClick={() => setItemToDelete(null)}
                 disabled={deleting}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -517,21 +548,23 @@ const AppointmentsTab = ({ partnerId }) => {
               </button>
             </div>
 
-            {/* Appointment Details */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            {/* Item Details */}
+            <div className={`rounded-lg p-4 mb-4 ${
+              itemToDelete.itemType === 'video' ? 'bg-purple-50' : 'bg-gray-50'
+            }`}>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4 text-gray-500" />
-                  <span className="font-medium text-gray-900">{appointmentToDelete.user_name}</span>
+                  <span className="font-medium text-gray-900">{itemToDelete.user_name}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-700">{appointmentToDelete.title}</span>
+                  <span className="text-gray-700">{itemToDelete.title}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-700">
-                    {new Date(appointmentToDelete.appointment_date).toLocaleString('en-US', {
+                    {new Date(itemToDelete.appointment_date || itemToDelete.session_date).toLocaleString('en-US', {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
@@ -545,22 +578,24 @@ const AppointmentsTab = ({ partnerId }) => {
             </div>
 
             <p className="text-xs text-gray-500 mb-4">
-              This will remove the appointment from your calendar, upcoming appointments, and the client's dashboard.
+              This will remove the {itemToDelete.itemType === 'video' ? 'video session' : 'appointment'} from your calendar, upcoming appointments, and the client's dashboard.
             </p>
 
             {/* Action Buttons */}
             <div className="flex justify-end space-x-3">
               <button
-                onClick={() => setAppointmentToDelete(null)}
+                onClick={() => setItemToDelete(null)}
                 disabled={deleting}
                 className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Keep Appointment
+                Keep {itemToDelete.itemType === 'video' ? 'Session' : 'Appointment'}
               </button>
               <button
-                onClick={handleDeleteAppointment}
+                onClick={handleDeleteItem}
                 disabled={deleting}
-                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className={`px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 ${
+                  itemToDelete.itemType === 'video' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-red-600 hover:bg-red-700'
+                }`}
               >
                 {deleting ? (
                   <>
@@ -570,7 +605,7 @@ const AppointmentsTab = ({ partnerId }) => {
                 ) : (
                   <>
                     <Trash2 className="h-4 w-4" />
-                    <span>Cancel Appointment</span>
+                    <span>Cancel {itemToDelete.itemType === 'video' ? 'Session' : 'Appointment'}</span>
                   </>
                 )}
               </button>
