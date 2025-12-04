@@ -229,67 +229,25 @@ const UserDashboard = () => {
       {/* Content */}
       {activeTab === 'overview' && (
         <div>
-          {/* Latest Shared Chart Notification */}
-          {latestSharedChart && (
-            <div className="card mb-6 border-l-4 border-l-blue-500 bg-blue-50">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-                    <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
-                    New Chart Shared with You
-                  </h3>
-                  <div className="space-y-1 text-sm text-gray-700">
-                    <p>
-                      <span className="font-medium">{latestSharedChart.partner_name}</span> has shared a new comparison chart with you
-                    </p>
-                    {latestSharedChart.questionnaire_name && (
-                      <p className="text-gray-600">
-                        Questionnaire: {latestSharedChart.questionnaire_name}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500">
-                      Shared on {new Date(latestSharedChart.sent_at).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                      })}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setActiveTab('charts')}
-                  className="btn btn-primary ml-4 whitespace-nowrap"
-                >
-                  View Chart →
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Upcoming Appointments Widget - MOVED TO TOP */}
+          {(() => {
+            const now = new Date();
+            const upcomingAppointments = appointments.filter(apt => new Date(apt.appointment_date) >= now);
+            const pastAppointments = appointments.filter(apt => new Date(apt.appointment_date) < now);
 
-          {/* Upcoming Video Sessions Widget */}
-          {videoSessionsEnabled && videoSessions.length > 0 && (
-            <div className="card mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Video className="h-5 w-5 mr-2 text-primary-600" />
-                Upcoming Video Sessions
-              </h3>
-              <div className="space-y-3">
-                {videoSessions.slice(0, 3).map(session => {
-                  const canJoin = canJoinSession(session.session_date);
-                  const timeUntil = formatTimeUntilSession(session.session_date);
-                  
-                  return (
-                    <div key={session.id} className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <Video className="h-5 w-5 text-purple-600" />
-                          <p className="font-medium text-gray-900">{session.title}</p>
-                        </div>
+            return upcomingAppointments.length > 0 ? (
+              <div className="card mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-primary-600" />
+                  Upcoming Appointments
+                </h3>
+                <div className="space-y-3">
+                  {upcomingAppointments.slice(0, 5).map(apt => (
+                    <div key={apt.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">{apt.title}</p>
                         <p className="text-sm text-gray-600">
-                          {new Date(session.session_date).toLocaleString('en-US', {
+                          {new Date(apt.appointment_date).toLocaleString('en-US', {
                             weekday: 'short',
                             month: 'short',
                             day: 'numeric',
@@ -298,34 +256,59 @@ const UserDashboard = () => {
                             minute: '2-digit'
                           })}
                         </p>
-                        <div className="flex items-center space-x-4 mt-1">
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <UserIcon className="h-4 w-4 mr-1" />
-                            with {session.partner_name}
-                          </p>
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <Clock className="h-4 w-4 mr-1" />
-                            {session.duration_minutes} min
-                          </p>
-                        </div>
-                        {!canJoin && (
-                          <p className="text-xs text-purple-600 font-medium mt-1">
-                            Starts in: {timeUntil}
-                          </p>
-                        )}
+                        <p className="text-sm text-gray-500">with {apt.partner_name}</p>
                       </div>
-                      <button
-                        onClick={() => setSelectedVideoSession(session)}
-                        className={`btn ${canJoin ? 'btn-primary' : 'btn-secondary'} ml-4`}
-                      >
-                        {canJoin ? 'Join Now' : 'View Details'}
-                      </button>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+                {upcomingAppointments.length > 5 && (
+                  <div className="mt-4 text-center text-sm text-gray-500">
+                    + {upcomingAppointments.length - 5} more upcoming appointments
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            ) : null;
+          })()}
+
+          {/* Past Appointments Widget */}
+          {(() => {
+            const now = new Date();
+            const pastAppointments = appointments.filter(apt => new Date(apt.appointment_date) < now);
+
+            return pastAppointments.length > 0 ? (
+              <div className="card mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-gray-600" />
+                  Past Appointments
+                </h3>
+                <div className="space-y-3">
+                  {pastAppointments.slice(0, 3).map(apt => (
+                    <div key={apt.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-700">{apt.title}</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(apt.appointment_date).toLocaleString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                        <p className="text-sm text-gray-400">with {apt.partner_name}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {pastAppointments.length > 3 && (
+                  <div className="mt-4 text-center text-sm text-gray-500">
+                    + {pastAppointments.length - 3} more past appointments
+                  </div>
+                )}
+              </div>
+            ) : null;
+          })()}
 
           {/* Pending Questionnaires Widget */}
           {questionnaireAssignments.filter(a => a.status === 'pending').length > 0 && (
@@ -389,43 +372,53 @@ const UserDashboard = () => {
             </div>
           )}
 
-          {/* Upcoming Appointments Widget */}
-          {appointments.length > 0 && (
-            <div className="card mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-primary-600" />
-                Upcoming Appointments
-              </h3>
-              <div className="space-y-3">
-                {appointments.slice(0, 3).map(apt => (
-                  <div key={apt.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">{apt.title}</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(apt.appointment_date).toLocaleString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+          {/* Latest Shared Chart Notification */}
+          {latestSharedChart && (
+            <div className="card mb-6 border-l-4 border-l-blue-500 bg-blue-50">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                    <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                    New Chart Shared with You
+                  </h3>
+                  <div className="space-y-1 text-sm text-gray-700">
+                    <p>
+                      <span className="font-medium">{latestSharedChart.partner_name}</span> has shared a new comparison chart with you
+                    </p>
+                    {latestSharedChart.questionnaire_name && (
+                      <p className="text-gray-600">
+                        Questionnaire: {latestSharedChart.questionnaire_name}
                       </p>
-                      <p className="text-sm text-gray-500">with {apt.partner_name}</p>
-                    </div>
+                    )}
+                    <p className="text-xs text-gray-500">
+                      Shared on {new Date(latestSharedChart.sent_at).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </p>
                   </div>
-                ))}
+                </div>
+                <button
+                  onClick={() => setActiveTab('charts')}
+                  className="btn btn-primary ml-4 whitespace-nowrap"
+                >
+                  View Chart →
+                </button>
               </div>
             </div>
           )}
 
           {/* Empty State */}
-          {videoSessions.length === 0 && appointments.length === 0 && questionnaireAssignments.filter(a => a.status === 'pending').length === 0 && (
+          {appointments.length === 0 && questionnaireAssignments.filter(a => a.status === 'pending').length === 0 && !latestSharedChart && (
             <div className="card text-center py-12">
               <Activity className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome to Your Dashboard</h3>
               <p className="text-gray-600">
-                Your upcoming video sessions, appointments, and questionnaires will appear here.
+                Your upcoming appointments, questionnaires, and shared charts will appear here.
               </p>
             </div>
           )}
