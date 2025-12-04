@@ -619,7 +619,11 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
                         className="w-4 h-4 text-primary-600 rounded"
                       />
                       <span className="ml-3">
-                        <span className="font-medium">Submission #{completion.submission_number}</span>
+                        <span className="font-medium">
+                          {completion.session_number
+                            ? `Session #${completion.session_number} - Submission #${completion.submission_number}`
+                            : `Submission #${completion.submission_number}`}
+                        </span>
                         <span className="text-gray-500 text-sm ml-2">
                           ({new Date(completion.completed_at).toLocaleString('en-US', {
                             month: 'short',

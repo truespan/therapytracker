@@ -92,7 +92,9 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
           {/* Header with Title and Actions */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
-              <h4 className="text-lg font-semibold text-gray-900 mb-1">{session.session_title}</h4>
+              <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                {session.session_number ? `Session #${session.session_number}: ` : ''}{session.session_title}
+              </h4>
               <div className="flex items-center space-x-2">
                 {session.from_appointment && (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -266,7 +268,9 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
         {/* Header with Title and Actions */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <h4 className="text-lg font-semibold text-gray-900 mb-1">{session.session_title}</h4>
+            <h4 className="text-lg font-semibold text-gray-900 mb-1">
+              {session.session_number ? `Session #${session.session_number}: ` : ''}{session.session_title}
+            </h4>
             <div className="flex items-center space-x-2 flex-wrap">
               {session.from_appointment && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">

@@ -324,15 +324,33 @@ class QuestionnaireAssignment {
       for (const type of typesResult.rows) {
         const completionsResult = await db.query(
           `SELECT uqa.id as assignment_id, uqa.completed_at,
-           COUNT(DISTINCT uqr.id) as response_count
+           COUNT(DISTINCT uqr.id) as response_count,
+           ts.id as session_id, ts.session_title, ts.session_date
            FROM user_questionnaire_assignments uqa
            LEFT JOIN user_questionnaire_responses uqr ON uqa.id = uqr.assignment_id
+           LEFT JOIN session_questionnaire_assignments sqa ON uqa.id = sqa.user_questionnaire_assignment_id
+           LEFT JOIN therapy_sessions ts ON sqa.therapy_session_id = ts.id
            WHERE uqa.questionnaire_id = $1 AND uqa.user_id = $2
            AND uqa.partner_id = $3 AND uqa.status = 'completed'
-           GROUP BY uqa.id, uqa.completed_at
+           GROUP BY uqa.id, uqa.completed_at, ts.id, ts.session_title, ts.session_date
            ORDER BY uqa.completed_at ASC`,
           [type.questionnaire_id, userId, partnerId]
         );
+
+        // Sort all sessions by date for this user/partner to calculate session numbers
+        const allSessionsResult = await db.query(
+          `SELECT id, session_date
+           FROM therapy_sessions
+           WHERE user_id = $1 AND partner_id = $2
+           ORDER BY session_date ASC`,
+          [userId, partnerId]
+        );
+
+        // Create a map of session_id to session_number
+        const sessionNumberMap = {};
+        allSessionsResult.rows.forEach((session, index) => {
+          sessionNumberMap[session.id] = index + 1;
+        });
 
         questionnaireTypes.push({
           questionnaire_id: type.questionnaire_id,
@@ -342,7 +360,11 @@ class QuestionnaireAssignment {
             assignment_id: c.assignment_id,
             completed_at: c.completed_at,
             response_count: parseInt(c.response_count),
-            submission_number: index + 1
+            submission_number: index + 1,
+            session_id: c.session_id,
+            session_title: c.session_title,
+            session_date: c.session_date,
+            session_number: c.session_id ? sessionNumberMap[c.session_id] : null
           }))
         });
       }

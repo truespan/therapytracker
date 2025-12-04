@@ -28,7 +28,16 @@ const SessionsSection = ({ partnerId, userId, userName }) => {
       setLoading(true);
       const response = await therapySessionAPI.getByPartnerAndUser(partnerId, userId);
       console.log('Sessions loaded:', response.data.sessions);
-      setSessions(response.data.sessions || []);
+
+      // Sort sessions by date and assign session numbers
+      const sortedSessions = (response.data.sessions || [])
+        .sort((a, b) => new Date(a.session_date) - new Date(b.session_date))
+        .map((session, index) => ({
+          ...session,
+          session_number: index + 1
+        }));
+
+      setSessions(sortedSessions);
     } catch (err) {
       console.error('Failed to load sessions:', err);
     } finally {
