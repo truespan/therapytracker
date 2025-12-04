@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { organizationAPI } from '../../services/api';
+import { organizationAPI, therapySessionAPI } from '../../services/api';
 import {
   Building2, Users, UserCheck, Activity, Plus, Edit, UserX,
   UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail,
-  AlertCircle, Send, Trash2, Settings
+  AlertCircle, Send, Trash2, Settings, Calendar as CalendarIcon,
+  Clock, Video as VideoIcon, User as UserIcon
 } from 'lucide-react';
 import CreatePartnerModal from '../organization/CreatePartnerModal';
 import EditPartnerModal from '../organization/EditPartnerModal';
@@ -23,6 +24,9 @@ const OrganizationDashboard = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [partnerClients, setPartnerClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [clientSessions, setClientSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
   const [partnerClientCounts, setPartnerClientCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -122,7 +126,26 @@ const OrganizationDashboard = () => {
 
   const handlePartnerSelect = async (partner) => {
     setSelectedPartner(partner);
+    setSelectedClient(null);
+    setClientSessions([]);
     await loadPartnerClients(partner.id);
+  };
+
+  const handleClientSelect = async (client) => {
+    if (!client || !selectedPartner) return;
+
+    setSelectedClient(client);
+    setSessionsLoading(true);
+
+    try {
+      const response = await therapySessionAPI.getByPartnerAndUser(selectedPartner.id, client.id);
+      setClientSessions(response.data.sessions || []);
+    } catch (err) {
+      console.error('Failed to load client sessions:', err);
+      setClientSessions([]);
+    } finally {
+      setSessionsLoading(false);
+    }
   };
 
   const handleCreatePartner = async (partnerData) => {
@@ -639,22 +662,135 @@ const OrganizationDashboard = () => {
                 <p>No clients assigned to this therapist yet</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {partnerClients.map((client) => (
-                  <div
-                    key={client.id}
-                    className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-300 transition"
+              <div className="space-y-4">
+                {/* Client Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Client
+                  </label>
+                  <select
+                    value={selectedClient?.id || ''}
+                    onChange={(e) => {
+                      const client = partnerClients.find(c => c.id === parseInt(e.target.value));
+                      if (client) handleClientSelect(client);
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
-                    <p className="font-medium text-gray-900">{client.name}</p>
-                    <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
-                    {client.email && <p className="text-sm text-gray-600 mt-1">{client.email}</p>}
-                    {client.assigned_at && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        Assigned: {new Date(client.assigned_at).toLocaleDateString()}
-                      </p>
+                    <option value="">-- Select a client --</option>
+                    {partnerClients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.name} ({client.sex}, {client.age} years)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Session Details */}
+                {selectedClient && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <CalendarIcon className="h-5 w-5 mr-2 text-primary-600" />
+                      Sessions for {selectedClient.name}
+                    </h3>
+
+                    {sessionsLoading ? (
+                      <div className="text-center py-8">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                        <p className="text-gray-600 mt-2">Loading sessions...</p>
+                      </div>
+                    ) : clientSessions.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <CalendarIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                        <p>No sessions found for this client</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {clientSessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                          >
+                            {/* Client Info */}
+                            <div className="mb-3 pb-3 border-b border-gray-200">
+                              <h4 className="font-semibold text-gray-900 flex items-center mb-2">
+                                <UserIcon className="h-4 w-4 mr-2 text-primary-600" />
+                                {selectedClient.name}
+                              </h4>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <p>{selectedClient.sex}, {selectedClient.age} years</p>
+                                {selectedClient.email && (
+                                  <p className="text-xs truncate">{selectedClient.email}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Session Details */}
+                            <div className="space-y-2 text-sm">
+                              {/* Assigned Date */}
+                              {selectedClient.assigned_at && (
+                                <div className="flex items-start">
+                                  <span className="font-medium text-gray-700 min-w-[100px]">Assigned:</span>
+                                  <span className="text-gray-600">
+                                    {new Date(selectedClient.assigned_at).toLocaleDateString('en-US', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Session Date */}
+                              <div className="flex items-start">
+                                <span className="font-medium text-gray-700 min-w-[100px]">Session Date:</span>
+                                <span className="text-gray-600">
+                                  {new Date(session.session_date).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+
+                              {/* Time & Duration */}
+                              {session.session_time && (
+                                <div className="flex items-start">
+                                  <span className="font-medium text-gray-700 min-w-[100px] flex items-center">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    Time:
+                                  </span>
+                                  <span className="text-gray-600">
+                                    {session.session_time}
+                                    {session.duration && ` (${session.duration} min)`}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Session Type */}
+                              <div className="flex items-start">
+                                <span className="font-medium text-gray-700 min-w-[100px] flex items-center">
+                                  <VideoIcon className="h-3 w-3 mr-1" />
+                                  Type:
+                                </span>
+                                <span className="text-gray-600 capitalize">
+                                  {session.session_type === 'video' ? 'Video Call' : 'In-Person'}
+                                </span>
+                              </div>
+
+                              {/* Topic */}
+                              {session.topic && (
+                                <div className="flex items-start">
+                                  <span className="font-medium text-gray-700 min-w-[100px]">Topic:</span>
+                                  <span className="text-gray-600">{session.topic}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
