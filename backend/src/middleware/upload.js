@@ -14,12 +14,13 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
-    // Generate unique filename: userType-id-timestamp.ext
-    const userType = req.body.userType || 'unknown';
-    const userId = req.body.userId || 'unknown';
+    // Generate unique filename: timestamp-random.ext
+    // Note: req.body is not available yet when multer processes the file
+    // so we use a simple unique naming scheme
     const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
     const ext = path.extname(file.originalname);
-    cb(null, `${userType}-${userId}-${timestamp}${ext}`);
+    cb(null, `profile-${timestamp}-${random}${ext}`);
   }
 });
 

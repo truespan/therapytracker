@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// For production: https://therapy-tracker-api.onrender.com/api -> https://therapy-tracker-api.onrender.com
+// For localhost: http://localhost:5000/api -> http://localhost:5000
 const SERVER_BASE_URL = API_BASE_URL.replace('/api', '');
 
 const ImageUpload = ({
@@ -140,6 +142,10 @@ const ImageUpload = ({
                 src={preview.startsWith('http') ? preview : `${SERVER_BASE_URL}${preview}`}
                 alt="Profile"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error('Image load error:', e.target.src);
+                  e.target.style.display = 'none';
+                }}
               />
             ) : (
               <svg

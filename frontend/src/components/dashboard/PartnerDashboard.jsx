@@ -23,6 +23,17 @@ const PartnerDashboard = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [sentCharts, setSentCharts] = useState([]);
+
+  // Debug logging for production
+  useEffect(() => {
+    console.log('PartnerDashboard - API_BASE_URL:', API_BASE_URL);
+    console.log('PartnerDashboard - SERVER_BASE_URL:', SERVER_BASE_URL);
+    console.log('PartnerDashboard - user.photo_url:', user?.photo_url);
+    if (user?.photo_url) {
+      const finalUrl = user.photo_url.startsWith('http') ? user.photo_url : `${SERVER_BASE_URL}${user.photo_url}`;
+      console.log('PartnerDashboard - Final image URL:', finalUrl);
+    }
+  }, [user]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('appointments');
   const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(true);
@@ -126,6 +137,10 @@ const PartnerDashboard = () => {
                 src={user.photo_url.startsWith('http') ? user.photo_url : `${SERVER_BASE_URL}${user.photo_url}`}
                 alt={user.name}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error('Partner profile image load error:', e.target.src);
+                  e.target.style.display = 'none';
+                }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-primary-100">
@@ -176,6 +191,10 @@ const PartnerDashboard = () => {
                 src={user.photo_url.startsWith('http') ? user.photo_url : `${SERVER_BASE_URL}${user.photo_url}`}
                 alt={user.name}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error('Partner mobile profile image load error:', e.target.src);
+                  e.target.style.display = 'none';
+                }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-primary-100">

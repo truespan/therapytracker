@@ -33,6 +33,17 @@ const OrganizationDashboard = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Debug logging for production
+  useEffect(() => {
+    console.log('OrganizationDashboard - API_BASE_URL:', API_BASE_URL);
+    console.log('OrganizationDashboard - SERVER_BASE_URL:', SERVER_BASE_URL);
+    console.log('OrganizationDashboard - user.photo_url:', user?.photo_url);
+    if (user?.photo_url) {
+      const finalUrl = user.photo_url.startsWith('http') ? user.photo_url : `${SERVER_BASE_URL}${user.photo_url}`;
+      console.log('OrganizationDashboard - Final image URL:', finalUrl);
+    }
+  }, [user]);
+
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -344,6 +355,10 @@ const OrganizationDashboard = () => {
                   src={user.photo_url.startsWith('http') ? user.photo_url : `${SERVER_BASE_URL}${user.photo_url}`}
                   alt={user.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Organization profile image load error:', e.target.src);
+                    e.target.style.display = 'none';
+                  }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-indigo-100">
