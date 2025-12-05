@@ -16,7 +16,7 @@ const Home = () => {
                 className="h-full w-full object-contain"
               />
             </div>
-            <h1 className="text-5xl font-bold mb-6">Therapy Tracker</h1>
+            <h1 className="text-5xl font-bold mb-6">TheraP Track</h1>
             <p className="text-xl mb-8 text-primary-100">
               Track your therapy progress with visual mind-body maps
             </p>
@@ -94,7 +94,7 @@ const Home = () => {
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; 2024 Therapy Tracker. All rights reserved.</p>
+          <p>&copy; 2025 TheraP Track. All rights reserved.</p>
         </div>
       </footer>
     </div>
