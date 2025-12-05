@@ -421,11 +421,11 @@ async function updateAppointmentSyncStatus(appointmentId, status, googleEventId,
   const query = `
     UPDATE appointments
     SET
-      google_sync_status = $1,
-      google_event_id = CASE WHEN $2::text IS NOT NULL THEN $2 ELSE google_event_id END,
-      google_last_synced_at = CASE WHEN $1 = 'synced' THEN NOW() ELSE google_last_synced_at END,
-      google_sync_error = $3
-    WHERE id = $4
+      google_sync_status = $1::varchar,
+      google_event_id = CASE WHEN $2::text IS NOT NULL THEN $2::varchar ELSE google_event_id END,
+      google_last_synced_at = CASE WHEN $1::varchar = 'synced' THEN NOW() ELSE google_last_synced_at END,
+      google_sync_error = $3::text
+    WHERE id = $4::integer
   `;
 
   await pool.query(query, [status, googleEventId || null, error || null, appointmentId]);
@@ -442,11 +442,11 @@ async function updateVideoSessionSyncStatus(sessionId, status, googleEventId, er
   const query = `
     UPDATE video_sessions
     SET
-      google_sync_status = $1,
-      google_event_id = CASE WHEN $2::text IS NOT NULL THEN $2 ELSE google_event_id END,
-      google_last_synced_at = CASE WHEN $1 = 'synced' THEN NOW() ELSE google_last_synced_at END,
-      google_sync_error = $3
-    WHERE id = $4
+      google_sync_status = $1::varchar,
+      google_event_id = CASE WHEN $2::text IS NOT NULL THEN $2::varchar ELSE google_event_id END,
+      google_last_synced_at = CASE WHEN $1::varchar = 'synced' THEN NOW() ELSE google_last_synced_at END,
+      google_sync_error = $3::text
+    WHERE id = $4::integer
   `;
 
   await pool.query(query, [status, googleEventId || null, error || null, sessionId]);
