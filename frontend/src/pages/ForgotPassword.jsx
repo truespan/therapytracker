@@ -16,7 +16,7 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      await authAPI.forgotPassword(identifier);
+      await authAPI.forgotPassword(identifier.trim());
       setSuccess(true);
       setIdentifier('');
     } catch (err) {
