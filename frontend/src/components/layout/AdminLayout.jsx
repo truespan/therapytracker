@@ -32,8 +32,14 @@ const AdminLayout = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link to="/admin" className="flex items-center space-x-2">
-                <Shield className="h-8 w-8 text-white" />
+              <Link to="/admin" className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center p-1.5 shadow-md">
+                  <img
+                    src="/TheraPTrackLogoBgRemoved.png"
+                    alt="TheraP Track Logo"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
                 <div>
                   <span className="text-xl font-bold text-white">Admin Panel</span>
                   <p className="text-xs text-indigo-100">TheraP Track</p>

@@ -42,10 +42,15 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo - Responsive */}
           <Link to={getDashboardLink()} className="flex items-center space-x-2">
-            <Activity className="h-8 w-8 text-primary-600" />
+            <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center p-1.5 shadow-md">
+              <img
+                src="/TheraPTrackLogoBgRemoved.png"
+                alt="TheraP Track Logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
             <span className="text-lg sm:text-xl font-bold text-gray-900">
-              <span className="hidden sm:inline">TheraP Track</span>
-              <span className="sm:hidden">TT</span>
+              TheraP Track
             </span>
           </Link>
 
