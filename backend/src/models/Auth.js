@@ -16,7 +16,7 @@ class Auth {
 
   static async findByEmail(email) {
     const query = 'SELECT * FROM auth_credentials WHERE LOWER(email) = LOWER($1)';
-    const result = await db.query(query, [email]);
+    const result = await db.query(query, [email.trim()]);
     return result.rows[0];
   }
 

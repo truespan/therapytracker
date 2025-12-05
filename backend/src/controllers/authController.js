@@ -13,7 +13,13 @@ const SALT_ROUNDS = 10;
 
 const signup = async (req, res) => {
   try {
-    const { userType, email, password, ...userData } = req.body;
+    const { userType, password, ...userData } = req.body;
+    let { email } = req.body;
+
+    // Trim email if provided
+    if (email) {
+      email = email.trim();
+    }
 
     // Validate required fields
     if (!userType || !email || !password) {
@@ -179,12 +185,15 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Email or phone number and password are required' });
     }
 
-    console.log(`[LOGIN] Attempting login with identifier: ${email}`);
+    // Trim whitespace from email/identifier
+    const trimmedEmail = email.trim();
+
+    console.log(`[LOGIN] Attempting login with identifier: ${trimmedEmail}`);
 
     // Find auth credentials by email or phone
-    const authRecord = await Auth.findByEmailOrPhone(email);
+    const authRecord = await Auth.findByEmailOrPhone(trimmedEmail);
     if (!authRecord) {
-      console.log(`[LOGIN] No auth record found for: ${email}`);
+      console.log(`[LOGIN] No auth record found for: ${trimmedEmail}`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -316,8 +325,11 @@ const forgotPassword = async (req, res) => {
       return res.status(400).json({ error: 'Email or phone number is required' });
     }
 
+    // Trim whitespace from identifier
+    const trimmedIdentifier = identifier.trim();
+
     // Find user by email or phone
-    const authRecord = await Auth.findByEmailOrPhone(identifier);
+    const authRecord = await Auth.findByEmailOrPhone(trimmedIdentifier);
     
     // For security, always return success even if user doesn't exist
     // This prevents email enumeration attacks
