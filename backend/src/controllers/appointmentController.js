@@ -1,4 +1,5 @@
 const Appointment = require('../models/Appointment');
+const googleCalendarService = require('../services/googleCalendarService');
 
 const createAppointment = async (req, res) => {
   try {
@@ -24,6 +25,14 @@ const createAppointment = async (req, res) => {
       notes,
       timezone
     });
+
+    // Sync to Google Calendar (non-blocking)
+    try {
+      await googleCalendarService.syncAppointmentToGoogle(newAppointment.id);
+    } catch (error) {
+      console.error('Google Calendar sync failed:', error.message);
+      // Don't fail the appointment creation if sync fails
+    }
 
     res.status(201).json({
       message: 'Appointment created successfully',
@@ -108,6 +117,14 @@ const updateAppointment = async (req, res) => {
       timezone
     });
 
+    // Sync update to Google Calendar (non-blocking)
+    try {
+      await googleCalendarService.syncAppointmentToGoogle(id);
+    } catch (error) {
+      console.error('Google Calendar sync failed:', error.message);
+      // Don't fail the appointment update if sync fails
+    }
+
     res.json({
       message: 'Appointment updated successfully',
       appointment: updatedAppointment
@@ -125,6 +142,14 @@ const deleteAppointment = async (req, res) => {
     const appointment = await Appointment.findById(id);
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    // Delete from Google Calendar first (non-blocking)
+    try {
+      await googleCalendarService.deleteAppointmentFromGoogle(id);
+    } catch (error) {
+      console.error('Google Calendar delete failed:', error.message);
+      // Continue with deletion even if Google sync fails
     }
 
     await Appointment.delete(id);

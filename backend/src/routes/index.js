@@ -15,6 +15,7 @@ const videoSessionController = require('../controllers/videoSessionController');
 const questionnaireController = require('../controllers/questionnaireController');
 const therapySessionController = require('../controllers/therapySessionController');
 const uploadController = require('../controllers/uploadController');
+const googleCalendarController = require('../controllers/googleCalendarController');
 
 // Upload middleware
 const upload = require('../middleware/upload');
@@ -28,6 +29,14 @@ router.get('/auth/me', authenticateToken, authController.getCurrentUser);
 router.post('/auth/forgot-password', authController.forgotPassword);
 router.post('/auth/reset-password', authController.resetPassword);
 router.get('/auth/verify-email', authController.verifyEmail);
+
+// ==================== GOOGLE CALENDAR ROUTES ====================
+router.get('/google-calendar/auth', authenticateToken, googleCalendarController.initiateOAuth);
+router.get('/google-calendar/callback', authenticateToken, googleCalendarController.handleCallback);
+router.get('/google-calendar/status', authenticateToken, googleCalendarController.getConnectionStatus);
+router.post('/google-calendar/disconnect', authenticateToken, googleCalendarController.disconnectCalendar);
+router.post('/google-calendar/resync/:eventType/:eventId', authenticateToken, googleCalendarController.resyncEvent);
+router.post('/google-calendar/toggle-sync', authenticateToken, googleCalendarController.toggleSync);
 
 // ==================== USER ROUTES ====================
 router.get('/users/:id', authenticateToken, userController.getUserById);

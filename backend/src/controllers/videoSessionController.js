@@ -1,4 +1,5 @@
 const VideoSession = require('../models/VideoSession');
+const googleCalendarService = require('../services/googleCalendarService');
 
 const createVideoSession = async (req, res) => {
   try {
@@ -39,6 +40,14 @@ const createVideoSession = async (req, res) => {
       notes,
       timezone
     });
+
+    // Sync to Google Calendar (non-blocking)
+    try {
+      await googleCalendarService.syncVideoSessionToGoogle(newSession.id);
+    } catch (error) {
+      console.error('Google Calendar sync failed:', error.message);
+      // Don't fail the video session creation if sync fails
+    }
 
     res.status(201).json({
       message: 'Video session created successfully',
@@ -159,6 +168,14 @@ const updateVideoSession = async (req, res) => {
       timezone
     });
 
+    // Sync update to Google Calendar (non-blocking)
+    try {
+      await googleCalendarService.syncVideoSessionToGoogle(id);
+    } catch (error) {
+      console.error('Google Calendar sync failed:', error.message);
+      // Don't fail the video session update if sync fails
+    }
+
     // Don't send password hash to client
     const { password, ...sessionData } = updatedSession;
 
@@ -182,6 +199,14 @@ const deleteVideoSession = async (req, res) => {
     const session = await VideoSession.findById(id);
     if (!session) {
       return res.status(404).json({ error: 'Video session not found' });
+    }
+
+    // Delete from Google Calendar first (non-blocking)
+    try {
+      await googleCalendarService.deleteVideoSessionFromGoogle(id);
+    } catch (error) {
+      console.error('Google Calendar delete failed:', error.message);
+      // Continue with deletion even if Google sync fails
     }
 
     await VideoSession.delete(id);
