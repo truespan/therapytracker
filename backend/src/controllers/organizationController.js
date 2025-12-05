@@ -640,8 +640,8 @@ const deleteClient = async (req, res) => {
       const userCheck = await client.query(
         `SELECT u.id, u.name, u.email
          FROM users u
-         JOIN user_partners up ON u.id = up.user_id
-         JOIN partners p ON up.partner_id = p.id
+         JOIN user_partner_assignments upa ON u.id = upa.user_id
+         JOIN partners p ON upa.partner_id = p.id
          WHERE u.id = $1 AND p.organization_id = $2
          LIMIT 1`,
         [clientId, organizationId]
@@ -684,7 +684,7 @@ const deleteClient = async (req, res) => {
       console.log(`[DELETE CLIENT] Deleted appointments for user ${clientId}`);
 
       // 7. Delete user-partner assignments
-      await client.query('DELETE FROM user_partners WHERE user_id = $1', [clientId]);
+      await client.query('DELETE FROM user_partner_assignments WHERE user_id = $1', [clientId]);
       console.log(`[DELETE CLIENT] Deleted user-partner assignments for user ${clientId}`);
 
       // 8. Delete auth credentials
