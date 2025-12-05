@@ -1,4 +1,4 @@
-# Render Blueprint for Therapy Tracker Application
+# Render Blueprint for TheraP Track Application
 # This file defines all services needed to deploy the application
 # Deploy using: Dashboard -> New -> Blueprint -> Connect Repository
 
@@ -55,7 +55,7 @@ services:
         sync: false # Set manually in Render dashboard (use App Password for Gmail)
 
       - key: EMAIL_FROM
-        value: Therapy Tracker <noreply@therapytracker.com>
+        value: TheraP Track <noreply@theraptrack.com>
 
       # Frontend URL - Update after frontend deployment
       - key: FRONTEND_URL

@@ -44,7 +44,7 @@ const Navbar = () => {
           <Link to={getDashboardLink()} className="flex items-center space-x-2">
             <Activity className="h-8 w-8 text-primary-600" />
             <span className="text-lg sm:text-xl font-bold text-gray-900">
-              <span className="hidden sm:inline">Therapy Tracker</span>
+              <span className="hidden sm:inline">TheraP Track</span>
               <span className="sm:hidden">TT</span>
             </span>
           </Link>

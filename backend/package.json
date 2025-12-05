@@ -1,7 +1,7 @@
 {
   "name": "therapy-tracker-backend",
   "version": "1.0.0",
-  "description": "Backend API for Therapy Tracker application",
+  "description": "Backend API for TheraP Track application",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

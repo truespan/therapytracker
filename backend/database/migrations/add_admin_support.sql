@@ -1,4 +1,4 @@
--- Migration to add admin support to the therapy tracker system
+-- Migration to add admin support to the theraP track system
 -- Run this after the main schema.sql
 
 -- Step 1: Drop the existing CHECK constraint on auth_credentials if it exists

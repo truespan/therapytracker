@@ -192,7 +192,7 @@ Potential improvements:
 
 **Message to Display:**
 ```
-Want to add your organization to Therapy Tracker?
+Want to add your organization to TheraP Track?
 Please contact our administrators at: admin@therapytracker.com
 
 Administrators will create your organization account and provide you with login credentials.

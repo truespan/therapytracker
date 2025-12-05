@@ -1,4 +1,4 @@
-# Therapy Tracker Backend
+# TheraP Track Backend
 
 Express.js backend API with PostgreSQL database.
 

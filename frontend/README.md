@@ -1,4 +1,4 @@
-# Therapy Tracker Frontend
+# TheraP Track Frontend
 
 React application for tracking therapy progress with visual mind-body maps.
 

@@ -12,7 +12,7 @@ const Home = () => {
             <div className="h-20 w-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center p-2">
               <img
                 src="/TheraPTrackLogoBgRemoved.png"
-                alt="Therapy Tracker Logo"
+                alt="TheraP Track Logo"
                 className="h-full w-full object-contain"
               />
             </div>

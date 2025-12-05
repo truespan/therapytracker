@@ -73,7 +73,7 @@ COMMENT ON COLUMN video_sessions.google_last_synced_at IS 'Timestamp of last suc
 COMMENT ON COLUMN video_sessions.google_sync_error IS 'Error message if sync failed';
 
 -- ==================== MIGRATION COMPLETE ====================
--- Migration adds Google Calendar integration support to the therapy tracker application
+-- Migration adds Google Calendar integration support to the theraP track application
 -- Next steps:
 -- 1. Run this migration on the database
 -- 2. Configure Google Cloud Console OAuth credentials

@@ -36,7 +36,7 @@ const AdminLayout = ({ children }) => {
                 <Shield className="h-8 w-8 text-white" />
                 <div>
                   <span className="text-xl font-bold text-white">Admin Panel</span>
-                  <p className="text-xs text-indigo-100">Therapy Tracker</p>
+                  <p className="text-xs text-indigo-100">TheraP Track</p>
                 </div>
               </Link>
             </div>

@@ -1,5 +1,5 @@
 <!-- 8abcc6e2-e42d-4dba-a4cc-8859a9a7ca08 2eff6969-74b4-4ac9-bdfb-33aeba34d9c5 -->
-# Therapy Tracker MVP Implementation Plan
+# TheraP Track MVP Implementation Plan
 
 ## Architecture Overview
 

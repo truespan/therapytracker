@@ -170,7 +170,7 @@ function formatEventData(eventType, eventData) {
   if (eventData.notes) {
     description += `${eventData.notes}\n\n`;
   }
-  description += 'Managed by Therapy Tracker\n';
+  description += 'Managed by TheraP Track\n';
 
   if (isVideo && eventData.meeting_room_id) {
     const meetingLink = `https://meet.jit.si/${eventData.meeting_room_id}`;

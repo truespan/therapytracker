@@ -162,7 +162,7 @@ Open `http://localhost:5000` in your browser. You should see:
 
 ```json
 {
-  "message": "Therapy Tracker API",
+  "message": "TheraP Track API",
   "version": "1.0.0",
   ...
 }

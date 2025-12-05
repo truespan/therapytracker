@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Production Database Migration: Create All Tables
 -- ============================================================================
--- This script creates all 18 tables required for the Therapy Tracker system
+-- This script creates all 18 tables required for the TheraP Track system
 -- Execute this file in your production database to set up the complete schema
 --
 -- Execution: psql -U postgres -d your_database_name -f 01_create_all_tables.sql

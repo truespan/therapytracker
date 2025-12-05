@@ -82,11 +82,11 @@ const VerifyEmail = () => {
             <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center p-2 shadow-md">
               <img
                 src="/TheraPTrackLogoBgRemoved.png"
-                alt="Therapy Tracker Logo"
+                alt="TheraP Track Logo"
                 className="h-full w-full object-contain"
               />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Therapy Tracker</h1>
+            <h1 className="text-3xl font-bold text-gray-900">TheraP Track</h1>
           </div>
           <h2 className="text-xl font-semibold text-gray-700">Email Verification</h2>
         </div>

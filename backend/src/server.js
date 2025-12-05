@@ -28,7 +28,7 @@ app.use('/api', routes);
 // Root route
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'Therapy Tracker API',
+    message: 'TheraP Track API',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',

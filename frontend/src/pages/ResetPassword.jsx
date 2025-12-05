@@ -71,7 +71,7 @@ const ResetPassword = () => {
             <div className="h-16 w-16 mx-auto mb-4 bg-white rounded-full flex items-center justify-center p-2 shadow-md">
               <img
                 src="/TheraPTrackLogoBgRemoved.png"
-                alt="Therapy Tracker Logo"
+                alt="TheraP Track Logo"
                 className="h-full w-full object-contain"
               />
             </div>

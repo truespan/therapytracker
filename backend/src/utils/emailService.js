@@ -54,7 +54,7 @@ const sendPasswordResetEmail = async (email, token) => {
         </div>
         <div class="content">
           <p>Hello,</p>
-          <p>We received a request to reset your password for your Therapy Tracker account.</p>
+          <p>We received a request to reset your password for your TheraP Track account.</p>
           <p>Click the button below to reset your password:</p>
           <p style="text-align: center;">
             <a href="${resetUrl}" class="button">Reset Password</a>
@@ -69,7 +69,7 @@ const sendPasswordResetEmail = async (email, token) => {
           <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
         </div>
         <div class="footer">
-          <p>This is an automated email from Therapy Tracker. Please do not reply to this email.</p>
+          <p>This is an automated email from TheraP Track. Please do not reply to this email.</p>
         </div>
       </div>
     </body>
@@ -81,7 +81,7 @@ const sendPasswordResetEmail = async (email, token) => {
     
     Hello,
     
-    We received a request to reset your password for your Therapy Tracker account.
+    We received a request to reset your password for your TheraP Track account.
     
     Click the link below to reset your password:
     ${resetUrl}
@@ -90,13 +90,13 @@ const sendPasswordResetEmail = async (email, token) => {
     
     If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
     
-    This is an automated email from Therapy Tracker.
+    This is an automated email from TheraP Track.
   `;
 
   const sendSmtpEmail = new brevo.SendSmtpEmail();
-  sendSmtpEmail.sender = { email: 'vakshreem@gmail.com', name: 'Therapy Tracker' };
+  sendSmtpEmail.sender = { email: 'vakshreem@gmail.com', name: 'TheraP Track' };
   sendSmtpEmail.to = [{ email: email }];
-  sendSmtpEmail.subject = 'Password Reset Request - Therapy Tracker';
+  sendSmtpEmail.subject = 'Password Reset Request - TheraP Track';
   sendSmtpEmail.htmlContent = htmlContent;
   sendSmtpEmail.textContent = textContent;
 
@@ -174,7 +174,7 @@ const sendPartnerVerificationEmail = async (email, token) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>Welcome to Therapy Tracker</h1>
+          <h1>Welcome to TheraP Track</h1>
         </div>
         <div class="content">
           <p>Hello,</p>
@@ -193,7 +193,7 @@ const sendPartnerVerificationEmail = async (email, token) => {
           <p>If you didn't expect this email or have any questions, please contact your organization administrator.</p>
         </div>
         <div class="footer">
-          <p>This is an automated email from Therapy Tracker. Please do not reply to this email.</p>
+          <p>This is an automated email from TheraP Track. Please do not reply to this email.</p>
         </div>
       </div>
     </body>
@@ -201,7 +201,7 @@ const sendPartnerVerificationEmail = async (email, token) => {
   `;
 
   const textContent = `
-    Welcome to Therapy Tracker
+    Welcome to TheraP Track
 
     Hello,
 
@@ -214,13 +214,13 @@ const sendPartnerVerificationEmail = async (email, token) => {
 
     If you didn't expect this email or have any questions, please contact your organization administrator.
 
-    This is an automated email from Therapy Tracker.
+    This is an automated email from TheraP Track.
   `;
 
   const sendSmtpEmail = new brevo.SendSmtpEmail();
-  sendSmtpEmail.sender = { email: process.env.EMAIL_USER, name: 'Therapy Tracker' };
+  sendSmtpEmail.sender = { email: process.env.EMAIL_USER, name: 'TheraP Track' };
   sendSmtpEmail.to = [{ email: email }];
-  sendSmtpEmail.subject = 'Verify Your Email - Therapy Tracker';
+  sendSmtpEmail.subject = 'Verify Your Email - TheraP Track';
   sendSmtpEmail.htmlContent = htmlContent;
   sendSmtpEmail.textContent = textContent;
 

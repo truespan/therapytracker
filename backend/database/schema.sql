@@ -1,4 +1,4 @@
--- Therapy Tracker Database Schema
+-- TheraP Track Database Schema
 
 -- Drop tables if they exist (for clean setup)
 DROP TABLE IF EXISTS user_profiles CASCADE;
