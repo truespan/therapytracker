@@ -9,11 +9,13 @@ const Home = () => {
       <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <img
-              src="/TheraPTrackLogoBgRemoved.png"
-              alt="Therapy Tracker Logo"
-              className="h-20 w-20 mx-auto mb-6 object-contain"
-            />
+            <div className="h-20 w-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center p-2">
+              <img
+                src="/TheraPTrackLogoBgRemoved.png"
+                alt="Therapy Tracker Logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
             <h1 className="text-5xl font-bold mb-6">Therapy Tracker</h1>
             <p className="text-xl mb-8 text-primary-100">
               Track your therapy progress with visual mind-body maps

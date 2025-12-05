@@ -78,8 +78,14 @@ const VerifyEmail = () => {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Activity className="h-10 w-10 text-primary-600" />
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center p-2 shadow-md">
+              <img
+                src="/TheraPTrackLogoBgRemoved.png"
+                alt="Therapy Tracker Logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
             <h1 className="text-3xl font-bold text-gray-900">Therapy Tracker</h1>
           </div>
           <h2 className="text-xl font-semibold text-gray-700">Email Verification</h2>

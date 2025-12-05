@@ -125,7 +125,13 @@ const Signup = () => {
       <div className="max-w-2xl mx-auto px-4">
         <div className="bg-white rounded-lg shadow-xl p-4 sm:p-8">
           <div className="text-center mb-6 sm:mb-8">
-            <Activity className="h-10 w-10 sm:h-12 sm:w-12 text-primary-600 mx-auto mb-4" />
+            <div className="h-14 w-14 sm:h-16 sm:w-16 mx-auto mb-4 bg-white rounded-full flex items-center justify-center p-2 shadow-md">
+              <img
+                src="/TheraPTrackLogoBgRemoved.png"
+                alt="Therapy Tracker Logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Patient Account</h2>
             <p className="text-sm sm:text-base text-gray-600 mt-2">Join Therapy Tracker today</p>
           </div>

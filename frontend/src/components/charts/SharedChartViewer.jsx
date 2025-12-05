@@ -166,8 +166,9 @@ const SharedChartViewer = ({ charts }) => {
     });
     console.log('SharedChartViewer - Max Data Value:', maxDataValue);
 
-    // Set domain based on data, with a buffer
-    const domainMax = Math.max(10, Math.ceil(maxDataValue * 1.2));
+    // Set domain based on data - use actual max value, not forced to 10
+    // This matches the dynamic scale used in partner dashboard
+    const domainMax = Math.ceil(maxDataValue);
     console.log('SharedChartViewer - Domain Max:', domainMax);
 
     if (chartType === 'radar') {

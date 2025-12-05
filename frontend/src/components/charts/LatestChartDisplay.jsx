@@ -152,7 +152,8 @@ const LatestChartDisplay = ({ sentCharts, userName }) => {
         if (value > maxDataValue) maxDataValue = value;
       });
     });
-    const domainMax = Math.max(10, Math.ceil(maxDataValue * 1.2));
+    // Use actual max value to match partner dashboard dynamic scale
+    const domainMax = Math.ceil(maxDataValue);
 
     if (chartType === 'radar') {
       // Prepare data for Chart.js

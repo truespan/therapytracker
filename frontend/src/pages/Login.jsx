@@ -72,7 +72,13 @@ const Login = () => {
       <div className="max-w-md w-full">
         <div className="bg-white rounded-lg shadow-xl p-8">
           <div className="text-center mb-8">
-            <Activity className="h-12 w-12 text-primary-600 mx-auto mb-4" />
+            <div className="h-16 w-16 mx-auto mb-4 bg-white rounded-full flex items-center justify-center p-2 shadow-md">
+              <img
+                src="/TheraPTrackLogoBgRemoved.png"
+                alt="Therapy Tracker Logo"
+                className="h-full w-full object-contain"
+              />
+            </div>
             <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
             <p className="text-gray-600 mt-2">Sign in to your account</p>
           </div>
