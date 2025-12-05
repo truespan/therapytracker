@@ -15,8 +15,15 @@ class Auth {
   }
 
   static async findByEmail(email) {
+    const trimmedEmail = email.trim();
+    console.log(`[AUTH] Searching for email: "${trimmedEmail}"`);
     const query = 'SELECT * FROM auth_credentials WHERE LOWER(email) = LOWER($1)';
-    const result = await db.query(query, [email.trim()]);
+    const result = await db.query(query, [trimmedEmail]);
+    if (result.rows[0]) {
+      console.log(`[AUTH] Found user by email - Type: ${result.rows[0].user_type}, ID: ${result.rows[0].reference_id}`);
+    } else {
+      console.log(`[AUTH] No user found with email: "${trimmedEmail}"`);
+    }
     return result.rows[0];
   }
 

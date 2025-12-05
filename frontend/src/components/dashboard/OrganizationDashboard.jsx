@@ -11,6 +11,7 @@ import CreatePartnerModal from '../organization/CreatePartnerModal';
 import EditPartnerModal from '../organization/EditPartnerModal';
 import DeactivatePartnerModal from '../organization/DeactivatePartnerModal';
 import ReassignClientsModal from '../organization/ReassignClientsModal';
+import DeleteClientModal from '../organization/DeleteClientModal';
 import OrganizationSettings from '../organization/OrganizationSettings';
 
 // Use environment variable for API URL, fallback to localhost for development
@@ -65,7 +66,9 @@ const OrganizationDashboard = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [showReassignModal, setShowReassignModal] = useState(false);
+  const [showDeleteClientModal, setShowDeleteClientModal] = useState(false);
   const [modalPartner, setModalPartner] = useState(null);
+  const [clientToDelete, setClientToDelete] = useState(null);
 
   const [stats, setStats] = useState({
     totalPartners: 0,
@@ -343,6 +346,44 @@ const OrganizationDashboard = () => {
     setModalPartner(partner);
     await loadPartnerClients(partner.id);
     setShowReassignModal(true);
+  };
+
+  const openDeleteClientModal = (client) => {
+    setClientToDelete(client);
+    setShowDeleteClientModal(true);
+  };
+
+  const handleDeleteClient = async (clientId) => {
+    try {
+      setActionLoading(true);
+      setError('');
+      await organizationAPI.deleteClient(user.id, clientId);
+      setSuccessMessage('Client deleted successfully! All associated data has been removed.');
+      setShowDeleteClientModal(false);
+      setClientToDelete(null);
+
+      // Clear selected client if it was the one deleted
+      if (selectedClient && selectedClient.id === clientId) {
+        setSelectedClient(null);
+        setClientSessions([]);
+      }
+
+      // Reload partner clients if a partner is selected
+      if (selectedPartner) {
+        await loadPartnerClients(selectedPartner.id);
+      }
+
+      // Reload organization data to update stats
+      await loadOrganizationData();
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (err) {
+      console.error('Failed to delete client:', err);
+      setError(err.response?.data?.error || 'Failed to delete client');
+      setShowDeleteClientModal(false);
+      setClientToDelete(null);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (loading && partners.length === 0) {
@@ -694,26 +735,49 @@ const OrganizationDashboard = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Client Dropdown */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Client
-                  </label>
-                  <select
-                    value={selectedClient?.id || ''}
-                    onChange={(e) => {
-                      const client = partnerClients.find(c => c.id === parseInt(e.target.value));
-                      if (client) handleClientSelect(client);
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    <option value="">-- Select a client --</option>
+                {/* Client List with Delete Buttons */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    Client List ({partnerClients.length})
+                  </h3>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
                     {partnerClients.map((client) => (
-                      <option key={client.id} value={client.id}>
-                        {client.name} ({client.sex}, {client.age} years)
-                      </option>
+                      <div
+                        key={client.id}
+                        className={`flex items-center justify-between p-3 sm:p-4 border rounded-lg transition-all ${
+                          selectedClient?.id === client.id
+                            ? 'border-primary-500 bg-primary-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                        }`}
+                      >
+                        <button
+                          onClick={() => handleClientSelect(client)}
+                          className="flex-1 text-left min-w-0"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                              <UserIcon className="h-5 w-5 text-primary-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm sm:text-base font-medium text-gray-900 truncate">
+                                {client.name}
+                              </p>
+                              <p className="text-xs sm:text-sm text-gray-500">
+                                {client.sex}, {client.age} years
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => openDeleteClientModal(client)}
+                          className="flex-shrink-0 ml-2 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete client"
+                        >
+                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </button>
+                      </div>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
                 {/* Session Details */}
@@ -877,6 +941,17 @@ const OrganizationDashboard = () => {
         sourcePartner={modalPartner}
         clients={partnerClients}
         activePartners={activePartners}
+        isLoading={actionLoading}
+      />
+
+      <DeleteClientModal
+        isOpen={showDeleteClientModal}
+        onClose={() => {
+          setShowDeleteClientModal(false);
+          setClientToDelete(null);
+        }}
+        onConfirm={handleDeleteClient}
+        client={clientToDelete}
         isLoading={actionLoading}
       />
     </div>

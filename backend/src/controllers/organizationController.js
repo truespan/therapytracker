@@ -619,6 +619,97 @@ const deletePartner = async (req, res) => {
   }
 };
 
+const deleteClient = async (req, res) => {
+  try {
+    const { id: organizationId, clientId } = req.params;
+
+    // Check if organization exists
+    const organization = await Organization.findById(organizationId);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization - only organization can delete its clients
+    if (req.user.userType !== 'organization' || req.user.id !== parseInt(organizationId)) {
+      return res.status(403).json({ error: 'Unauthorized to delete clients' });
+    }
+
+    // Use transaction to ensure all related data is deleted atomically
+    await db.transaction(async (client) => {
+      // Verify client exists and belongs to this organization
+      const userCheck = await client.query(
+        `SELECT u.id, u.name, u.email
+         FROM users u
+         JOIN user_partners up ON u.id = up.user_id
+         JOIN partners p ON up.partner_id = p.id
+         WHERE u.id = $1 AND p.organization_id = $2
+         LIMIT 1`,
+        [clientId, organizationId]
+      );
+
+      if (userCheck.rows.length === 0) {
+        throw new Error('Client not found or does not belong to this organization');
+      }
+
+      const user = userCheck.rows[0];
+      console.log(`[DELETE CLIENT] Starting deletion for client: ${user.name} (ID: ${clientId})`);
+
+      // Delete in order to respect foreign key constraints:
+
+      // 1. Delete questionnaire responses
+      await client.query(
+        'DELETE FROM questionnaire_responses WHERE assignment_id IN (SELECT id FROM questionnaire_assignments WHERE user_id = $1)',
+        [clientId]
+      );
+      console.log(`[DELETE CLIENT] Deleted questionnaire responses for user ${clientId}`);
+
+      // 2. Delete questionnaire assignments
+      await client.query('DELETE FROM questionnaire_assignments WHERE user_id = $1', [clientId]);
+      console.log(`[DELETE CLIENT] Deleted questionnaire assignments for user ${clientId}`);
+
+      // 3. Delete shared charts
+      await client.query('DELETE FROM shared_charts WHERE user_id = $1', [clientId]);
+      console.log(`[DELETE CLIENT] Deleted shared charts for user ${clientId}`);
+
+      // 4. Delete therapy sessions
+      await client.query('DELETE FROM therapy_sessions WHERE user_id = $1', [clientId]);
+      console.log(`[DELETE CLIENT] Deleted therapy sessions for user ${clientId}`);
+
+      // 5. Delete video sessions
+      await client.query('DELETE FROM video_sessions WHERE user_id = $1', [clientId]);
+      console.log(`[DELETE CLIENT] Deleted video sessions for user ${clientId}`);
+
+      // 6. Delete appointments
+      await client.query('DELETE FROM appointments WHERE user_id = $1', [clientId]);
+      console.log(`[DELETE CLIENT] Deleted appointments for user ${clientId}`);
+
+      // 7. Delete user-partner assignments
+      await client.query('DELETE FROM user_partners WHERE user_id = $1', [clientId]);
+      console.log(`[DELETE CLIENT] Deleted user-partner assignments for user ${clientId}`);
+
+      // 8. Delete auth credentials
+      await client.query('DELETE FROM auth_credentials WHERE user_type = $1 AND reference_id = $2', ['user', clientId]);
+      console.log(`[DELETE CLIENT] Deleted auth credentials for user ${clientId}`);
+
+      // 9. Finally, delete the user record
+      await client.query('DELETE FROM users WHERE id = $1', [clientId]);
+      console.log(`[DELETE CLIENT] Deleted user record for user ${clientId}`);
+    });
+
+    console.log(`[DELETE CLIENT] Successfully deleted client ${clientId} and all associated data`);
+
+    res.json({
+      message: 'Client and all associated data deleted successfully'
+    });
+  } catch (error) {
+    console.error('[DELETE CLIENT ERROR]:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to delete client',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   getOrganizationById,
@@ -632,6 +723,7 @@ module.exports = {
   getPartnerClients,
   reassignClients,
   resendVerificationEmail,
-  deletePartner
+  deletePartner,
+  deleteClient
 };
 

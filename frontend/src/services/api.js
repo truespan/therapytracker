@@ -107,6 +107,9 @@ export const organizationAPI = {
   resendVerificationEmail: (organizationId, partnerId) => api.post(`/organizations/${organizationId}/partners/${partnerId}/resend-verification`),
   getPartnerClients: (organizationId, partnerId) => api.get(`/organizations/${organizationId}/partners/${partnerId}/clients`),
   reassignClients: (organizationId, data) => api.post(`/organizations/${organizationId}/reassign-clients`, data),
+
+  // Client management
+  deleteClient: (organizationId, clientId) => api.delete(`/organizations/${organizationId}/clients/${clientId}`),
 };
 
 // Admin APIs

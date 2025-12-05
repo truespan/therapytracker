@@ -73,6 +73,9 @@ router.post('/organizations/:id/partners/:partnerId/resend-verification', authen
 router.get('/organizations/:id/partners/:partnerId/clients', authenticateToken, checkRole('organization'), organizationController.getPartnerClients);
 router.post('/organizations/:id/reassign-clients', authenticateToken, checkRole('organization'), organizationController.reassignClients);
 
+// Organization client management
+router.delete('/organizations/:id/clients/:clientId', authenticateToken, checkRole('organization'), organizationController.deleteClient);
+
 // ==================== APPOINTMENT ROUTES ====================
 router.post('/appointments', authenticateToken, appointmentController.createAppointment);
 router.get('/appointments/:id', authenticateToken, appointmentController.getAppointmentById);
