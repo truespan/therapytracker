@@ -27,6 +27,10 @@ function getOAuth2Config() {
     );
   }
 
+  // Log the redirect URI for debugging (without exposing secret)
+  console.log('[Google Calendar Config] Redirect URI:', redirectUri);
+  console.log('[Google Calendar Config] Client ID:', clientId ? `${clientId.substring(0, 10)}...` : 'NOT SET');
+
   return {
     clientId,
     clientSecret,
@@ -72,13 +76,19 @@ const CALENDAR_SCOPES = [
  */
 function generateAuthUrl(state) {
   const oauth2Client = createOAuth2Client();
+  const { redirectUri } = getOAuth2Config();
 
-  return oauth2Client.generateAuthUrl({
+  const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline', // Request refresh token
     scope: CALENDAR_SCOPES,
     state: state,
     prompt: 'consent' // Force consent screen to get refresh token
   });
+
+  console.log('[Google Calendar] Generated auth URL with redirect URI:', redirectUri);
+  console.log('[Google Calendar] Auth URL (first 100 chars):', authUrl.substring(0, 100) + '...');
+
+  return authUrl;
 }
 
 /**
@@ -88,6 +98,11 @@ function generateAuthUrl(state) {
  */
 async function exchangeCodeForTokens(code) {
   const oauth2Client = createOAuth2Client();
+  const { redirectUri } = getOAuth2Config();
+
+  console.log('[Google Calendar] Exchanging code for tokens');
+  console.log('[Google Calendar] Using redirect URI:', redirectUri);
+  console.log('[Google Calendar] Code length:', code ? code.length : 0);
 
   try {
     const { tokens } = await oauth2Client.getToken(code);
@@ -96,18 +111,35 @@ async function exchangeCodeForTokens(code) {
       throw new Error('Failed to obtain access token or refresh token');
     }
 
+    console.log('[Google Calendar] Successfully obtained tokens');
     return tokens;
   } catch (error) {
     // Log detailed error information for debugging
-    console.error('Token exchange failed:', {
+    console.error('[Google Calendar] Token exchange failed:', {
       error: error.message,
       code: error.code,
-      response: error.response?.data
+      response: error.response?.data,
+      redirectUri: redirectUri
     });
+
+    // Check for specific error types
+    if (error.response?.data) {
+      console.error('[Google Calendar] Error response data:', JSON.stringify(error.response.data, null, 2));
+    }
 
     // Provide more helpful error messages
     if (error.message && error.message.includes('invalid_grant')) {
-      throw new Error('invalid_grant: Authorization code expired, already used, or redirect URI mismatch. Please check your GOOGLE_REDIRECT_URI matches Google Cloud Console exactly.');
+      const detailedError = `invalid_grant: Authorization code expired, already used, or redirect URI mismatch.
+      
+Current redirect URI: ${redirectUri}
+
+Please verify:
+1. GOOGLE_REDIRECT_URI in backend .env matches EXACTLY what's in Google Cloud Console
+2. The redirect URI in Google Cloud Console includes: ${redirectUri}
+3. You haven't refreshed the page or tried connecting twice
+4. The code hasn't expired (try connecting again immediately)`;
+      
+      throw new Error(detailedError);
     }
 
     throw error;

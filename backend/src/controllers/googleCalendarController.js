@@ -38,6 +38,12 @@ exports.handleCallback = async (req, res) => {
   try {
     const { code, state } = req.query;
 
+    console.log('[Google Calendar Callback] Received callback');
+    console.log('[Google Calendar Callback] Has code:', !!code);
+    console.log('[Google Calendar Callback] Has state:', !!state);
+    console.log('[Google Calendar Callback] Request URL:', req.url);
+    console.log('[Google Calendar Callback] Full URL:', req.protocol + '://' + req.get('host') + req.originalUrl);
+
     if (!code || !state) {
       return res.status(400).json({
         success: false,
@@ -49,16 +55,23 @@ exports.handleCallback = async (req, res) => {
     // Process callback and store tokens
     const result = await googleCalendarService.handleOAuthCallback(code, state);
 
+    console.log('[Google Calendar Callback] Successfully processed callback');
     res.json(result);
   } catch (error) {
-    console.error('Error handling OAuth callback:', error);
-    console.error('Request query:', req.query);
+    console.error('[Google Calendar Callback] Error handling OAuth callback:', error);
+    console.error('[Google Calendar Callback] Request query:', req.query);
+    console.error('[Google Calendar Callback] Error stack:', error.stack);
     
     // Provide more specific error messages
     let errorMessage = error.message || 'Failed to connect Google Calendar';
     
     if (error.message && error.message.includes('invalid_grant')) {
-      errorMessage = 'Authorization code expired or already used. This can happen if you refresh the page or try connecting twice. Please go back to Settings and click "Connect Google Calendar" again.';
+      // Extract the detailed error message if it contains redirect URI info
+      if (error.message.includes('Current redirect URI:')) {
+        errorMessage = error.message; // Use the detailed message
+      } else {
+        errorMessage = 'Authorization code expired or already used. This can happen if you refresh the page or try connecting twice. Please go back to Settings and click "Connect Google Calendar" again.';
+      }
     } else if (error.message && error.message.includes('redirect_uri_mismatch')) {
       errorMessage = 'Redirect URI mismatch. Please verify that GOOGLE_REDIRECT_URI in your backend environment matches exactly what is configured in Google Cloud Console (including http/https and trailing slashes).';
     }
