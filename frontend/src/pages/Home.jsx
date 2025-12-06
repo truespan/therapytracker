@@ -97,30 +97,18 @@ const Home = () => {
           <div className="text-center">
             <p className="mb-4">&copy; 2025 TheraP Track. All rights reserved.</p>
             <div className="flex justify-center space-x-6 text-sm">
-              <a 
-                href="/privacy-policy" 
-                target="_blank" 
-                rel="noopener noreferrer"
+              <Link 
+                to="/privacy-policy" 
                 className="text-gray-300 hover:text-white transition underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.open('/privacy-policy', '_blank');
-                }}
               >
                 Privacy Policy
-              </a>
-              <a 
-                href="/terms-of-service" 
-                target="_blank" 
-                rel="noopener noreferrer"
+              </Link>
+              <Link 
+                to="/terms-of-service" 
                 className="text-gray-300 hover:text-white transition underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.open('/terms-of-service', '_blank');
-                }}
               >
                 Terms of Service
-              </a>
+              </Link>
             </div>
           </div>
         </div>

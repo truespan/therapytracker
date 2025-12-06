@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import InactivityLogout from './components/InactivityLogout';
 import Navbar from './components/layout/Navbar';
 import AdminLayout from './components/layout/AdminLayout';
 import Home from './pages/Home';
@@ -47,7 +48,9 @@ function AppRoutes() {
   };
 
   return (
-    <Routes>
+    <>
+      <InactivityLogout />
+      <Routes>
       {/* Public Routes */}
       <Route path="/" element={user ? <Navigate to={getRedirectPath()} /> : <Home />} />
       <Route path="/login" element={user ? <Navigate to={getRedirectPath()} /> : <Login />} />
@@ -115,6 +118,7 @@ function AppRoutes() {
         }
       />
     </Routes>
+    </>
   );
 }
 
