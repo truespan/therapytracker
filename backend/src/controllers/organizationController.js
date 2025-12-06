@@ -658,40 +658,47 @@ const deleteClient = async (req, res) => {
 
       // 1. Delete questionnaire responses
       await client.query(
-        'DELETE FROM questionnaire_responses WHERE assignment_id IN (SELECT id FROM questionnaire_assignments WHERE user_id = $1)',
+        'DELETE FROM user_questionnaire_responses WHERE assignment_id IN (SELECT id FROM user_questionnaire_assignments WHERE user_id = $1)',
         [clientId]
       );
       console.log(`[DELETE CLIENT] Deleted questionnaire responses for user ${clientId}`);
 
-      // 2. Delete questionnaire assignments
-      await client.query('DELETE FROM questionnaire_assignments WHERE user_id = $1', [clientId]);
+      // 2. Delete questionnaire text responses
+      await client.query(
+        'DELETE FROM user_questionnaire_text_responses WHERE assignment_id IN (SELECT id FROM user_questionnaire_assignments WHERE user_id = $1)',
+        [clientId]
+      );
+      console.log(`[DELETE CLIENT] Deleted questionnaire textresponses for user ${clientId}`);
+
+      // 3. Delete questionnaire assignments
+      await client.query('DELETE FROM user_questionnaire_assignments WHERE user_id = $1', [clientId]);
       console.log(`[DELETE CLIENT] Deleted questionnaire assignments for user ${clientId}`);
 
-      // 3. Delete shared charts
+      // 4. Delete shared charts
       await client.query('DELETE FROM shared_charts WHERE user_id = $1', [clientId]);
       console.log(`[DELETE CLIENT] Deleted shared charts for user ${clientId}`);
 
-      // 4. Delete therapy sessions
+      // 5. Delete therapy sessions
       await client.query('DELETE FROM therapy_sessions WHERE user_id = $1', [clientId]);
       console.log(`[DELETE CLIENT] Deleted therapy sessions for user ${clientId}`);
 
-      // 5. Delete video sessions
+      // 6. Delete video sessions
       await client.query('DELETE FROM video_sessions WHERE user_id = $1', [clientId]);
       console.log(`[DELETE CLIENT] Deleted video sessions for user ${clientId}`);
 
-      // 6. Delete appointments
+      // 7. Delete appointments
       await client.query('DELETE FROM appointments WHERE user_id = $1', [clientId]);
       console.log(`[DELETE CLIENT] Deleted appointments for user ${clientId}`);
 
-      // 7. Delete user-partner assignments
+      // 8. Delete user-partner assignments
       await client.query('DELETE FROM user_partner_assignments WHERE user_id = $1', [clientId]);
       console.log(`[DELETE CLIENT] Deleted user-partner assignments for user ${clientId}`);
 
-      // 8. Delete auth credentials
+      // 9. Delete auth credentials
       await client.query('DELETE FROM auth_credentials WHERE user_type = $1 AND reference_id = $2', ['user', clientId]);
       console.log(`[DELETE CLIENT] Deleted auth credentials for user ${clientId}`);
 
-      // 9. Finally, delete the user record
+      // 10. Finally, delete the user record
       await client.query('DELETE FROM users WHERE id = $1', [clientId]);
       console.log(`[DELETE CLIENT] Deleted user record for user ${clientId}`);
     });
