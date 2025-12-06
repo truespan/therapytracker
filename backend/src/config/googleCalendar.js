@@ -115,33 +115,58 @@ async function exchangeCodeForTokens(code) {
     return tokens;
   } catch (error) {
     // Log detailed error information for debugging
-    console.error('[Google Calendar] Token exchange failed:', {
-      error: error.message,
+    console.error('[Google Calendar] Token exchange failed - Full error object:', {
+      message: error.message,
       code: error.code,
-      response: error.response?.data,
-      redirectUri: redirectUri
+      name: error.name,
+      response: error.response,
+      responseData: error.response?.data,
+      responseStatus: error.response?.status,
+      responseStatusText: error.response?.statusText,
+      redirectUri: redirectUri,
+      errorKeys: Object.keys(error)
     });
 
-    // Check for specific error types
+    // Try to extract error details from response
+    let errorDetails = {};
     if (error.response?.data) {
+      errorDetails = error.response.data;
       console.error('[Google Calendar] Error response data:', JSON.stringify(error.response.data, null, 2));
     }
 
-    // Provide more helpful error messages
-    if (error.message && error.message.includes('invalid_grant')) {
+    // Log the full error with all properties
+    try {
+      console.error('[Google Calendar] Full error (stringified):', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    } catch (e) {
+      console.error('[Google Calendar] Could not stringify error:', e);
+    }
+
+    // Check for invalid_grant in various formats
+    const errorMessage = error.message || '';
+    const errorCode = error.code || '';
+    const responseError = errorDetails.error || '';
+    
+    if (errorMessage.includes('invalid_grant') || 
+        errorCode.includes('invalid_grant') ||
+        responseError === 'invalid_grant' ||
+        errorDetails.error === 'invalid_grant') {
+      
       const detailedError = `invalid_grant: Authorization code expired, already used, or redirect URI mismatch.
       
 Current redirect URI: ${redirectUri}
+Error from Google: ${JSON.stringify(errorDetails)}
 
 Please verify:
 1. GOOGLE_REDIRECT_URI in backend .env matches EXACTLY what's in Google Cloud Console
 2. The redirect URI in Google Cloud Console includes: ${redirectUri}
 3. You haven't refreshed the page or tried connecting twice
-4. The code hasn't expired (try connecting again immediately)`;
+4. The code hasn't expired (try connecting again immediately)
+5. The authorization code was used only once`;
       
       throw new Error(detailedError);
     }
 
+    // Re-throw with original error message
     throw error;
   }
 }

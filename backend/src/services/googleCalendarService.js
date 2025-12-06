@@ -68,11 +68,29 @@ async function handleOAuthCallback(code, state) {
     try {
       tokens = await exchangeCodeForTokens(code);
     } catch (tokenError) {
-      console.error('Token exchange error:', tokenError);
+      console.error('[Google Calendar Service] Token exchange error details:', {
+        message: tokenError.message,
+        code: tokenError.code,
+        response: tokenError.response,
+        responseData: tokenError.response?.data,
+        stack: tokenError.stack,
+        fullError: JSON.stringify(tokenError, Object.getOwnPropertyNames(tokenError))
+      });
       
-      // Provide more specific error messages
-      if (tokenError.message && tokenError.message.includes('invalid_grant')) {
-        throw new Error('Authorization code expired or already used. Please try connecting again from the settings page.');
+      // Check for invalid_grant in various places
+      const errorMessage = tokenError.message || '';
+      const errorResponse = tokenError.response?.data || {};
+      const errorString = JSON.stringify(errorResponse);
+      
+      if (errorMessage.includes('invalid_grant') || 
+          errorString.includes('invalid_grant') ||
+          errorResponse.error === 'invalid_grant') {
+        console.error('[Google Calendar Service] Invalid grant detected. Original error:', {
+          message: errorMessage,
+          response: errorResponse,
+          redirectUri: process.env.GOOGLE_REDIRECT_URI
+        });
+        throw new Error(`Authorization code expired or already used. Original error: ${errorMessage || JSON.stringify(errorResponse)}`);
       }
       throw tokenError;
     }

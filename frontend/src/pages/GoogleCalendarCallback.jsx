@@ -9,8 +9,15 @@ const GoogleCalendarCallback = () => {
   const { user } = useAuth();
   const [status, setStatus] = useState('processing'); // processing, success, error
   const [message, setMessage] = useState('Connecting Google Calendar...');
+  const [hasProcessed, setHasProcessed] = useState(false); // Prevent double processing
 
   useEffect(() => {
+    // Prevent double processing (React strict mode or re-renders)
+    if (hasProcessed) {
+      console.log('[Google Calendar Callback] Already processed, skipping...');
+      return;
+    }
+
     const handleCallback = async () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
@@ -24,13 +31,19 @@ const GoogleCalendarCallback = () => {
         return;
       }
 
+      // Mark as processing to prevent duplicate calls
+      setHasProcessed(true);
+
       try {
         const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        console.log('[Google Calendar Callback] Making request to backend...');
+        
         const response = await fetch(
           `${API_URL}/google-calendar/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
         );
 
         const data = await response.json();
+        console.log('[Google Calendar Callback] Response:', { ok: response.ok, success: data.success });
 
         if (response.ok && data.success) {
           setStatus('success');
@@ -45,7 +58,7 @@ const GoogleCalendarCallback = () => {
           // Don't auto-redirect on error, let user read the message
         }
       } catch (error) {
-        console.error('Callback error:', error);
+        console.error('[Google Calendar Callback] Callback error:', error);
         setStatus('error');
         setMessage('Failed to connect Google Calendar. Please check your connection and try again.');
         // Don't auto-redirect on error
@@ -53,7 +66,7 @@ const GoogleCalendarCallback = () => {
     };
 
     handleCallback();
-  }, [searchParams, navigate, user]);
+  }, [searchParams, navigate, user, hasProcessed]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
