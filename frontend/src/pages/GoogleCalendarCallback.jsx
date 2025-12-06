@@ -35,19 +35,20 @@ const GoogleCalendarCallback = () => {
         if (response.ok && data.success) {
           setStatus('success');
           setMessage('Successfully connected to Google Calendar!');
+          // Redirect after 2 seconds on success
+          setTimeout(() => {
+            navigate(`/${user?.userType || 'user'}/dashboard`);
+          }, 2000);
         } else {
           setStatus('error');
           setMessage(data.message || data.error || 'Failed to connect Google Calendar');
+          // Don't auto-redirect on error, let user read the message
         }
       } catch (error) {
         console.error('Callback error:', error);
         setStatus('error');
-        setMessage('Failed to connect Google Calendar. Please try again.');
-      } finally {
-        // Redirect after 3 seconds
-        setTimeout(() => {
-          navigate(`/${user?.userType || 'user'}/dashboard`);
-        }, 3000);
+        setMessage('Failed to connect Google Calendar. Please check your connection and try again.');
+        // Don't auto-redirect on error
       }
     };
 
@@ -80,7 +81,17 @@ const GoogleCalendarCallback = () => {
               <XCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Connection Failed</h2>
               <p className="text-gray-600 mb-4">{message}</p>
-              <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+              <div className="space-y-3">
+                <button
+                  onClick={() => navigate(`/${user?.userType || 'user'}/dashboard`)}
+                  className="btn btn-primary w-full"
+                >
+                  Go to Dashboard
+                </button>
+                <p className="text-xs text-gray-500">
+                  Tip: If you see "invalid_grant", try disconnecting and reconnecting from Settings.
+                </p>
+              </div>
             </>
           )}
         </div>

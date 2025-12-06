@@ -89,13 +89,29 @@ function generateAuthUrl(state) {
 async function exchangeCodeForTokens(code) {
   const oauth2Client = createOAuth2Client();
 
-  const { tokens } = await oauth2Client.getToken(code);
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
 
-  if (!tokens.access_token || !tokens.refresh_token) {
-    throw new Error('Failed to obtain access token or refresh token');
+    if (!tokens.access_token || !tokens.refresh_token) {
+      throw new Error('Failed to obtain access token or refresh token');
+    }
+
+    return tokens;
+  } catch (error) {
+    // Log detailed error information for debugging
+    console.error('Token exchange failed:', {
+      error: error.message,
+      code: error.code,
+      response: error.response?.data
+    });
+
+    // Provide more helpful error messages
+    if (error.message && error.message.includes('invalid_grant')) {
+      throw new Error('invalid_grant: Authorization code expired, already used, or redirect URI mismatch. Please check your GOOGLE_REDIRECT_URI matches Google Cloud Console exactly.');
+    }
+
+    throw error;
   }
-
-  return tokens;
 }
 
 /**

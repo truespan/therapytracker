@@ -42,18 +42,44 @@ function getAuthUrl(userType, userId) {
 async function handleOAuthCallback(code, state) {
   try {
     // Decode and validate state parameter
-    const stateData = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
+    let stateData;
+    try {
+      stateData = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
+    } catch (stateError) {
+      console.error('Invalid state parameter:', stateError);
+      throw new Error('Invalid state parameter. Please try connecting again.');
+    }
+
     const { userType, userId, timestamp } = stateData;
+
+    if (!userType || !userId) {
+      throw new Error('Invalid state data. Missing user information.');
+    }
 
     // Validate state timestamp (prevent replay attacks)
     const stateAge = Date.now() - timestamp;
     const MAX_STATE_AGE = 10 * 60 * 1000; // 10 minutes
     if (stateAge > MAX_STATE_AGE) {
-      throw new Error('OAuth state expired. Please try again.');
+      throw new Error('OAuth state expired. Please try connecting again.');
     }
 
     // Exchange code for tokens
-    const tokens = await exchangeCodeForTokens(code);
+    let tokens;
+    try {
+      tokens = await exchangeCodeForTokens(code);
+    } catch (tokenError) {
+      console.error('Token exchange error:', tokenError);
+      
+      // Provide more specific error messages
+      if (tokenError.message && tokenError.message.includes('invalid_grant')) {
+        throw new Error('Authorization code expired or already used. Please try connecting again from the settings page.');
+      }
+      throw tokenError;
+    }
+
+    if (!tokens.access_token || !tokens.refresh_token) {
+      throw new Error('Failed to obtain access token or refresh token from Google');
+    }
 
     // Encrypt tokens
     const encryptedAccessToken = encrypt(tokens.access_token);
@@ -81,7 +107,12 @@ async function handleOAuthCallback(code, state) {
     };
   } catch (error) {
     console.error('OAuth callback error:', error);
-    throw new Error(`Failed to connect Google Calendar: ${error.message}`);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.data
+    });
+    throw error;
   }
 }
 

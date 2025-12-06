@@ -40,7 +40,9 @@ exports.handleCallback = async (req, res) => {
 
     if (!code || !state) {
       return res.status(400).json({
-        error: 'Missing authorization code or state parameter'
+        success: false,
+        error: 'Missing authorization code or state parameter',
+        message: 'Invalid OAuth callback. Please try connecting again.'
       });
     }
 
@@ -50,9 +52,21 @@ exports.handleCallback = async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error handling OAuth callback:', error);
+    console.error('Request query:', req.query);
+    
+    // Provide more specific error messages
+    let errorMessage = error.message || 'Failed to connect Google Calendar';
+    
+    if (error.message && error.message.includes('invalid_grant')) {
+      errorMessage = 'Authorization code expired or already used. This can happen if you refresh the page or try connecting twice. Please go back to Settings and click "Connect Google Calendar" again.';
+    } else if (error.message && error.message.includes('redirect_uri_mismatch')) {
+      errorMessage = 'Redirect URI mismatch. Please verify that GOOGLE_REDIRECT_URI in your backend environment matches exactly what is configured in Google Cloud Console (including http/https and trailing slashes).';
+    }
+
     res.status(500).json({
+      success: false,
       error: 'Failed to connect Google Calendar',
-      message: error.message
+      message: errorMessage
     });
   }
 };

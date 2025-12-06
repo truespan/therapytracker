@@ -347,6 +347,59 @@ For production use, you need to submit your app for Google verification:
 - Encryption key changed - tokens need to be re-created
 - User should disconnect and reconnect
 
+### "invalid_grant" Error
+**Problem**: You see "invalid_grant" error when trying to connect Google Calendar.
+
+**Common Causes & Solutions**:
+
+1. **Redirect URI Mismatch** (Most Common)
+   - The `GOOGLE_REDIRECT_URI` in your backend `.env` must EXACTLY match what's in Google Cloud Console
+   - Check for:
+     - `http://` vs `https://` (must match exactly)
+     - Trailing slashes (must match exactly)
+     - Port numbers (if using localhost)
+     - Domain name (theraptrack.com vs www.theraptrack.com)
+   
+   **Fix**:
+   - Go to Google Cloud Console → APIs & Services → Credentials
+   - Check your OAuth 2.0 Client ID → Authorized redirect URIs
+   - Ensure it matches your `GOOGLE_REDIRECT_URI` exactly
+   - For production: `https://theraptrack.com/auth/google/callback`
+   - For development: `http://localhost:3000/auth/google/callback`
+   - Update your backend `.env` to match exactly
+   - Restart your backend server
+
+2. **Authorization Code Already Used**
+   - OAuth codes are single-use only
+   - If you refresh the page or click back, the code becomes invalid
+   
+   **Fix**:
+   - Go back to Settings
+   - Click "Disconnect" if already connected
+   - Click "Connect Google Calendar" again
+   - Complete the flow without refreshing or going back
+
+3. **Authorization Code Expired**
+   - Codes expire quickly (usually within 1-2 minutes)
+   - If you take too long between authorization and callback, it expires
+   
+   **Fix**:
+   - Try connecting again immediately
+   - Don't delay between clicking "Allow" and the redirect
+
+4. **State Parameter Issues**
+   - State parameter might be corrupted or expired
+   
+   **Fix**:
+   - Clear browser cache and cookies
+   - Try connecting again
+
+**Debug Steps**:
+1. Check backend logs for detailed error messages
+2. Verify `GOOGLE_REDIRECT_URI` in backend `.env` matches Google Cloud Console exactly
+3. Check that your backend server is accessible from the redirect URL
+4. Try disconnecting and reconnecting from Settings
+
 ### "Google Calendar token expired. Please reconnect."
 - Refresh token is invalid or revoked
 - User needs to disconnect and reconnect
