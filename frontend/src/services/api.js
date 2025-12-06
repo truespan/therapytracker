@@ -23,7 +23,8 @@ api.interceptors.request.use(
                              config.url.includes('/auth/signup') ||
                              config.url.includes('/auth/login') ||
                              config.url.includes('/auth/forgot-password') ||
-                             config.url.includes('/auth/reset-password');
+                             config.url.includes('/auth/reset-password') ||
+                             config.url.includes('/google-calendar/callback');
 
     if (token && !isPublicEndpoint) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -53,7 +54,8 @@ api.interceptors.response.use(
                              error.config?.url?.includes('/auth/signup') ||
                              error.config?.url?.includes('/auth/login') ||
                              error.config?.url?.includes('/auth/forgot-password') ||
-                             error.config?.url?.includes('/auth/reset-password');
+                             error.config?.url?.includes('/auth/reset-password') ||
+                             error.config?.url?.includes('/google-calendar/callback');
 
     if (error.response?.status === 401 && !isPublicEndpoint) {
       localStorage.removeItem('token');
@@ -225,6 +227,15 @@ export const questionnaireAPI = {
   // Comparison chart helpers
   getCompletedByTypeForUser: (userId) => api.get(`/questionnaires/completed-by-type/user/${userId}`),
   getResponsesForComparison: (assignmentIds) => api.post('/questionnaires/responses-for-comparison', { assignmentIds })
+};
+
+// Google Calendar APIs
+export const googleCalendarAPI = {
+  initiateAuth: () => api.get('/google-calendar/auth'),
+  getStatus: () => api.get('/google-calendar/status'),
+  disconnect: () => api.post('/google-calendar/disconnect'),
+  toggleSync: (enabled) => api.post('/google-calendar/toggle-sync', { enabled }),
+  resyncEvent: (eventType, eventId) => api.post(`/google-calendar/resync/${eventType}/${eventId}`)
 };
 
 export default api;

@@ -9,6 +9,7 @@ import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
+import GoogleCalendarCallback from './pages/GoogleCalendarCallback';
 import UserDashboardPage from './pages/UserDashboardPage';
 import PartnerDashboardPage from './pages/PartnerDashboardPage';
 import OrganizationDashboardPage from './pages/OrganizationDashboardPage';
@@ -52,6 +53,7 @@ function AppRoutes() {
       <Route path="/forgot-password" element={user ? <Navigate to={getRedirectPath()} /> : <ForgotPassword />} />
       <Route path="/reset-password" element={user ? <Navigate to={getRedirectPath()} /> : <ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/auth/google/callback" element={<GoogleCalendarCallback />} />
       
       {/* Admin Routes - Use AdminLayout instead of Navbar */}
       <Route

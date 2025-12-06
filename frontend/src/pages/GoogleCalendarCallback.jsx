@@ -1,0 +1,93 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { Activity, CheckCircle, XCircle } from 'lucide-react';
+
+const GoogleCalendarCallback = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [status, setStatus] = useState('processing'); // processing, success, error
+  const [message, setMessage] = useState('Connecting Google Calendar...');
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      const code = searchParams.get('code');
+      const state = searchParams.get('state');
+
+      if (!code || !state) {
+        setStatus('error');
+        setMessage('Invalid callback parameters. Please try connecting again.');
+        setTimeout(() => {
+          navigate(`/${user?.userType || 'user'}/dashboard`);
+        }, 3000);
+        return;
+      }
+
+      try {
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        const response = await fetch(
+          `${API_URL}/google-calendar/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
+        );
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          setStatus('success');
+          setMessage('Successfully connected to Google Calendar!');
+        } else {
+          setStatus('error');
+          setMessage(data.message || data.error || 'Failed to connect Google Calendar');
+        }
+      } catch (error) {
+        console.error('Callback error:', error);
+        setStatus('error');
+        setMessage('Failed to connect Google Calendar. Please try again.');
+      } finally {
+        // Redirect after 3 seconds
+        setTimeout(() => {
+          navigate(`/${user?.userType || 'user'}/dashboard`);
+        }, 3000);
+      }
+    };
+
+    handleCallback();
+  }, [searchParams, navigate, user]);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="max-w-md w-full mx-4">
+        <div className="card text-center">
+          {status === 'processing' && (
+            <>
+              <Activity className="h-12 w-12 text-primary-600 mx-auto mb-4 animate-pulse" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Connecting Google Calendar</h2>
+              <p className="text-gray-600">{message}</p>
+            </>
+          )}
+
+          {status === 'success' && (
+            <>
+              <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Connection Successful!</h2>
+              <p className="text-gray-600 mb-4">{message}</p>
+              <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+            </>
+          )}
+
+          {status === 'error' && (
+            <>
+              <XCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Connection Failed</h2>
+              <p className="text-gray-600 mb-4">{message}</p>
+              <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GoogleCalendarCallback;
+

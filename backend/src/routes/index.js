@@ -32,7 +32,9 @@ router.get('/auth/verify-email', authController.verifyEmail);
 
 // ==================== GOOGLE CALENDAR ROUTES ====================
 router.get('/google-calendar/auth', authenticateToken, googleCalendarController.initiateOAuth);
-router.get('/google-calendar/callback', authenticateToken, googleCalendarController.handleCallback);
+// Callback route does NOT require authentication - OAuth redirects don't include JWT tokens
+// Security is handled via state parameter (CSRF protection)
+router.get('/google-calendar/callback', googleCalendarController.handleCallback);
 router.get('/google-calendar/status', authenticateToken, googleCalendarController.getConnectionStatus);
 router.post('/google-calendar/disconnect', authenticateToken, googleCalendarController.disconnectCalendar);
 router.post('/google-calendar/resync/:eventType/:eventId', authenticateToken, googleCalendarController.resyncEvent);

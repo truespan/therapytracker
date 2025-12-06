@@ -1,10 +1,70 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Phone, MapPin, Calendar } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
+import { googleCalendarAPI } from '../../services/api';
 
 const PartnerSettings = () => {
   const { user, refreshUser } = useAuth();
+  const [googleCalendarStatus, setGoogleCalendarStatus] = useState(null);
+  const [connectingCalendar, setConnectingCalendar] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState(true);
+
+  // Load Google Calendar status
+  useEffect(() => {
+    checkGoogleCalendarStatus();
+  }, []);
+
+  const checkGoogleCalendarStatus = async () => {
+    try {
+      setLoadingStatus(true);
+      const response = await googleCalendarAPI.getStatus();
+      setGoogleCalendarStatus(response.data);
+    } catch (err) {
+      console.error('Failed to check Google Calendar status:', err);
+      setGoogleCalendarStatus({ connected: false });
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
+
+  const connectGoogleCalendar = async () => {
+    try {
+      setConnectingCalendar(true);
+      const response = await googleCalendarAPI.initiateAuth();
+      // Redirect to Google OAuth page
+      window.location.href = response.data.authUrl;
+    } catch (err) {
+      console.error('Failed to initiate Google Calendar auth:', err);
+      alert('Failed to connect Google Calendar. Please try again.');
+      setConnectingCalendar(false);
+    }
+  };
+
+  const disconnectGoogleCalendar = async () => {
+    if (!window.confirm('Are you sure you want to disconnect Google Calendar? Appointments will no longer sync automatically.')) {
+      return;
+    }
+
+    try {
+      await googleCalendarAPI.disconnect();
+      setGoogleCalendarStatus({ connected: false });
+      alert('Google Calendar disconnected successfully.');
+    } catch (err) {
+      console.error('Failed to disconnect Google Calendar:', err);
+      alert('Failed to disconnect Google Calendar. Please try again.');
+    }
+  };
+
+  const toggleSync = async (enabled) => {
+    try {
+      await googleCalendarAPI.toggleSync(enabled);
+      setGoogleCalendarStatus(prev => ({ ...prev, syncEnabled: enabled }));
+    } catch (err) {
+      console.error('Failed to toggle sync:', err);
+      alert('Failed to update sync settings. Please try again.');
+    }
+  };
 
   // Parse contact to extract country code and number for display
   const parseContact = (contact) => {
@@ -164,6 +224,103 @@ const PartnerSettings = () => {
               </span>
             </div>
           )}
+
+          {/* Google Calendar Integration */}
+          <div className="border-t border-gray-200 pt-6">
+            <div className="flex items-center mb-4">
+              <CalendarIcon className="h-6 w-6 mr-2 text-primary-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Google Calendar Integration</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Connect your Google Calendar to automatically sync appointments. When you create or update appointments, they will appear in your Google Calendar.
+            </p>
+
+            {loadingStatus ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+              </div>
+            ) : googleCalendarStatus?.connected ? (
+              <div className="space-y-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="text-sm font-medium text-green-700">Google Calendar Connected</span>
+                    </div>
+                    <button
+                      onClick={disconnectGoogleCalendar}
+                      className="text-sm text-red-600 hover:text-red-700 flex items-center space-x-1"
+                    >
+                      <Unlink className="h-4 w-4" />
+                      <span>Disconnect</span>
+                    </button>
+                  </div>
+                  {googleCalendarStatus.connectedAt && (
+                    <p className="text-xs text-gray-600 mt-2">
+                      Connected on {new Date(googleCalendarStatus.connectedAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Sync Enabled</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {googleCalendarStatus.syncEnabled 
+                        ? 'Appointments will automatically sync to your Google Calendar'
+                        : 'Sync is currently disabled'}
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={googleCalendarStatus.syncEnabled}
+                      onChange={(e) => toggleSync(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                  </label>
+                </div>
+
+                {googleCalendarStatus.lastSyncedAt && (
+                  <p className="text-xs text-gray-500">
+                    Last synced: {new Date(googleCalendarStatus.lastSyncedAt).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <AlertCircle className="h-5 w-5 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-700">Not Connected</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-4">
+                      Connect your Google Calendar to automatically sync appointments when you create or update them.
+                    </p>
+                    <button
+                      onClick={connectGoogleCalendar}
+                      disabled={connectingCalendar}
+                      className="btn btn-primary flex items-center space-x-2"
+                    >
+                      {connectingCalendar ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Connecting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Link2 className="h-4 w-4" />
+                          <span>Connect Google Calendar</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

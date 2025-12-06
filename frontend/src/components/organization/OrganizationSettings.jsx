@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Building2, Mail, Phone, MapPin, FileText } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
+import { googleCalendarAPI } from '../../services/api';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
