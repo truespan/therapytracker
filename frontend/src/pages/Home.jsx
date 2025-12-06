@@ -93,8 +93,36 @@ const Home = () => {
 
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; 2025 TheraP Track. All rights reserved.</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="mb-4">&copy; 2025 TheraP Track. All rights reserved.</p>
+            <div className="flex justify-center space-x-6 text-sm">
+              <a 
+                href="/privacy-policy" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-300 hover:text-white transition underline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open('/privacy-policy', '_blank');
+                }}
+              >
+                Privacy Policy
+              </a>
+              <a 
+                href="/terms-of-service" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-300 hover:text-white transition underline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open('/terms-of-service', '_blank');
+                }}
+              >
+                Terms of Service
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

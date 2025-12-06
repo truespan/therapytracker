@@ -14,6 +14,8 @@ import UserDashboardPage from './pages/UserDashboardPage';
 import PartnerDashboardPage from './pages/PartnerDashboardPage';
 import OrganizationDashboardPage from './pages/OrganizationDashboardPage';
 import AdminDashboard from './components/dashboard/AdminDashboard';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -54,6 +56,8 @@ function AppRoutes() {
       <Route path="/reset-password" element={user ? <Navigate to={getRedirectPath()} /> : <ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/google/callback" element={<GoogleCalendarCallback />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
       
       {/* Admin Routes - Use AdminLayout instead of Navbar */}
       <Route

@@ -103,7 +103,13 @@ The backend infrastructure for Google Calendar integration is now complete. This
      - User support email: Your email
      - Developer contact: Your email
    - Scopes: Add `https://www.googleapis.com/auth/calendar.events`
-   - Add test users (for testing mode)
+   - **Publishing Status**: The app will be in "Testing" mode by default
+   - **Add Test Users** (IMPORTANT for Testing Mode):
+     - Scroll down to "Test users" section
+     - Click "+ ADD USERS"
+     - Add the email addresses of users who will test the integration
+     - These users can use the app without seeing the verification warning
+     - Click "SAVE"
 
 ### Step 2: Environment Variables
 
@@ -307,6 +313,29 @@ Add to `App.jsx` or your router:
 ---
 
 ## 🆘 Troubleshooting
+
+### "Google hasn't verified this app" Warning
+**Problem**: You see a warning saying "Google hasn't verified this app" when trying to connect.
+
+**Solution (Quick Fix - For Testing)**:
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Navigate to "APIs & Services" → "OAuth consent screen"
+3. Scroll down to the "Test users" section
+4. Click "+ ADD USERS"
+5. Add the email address of the Google account you're using to test
+6. Click "SAVE"
+7. Try connecting again - the warning should be gone for test users
+
+**Solution (Production - App Verification)**:
+For production use, you need to submit your app for Google verification:
+1. Complete all required fields in OAuth consent screen
+2. Add a privacy policy URL (required for verification)
+3. Add a terms of service URL (recommended)
+4. Click "PUBLISH APP" (or submit for verification)
+5. Google will review your app (can take several days to weeks)
+6. Once verified, all users can use the app without warnings
+
+**Note**: For internal Google Workspace apps, you can mark it as "Internal" and skip verification.
 
 ### "ENCRYPTION_KEY environment variable is not set"
 - Add `ENCRYPTION_KEY` to `backend/.env` (must be exactly 32 characters)
