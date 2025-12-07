@@ -12,7 +12,7 @@ import UserAssignmentsSection from '../questionnaires/UserAssignmentsSection';
 import SessionsSection from '../sessions/SessionsSection';
 import AppointmentsTab from '../appointments/AppointmentsTab';
 import PartnerSettings from '../partner/PartnerSettings';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings } from 'lucide-react';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, File } from 'lucide-react';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -59,6 +59,9 @@ const PartnerDashboard = () => {
   const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
   const [editingQuestionnaireId, setEditingQuestionnaireId] = useState(null);
   const [assigningQuestionnaire, setAssigningQuestionnaire] = useState(null);
+
+  // Client detail tabs state
+  const [clientDetailTab, setClientDetailTab] = useState('caseHistory');
 
   useEffect(() => {
     loadPartnerUsers();
@@ -525,24 +528,109 @@ const PartnerDashboard = () => {
                 </div>
               </div>
 
-              {/* Therapy Sessions */}
-              <SessionsSection
-                partnerId={user.id}
-                userId={selectedUser.id}
-                userName={selectedUser.name}
-              />
+              {/* Tab Navigation */}
+              <div className="border-b border-gray-200">
+                <nav className="flex space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
+                  <button
+                    onClick={() => setClientDetailTab('caseHistory')}
+                    className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
+                      clientDetailTab === 'caseHistory'
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>Case History</span>
+                  </button>
+                  <button
+                    onClick={() => setClientDetailTab('mentalStatus')}
+                    className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
+                      clientDetailTab === 'mentalStatus'
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Brain className="h-4 w-4" />
+                    <span>Mental Status Examination & BO</span>
+                  </button>
+                  <button
+                    onClick={() => setClientDetailTab('generalNotes')}
+                    className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
+                      clientDetailTab === 'generalNotes'
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    <span>General Notes</span>
+                  </button>
+                  <button
+                    onClick={() => setClientDetailTab('report')}
+                    className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
+                      clientDetailTab === 'report'
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <File className="h-4 w-4" />
+                    <span>Report</span>
+                  </button>
+                </nav>
+              </div>
 
-              {/* Latest Chart Sent to Client */}
-              <LatestChartDisplay
-                sentCharts={sentCharts}
-                userName={selectedUser.name}
-              />
+              {/* Tab Content */}
+              <div className="mt-6">
+                {/* Case History Tab */}
+                {clientDetailTab === 'caseHistory' && (
+                  <div className="card text-center py-16">
+                    <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 text-lg">Case History content will be available here</p>
+                    <p className="text-gray-500 text-sm mt-2">This section is coming soon</p>
+                  </div>
+                )}
 
-              {/* Questionnaires Assigned to Client */}
-              <UserAssignmentsSection
-                userId={selectedUser.id}
-                userName={selectedUser.name}
-              />
+                {/* Mental Status Examination & BO Tab */}
+                {clientDetailTab === 'mentalStatus' && (
+                  <div className="card text-center py-16">
+                    <Brain className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 text-lg">Mental Status Examination & BO content will be available here</p>
+                    <p className="text-gray-500 text-sm mt-2">This section is coming soon</p>
+                  </div>
+                )}
+
+                {/* General Notes Tab */}
+                {clientDetailTab === 'generalNotes' && (
+                  <div className="space-y-6">
+                    {/* Therapy Sessions */}
+                    <SessionsSection
+                      partnerId={user.id}
+                      userId={selectedUser.id}
+                      userName={selectedUser.name}
+                    />
+
+                    {/* Latest Chart Sent to Client */}
+                    <LatestChartDisplay
+                      sentCharts={sentCharts}
+                      userName={selectedUser.name}
+                    />
+
+                    {/* Questionnaires Assigned to Client */}
+                    <UserAssignmentsSection
+                      userId={selectedUser.id}
+                      userName={selectedUser.name}
+                    />
+                  </div>
+                )}
+
+                {/* Report Tab */}
+                {clientDetailTab === 'report' && (
+                  <div className="card text-center py-16">
+                    <File className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 text-lg">Report content will be available here</p>
+                    <p className="text-gray-500 text-sm mt-2">This section is coming soon</p>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="card text-center py-16">
