@@ -12,6 +12,7 @@ import UserAssignmentsSection from '../questionnaires/UserAssignmentsSection';
 import SessionsSection from '../sessions/SessionsSection';
 import AppointmentsTab from '../appointments/AppointmentsTab';
 import PartnerSettings from '../partner/PartnerSettings';
+import CaseHistoryForm from '../casehistory/CaseHistoryForm';
 import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, File } from 'lucide-react';
 
 // Use environment variable for API URL, fallback to localhost for development
@@ -582,11 +583,7 @@ const PartnerDashboard = () => {
               <div className="mt-6">
                 {/* Case History Tab */}
                 {clientDetailTab === 'caseHistory' && (
-                  <div className="card text-center py-16">
-                    <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 text-lg">Case History content will be available here</p>
-                    <p className="text-gray-500 text-sm mt-2">This section is coming soon</p>
-                  </div>
+                  <CaseHistoryForm userId={selectedUser.id} partnerId={user.id} />
                 )}
 
                 {/* Mental Status Examination & BO Tab */}

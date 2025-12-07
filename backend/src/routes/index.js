@@ -16,6 +16,7 @@ const questionnaireController = require('../controllers/questionnaireController'
 const therapySessionController = require('../controllers/therapySessionController');
 const uploadController = require('../controllers/uploadController');
 const googleCalendarController = require('../controllers/googleCalendarController');
+const caseHistoryController = require('../controllers/caseHistoryController');
 
 // Upload middleware
 const upload = require('../middleware/upload');
@@ -56,6 +57,10 @@ router.get('/partners/:id', authenticateToken, partnerController.getPartnerById)
 router.put('/partners/:id', authenticateToken, partnerController.updatePartner);
 router.get('/partners/:id/users', authenticateToken, partnerController.getPartnerUsers);
 router.get('/partners/:partnerId/users/:userId/profile', authenticateToken, checkRole('partner', 'organization'), partnerController.getUserProfileForPartner);
+
+// ==================== CASE HISTORY ROUTES ====================
+router.get('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.getCaseHistory);
+router.post('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.saveCaseHistory);
 
 // ==================== ORGANIZATION ROUTES ====================
 // Public route for signup - get all organizations

@@ -238,5 +238,11 @@ export const googleCalendarAPI = {
   resyncEvent: (eventType, eventId) => api.post(`/google-calendar/resync/${eventType}/${eventId}`)
 };
 
+// Case History APIs
+export const caseHistoryAPI = {
+  get: (userId) => api.get(`/users/${userId}/case-history`),
+  save: (userId, data) => api.post(`/users/${userId}/case-history`, data)
+};
+
 export default api;
 
