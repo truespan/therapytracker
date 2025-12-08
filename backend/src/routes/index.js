@@ -17,6 +17,7 @@ const therapySessionController = require('../controllers/therapySessionControlle
 const uploadController = require('../controllers/uploadController');
 const googleCalendarController = require('../controllers/googleCalendarController');
 const caseHistoryController = require('../controllers/caseHistoryController');
+const mentalStatusExaminationController = require('../controllers/mentalStatusExaminationController');
 
 // Upload middleware
 const upload = require('../middleware/upload');
@@ -61,6 +62,10 @@ router.get('/partners/:partnerId/users/:userId/profile', authenticateToken, chec
 // ==================== CASE HISTORY ROUTES ====================
 router.get('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.getCaseHistory);
 router.post('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.saveCaseHistory);
+
+// ==================== MENTAL STATUS EXAMINATION ROUTES ====================
+router.get('/users/:userId/mental-status', authenticateToken, checkRole('partner'), mentalStatusExaminationController.getMentalStatus);
+router.post('/users/:userId/mental-status', authenticateToken, checkRole('partner'), mentalStatusExaminationController.saveMentalStatus);
 
 // ==================== ORGANIZATION ROUTES ====================
 // Public route for signup - get all organizations

@@ -58,12 +58,61 @@ const saveCaseHistory = async (req, res) => {
 
     // Use transaction to ensure data consistency
     const result = await db.transaction(async (client) => {
+      // Normalize date fields - convert empty strings to null
+      const normalizeDateField = (value) => {
+        if (value === '' || value === null || value === undefined) return null;
+        return value;
+      };
+
+      // Normalize integer fields - convert empty strings to null
+      const normalizeIntegerField = (value) => {
+        if (value === '' || value === null || value === undefined) return null;
+        // If it's a string that can be parsed as a number, parse it
+        if (typeof value === 'string' && value.trim() !== '') {
+          const parsed = parseInt(value, 10);
+          return isNaN(parsed) ? null : parsed;
+        }
+        // If it's already a number, return it
+        if (typeof value === 'number') return value;
+        return null;
+      };
+
+      // Normalize case history data
+      const normalizedCaseHistory = { ...caseHistory };
+      const dateFields = [
+        'personal_history_birth_date',
+        'menstrual_last_date',
+        'marital_date_of_marriage'
+      ];
+      
+      const integerFields = [
+        'identification_age',
+        'informant_age',
+        'marital_age_at_marriage',
+        'marital_partner_age_at_marriage'
+      ];
+      
+      dateFields.forEach(field => {
+        if (normalizedCaseHistory[field] !== undefined) {
+          normalizedCaseHistory[field] = normalizeDateField(normalizedCaseHistory[field]);
+        }
+      });
+
+      integerFields.forEach(field => {
+        if (normalizedCaseHistory[field] !== undefined) {
+          normalizedCaseHistory[field] = normalizeIntegerField(normalizedCaseHistory[field]);
+        }
+      });
+
       // Create or update case history
       const caseHistoryData = {
-        ...caseHistory,
+        ...normalizedCaseHistory,
         user_id: parseInt(userId),
         partner_id: partnerId
       };
+
+      console.log('[CaseHistory Save] Chief complaints type:', typeof caseHistoryData.chief_complaints);
+      console.log('[CaseHistory Save] Chief complaints value:', caseHistoryData.chief_complaints);
 
       const savedCaseHistory = await CaseHistory.createOrUpdate(caseHistoryData, client);
 

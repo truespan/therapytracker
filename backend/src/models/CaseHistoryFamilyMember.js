@@ -27,6 +27,30 @@ class CaseHistoryFamilyMember {
 
   static async create(familyMemberData, client = null) {
     const dbClient = client || db;
+
+    // Normalize empty strings to null for proper database insertion
+    const normalizeValue = (value) => {
+      if (value === '' || value === undefined || value === null) return null;
+      // Handle whitespace-only strings
+      if (typeof value === 'string' && value.trim() === '') return null;
+      return value;
+    };
+
+    // Normalize integer fields - convert empty strings to null, parse valid numbers
+    const normalizeInteger = (value) => {
+      if (value === '' || value === undefined || value === null) return null;
+      // Handle whitespace-only strings
+      if (typeof value === 'string' && value.trim() === '') return null;
+      // If it's already a number, return it
+      if (typeof value === 'number') return value;
+      // Try to parse string to integer
+      if (typeof value === 'string') {
+        const parsed = parseInt(value, 10);
+        return isNaN(parsed) ? null : parsed;
+      }
+      return null;
+    };
+
     const {
       case_history_id,
       member_type,
@@ -54,9 +78,20 @@ class CaseHistoryFamilyMember {
     `;
 
     const values = [
-      case_history_id, member_type, name, age, education, occupation,
-      religion, nationality, mother_tongue, health, personality,
-      relationship_attitude, sibling_number, other_label
+      case_history_id,
+      member_type,
+      normalizeValue(name),
+      normalizeInteger(age),
+      normalizeValue(education),
+      normalizeValue(occupation),
+      normalizeValue(religion),
+      normalizeValue(nationality),
+      normalizeValue(mother_tongue),
+      normalizeValue(health),
+      normalizeValue(personality),
+      normalizeValue(relationship_attitude),
+      normalizeInteger(sibling_number),
+      normalizeValue(other_label)
     ];
 
     const result = await dbClient.query(query, values);
@@ -77,6 +112,30 @@ class CaseHistoryFamilyMember {
 
   static async update(id, familyMemberData, client = null) {
     const dbClient = client || db;
+
+    // Normalize empty strings to null for proper database update
+    const normalizeValue = (value) => {
+      if (value === '' || value === undefined || value === null) return null;
+      // Handle whitespace-only strings
+      if (typeof value === 'string' && value.trim() === '') return null;
+      return value;
+    };
+
+    // Normalize integer fields - convert empty strings to null, parse valid numbers
+    const normalizeInteger = (value) => {
+      if (value === '' || value === undefined || value === null) return null;
+      // Handle whitespace-only strings
+      if (typeof value === 'string' && value.trim() === '') return null;
+      // If it's already a number, return it
+      if (typeof value === 'number') return value;
+      // Try to parse string to integer
+      if (typeof value === 'string') {
+        const parsed = parseInt(value, 10);
+        return isNaN(parsed) ? null : parsed;
+      }
+      return null;
+    };
+
     const {
       name,
       age,
@@ -111,9 +170,19 @@ class CaseHistoryFamilyMember {
     `;
 
     const values = [
-      name, age, education, occupation, religion, nationality,
-      mother_tongue, health, personality, relationship_attitude,
-      sibling_number, other_label, id
+      normalizeValue(name),
+      normalizeInteger(age),
+      normalizeValue(education),
+      normalizeValue(occupation),
+      normalizeValue(religion),
+      normalizeValue(nationality),
+      normalizeValue(mother_tongue),
+      normalizeValue(health),
+      normalizeValue(personality),
+      normalizeValue(relationship_attitude),
+      normalizeInteger(sibling_number),
+      normalizeValue(other_label),
+      id
     ];
 
     const result = await dbClient.query(query, values);

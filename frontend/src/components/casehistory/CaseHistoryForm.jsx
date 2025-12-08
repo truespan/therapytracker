@@ -62,8 +62,7 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
     family_history_expressed_emotion_critical_comments: '',
     family_history_expressed_emotion_emotional_over_involvement: '',
     family_history_expressed_emotion_reinforcement: '',
-    family_history_consanguinity_present: '',
-    family_history_consanguinity_absent: '',
+    family_history_consanguinity: '',
     family_history_economic_social_status: '',
     family_history_home_atmosphere: '',
     family_history_sibling_rivalry: '',
@@ -204,16 +203,205 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
   const [newComplaint, setNewComplaint] = useState('');
 
   useEffect(() => {
-    loadCaseHistory();
+    if (userId) {
+      loadCaseHistory();
+    } else {
+      // Reset form when userId is cleared
+      setFormData({
+        identification_name: '',
+        identification_age: '',
+        identification_gender: '',
+        identification_father_husband_name: '',
+        identification_education: '',
+        identification_occupation: '',
+        identification_marital_status: '',
+        identification_religion: '',
+        identification_nationality: '',
+        identification_mother_tongue: '',
+        identification_residence: '',
+        identification_family_income: '',
+        identification_socio_economic_background: '',
+        identification_family_type: '',
+        identification_domicile: '',
+        identification_address: '',
+        identification_source_of_referral: '',
+        identification_reason_for_referral: '',
+        informant_name: '',
+        informant_age: '',
+        informant_sex: '',
+        informant_education: '',
+        informant_occupation: '',
+        informant_marital_status: '',
+        informant_religion: '',
+        informant_nationality: '',
+        informant_mother_tongue: '',
+        informant_relation_duration: '',
+        informant_consistency: '',
+        informant_reliability: '',
+        patient_report_reliability: '',
+        chief_complaints: [],
+        family_history_family_tree: '',
+        family_history_psychiatric_illness: '',
+        family_history_interaction_communication: '',
+        family_history_interaction_leadership: '',
+        family_history_interaction_decision_making: '',
+        family_history_interaction_role: '',
+        family_history_interaction_family_rituals: '',
+        family_history_interaction_cohesiveness: '',
+        family_history_interaction_family_burden: '',
+        family_history_expressed_emotion_warmth: '',
+        family_history_expressed_emotion_hostility: '',
+        family_history_expressed_emotion_critical_comments: '',
+        family_history_expressed_emotion_emotional_over_involvement: '',
+        family_history_expressed_emotion_reinforcement: '',
+        family_history_consanguinity: '',
+        family_history_economic_social_status: '',
+        family_history_home_atmosphere: '',
+        family_history_sibling_rivalry: '',
+        personal_history_birth_date: '',
+        personal_history_birth_place: '',
+        personal_history_mother_condition_pregnancy: '',
+        personal_history_mother_condition_delivery: '',
+        personal_history_mother_condition_after_delivery: '',
+        personal_history_nature_of_delivery: '',
+        personal_history_birth_weight: '',
+        personal_history_feeding_method: '',
+        personal_history_milestones_physical_development: '',
+        personal_history_neurotic_symptoms_childhood: '',
+        personal_history_health_childhood: '',
+        personal_history_childhood_disorders: '',
+        personal_history_home_atmosphere_childhood: '',
+        scholastic_age_standard_admission: '',
+        scholastic_highest_grade_completed: '',
+        scholastic_change_institution_cause: '',
+        scholastic_academic_performance: '',
+        scholastic_reason_discontinuation: '',
+        scholastic_adjustment_school: '',
+        scholastic_peer_relationships: '',
+        scholastic_disciplinary_problems: '',
+        scholastic_further_education: '',
+        scholastic_extracurricular_activities: '',
+        vocation_age_starting: '',
+        vocation_nature_position: '',
+        vocation_change_job_cause: '',
+        vocation_nature_duration_present_job: '',
+        vocation_working_past_year: '',
+        vocation_work_record: '',
+        vocation_adjustment_peers_authority: '',
+        vocation_work_position_ambition: '',
+        menstrual_menarche_age: '',
+        menstrual_information_acquired_from: '',
+        menstrual_reaction: '',
+        menstrual_associated_discomfort: '',
+        menstrual_regularity: '',
+        menstrual_last_date: '',
+        menstrual_amenorrhea: '',
+        menstrual_menopause: '',
+        menstrual_related_symptoms: '',
+        sexual_source_information: '',
+        sexual_age_acquisition: '',
+        sexual_reaction_attitude: '',
+        sexual_libido: '',
+        sexual_masturbation: '',
+        sexual_fantasy: '',
+        sexual_heterosexual_homosexual: '',
+        sexual_pre_marital_extra_marital: '',
+        sexual_deviance: '',
+        marital_date_of_marriage: '',
+        marital_type: '',
+        marital_age_at_marriage: '',
+        marital_partner_age_at_marriage: '',
+        marital_spouse_education: '',
+        marital_spouse_occupation: '',
+        marital_adjustment: '',
+        marital_sexual_life: '',
+        marital_number_children_details: '',
+        marital_extra_marital_relations: '',
+        marital_other_details: '',
+        forensic_history: '',
+        medical_history_nature_illness: '',
+        medical_history_doctors_consulted: '',
+        medical_history_medication: '',
+        medical_history_hospitalization: '',
+        medical_history_degree_recovery: '',
+        medical_history_accidents_operations: '',
+        premorbid_personality_self: '',
+        premorbid_personality_sociability: '',
+        premorbid_personality_responsibility: '',
+        premorbid_personality_work_leisure: '',
+        premorbid_personality_mood: '',
+        premorbid_personality_character: '',
+        premorbid_personality_attitudes_standards: '',
+        premorbid_personality_habits: '',
+        premorbid_personality_adjustments: '',
+        premorbid_personality_food_sleep_pattern: '',
+        fantasy_life: '',
+        present_illness_evolution_symptoms: '',
+        present_illness_mode_onset: '',
+        present_illness_course: '',
+        present_illness_progress: '',
+        present_illness_sleep_change: '',
+        present_illness_appetite_change: '',
+        present_illness_sexual_interest_change: '',
+        present_illness_energy_change: '',
+        present_illness_negative_history: '',
+        present_illness_treatment_history: '',
+        problem_conception: '',
+        patient_view_responsibility: '',
+        patient_pervasive_mood: '',
+        impact_patient_attitude: '',
+        role_functioning_biological: '',
+        personal_care_negative_symptoms: '',
+        additional_information: ''
+      });
+      setFamilyMembers({
+        father: {
+          name: '', age: '', education: '', occupation: '', religion: '',
+          nationality: '', mother_tongue: '', health: '', personality: '', relationship_attitude: ''
+        },
+        mother: {
+          name: '', age: '', education: '', occupation: '', religion: '',
+          nationality: '', mother_tongue: '', health: '', personality: '', relationship_attitude: ''
+        },
+        siblings: [],
+        others: []
+      });
+      setLoading(false);
+    }
   }, [userId]);
 
   const loadCaseHistory = async () => {
+    if (!userId) {
+      console.log('[CaseHistory] No userId provided, skipping load');
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('[CaseHistory] Loading case history for userId:', userId);
       setLoading(true);
       const response = await caseHistoryAPI.get(userId);
-      
+      console.log('[CaseHistory] API response:', response.data);
+
       if (response.data.caseHistory) {
+        console.log('[CaseHistory] Case history data found, loading into form');
         const ch = response.data.caseHistory;
+
+        // Handle chief_complaints - can be array, string, or null
+        let parsedComplaints = [];
+        try {
+          if (ch.chief_complaints) {
+            if (Array.isArray(ch.chief_complaints)) {
+              parsedComplaints = ch.chief_complaints;
+            } else if (typeof ch.chief_complaints === 'string') {
+              parsedComplaints = JSON.parse(ch.chief_complaints);
+            }
+          }
+        } catch (e) {
+          console.error('[CaseHistory] Error parsing chief_complaints:', e);
+          parsedComplaints = [];
+        }
+
         setFormData({
           identification_name: ch.identification_name || '',
           identification_age: ch.identification_age || '',
@@ -246,7 +434,7 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
           informant_consistency: ch.informant_consistency || '',
           informant_reliability: ch.informant_reliability || '',
           patient_report_reliability: ch.patient_report_reliability || '',
-          chief_complaints: ch.chief_complaints ? (Array.isArray(ch.chief_complaints) ? ch.chief_complaints : JSON.parse(ch.chief_complaints)) : [],
+          chief_complaints: parsedComplaints,
           family_history_family_tree: ch.family_history_family_tree || '',
           family_history_psychiatric_illness: ch.family_history_psychiatric_illness || '',
           family_history_interaction_communication: ch.family_history_interaction_communication || '',
@@ -261,8 +449,7 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
           family_history_expressed_emotion_critical_comments: ch.family_history_expressed_emotion_critical_comments || '',
           family_history_expressed_emotion_emotional_over_involvement: ch.family_history_expressed_emotion_emotional_over_involvement || '',
           family_history_expressed_emotion_reinforcement: ch.family_history_expressed_emotion_reinforcement || '',
-          family_history_consanguinity_present: ch.family_history_consanguinity_present || '',
-          family_history_consanguinity_absent: ch.family_history_consanguinity_absent || '',
+          family_history_consanguinity: ch.family_history_consanguinity || '',
           family_history_economic_social_status: ch.family_history_economic_social_status || '',
           family_history_home_atmosphere: ch.family_history_home_atmosphere || '',
           family_history_sibling_rivalry: ch.family_history_sibling_rivalry || '',
@@ -407,9 +594,11 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
 
           setFamilyMembers(newFamilyMembers);
         }
+      } else {
+        console.log('[CaseHistory] No case history found for this user');
       }
     } catch (error) {
-      console.error('Failed to load case history:', error);
+      console.error('[CaseHistory] Failed to load case history:', error);
     } finally {
       setLoading(false);
     }
@@ -425,8 +614,10 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
       if (type === 'father' || type === 'mother') {
         newMembers[type] = { ...newMembers[type], [field]: value };
       } else {
-        newMembers[type] = [...newMembers[type]];
-        newMembers[type][index] = { ...newMembers[type][index], [field]: value };
+        // Map 'sibling' -> 'siblings', 'other' -> 'others'
+        const arrayKey = type === 'sibling' ? 'siblings' : 'others';
+        newMembers[arrayKey] = [...newMembers[arrayKey]];
+        newMembers[arrayKey][index] = { ...newMembers[arrayKey][index], [field]: value };
       }
       return newMembers;
     });
@@ -501,43 +692,73 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
     try {
       setSaving(true);
       
+      // Helper function to clean up family member data
+      const cleanFamilyMember = (member) => {
+        const cleaned = { ...member };
+        // Convert empty strings to null for numeric fields
+        if (cleaned.age === '' || cleaned.age === null || cleaned.age === undefined) {
+          cleaned.age = null;
+        } else if (typeof cleaned.age === 'string') {
+          const parsed = parseInt(cleaned.age, 10);
+          cleaned.age = isNaN(parsed) ? null : parsed;
+        }
+        // Convert empty strings to null for sibling_number
+        if (cleaned.sibling_number !== undefined) {
+          if (cleaned.sibling_number === '' || cleaned.sibling_number === null) {
+            cleaned.sibling_number = null;
+          } else if (typeof cleaned.sibling_number === 'string') {
+            const parsed = parseInt(cleaned.sibling_number, 10);
+            cleaned.sibling_number = isNaN(parsed) ? null : parsed;
+          }
+        }
+        // Convert empty strings to null for text fields
+        Object.keys(cleaned).forEach(key => {
+          if (key !== 'age' && key !== 'sibling_number' && key !== 'member_type') {
+            if (cleaned[key] === '') {
+              cleaned[key] = null;
+            }
+          }
+        });
+        return cleaned;
+      };
+      
       // Prepare family members array
       const familyMembersArray = [];
       
       // Add father
       if (familyMembers.father.name || familyMembers.father.age) {
-        familyMembersArray.push({
+        familyMembersArray.push(cleanFamilyMember({
           member_type: 'father',
           ...familyMembers.father
-        });
+        }));
       }
       
       // Add mother
       if (familyMembers.mother.name || familyMembers.mother.age) {
-        familyMembersArray.push({
+        familyMembersArray.push(cleanFamilyMember({
           member_type: 'mother',
           ...familyMembers.mother
-        });
+        }));
       }
       
       // Add siblings
       familyMembers.siblings.forEach((sibling, index) => {
         if (sibling.name || sibling.age) {
-          familyMembersArray.push({
+          familyMembersArray.push(cleanFamilyMember({
             member_type: 'sibling',
             ...sibling,
             sibling_number: sibling.sibling_number || index + 1
-          });
+          }));
         }
       });
       
       // Add others
       familyMembers.others.forEach(other => {
         if (other.name || other.age) {
-          familyMembersArray.push({
+          familyMembersArray.push(cleanFamilyMember({
             member_type: 'other',
             ...other
-          });
+          }));
         }
       });
 
@@ -901,15 +1122,14 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
               {renderField('Family Burden', 'family_history_interaction_family_burden', 'textarea')}
               
               <h5 className="font-medium mt-4 mb-2">Expressed Emotion</h5>
-              {renderField('a) Warmth', 'family_history_expressed_emotion_warmth', 'textarea')}
-              {renderField('b) Hostility', 'family_history_expressed_emotion_hostility', 'textarea')}
-              {renderField('c) Critical comments', 'family_history_expressed_emotion_critical_comments', 'textarea')}
-              {renderField('d) Emotional Over involvement', 'family_history_expressed_emotion_emotional_over_involvement', 'textarea')}
-              {renderField('e) Reinforcement', 'family_history_expressed_emotion_reinforcement', 'textarea')}
+              {renderField('a) Warmth', 'family_history_expressed_emotion_warmth', 'text')}
+              {renderField('b) Hostility', 'family_history_expressed_emotion_hostility', 'text')}
+              {renderField('c) Critical comments', 'family_history_expressed_emotion_critical_comments', 'text')}
+              {renderField('d) Emotional Over involvement', 'family_history_expressed_emotion_emotional_over_involvement', 'text')}
+              {renderField('e) Reinforcement', 'family_history_expressed_emotion_reinforcement', 'text')}
             </div>
             
-            {renderField('5. Consanguinity - Present', 'family_history_consanguinity_present', 'textarea')}
-            {renderField('5. Consanguinity - Absent', 'family_history_consanguinity_absent', 'textarea')}
+            {renderField('5. Consanguinity (Present / Absent)', 'family_history_consanguinity', 'text')}
             {renderField('6. Economic & Social Status', 'family_history_economic_social_status', 'textarea')}
             {renderField('7. Home Atmosphere', 'family_history_home_atmosphere', 'textarea')}
           </div>

@@ -34,7 +34,8 @@ const migrations = [
   '../migrations/add_custom_questionnaires_postgres.sql',
   '../migrations/add_question_subheadings.sql',
   '../migrations/add_questionnaire_text_field.sql',
-  '../migrations/update_subscription_plans.sql'
+  '../migrations/update_subscription_plans.sql',
+  '../migrations/add_mental_status_examinations.sql'
 ];
 
 async function runMigrations() {

@@ -244,5 +244,11 @@ export const caseHistoryAPI = {
   save: (userId, data) => api.post(`/users/${userId}/case-history`, data)
 };
 
+// Mental Status Examination APIs
+export const mentalStatusAPI = {
+  get: (userId) => api.get(`/users/${userId}/mental-status`),
+  save: (userId, data) => api.post(`/users/${userId}/mental-status`, data)
+};
+
 export default api;
 
