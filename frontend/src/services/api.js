@@ -154,6 +154,9 @@ export const generatedReportAPI = {
   getAll: () => api.get('/reports'),
   getByClient: (userId) => api.get(`/reports/client/${userId}`),
   getById: (id) => api.get(`/reports/${id}`),
+  download: (id) => api.get(`/reports/${id}/download`, {
+    responseType: 'blob'
+  }),
   update: (id, data) => api.put(`/reports/${id}`, data),
   share: (id) => api.post(`/reports/${id}/share`),
   unshare: (id) => api.post(`/reports/${id}/unshare`),

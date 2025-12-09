@@ -108,7 +108,7 @@ const getOrganizationUsers = async (req, res) => {
 const createPartner = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, sex, age, email, contact, address, password, photo_url } = req.body;
+    const { name, sex, age, email, contact, qualification, address, password, photo_url } = req.body;
 
     // Check authorization
     if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
@@ -116,8 +116,8 @@ const createPartner = async (req, res) => {
     }
 
     // Validate required fields
-    if (!name || !sex || !age || !email || !contact || !password) {
-      return res.status(400).json({ error: 'Missing required fields: name, sex, age, email, contact, password' });
+    if (!name || !sex || !age || !email || !contact || !qualification || !password) {
+      return res.status(400).json({ error: 'Missing required fields: name, sex, age, email, contact, qualification, password' });
     }
 
     // Validate email format
@@ -164,6 +164,7 @@ const createPartner = async (req, res) => {
         age,
         email,
         contact,
+        qualification,
         address,
         photo_url,
         organization_id: id,

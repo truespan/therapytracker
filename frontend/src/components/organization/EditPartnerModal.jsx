@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, MapPin, Calendar, Users } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Calendar, Users, Award } from 'lucide-react';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import ImageUpload from '../common/ImageUpload';
 
@@ -11,6 +11,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
     email: '',
     countryCode: '+91',
     contact: '',
+    qualification: '',
     address: '',
     photo_url: '',
   });
@@ -38,6 +39,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
         email: partner.email || '',
         countryCode: countryCode,
         contact: number,
+        qualification: partner.qualification || '',
         address: partner.address || '',
         photo_url: partner.photo_url || '',
       });
@@ -88,6 +90,10 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
       newErrors.contact = 'Contact number must be 7-15 digits';
     }
 
+    if (!formData.qualification.trim()) {
+      newErrors.qualification = 'Qualification is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -102,6 +108,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
         age: parseInt(formData.age),
         email: formData.email,
         contact: `${formData.countryCode}${formData.contact}`,
+        qualification: formData.qualification,
         address: formData.address,
         photo_url: formData.photo_url,
       };
@@ -283,6 +290,28 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
               </div>
             </div>
             {errors.contact && <p className="mt-1 text-sm text-red-500">{errors.contact}</p>}
+          </div>
+
+          {/* Qualification */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Qualification <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                name="qualification"
+                value={formData.qualification}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                  errors.qualification ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="e.g., M.D. Psychiatry, Clinical Psychologist"
+                disabled={isLoading}
+              />
+            </div>
+            {errors.qualification && <p className="mt-1 text-sm text-red-500">{errors.qualification}</p>}
           </div>
 
           {/* Address */}

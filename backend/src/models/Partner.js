@@ -50,17 +50,17 @@ class Partner {
   }
 
   static async create(partnerData, client = null) {
-    const { name, sex, age, email, contact, address, photo_url, organization_id, verification_token, verification_token_expires } = partnerData;
+    const { name, sex, age, email, contact, qualification, address, photo_url, organization_id, verification_token, verification_token_expires } = partnerData;
 
     // Generate unique Partner ID
     const partnerId = await this.generatePartnerId(organization_id);
 
     const query = `
-      INSERT INTO partners (partner_id, name, sex, age, email, contact, address, photo_url, organization_id, verification_token, verification_token_expires)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, address, photo_url, organization_id, verification_token, verification_token_expires)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
-    const values = [partnerId, name, sex, age, email, contact, address, photo_url, organization_id, verification_token, verification_token_expires];
+    const values = [partnerId, name, sex, age, email, contact, qualification, address, photo_url, organization_id, verification_token, verification_token_expires];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
     return result.rows[0];
@@ -91,7 +91,7 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, address, photo_url, email_verified, default_report_template_id } = partnerData;
+    const { name, sex, age, email, contact, qualification, address, photo_url, email_verified, default_report_template_id } = partnerData;
     const query = `
       UPDATE partners
       SET name = COALESCE($1, name),
@@ -99,14 +99,15 @@ class Partner {
           age = COALESCE($3, age),
           email = COALESCE($4, email),
           contact = COALESCE($5, contact),
-          address = COALESCE($6, address),
-          photo_url = COALESCE($7, photo_url),
-          email_verified = COALESCE($8, email_verified),
-          default_report_template_id = CASE WHEN $9::INTEGER IS NULL THEN default_report_template_id ELSE $9 END
-      WHERE id = $10
+          qualification = COALESCE($6, qualification),
+          address = COALESCE($7, address),
+          photo_url = COALESCE($8, photo_url),
+          email_verified = COALESCE($9, email_verified),
+          default_report_template_id = CASE WHEN $10::INTEGER IS NULL THEN default_report_template_id ELSE $10 END
+      WHERE id = $11
       RETURNING *
     `;
-    const values = [name, sex, age, email, contact, address, photo_url, email_verified, default_report_template_id, id];
+    const values = [name, sex, age, email, contact, qualification, address, photo_url, email_verified, default_report_template_id, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }

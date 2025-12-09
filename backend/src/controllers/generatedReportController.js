@@ -1,4 +1,40 @@
+const fs = require('fs');
+const path = require('path');
+const Docxtemplater = require('docxtemplater');
+const PizZip = require('pizzip');
 const GeneratedReport = require('../models/GeneratedReport');
+const ReportTemplate = require('../models/ReportTemplate');
+const Partner = require('../models/Partner');
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+const getTemplateForReport = async (report) => {
+  if (report.template_id) {
+    const template = await ReportTemplate.findById(report.template_id);
+    if (template) {
+      return template;
+    }
+  }
+
+  const partnerWithTemplate = await Partner.getDefaultReportTemplate(report.partner_id);
+  if (partnerWithTemplate?.template_id) {
+    const fallbackTemplate = await ReportTemplate.findById(partnerWithTemplate.template_id);
+    if (fallbackTemplate) {
+      return fallbackTemplate;
+    }
+  }
+
+  return null;
+};
 
 /**
  * Create a new generated report
@@ -178,6 +214,96 @@ const getReportById = async (req, res) => {
 };
 
 /**
+ * Download a report merged with its template (keeps header/footer design)
+ */
+const downloadReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const report = await GeneratedReport.findById(id);
+
+    if (!report) {
+      return res.status(404).json({
+        error: 'Report not found'
+      });
+    }
+
+    // Access control
+    if (req.user.userType === 'partner' && report.partner_id !== req.user.id) {
+      return res.status(403).json({
+        error: 'Access denied'
+      });
+    }
+
+    if (req.user.userType === 'user' && (report.user_id !== req.user.id || !report.is_shared)) {
+      return res.status(403).json({
+        error: 'Access denied'
+      });
+    }
+
+    const template = await getTemplateForReport(report);
+    if (!template || !template.file_path) {
+      return res.status(400).json({
+        error: 'No report template configured for this report. Please select a template or set a default template first.'
+      });
+    }
+
+    let templateBuffer;
+    try {
+      templateBuffer = fs.readFileSync(path.resolve(template.file_path));
+    } catch (fileError) {
+      console.error('Template file read error:', fileError);
+      return res.status(404).json({
+        error: 'Template file not found on server'
+      });
+    }
+
+    let docBuffer;
+    try {
+      const zip = new PizZip(templateBuffer);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true
+      });
+
+      doc.setData({
+        report_name: report.report_name || '',
+        client_name: report.client_name || '',
+        client_age: report.client_age || '',
+        client_sex: report.client_sex || '',
+        report_date: formatDate(report.report_date),
+        description: report.description || '',
+        partner_name: report.partner_name || '',
+        template_name: template.name || '',
+        generated_on: formatDate(new Date())
+      });
+
+      doc.render();
+      docBuffer = doc.getZip().generate({
+        type: 'nodebuffer',
+        compression: 'DEFLATE'
+      });
+    } catch (renderError) {
+      console.error('Error rendering report template:', renderError);
+      return res.status(500).json({
+        error: 'Failed to generate report document',
+        details: renderError.message
+      });
+    }
+
+    const safeFileName = `${(report.report_name || 'report').replace(/[^a-z0-9_\-]+/gi, '_')}.docx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFileName}"`);
+    return res.send(docBuffer);
+  } catch (error) {
+    console.error('Error downloading report:', error);
+    res.status(500).json({
+      error: 'Failed to download report',
+      details: error.message
+    });
+  }
+};
+
+/**
  * Update a report
  */
 const updateReport = async (req, res) => {
@@ -332,6 +458,7 @@ module.exports = {
   getUserSharedReports,
   getUserUnreadCount,
   getReportById,
+  downloadReport,
   updateReport,
   shareReport,
   unshareReport,

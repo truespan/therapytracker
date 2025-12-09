@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { generatedReportAPI, reportTemplateAPI, partnerAPI, userAPI } from '../../services/api';
-import { FileText, AlertCircle, Save, Eye, Send, X, Trash2, Edit, Share, Ban, Plus } from 'lucide-react';
+import { FileText, AlertCircle, Save, Eye, Send, X, Trash2, Edit, Share, Ban, Plus, Download } from 'lucide-react';
 
 const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCreated }) => {
   const [reports, setReports] = useState([]);
@@ -14,6 +14,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewReport, setPreviewReport] = useState(null);
+  const [downloadingReportId, setDownloadingReportId] = useState(null);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -217,40 +218,29 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
     }
   };
 
-  const handlePrintReport = (report) => {
-    const printContent = `
-      <html>
-        <head>
-          <title>${report.report_name}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 40px; }
-            h1 { color: #333; border-bottom: 2px solid #4F46E5; padding-bottom: 10px; }
-            .info { margin: 20px 0; }
-            .info-row { margin: 10px 0; }
-            .label { font-weight: bold; display: inline-block; width: 120px; }
-            .description { margin-top: 20px; white-space: pre-wrap; line-height: 1.6; }
-          </style>
-        </head>
-        <body>
-          <h1>${report.report_name}</h1>
-          <div class="info">
-            <div class="info-row"><span class="label">Client Name:</span> ${report.client_name}</div>
-            <div class="info-row"><span class="label">Age:</span> ${report.client_age || 'N/A'}</div>
-            <div class="info-row"><span class="label">Sex:</span> ${report.client_sex || 'N/A'}</div>
-            <div class="info-row"><span class="label">Date:</span> ${new Date(report.report_date).toLocaleDateString()}</div>
-          </div>
-          <div class="description">
-            <h2>Report Details</h2>
-            <p>${report.description}</p>
-          </div>
-        </body>
-      </html>
-    `;
-
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.print();
+  const handleDownloadReport = async (report) => {
+    try {
+      setDownloadingReportId(report.id);
+      const response = await generatedReportAPI.download(report.id);
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const date = new Date(report.report_date).toISOString().split('T')[0];
+      const sanitizedName = (report.report_name || 'report').replace(/[^a-z0-9_\-]/gi, '_');
+      link.href = url;
+      link.download = `${sanitizedName}_${date}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download report:', err);
+      alert(err.response?.data?.error || 'Failed to download report with template. Please try again.');
+    } finally {
+      setDownloadingReportId(null);
+    }
   };
 
   if (loading) {
@@ -516,6 +506,14 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                     {report.is_shared ? <Ban className="h-5 w-5" /> : <Share className="h-5 w-5" />}
                   </button>
                   <button
+                    onClick={() => handleDownloadReport(report)}
+                    className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                    title="Download with Template"
+                    disabled={downloadingReportId === report.id}
+                  >
+                    <Download className="h-5 w-5" />
+                  </button>
+                  <button
                     onClick={() => handleDeleteReport(report)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Delete Report"
@@ -576,11 +574,12 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
 
               <div className="flex items-center justify-end space-x-3">
                 <button
-                  onClick={() => handlePrintReport(previewReport)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                  onClick={() => handleDownloadReport(previewReport)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-60"
+                  disabled={downloadingReportId === previewReport.id}
                 >
-                  <Eye className="h-5 w-5" />
-                  <span>Print</span>
+                  <Download className="h-5 w-5" />
+                  <span>{downloadingReportId === previewReport.id ? 'Preparing...' : 'Download (.docx)'}</span>
                 </button>
                 <button
                   onClick={() => handleShareReport(previewReport)}
