@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { therapySessionAPI, questionnaireAPI } from '../../services/api';
-import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList, Video, X } from 'lucide-react';
+import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList, Video, X, Plus } from 'lucide-react';
 import QuestionnaireViewModal from '../questionnaires/QuestionnaireViewModal';
 
-const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuestionnaireDeleted }) => {
-  const [showFullNotes, setShowFullNotes] = useState(false);
+const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuestionnaireDeleted, onCreateNote, onViewNote }) => {
   const [showPaymentNotes, setShowPaymentNotes] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
@@ -155,28 +154,26 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
             </div>
           </div>
 
-          {/* Session Notes */}
-          {session.session_notes && (
-            <div className="mb-3">
-              <div className="flex items-start text-sm">
-                <FileText className="h-4 w-4 mr-2 text-gray-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="font-medium text-gray-700">Notes:</span>
-                  <p className="text-gray-600 mt-1">
-                    {showFullNotes ? session.session_notes : truncateText(session.session_notes)}
-                  </p>
-                  {session.session_notes.length > 100 && (
-                    <button
-                      onClick={() => setShowFullNotes(!showFullNotes)}
-                      className="text-primary-600 hover:text-primary-700 text-xs mt-1 font-medium"
-                    >
-                      {showFullNotes ? 'Show less' : 'Show more'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Session Note Action */}
+          <div className="mb-3 pt-3 border-t border-gray-100">
+            {session.session_notes && session.session_notes.trim().length > 0 ? (
+              <button
+                onClick={() => onViewNote?.(session.id)}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center space-x-1"
+              >
+                <FileText className="h-4 w-4" />
+                <span>View Note</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => onCreateNote?.(session.id)}
+                className="text-sm px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 font-medium flex items-center space-x-1 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create Note</span>
+              </button>
+            )}
+          </div>
 
           {/* Payment Notes */}
           {session.payment_notes && (
@@ -330,29 +327,6 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
             )}
           </div>
         </div>
-
-        {/* Session Notes */}
-        {session.session_notes && (
-          <div className="mb-3">
-            <div className="flex items-start text-sm">
-              <FileText className="h-4 w-4 mr-2 text-gray-500 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <span className="font-medium text-gray-700">Notes:</span>
-                <p className="text-gray-600 mt-1">
-                  {showFullNotes ? session.session_notes : truncateText(session.session_notes)}
-                </p>
-                {session.session_notes.length > 100 && (
-                  <button
-                    onClick={() => setShowFullNotes(!showFullNotes)}
-                    className="text-primary-600 hover:text-primary-700 text-xs mt-1 font-medium"
-                  >
-                    {showFullNotes ? 'Show less' : 'Show more'}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Payment Notes */}
         {session.payment_notes && (

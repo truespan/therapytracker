@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { partnerAPI, chartAPI, questionnaireAPI } from '../../services/api';
 import QuestionnaireComparison from '../charts/QuestionnaireComparison';
@@ -14,7 +14,8 @@ import AppointmentsTab from '../appointments/AppointmentsTab';
 import PartnerSettings from '../partner/PartnerSettings';
 import CaseHistoryForm from '../casehistory/CaseHistoryForm';
 import MentalStatusExaminationForm from '../mentalstatus/MentalStatusExaminationForm';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, File } from 'lucide-react';
+import SessionNotesTab from '../sessions/SessionNotesTab';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, File, StickyNote } from 'lucide-react';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -63,7 +64,9 @@ const PartnerDashboard = () => {
   const [assigningQuestionnaire, setAssigningQuestionnaire] = useState(null);
 
   // Client detail tabs state
-  const [clientDetailTab, setClientDetailTab] = useState('caseHistory');
+  const [clientDetailTab, setClientDetailTab] = useState('sessionDetails');
+  const [editingNoteSessionId, setEditingNoteSessionId] = useState(null);
+  const sessionsSectionRef = useRef(null);
 
   useEffect(() => {
     loadPartnerUsers();
@@ -101,6 +104,22 @@ const PartnerDashboard = () => {
     } catch (err) {
       console.error('Failed to load user data:', err);
       setLoading(false);
+    }
+  };
+
+  const handleNavigateToNotes = (sessionId) => {
+    setClientDetailTab('sessionNotes');
+    setEditingNoteSessionId(sessionId);
+  };
+
+  const handleNoteChanged = () => {
+    // Refresh sessions list when a note is created/updated/deleted
+    console.log('handleNoteChanged called, refreshing sessions...');
+    if (sessionsSectionRef.current && sessionsSectionRef.current.loadSessions) {
+      console.log('Calling loadSessions on SessionsSection');
+      sessionsSectionRef.current.loadSessions();
+    } else {
+      console.warn('SessionsSection ref not available');
     }
   };
 
@@ -534,6 +553,17 @@ const PartnerDashboard = () => {
               <div className="border-b border-gray-200">
                 <nav className="flex space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
                   <button
+                    onClick={() => setClientDetailTab('sessionDetails')}
+                    className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
+                      clientDetailTab === 'sessionDetails'
+                        ? 'border-primary-600 text-primary-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    <span>Session Details</span>
+                  </button>
+                  <button
                     onClick={() => setClientDetailTab('caseHistory')}
                     className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
                       clientDetailTab === 'caseHistory'
@@ -553,18 +583,21 @@ const PartnerDashboard = () => {
                     }`}
                   >
                     <Brain className="h-4 w-4" />
-                    <span>Mental Status Examination & BO</span>
+                    <span>Mental Status Examination</span>
                   </button>
                   <button
-                    onClick={() => setClientDetailTab('generalNotes')}
+                    onClick={() => {
+                      setClientDetailTab('sessionNotes');
+                      setEditingNoteSessionId(null);
+                    }}
                     className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
-                      clientDetailTab === 'generalNotes'
+                      clientDetailTab === 'sessionNotes'
                         ? 'border-primary-600 text-primary-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <ClipboardList className="h-4 w-4" />
-                    <span>General Notes</span>
+                    <StickyNote className="h-4 w-4" />
+                    <span>Session Notes</span>
                   </button>
                   <button
                     onClick={() => setClientDetailTab('report')}
@@ -593,13 +626,15 @@ const PartnerDashboard = () => {
                 )}
 
                 {/* General Notes Tab */}
-                {clientDetailTab === 'generalNotes' && (
+                {clientDetailTab === 'sessionDetails' && (
                   <div className="space-y-6">
                     {/* Therapy Sessions */}
                     <SessionsSection
+                      ref={sessionsSectionRef}
                       partnerId={user.id}
                       userId={selectedUser.id}
                       userName={selectedUser.name}
+                      onNavigateToNotes={handleNavigateToNotes}
                     />
 
                     {/* Latest Chart Sent to Client */}
@@ -614,6 +649,17 @@ const PartnerDashboard = () => {
                       userName={selectedUser.name}
                     />
                   </div>
+                )}
+
+                {/* Session Notes Tab */}
+                {clientDetailTab === 'sessionNotes' && selectedUser && (
+                  <SessionNotesTab
+                    partnerId={user.id}
+                    userId={selectedUser.id}
+                    userName={selectedUser.name}
+                    initialEditSessionId={editingNoteSessionId}
+                    onNoteChanged={handleNoteChanged}
+                  />
                 )}
 
                 {/* Report Tab */}

@@ -134,7 +134,26 @@ const getUserTherapySessions = async (req, res) => {
 const updateTherapySession = async (req, res) => {
   try {
     const { id } = req.params;
-    const { session_title, session_date, session_duration, session_notes, payment_notes } = req.body;
+    let { session_title, session_date, session_duration, session_notes, payment_notes } = req.body;
+
+    // Validate session note length if provided
+    if (session_notes !== undefined && session_notes !== null) {
+      if (typeof session_notes === 'string') {
+        const trimmedNote = session_notes.trim();
+
+        if (trimmedNote.length > 10000) {
+          return res.status(400).json({
+            error: 'Session note cannot exceed 10,000 characters'
+          });
+        }
+
+        // Normalize empty strings to null
+        session_notes = trimmedNote.length === 0 ? null : trimmedNote;
+      } else {
+        // If it's not a string and not null, set to null
+        session_notes = null;
+      }
+    }
 
     const session = await TherapySession.findById(id);
     if (!session) {

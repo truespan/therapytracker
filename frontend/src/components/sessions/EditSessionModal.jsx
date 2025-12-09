@@ -13,7 +13,6 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
     session_date: dateStr,
     session_time: timeStr,
     session_duration: session.session_duration || '',
-    session_notes: session.session_notes || '',
     payment_notes: session.payment_notes || ''
   });
   const [loading, setLoading] = useState(false);
@@ -56,7 +55,6 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
         session_title: formData.session_title,
         session_date: sessionDateTime,
         session_duration: parseInt(formData.session_duration),
-        session_notes: formData.session_notes || null,
         payment_notes: formData.payment_notes || null
       });
 
@@ -171,21 +169,6 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
                 <option value="90">1.5 hours</option>
                 <option value="120">2 hours</option>
               </select>
-            </div>
-
-            {/* Session Notes */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Session Description / Notes (Optional)
-              </label>
-              <textarea
-                name="session_notes"
-                value={formData.session_notes}
-                onChange={handleChange}
-                rows="4"
-                placeholder="Add detailed notes about the session, key discussion points, observations, etc..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
             </div>
 
             {/* Payment Notes */}

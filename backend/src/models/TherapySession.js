@@ -158,18 +158,26 @@ class TherapySession {
   // Update a session
   static async update(id, sessionData) {
     const { session_title, session_date, session_duration, session_notes, payment_notes } = sessionData;
+
+    // Build dynamic query to handle explicit null values for session_notes
     const query = `
       UPDATE therapy_sessions
       SET session_title = COALESCE($1, session_title),
           session_date = COALESCE($2, session_date),
           session_duration = COALESCE($3, session_duration),
-          session_notes = COALESCE($4, session_notes),
+          session_notes = CASE
+            WHEN $7 = true THEN $4  -- If session_notes was explicitly provided, use it (even if null)
+            ELSE session_notes       -- Otherwise keep existing value
+          END,
           payment_notes = COALESCE($5, payment_notes),
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $6
       RETURNING *
     `;
-    const values = [session_title, session_date, session_duration, session_notes, payment_notes, id];
+
+    // Check if session_notes was explicitly provided in the request
+    const sessionNotesProvided = sessionData.hasOwnProperty('session_notes');
+    const values = [session_title, session_date, session_duration, session_notes, payment_notes, id, sessionNotesProvided];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -225,3 +233,4 @@ class TherapySession {
 }
 
 module.exports = TherapySession;
+ 

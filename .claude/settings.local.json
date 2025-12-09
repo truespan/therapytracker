@@ -1,24 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cat:*)",
-      "Bash(node -e:*)",
-      "Bash(npm run dev:*)",
-      "Bash(timeout 3 sleep:*)",
-      "Bash(tasklist:*)",
-      "Bash(findstr:*)",
-      "Bash(node:*)",
-      "Bash(psql:*)",
-      "mcp__ide__getDiagnostics",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(dir:*)",
-      "Bash(npm run build:*)",
-      "Bash(npm install:*)",
-      "Bash(npm start)",
-      "Bash(find:*)",
-      "Bash(git checkout:*)",
-      "Bash(python update_case_history_model.py:*)"
+      "Bash(timeout 5 sleep:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(timeout 2 sleep 2:*)"
     ],
     "deny": [],
     "ask": []

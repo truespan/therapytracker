@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { therapySessionAPI } from '../../services/api';
 import { ChevronDown, ChevronUp, FileText, Plus } from 'lucide-react';
 import SessionCard from './SessionCard';
@@ -6,7 +6,7 @@ import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
 import AssignQuestionnaireToSessionModal from './AssignQuestionnaireToSessionModal';
 
-const SessionsSection = ({ partnerId, userId, userName }) => {
+const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToNotes }, ref) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -23,11 +23,17 @@ const SessionsSection = ({ partnerId, userId, userName }) => {
     }
   }, [userId, partnerId]);
 
+  // Expose loadSessions to parent via ref
+  useImperativeHandle(ref, () => ({
+    loadSessions
+  }));
+
   const loadSessions = async () => {
     try {
       setLoading(true);
+      console.log('SessionsSection: Loading sessions for user:', userId, 'partner:', partnerId);
       const response = await therapySessionAPI.getByPartnerAndUser(partnerId, userId);
-      console.log('Sessions loaded:', response.data.sessions);
+      console.log('SessionsSection: Sessions loaded:', response.data.sessions);
 
       // Sort sessions by date and assign session numbers
       const sortedSessions = (response.data.sessions || [])
@@ -37,6 +43,7 @@ const SessionsSection = ({ partnerId, userId, userName }) => {
           session_number: index + 1
         }));
 
+      console.log('SessionsSection: Sorted sessions with numbers:', sortedSessions);
       setSessions(sortedSessions);
     } catch (err) {
       console.error('Failed to load sessions:', err);
@@ -192,6 +199,8 @@ const SessionsSection = ({ partnerId, userId, userName }) => {
                   onDelete={handleDeleteSession}
                   onAssignQuestionnaire={handleAssignQuestionnaire}
                   onQuestionnaireDeleted={loadSessions}
+                  onCreateNote={onNavigateToNotes}
+                  onViewNote={onNavigateToNotes}
                 />
               ))}
             </div>
@@ -229,6 +238,8 @@ const SessionsSection = ({ partnerId, userId, userName }) => {
       )}
     </div>
   );
-};
+});
+
+SessionsSection.displayName = 'SessionsSection';
 
 export default SessionsSection;
