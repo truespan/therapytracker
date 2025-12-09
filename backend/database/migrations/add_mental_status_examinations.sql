@@ -149,3 +149,4 @@ CREATE TABLE IF NOT EXISTS mental_status_examinations (
 CREATE INDEX IF NOT EXISTS idx_mse_user ON mental_status_examinations(user_id);
 CREATE INDEX IF NOT EXISTS idx_mse_partner ON mental_status_examinations(partner_id);
 
+

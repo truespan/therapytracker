@@ -77,6 +77,16 @@ const saveCaseHistory = async (req, res) => {
         return null;
       };
 
+      // Normalize JSON fields - convert arrays/objects to JSON strings
+      const normalizeJsonField = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        // If it's already a string, return it
+        if (typeof value === 'string') return value;
+        // If it's an array or object, stringify it
+        if (typeof value === 'object') return JSON.stringify(value);
+        return value;
+      };
+
       // Normalize case history data
       const normalizedCaseHistory = { ...caseHistory };
       const dateFields = [
@@ -84,14 +94,18 @@ const saveCaseHistory = async (req, res) => {
         'menstrual_last_date',
         'marital_date_of_marriage'
       ];
-      
+
       const integerFields = [
         'identification_age',
         'informant_age',
         'marital_age_at_marriage',
         'marital_partner_age_at_marriage'
       ];
-      
+
+      const jsonFields = [
+        'chief_complaints'
+      ];
+
       dateFields.forEach(field => {
         if (normalizedCaseHistory[field] !== undefined) {
           normalizedCaseHistory[field] = normalizeDateField(normalizedCaseHistory[field]);
@@ -104,6 +118,12 @@ const saveCaseHistory = async (req, res) => {
         }
       });
 
+      jsonFields.forEach(field => {
+        if (normalizedCaseHistory[field] !== undefined) {
+          normalizedCaseHistory[field] = normalizeJsonField(normalizedCaseHistory[field]);
+        }
+      });
+
       // Create or update case history
       const caseHistoryData = {
         ...normalizedCaseHistory,
@@ -113,6 +133,7 @@ const saveCaseHistory = async (req, res) => {
 
       console.log('[CaseHistory Save] Chief complaints type:', typeof caseHistoryData.chief_complaints);
       console.log('[CaseHistory Save] Chief complaints value:', caseHistoryData.chief_complaints);
+      console.log('[CaseHistory Save] Full caseHistoryData:', JSON.stringify(caseHistoryData, null, 2));
 
       const savedCaseHistory = await CaseHistory.createOrUpdate(caseHistoryData, client);
 
