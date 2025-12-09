@@ -91,7 +91,7 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, address, photo_url, email_verified } = partnerData;
+    const { name, sex, age, email, contact, address, photo_url, email_verified, default_report_template_id } = partnerData;
     const query = `
       UPDATE partners
       SET name = COALESCE($1, name),
@@ -101,11 +101,12 @@ class Partner {
           contact = COALESCE($5, contact),
           address = COALESCE($6, address),
           photo_url = COALESCE($7, photo_url),
-          email_verified = COALESCE($8, email_verified)
-      WHERE id = $9
+          email_verified = COALESCE($8, email_verified),
+          default_report_template_id = CASE WHEN $9::INTEGER IS NULL THEN default_report_template_id ELSE $9 END
+      WHERE id = $10
       RETURNING *
     `;
-    const values = [name, sex, age, email, contact, address, photo_url, email_verified, id];
+    const values = [name, sex, age, email, contact, address, photo_url, email_verified, default_report_template_id, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -254,6 +255,39 @@ class Partner {
       RETURNING *
     `;
     const result = await dbClient.query(query, [userId, toPartnerId]);
+    return result.rows[0];
+  }
+
+  /**
+   * Set default report template for a partner
+   * @param {number} partnerId - Partner ID
+   * @param {number} templateId - Report template ID (null to remove)
+   * @returns {Object} Updated partner record
+   */
+  static async setDefaultReportTemplate(partnerId, templateId) {
+    const query = `
+      UPDATE partners
+      SET default_report_template_id = $2
+      WHERE id = $1
+      RETURNING *
+    `;
+    const result = await db.query(query, [partnerId, templateId]);
+    return result.rows[0];
+  }
+
+  /**
+   * Get default report template for a partner
+   * @param {number} partnerId - Partner ID
+   * @returns {Object} Partner with report template details
+   */
+  static async getDefaultReportTemplate(partnerId) {
+    const query = `
+      SELECT p.*, rt.id as template_id, rt.name as template_name, rt.description as template_description
+      FROM partners p
+      LEFT JOIN report_templates rt ON p.default_report_template_id = rt.id
+      WHERE p.id = $1
+    `;
+    const result = await db.query(query, [partnerId]);
     return result.rows[0];
   }
 }

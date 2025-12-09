@@ -1,5 +1,6 @@
 const Partner = require('../models/Partner');
 const User = require('../models/User');
+const ReportTemplate = require('../models/ReportTemplate');
 
 const getPartnerById = async (req, res) => {
   try {
@@ -122,10 +123,95 @@ const getUserProfileForPartner = async (req, res) => {
   }
 };
 
+/**
+ * Set default report template for a partner
+ */
+const setDefaultReportTemplate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { template_id } = req.body;
+
+    // Check authorization - only the partner themselves can set their default template
+    if (req.user.userType === 'partner' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to update this partner\'s settings' });
+    }
+
+    // Check if partner exists
+    const partner = await Partner.findById(id);
+    if (!partner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+
+    // If template_id is provided, verify it exists
+    if (template_id) {
+      const template = await ReportTemplate.findById(template_id);
+      if (!template) {
+        return res.status(404).json({ error: 'Report template not found' });
+      }
+    }
+
+    // Set the default template
+    const updatedPartner = await Partner.setDefaultReportTemplate(id, template_id || null);
+
+    res.json({
+      success: true,
+      message: template_id ? 'Default report template set successfully' : 'Default report template removed',
+      partner: updatedPartner
+    });
+  } catch (error) {
+    console.error('Set default report template error:', error);
+    res.status(500).json({
+      error: 'Failed to set default report template',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Get default report template for a partner
+ */
+const getDefaultReportTemplate = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check authorization
+    if (req.user.userType === 'partner' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to view this partner\'s settings' });
+    }
+
+    // Check if partner exists
+    const partner = await Partner.findById(id);
+    if (!partner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+
+    // Get partner with template details
+    const partnerWithTemplate = await Partner.getDefaultReportTemplate(id);
+
+    res.json({
+      success: true,
+      default_template_id: partnerWithTemplate.default_report_template_id,
+      template: partnerWithTemplate.template_id ? {
+        id: partnerWithTemplate.template_id,
+        name: partnerWithTemplate.template_name,
+        description: partnerWithTemplate.template_description
+      } : null
+    });
+  } catch (error) {
+    console.error('Get default report template error:', error);
+    res.status(500).json({
+      error: 'Failed to get default report template',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getPartnerById,
   updatePartner,
   getPartnerUsers,
-  getUserProfileForPartner
+  getUserProfileForPartner,
+  setDefaultReportTemplate,
+  getDefaultReportTemplate
 };
 

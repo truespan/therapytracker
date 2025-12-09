@@ -3,7 +3,7 @@ import { therapySessionAPI, questionnaireAPI } from '../../services/api';
 import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList, Video, X, Plus } from 'lucide-react';
 import QuestionnaireViewModal from '../questionnaires/QuestionnaireViewModal';
 
-const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuestionnaireDeleted, onCreateNote, onViewNote }) => {
+const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuestionnaireDeleted, onCreateNote, onViewNote, onGenerateReport }) => {
   const [showPaymentNotes, setShowPaymentNotes] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
@@ -154,8 +154,8 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
             </div>
           </div>
 
-          {/* Session Note Action */}
-          <div className="mb-3 pt-3 border-t border-gray-100">
+          {/* Session Note and Report Actions */}
+          <div className="mb-3 pt-3 border-t border-gray-100 flex items-center space-x-3">
             {session.session_notes && session.session_notes.trim().length > 0 ? (
               <button
                 onClick={() => onViewNote?.(session.id)}
@@ -171,6 +171,16 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
               >
                 <Plus className="h-4 w-4" />
                 <span>Create Note</span>
+              </button>
+            )}
+            {onGenerateReport && (
+              <button
+                onClick={() => onGenerateReport()}
+                className="text-sm px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center space-x-1 transition-colors"
+                title="Generate Report"
+              >
+                <FileText className="h-4 w-4" />
+                <span>Generate Report</span>
               </button>
             )}
           </div>
@@ -350,6 +360,37 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
             </div>
           </div>
         )}
+
+        {/* Session Note and Report Actions - Mobile */}
+        <div className="mb-3 pt-3 border-t border-gray-100 flex items-center space-x-3 flex-wrap">
+          {session.session_notes && session.session_notes.trim().length > 0 ? (
+            <button
+              onClick={() => onViewNote?.(session.id)}
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center space-x-1"
+            >
+              <FileText className="h-4 w-4" />
+              <span>View Note</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onCreateNote?.(session.id)}
+              className="text-sm px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 font-medium flex items-center space-x-1 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Note</span>
+            </button>
+          )}
+          {onGenerateReport && (
+            <button
+              onClick={() => onGenerateReport()}
+              className="text-sm px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center space-x-1 transition-colors"
+              title="Generate Report"
+            >
+              <FileText className="h-4 w-4" />
+              <span>Generate Report</span>
+            </button>
+          )}
+        </div>
 
         {/* Assigned Questionnaires - Mobile (Below Payment) */}
         {assignedQuestionnaires.length > 0 && (

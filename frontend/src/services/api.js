@@ -90,6 +90,8 @@ export const partnerAPI = {
   getById: (id) => api.get(`/partners/${id}`),
   update: (id, data) => api.put(`/partners/${id}`, data),
   getUsers: (id) => api.get(`/partners/${id}/users`),
+  setDefaultReportTemplate: (id, templateId) => api.post(`/partners/${id}/default-report-template`, { template_id: templateId }),
+  getDefaultReportTemplate: (id) => api.get(`/partners/${id}/default-report-template`),
 };
 
 // Organization APIs
@@ -124,6 +126,41 @@ export const adminAPI = {
   deleteOrganization: (id) => api.delete(`/admin/organizations/${id}`),
   getOrganizationMetrics: (id) => api.get(`/admin/organizations/${id}/metrics`),
   getDashboardStats: () => api.get('/admin/dashboard/stats'),
+  // Report Templates
+  getAllTemplates: () => api.get('/admin/report-templates'),
+  getTemplateCount: () => api.get('/admin/report-templates/count'),
+  uploadTemplate: (formData) => api.post('/admin/report-templates', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  updateTemplate: (id, data) => api.put(`/admin/report-templates/${id}`, data),
+  deleteTemplate: (id) => api.delete(`/admin/report-templates/${id}`),
+  downloadTemplate: (id) => api.get(`/admin/report-templates/${id}/download`, {
+    responseType: 'blob'
+  }),
+};
+
+// Report Template APIs (for partners)
+export const reportTemplateAPI = {
+  getAll: () => api.get('/report-templates'),
+  download: (id) => api.get(`/report-templates/${id}/download`, {
+    responseType: 'blob'
+  }),
+};
+
+// Generated Report APIs
+export const generatedReportAPI = {
+  // Partner APIs
+  create: (data) => api.post('/reports', data),
+  getAll: () => api.get('/reports'),
+  getByClient: (userId) => api.get(`/reports/client/${userId}`),
+  getById: (id) => api.get(`/reports/${id}`),
+  update: (id, data) => api.put(`/reports/${id}`, data),
+  share: (id) => api.post(`/reports/${id}/share`),
+  unshare: (id) => api.post(`/reports/${id}/unshare`),
+  delete: (id) => api.delete(`/reports/${id}`),
+  // User APIs
+  getUserSharedReports: () => api.get('/user/reports'),
+  getUnreadCount: () => api.get('/user/reports/unread-count'),
 };
 
 // Appointment APIs

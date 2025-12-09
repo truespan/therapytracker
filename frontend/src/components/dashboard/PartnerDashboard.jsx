@@ -15,7 +15,9 @@ import PartnerSettings from '../partner/PartnerSettings';
 import CaseHistoryForm from '../casehistory/CaseHistoryForm';
 import MentalStatusExaminationForm from '../mentalstatus/MentalStatusExaminationForm';
 import SessionNotesTab from '../sessions/SessionNotesTab';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, File, StickyNote } from 'lucide-react';
+import PartnerReportsTab from '../reports/PartnerReportsTab';
+import ClientReportsTab from '../reports/ClientReportsTab';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote } from 'lucide-react';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -66,6 +68,7 @@ const PartnerDashboard = () => {
   // Client detail tabs state
   const [clientDetailTab, setClientDetailTab] = useState('sessionDetails');
   const [editingNoteSessionId, setEditingNoteSessionId] = useState(null);
+  const [reportSessionId, setReportSessionId] = useState(null);
   const sessionsSectionRef = useRef(null);
 
   useEffect(() => {
@@ -121,6 +124,11 @@ const PartnerDashboard = () => {
     } else {
       console.warn('SessionsSection ref not available');
     }
+  };
+
+  const handleGenerateReport = (sessionId) => {
+    setClientDetailTab('reports');
+    setReportSessionId(sessionId);
   };
 
 
@@ -340,7 +348,7 @@ const PartnerDashboard = () => {
             }`}
           >
             <ClipboardList className="h-5 w-5" />
-            <span className="text-xs">Questionnaires</span>
+            <span className="text-xs">Questionnaires & Reports</span>
           </button>
           <button
             onClick={() => setActiveTab('calendar')}
@@ -428,7 +436,7 @@ const PartnerDashboard = () => {
             }`}
           >
             <ClipboardList className="inline h-5 w-5 mr-2" />
-            Questionnaires
+            Questionnaires & Reports
           </button>
           <button
             onClick={() => setActiveTab('calendar')}
@@ -600,15 +608,18 @@ const PartnerDashboard = () => {
                     <span>Session Notes</span>
                   </button>
                   <button
-                    onClick={() => setClientDetailTab('report')}
+                    onClick={() => {
+                      setClientDetailTab('reports');
+                      setReportSessionId(null);
+                    }}
                     className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
-                      clientDetailTab === 'report'
+                      clientDetailTab === 'reports'
                         ? 'border-primary-600 text-primary-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <File className="h-4 w-4" />
-                    <span>Report</span>
+                    <FileText className="h-4 w-4" />
+                    <span>Reports</span>
                   </button>
                 </nav>
               </div>
@@ -635,6 +646,7 @@ const PartnerDashboard = () => {
                       userId={selectedUser.id}
                       userName={selectedUser.name}
                       onNavigateToNotes={handleNavigateToNotes}
+                      onGenerateReport={handleGenerateReport}
                     />
 
                     {/* Latest Chart Sent to Client */}
@@ -662,13 +674,17 @@ const PartnerDashboard = () => {
                   />
                 )}
 
-                {/* Report Tab */}
-                {clientDetailTab === 'report' && (
-                  <div className="card text-center py-16">
-                    <File className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 text-lg">Report content will be available here</p>
-                    <p className="text-gray-500 text-sm mt-2">This section is coming soon</p>
-                  </div>
+                {/* Reports Tab */}
+                {clientDetailTab === 'reports' && selectedUser && (
+                  <ClientReportsTab
+                    partnerId={user.id}
+                    userId={selectedUser.id}
+                    userName={selectedUser.name}
+                    sessionId={reportSessionId}
+                    onReportCreated={() => {
+                      setReportSessionId(null);
+                    }}
+                  />
                 )}
               </div>
             </div>
@@ -792,22 +808,36 @@ const PartnerDashboard = () => {
 
       {/* Questionnaires Tab */}
       {activeTab === 'questionnaires' && (
-        <div>
+        <div className="space-y-8">
           {questionnaireView === 'list' && (
-            <QuestionnaireList
-              partnerId={user.id}
-              onCreateNew={() => {
-                setQuestionnaireView('create');
-                setEditingQuestionnaireId(null);
-              }}
-              onEdit={(questionnaireId) => {
-                setQuestionnaireView('edit');
-                setEditingQuestionnaireId(questionnaireId);
-              }}
-              onAssign={(questionnaire) => {
-                setAssigningQuestionnaire(questionnaire);
-              }}
-            />
+            <>
+              {/* Questionnaires Section */}
+              <div>
+                <QuestionnaireList
+                  partnerId={user.id}
+                  onCreateNew={() => {
+                    setQuestionnaireView('create');
+                    setEditingQuestionnaireId(null);
+                  }}
+                  onEdit={(questionnaireId) => {
+                    setQuestionnaireView('edit');
+                    setEditingQuestionnaireId(questionnaireId);
+                  }}
+                  onAssign={(questionnaire) => {
+                    setAssigningQuestionnaire(questionnaire);
+                  }}
+                />
+              </div>
+
+              {/* Reports Section */}
+              <div className="border-t-4 border-gray-200 pt-8">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Reports</h2>
+                  <p className="text-gray-600">Manage default report template settings</p>
+                </div>
+                <PartnerReportsTab />
+              </div>
+            </>
           )}
 
           {(questionnaireView === 'create' || questionnaireView === 'edit') && (

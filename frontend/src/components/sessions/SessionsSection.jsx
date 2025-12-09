@@ -6,7 +6,7 @@ import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
 import AssignQuestionnaireToSessionModal from './AssignQuestionnaireToSessionModal';
 
-const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToNotes }, ref) => {
+const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToNotes, onGenerateReport }, ref) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -103,14 +103,16 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
               </p>
             </div>
           </div>
-          {/* Create Session Button - Mobile (Small) */}
-          <button
-            onClick={handleCreateSession}
-            className="flex items-center space-x-1 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Create</span>
-          </button>
+          {/* Action Buttons - Mobile (Small) */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleCreateSession}
+              className="flex items-center space-x-1 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Create</span>
+            </button>
+          </div>
         </div>
 
         {/* Mobile: Show sessions toggle */}
@@ -164,14 +166,16 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
             </div>
           </button>
 
-          {/* Create Session Button - Desktop */}
-          <button
-            onClick={handleCreateSession}
-            className="ml-4 flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Create Session</span>
-          </button>
+          {/* Action Buttons - Desktop */}
+          <div className="ml-4 flex items-center space-x-3">
+            <button
+              onClick={handleCreateSession}
+              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Session</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -201,6 +205,7 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
                   onQuestionnaireDeleted={loadSessions}
                   onCreateNote={onNavigateToNotes}
                   onViewNote={onNavigateToNotes}
+                  onGenerateReport={() => onGenerateReport(session.id)}
                 />
               ))}
             </div>

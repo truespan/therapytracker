@@ -18,9 +18,12 @@ const uploadController = require('../controllers/uploadController');
 const googleCalendarController = require('../controllers/googleCalendarController');
 const caseHistoryController = require('../controllers/caseHistoryController');
 const mentalStatusExaminationController = require('../controllers/mentalStatusExaminationController');
+const reportTemplateController = require('../controllers/reportTemplateController');
+const generatedReportController = require('../controllers/generatedReportController');
 
 // Upload middleware
 const upload = require('../middleware/upload');
+const uploadTemplate = require('../middleware/uploadTemplate');
 
 const router = express.Router();
 
@@ -58,6 +61,10 @@ router.get('/partners/:id', authenticateToken, partnerController.getPartnerById)
 router.put('/partners/:id', authenticateToken, partnerController.updatePartner);
 router.get('/partners/:id/users', authenticateToken, partnerController.getPartnerUsers);
 router.get('/partners/:partnerId/users/:userId/profile', authenticateToken, checkRole('partner', 'organization'), partnerController.getUserProfileForPartner);
+
+// Partner report template settings
+router.post('/partners/:id/default-report-template', authenticateToken, checkRole('partner'), partnerController.setDefaultReportTemplate);
+router.get('/partners/:id/default-report-template', authenticateToken, checkRole('partner'), partnerController.getDefaultReportTemplate);
 
 // ==================== CASE HISTORY ROUTES ====================
 router.get('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.getCaseHistory);
@@ -165,6 +172,33 @@ router.post('/admin/organizations/:id/activate', authenticateToken, checkRole('a
 router.delete('/admin/organizations/:id', authenticateToken, checkRole('admin'), adminController.deleteOrganization);
 router.get('/admin/organizations/:id/metrics', authenticateToken, checkRole('admin'), adminController.getOrganizationMetrics);
 router.get('/admin/dashboard/stats', authenticateToken, checkRole('admin'), adminController.getDashboardStats);
+
+// Report template management routes - admin only
+router.get('/admin/report-templates', authenticateToken, checkRole('admin'), reportTemplateController.getAllTemplates);
+router.get('/admin/report-templates/count', authenticateToken, checkRole('admin'), reportTemplateController.getTemplateCount);
+router.post('/admin/report-templates', authenticateToken, checkRole('admin'), uploadTemplate.single('template'), reportTemplateController.uploadTemplate);
+router.put('/admin/report-templates/:id', authenticateToken, checkRole('admin'), reportTemplateController.updateTemplate);
+router.delete('/admin/report-templates/:id', authenticateToken, checkRole('admin'), reportTemplateController.deleteTemplate);
+router.get('/admin/report-templates/:id/download', authenticateToken, checkRole('admin'), reportTemplateController.downloadTemplate);
+
+// Partner routes for report templates
+router.get('/report-templates', authenticateToken, checkRole('partner', 'organization'), reportTemplateController.getAllTemplates);
+router.get('/report-templates/:id/download', authenticateToken, checkRole('partner', 'organization'), reportTemplateController.downloadTemplate);
+
+// ==================== GENERATED REPORTS ROUTES ====================
+// Partner routes for generated reports
+router.post('/reports', authenticateToken, checkRole('partner'), generatedReportController.createReport);
+router.get('/reports', authenticateToken, checkRole('partner'), generatedReportController.getPartnerReports);
+router.get('/reports/client/:userId', authenticateToken, checkRole('partner'), generatedReportController.getClientReports);
+router.get('/reports/:id', authenticateToken, generatedReportController.getReportById);
+router.put('/reports/:id', authenticateToken, checkRole('partner'), generatedReportController.updateReport);
+router.post('/reports/:id/share', authenticateToken, checkRole('partner'), generatedReportController.shareReport);
+router.post('/reports/:id/unshare', authenticateToken, checkRole('partner'), generatedReportController.unshareReport);
+router.delete('/reports/:id', authenticateToken, checkRole('partner'), generatedReportController.deleteReport);
+
+// User routes for shared reports
+router.get('/user/reports', authenticateToken, checkRole('user'), generatedReportController.getUserSharedReports);
+router.get('/user/reports/unread-count', authenticateToken, checkRole('user'), generatedReportController.getUserUnreadCount);
 
 // Health check
 router.get('/health', (req, res) => {

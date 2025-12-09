@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { appointmentAPI, chartAPI, videoSessionAPI, questionnaireAPI, userAPI } from '../../services/api';
+import { appointmentAPI, chartAPI, videoSessionAPI, questionnaireAPI, userAPI, generatedReportAPI } from '../../services/api';
 import SharedChartViewer from '../charts/SharedChartViewer';
 import VideoSessionJoin from '../video/VideoSessionJoin';
 import UserQuestionnaireView from '../questionnaires/UserQuestionnaireView';
 import QuestionnaireChart from '../questionnaires/QuestionnaireChart';
-import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText } from 'lucide-react';
+import UserReportsTab from '../reports/UserReportsTab';
+import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck } from 'lucide-react';
 import { canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
 
 const UserDashboard = () => {
@@ -21,6 +22,7 @@ const UserDashboard = () => {
   const [viewingQuestionnaireChart, setViewingQuestionnaireChart] = useState(null);
   const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(false);
   const [latestSharedChart, setLatestSharedChart] = useState(null);
+  const [reportsCount, setReportsCount] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -28,6 +30,7 @@ const UserDashboard = () => {
     loadQuestionnaireAssignments();
     checkVideoSessionsAccess();
     loadLatestChart();
+    loadReportsCount();
   }, [user.id]);
 
   const checkVideoSessionsAccess = async () => {
@@ -90,6 +93,15 @@ const UserDashboard = () => {
       setLatestSharedChart(response.data.chart || null);
     } catch (err) {
       console.error('Failed to load latest shared chart:', err);
+    }
+  };
+
+  const loadReportsCount = async () => {
+    try {
+      const response = await generatedReportAPI.getUnreadCount();
+      setReportsCount(response.data.count || 0);
+    } catch (err) {
+      console.error('Failed to load reports count:', err);
     }
   };
 
@@ -171,6 +183,22 @@ const UserDashboard = () => {
             <FileText className="h-5 w-5" />
             <span className="text-xs">Questionnaires</span>
           </button>
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 relative ${
+              activeTab === 'reports'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            <FileCheck className="h-5 w-5" />
+            <span className="text-xs">Reports</span>
+            {reportsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {reportsCount}
+              </span>
+            )}
+          </button>
         </nav>
       </div>
 
@@ -222,6 +250,22 @@ const UserDashboard = () => {
           >
             <FileText className="inline h-5 w-5 mr-2" />
             Questionnaires
+          </button>
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm relative ${
+              activeTab === 'reports'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <FileCheck className="inline h-5 w-5 mr-2" />
+            Reports
+            {reportsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {reportsCount}
+              </span>
+            )}
           </button>
         </nav>
       </div>
@@ -410,6 +454,34 @@ const UserDashboard = () => {
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Shared Reports Widget */}
+          {reportsCount > 0 && (
+            <div className="card mb-6 border-l-4 border-l-green-500 bg-green-50">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                    <FileCheck className="h-5 w-5 mr-2 text-green-600" />
+                    New Reports Shared with You
+                  </h3>
+                  <p className="text-sm text-gray-700 mb-3">
+                    You have {reportsCount} new report{reportsCount > 1 ? 's' : ''} shared by your therapist
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('reports')}
+                    className="btn btn-primary text-sm"
+                  >
+                    View Reports
+                  </button>
+                </div>
+                <div className="ml-4">
+                  <div className="bg-green-600 text-white rounded-full h-10 w-10 flex items-center justify-center font-bold">
+                    {reportsCount}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -689,6 +761,11 @@ const UserDashboard = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Reports Tab */}
+      {activeTab === 'reports' && (
+        <UserReportsTab userId={user.id} />
       )}
     </div>
   );
