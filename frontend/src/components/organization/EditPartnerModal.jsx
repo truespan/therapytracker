@@ -15,6 +15,8 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
     license_id: '',
     address: '',
     photo_url: '',
+    work_experience: '',
+    other_practice_details: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -44,6 +46,8 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
         license_id: partner.license_id || '',
         address: partner.address || '',
         photo_url: partner.photo_url || '',
+        work_experience: partner.work_experience || '',
+        other_practice_details: partner.other_practice_details || '',
       });
     }
   }, [partner, isOpen]);
@@ -74,9 +78,8 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
       newErrors.sex = 'Sex is required';
     }
 
-    if (!formData.age) {
-      newErrors.age = 'Age is required';
-    } else if (formData.age < 18 || formData.age > 100) {
+    // Age is now optional, but if provided, must be valid
+    if (formData.age && (formData.age < 18 || formData.age > 100)) {
       newErrors.age = 'Age must be between 18 and 100';
     }
 
@@ -107,13 +110,15 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
       const submitData = {
         name: formData.name,
         sex: formData.sex,
-        age: parseInt(formData.age),
+        age: formData.age ? parseInt(formData.age) : null,
         email: formData.email,
         contact: `${formData.countryCode}${formData.contact}`,
         qualification: formData.qualification,
         license_id: formData.license_id,
         address: formData.address,
         photo_url: formData.photo_url,
+        work_experience: formData.work_experience,
+        other_practice_details: formData.other_practice_details,
       };
       onSubmit(submitData);
     }
@@ -217,7 +222,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Age <span className="text-red-500">*</span>
+                Age (Optional)
               </label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -350,6 +355,44 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
                 rows="3"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Enter full address"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {/* Work Experience */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Work Experience (Optional)
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <textarea
+                name="work_experience"
+                value={formData.work_experience}
+                onChange={handleChange}
+                rows="3"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Enter work experience details"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {/* Other Practice Details */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Other Practice Details (Optional)
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <textarea
+                name="other_practice_details"
+                value={formData.other_practice_details}
+                onChange={handleChange}
+                rows="3"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Enter other significant work related details"
                 disabled={isLoading}
               />
             </div>

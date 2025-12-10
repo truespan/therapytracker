@@ -50,17 +50,17 @@ class Partner {
   }
 
   static async create(partnerData, client = null) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, organization_id, verification_token, verification_token_expires } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires } = partnerData;
 
     // Generate unique Partner ID
     const partnerId = await this.generatePartnerId(organization_id);
 
     const query = `
-      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, organization_id, verification_token, verification_token_expires)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *
     `;
-    const values = [partnerId, name, sex, age, email, contact, qualification, license_id || null, address, photo_url, organization_id, verification_token, verification_token_expires];
+    const values = [partnerId, name, sex, age || null, email, contact, qualification, license_id || null, address, photo_url, work_experience || null, other_practice_details || null, organization_id, verification_token, verification_token_expires];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
     return result.rows[0];
@@ -91,25 +91,27 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, email_verified, default_report_template_id, default_report_background } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background } = partnerData;
     const query = `
       UPDATE partners
       SET name = COALESCE($1, name),
           sex = COALESCE($2, sex),
-          age = COALESCE($3, age),
+          age = CASE WHEN $3 IS NULL THEN age ELSE $3 END,
           email = COALESCE($4, email),
           contact = COALESCE($5, contact),
           qualification = COALESCE($6, qualification),
           license_id = $7,
           address = COALESCE($8, address),
           photo_url = COALESCE($9, photo_url),
-          email_verified = COALESCE($10, email_verified),
-          default_report_template_id = CASE WHEN $11::INTEGER IS NULL THEN default_report_template_id ELSE $11 END,
-          default_report_background = COALESCE($12, default_report_background)
-      WHERE id = $13
+          work_experience = CASE WHEN $10 IS NULL THEN work_experience ELSE $10 END,
+          other_practice_details = CASE WHEN $11 IS NULL THEN other_practice_details ELSE $11 END,
+          email_verified = COALESCE($12, email_verified),
+          default_report_template_id = CASE WHEN $13::INTEGER IS NULL THEN default_report_template_id ELSE $13 END,
+          default_report_background = COALESCE($14, default_report_background)
+      WHERE id = $15
       RETURNING *
     `;
-    const values = [name, sex, age, email, contact, qualification, license_id !== undefined ? license_id : null, address, photo_url, email_verified, default_report_template_id, default_report_background, id];
+    const values = [name, sex, age !== undefined ? age : null, email, contact, qualification, license_id !== undefined ? license_id : null, address, photo_url, work_experience !== undefined ? work_experience : null, other_practice_details !== undefined ? other_practice_details : null, email_verified, default_report_template_id, default_report_background, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }

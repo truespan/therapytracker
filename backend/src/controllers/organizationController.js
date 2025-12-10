@@ -108,16 +108,16 @@ const getOrganizationUsers = async (req, res) => {
 const createPartner = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, sex, age, email, contact, qualification, license_id, address, password, photo_url } = req.body;
+    const { name, sex, age, email, contact, qualification, license_id, address, password, photo_url, work_experience, other_practice_details } = req.body;
 
     // Check authorization
     if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
       return res.status(403).json({ error: 'Unauthorized to create partner for this organization' });
     }
 
-    // Validate required fields
-    if (!name || !sex || !age || !email || !contact || !qualification || !password) {
-      return res.status(400).json({ error: 'Missing required fields: name, sex, age, email, contact, qualification, password' });
+    // Validate required fields (age is now optional)
+    if (!name || !sex || !email || !contact || !qualification || !password) {
+      return res.status(400).json({ error: 'Missing required fields: name, sex, email, contact, qualification, password' });
     }
 
     // Validate email format
@@ -132,9 +132,12 @@ const createPartner = async (req, res) => {
       return res.status(400).json({ error: 'Invalid contact format. Must include country code (e.g., +911234567890)' });
     }
 
-    // Validate age range
-    if (age < 18 || age > 100) {
-      return res.status(400).json({ error: 'Age must be between 18 and 100' });
+    // Validate age range (if provided)
+    if (age !== undefined && age !== null && age !== '') {
+      const ageNum = parseInt(age);
+      if (isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
+        return res.status(400).json({ error: 'Age must be between 18 and 100' });
+      }
     }
 
     // Validate sex values
@@ -161,13 +164,15 @@ const createPartner = async (req, res) => {
       const partner = await Partner.create({
         name,
         sex,
-        age,
+        age: age !== undefined && age !== null && age !== '' ? parseInt(age) : null,
         email,
         contact,
         qualification,
         license_id,
         address,
         photo_url,
+        work_experience,
+        other_practice_details,
         organization_id: id,
         verification_token: verificationToken,
         verification_token_expires: tokenExpiry
@@ -268,8 +273,14 @@ const updatePartner = async (req, res) => {
     }
 
     // Validate age if provided
-    if (updates.age && (updates.age < 18 || updates.age > 100)) {
-      return res.status(400).json({ error: 'Age must be between 18 and 100' });
+    if (updates.age !== undefined && updates.age !== null && updates.age !== '') {
+      const ageNum = parseInt(updates.age);
+      if (isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
+        return res.status(400).json({ error: 'Age must be between 18 and 100' });
+      }
+      updates.age = ageNum;
+    } else if (updates.age === null || updates.age === '') {
+      updates.age = null;
     }
 
     // Validate sex if provided
