@@ -138,7 +138,7 @@ const Signup = () => {
 
           <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary-50 border border-primary-200 rounded-lg">
             <p className="text-xs sm:text-sm text-primary-900">
-              <strong>Note:</strong> This signup is for patients/clients only. Therapists are added by their organization administrators.
+              <strong>Note:</strong> This signup is for patients/clients only and not for Therapists.
             </p>
           </div>
 

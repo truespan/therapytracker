@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { caseHistoryAPI } from '../../services/api';
-import { Save, Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Save, Loader2, Plus, Trash2, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const CaseHistoryForm = ({ userId, partnerId }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState(null); // 'saving', 'saved', 'error', null
   const [expandedSections, setExpandedSections] = useState(new Set([1])); // Section 1 expanded by default
+  const autosaveTimeoutRef = useRef(null);
+  const isInitialLoadRef = useRef(true);
   const [formData, setFormData] = useState({
     // Section 1: Identification Data
     identification_name: '',
@@ -604,6 +607,157 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
     }
   };
 
+  // Helper function to prepare data for saving
+  const prepareSaveData = useCallback(() => {
+    // Helper function to clean up family member data
+    const cleanFamilyMember = (member) => {
+      const cleaned = { ...member };
+      // Convert empty strings to null for numeric fields
+      if (cleaned.age === '' || cleaned.age === null || cleaned.age === undefined) {
+        cleaned.age = null;
+      } else if (typeof cleaned.age === 'string') {
+        const parsed = parseInt(cleaned.age, 10);
+        cleaned.age = isNaN(parsed) ? null : parsed;
+      }
+      // Convert empty strings to null for sibling_number
+      if (cleaned.sibling_number !== undefined) {
+        if (cleaned.sibling_number === '' || cleaned.sibling_number === null) {
+          cleaned.sibling_number = null;
+        } else if (typeof cleaned.sibling_number === 'string') {
+          const parsed = parseInt(cleaned.sibling_number, 10);
+          cleaned.sibling_number = isNaN(parsed) ? null : parsed;
+        }
+      }
+      // Convert empty strings to null for text fields
+      Object.keys(cleaned).forEach(key => {
+        if (key !== 'age' && key !== 'sibling_number' && key !== 'member_type') {
+          if (cleaned[key] === '') {
+            cleaned[key] = null;
+          }
+        }
+      });
+      return cleaned;
+    };
+    
+    // Prepare family members array
+    const familyMembersArray = [];
+    
+    // Add father
+    if (familyMembers.father.name || familyMembers.father.age) {
+      familyMembersArray.push(cleanFamilyMember({
+        member_type: 'father',
+        ...familyMembers.father
+      }));
+    }
+    
+    // Add mother
+    if (familyMembers.mother.name || familyMembers.mother.age) {
+      familyMembersArray.push(cleanFamilyMember({
+        member_type: 'mother',
+        ...familyMembers.mother
+      }));
+    }
+    
+    // Add siblings
+    familyMembers.siblings.forEach((sibling, index) => {
+      if (sibling.name || sibling.age) {
+        familyMembersArray.push(cleanFamilyMember({
+          member_type: 'sibling',
+          ...sibling,
+          sibling_number: sibling.sibling_number || index + 1
+        }));
+      }
+    });
+    
+    // Add others
+    familyMembers.others.forEach(other => {
+      if (other.name || other.age) {
+        familyMembersArray.push(cleanFamilyMember({
+          member_type: 'other',
+          ...other
+        }));
+      }
+    });
+
+    return {
+      caseHistory: formData,
+      familyMembers: familyMembersArray
+    };
+  }, [formData, familyMembers]);
+
+  // Autosave function
+  const performAutosave = useCallback(async (isManual = false) => {
+    if (!userId) return;
+
+    try {
+      if (isManual) {
+        setSaving(true);
+      } else {
+        setAutosaveStatus('saving');
+      }
+
+      const saveData = prepareSaveData();
+      await caseHistoryAPI.save(userId, saveData);
+
+      if (isManual) {
+        alert('Case history saved successfully!');
+      } else {
+        setAutosaveStatus('saved');
+        // Clear the saved status after 3 seconds
+        setTimeout(() => {
+          setAutosaveStatus(null);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Failed to save case history:', error);
+      if (isManual) {
+        alert('Failed to save case history. Please try again.');
+      } else {
+        setAutosaveStatus('error');
+        // Clear the error status after 5 seconds
+        setTimeout(() => {
+          setAutosaveStatus(null);
+        }, 5000);
+      }
+    } finally {
+      if (isManual) {
+        setSaving(false);
+      }
+    }
+  }, [userId, prepareSaveData]);
+
+  // Autosave effect - debounced
+  useEffect(() => {
+    // Skip autosave on initial load
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    // Clear existing timeout
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+    }
+
+    // Set new timeout for autosave (2 seconds debounce)
+    autosaveTimeoutRef.current = setTimeout(() => {
+      performAutosave(false);
+    }, 2000);
+
+    // Cleanup function
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+  }, [formData, familyMembers, performAutosave]);
+
+  // Reset autosave status when userId changes
+  useEffect(() => {
+    isInitialLoadRef.current = true;
+    setAutosaveStatus(null);
+  }, [userId]);
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -689,91 +843,7 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
   };
 
   const handleSave = async () => {
-    try {
-      setSaving(true);
-      
-      // Helper function to clean up family member data
-      const cleanFamilyMember = (member) => {
-        const cleaned = { ...member };
-        // Convert empty strings to null for numeric fields
-        if (cleaned.age === '' || cleaned.age === null || cleaned.age === undefined) {
-          cleaned.age = null;
-        } else if (typeof cleaned.age === 'string') {
-          const parsed = parseInt(cleaned.age, 10);
-          cleaned.age = isNaN(parsed) ? null : parsed;
-        }
-        // Convert empty strings to null for sibling_number
-        if (cleaned.sibling_number !== undefined) {
-          if (cleaned.sibling_number === '' || cleaned.sibling_number === null) {
-            cleaned.sibling_number = null;
-          } else if (typeof cleaned.sibling_number === 'string') {
-            const parsed = parseInt(cleaned.sibling_number, 10);
-            cleaned.sibling_number = isNaN(parsed) ? null : parsed;
-          }
-        }
-        // Convert empty strings to null for text fields
-        Object.keys(cleaned).forEach(key => {
-          if (key !== 'age' && key !== 'sibling_number' && key !== 'member_type') {
-            if (cleaned[key] === '') {
-              cleaned[key] = null;
-            }
-          }
-        });
-        return cleaned;
-      };
-      
-      // Prepare family members array
-      const familyMembersArray = [];
-      
-      // Add father
-      if (familyMembers.father.name || familyMembers.father.age) {
-        familyMembersArray.push(cleanFamilyMember({
-          member_type: 'father',
-          ...familyMembers.father
-        }));
-      }
-      
-      // Add mother
-      if (familyMembers.mother.name || familyMembers.mother.age) {
-        familyMembersArray.push(cleanFamilyMember({
-          member_type: 'mother',
-          ...familyMembers.mother
-        }));
-      }
-      
-      // Add siblings
-      familyMembers.siblings.forEach((sibling, index) => {
-        if (sibling.name || sibling.age) {
-          familyMembersArray.push(cleanFamilyMember({
-            member_type: 'sibling',
-            ...sibling,
-            sibling_number: sibling.sibling_number || index + 1
-          }));
-        }
-      });
-      
-      // Add others
-      familyMembers.others.forEach(other => {
-        if (other.name || other.age) {
-          familyMembersArray.push(cleanFamilyMember({
-            member_type: 'other',
-            ...other
-          }));
-        }
-      });
-
-      await caseHistoryAPI.save(userId, {
-        caseHistory: formData,
-        familyMembers: familyMembersArray
-      });
-
-      alert('Case history saved successfully!');
-    } catch (error) {
-      console.error('Failed to save case history:', error);
-      alert('Failed to save case history. Please try again.');
-    } finally {
-      setSaving(false);
-    }
+    await performAutosave(true);
   };
 
   const renderField = (label, fieldName, type = 'text', options = null, memberType = null, memberIndex = null) => {
@@ -911,25 +981,55 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
 
   return (
     <div className="space-y-6">
-      {/* Save Button - Sticky at top */}
+      {/* Save Button and Autosave Status - Sticky at top */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 py-3 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              Save Case History
-            </>
+        <div className="flex items-center justify-between gap-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Case History
+              </>
+            )}
+          </button>
+          
+          {/* Autosave Status Indicator */}
+          {autosaveStatus && (
+            <div className={`flex items-center gap-2 text-sm ${
+              autosaveStatus === 'saving' ? 'text-blue-600' :
+              autosaveStatus === 'saved' ? 'text-green-600' :
+              'text-red-600'
+            }`}>
+              {autosaveStatus === 'saving' && (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Auto-saving...</span>
+                </>
+              )}
+              {autosaveStatus === 'saved' && (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Auto-saved</span>
+                </>
+              )}
+              {autosaveStatus === 'error' && (
+                <>
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Auto-save failed</span>
+                </>
+              )}
+            </div>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Section 1: Identification Data */}

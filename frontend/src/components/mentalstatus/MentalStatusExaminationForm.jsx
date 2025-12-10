@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { mentalStatusAPI } from '../../services/api';
-import { Save, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Save, Loader2, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const INITIAL_FORM_STATE = {
   // Section 1: General Appearance
@@ -144,8 +144,11 @@ const INITIAL_FORM_STATE = {
 const MentalStatusExaminationForm = ({ userId, partnerId }) => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [autosaveStatus, setAutosaveStatus] = useState(null); // 'saving', 'saved', 'error', null
   const [expandedSections, setExpandedSections] = useState(new Set([1])); // Section 1 expanded by default
   const [formData, setFormData] = useState(() => ({ ...INITIAL_FORM_STATE }));
+  const autosaveTimeoutRef = useRef(null);
+  const isInitialLoadRef = useRef(true);
 
   const mapApiDataToForm = (apiData) => {
     if (!apiData) {
@@ -158,6 +161,72 @@ const MentalStatusExaminationForm = ({ userId, partnerId }) => {
       return acc;
     }, { ...INITIAL_FORM_STATE });
   };
+
+  // Autosave function
+  const performAutosave = useCallback(async (isManual = false) => {
+    if (!userId) return;
+
+    try {
+      if (isManual) {
+        setSaving(true);
+      } else {
+        setAutosaveStatus('saving');
+      }
+
+      await mentalStatusAPI.save(userId, { mentalStatus: formData });
+
+      if (isManual) {
+        alert('Mental Status Examination data saved successfully.');
+      } else {
+        setAutosaveStatus('saved');
+        // Clear the saved status after 3 seconds
+        setTimeout(() => {
+          setAutosaveStatus(null);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Failed to save MSE data:', error);
+      if (isManual) {
+        alert('Failed to save Mental Status Examination data. Please try again.');
+      } else {
+        setAutosaveStatus('error');
+        // Clear the error status after 5 seconds
+        setTimeout(() => {
+          setAutosaveStatus(null);
+        }, 5000);
+      }
+    } finally {
+      if (isManual) {
+        setSaving(false);
+      }
+    }
+  }, [userId, formData]);
+
+  // Autosave effect - debounced
+  useEffect(() => {
+    // Skip autosave on initial load
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    // Clear existing timeout
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+    }
+
+    // Set new timeout for autosave (2 seconds debounce)
+    autosaveTimeoutRef.current = setTimeout(() => {
+      performAutosave(false);
+    }, 2000);
+
+    // Cleanup function
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+  }, [formData, performAutosave]);
 
   useEffect(() => {
     const fetchMentalStatus = async () => {
@@ -182,6 +251,9 @@ const MentalStatusExaminationForm = ({ userId, partnerId }) => {
     };
 
     fetchMentalStatus();
+    // Reset autosave status when userId changes
+    isInitialLoadRef.current = true;
+    setAutosaveStatus(null);
   }, [userId, partnerId]);
 
   const handleInputChange = (field, value) => {
@@ -206,16 +278,7 @@ const MentalStatusExaminationForm = ({ userId, partnerId }) => {
       return;
     }
 
-    try {
-      setSaving(true);
-      await mentalStatusAPI.save(userId, { mentalStatus: formData });
-      alert('Mental Status Examination data saved successfully.');
-    } catch (error) {
-      console.error('Failed to save MSE data:', error);
-      alert('Failed to save Mental Status Examination data. Please try again.');
-    } finally {
-      setSaving(false);
-    }
+    await performAutosave(true);
   };
 
   const renderField = (label, fieldName, type = 'text', options = null, rows = 3, showLabel = true) => {
@@ -283,25 +346,55 @@ const MentalStatusExaminationForm = ({ userId, partnerId }) => {
 
   return (
     <div className="space-y-6">
-      {/* Save Button - Sticky at top */}
+      {/* Save Button and Autosave Status - Sticky at top */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 py-3 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              Save Mental Status Examination
-            </>
+        <div className="flex items-center justify-between gap-4">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Mental Status Examination
+              </>
+            )}
+          </button>
+          
+          {/* Autosave Status Indicator */}
+          {autosaveStatus && (
+            <div className={`flex items-center gap-2 text-sm ${
+              autosaveStatus === 'saving' ? 'text-blue-600' :
+              autosaveStatus === 'saved' ? 'text-green-600' :
+              'text-red-600'
+            }`}>
+              {autosaveStatus === 'saving' && (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Auto-saving...</span>
+                </>
+              )}
+              {autosaveStatus === 'saved' && (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Auto-saved</span>
+                </>
+              )}
+              {autosaveStatus === 'error' && (
+                <>
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Auto-save failed</span>
+                </>
+              )}
+            </div>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Section 1: General Appearance */}
