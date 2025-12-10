@@ -235,7 +235,7 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -304,7 +304,7 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div
-                className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                className="bg-primary-600 h-3 rounded-full transition-all duration-300"
                 style={{ width: `${getProgressPercentage()}%` }}
               ></div>
             </div>
@@ -313,11 +313,11 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
         
         {/* View Only Notice */}
         {viewOnly && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
-            <p className="text-blue-800 font-medium">
+          <div className="mb-6 p-4 bg-primary-50 border border-primary-200 rounded">
+            <p className="text-primary-900 font-medium">
               📋 Viewing Previous Responses (Read-Only)
             </p>
-            <p className="text-sm text-blue-600 mt-1">
+            <p className="text-sm text-primary-700 mt-1">
               This questionnaire has been completed. To answer again, your therapist needs to assign it to you again.
             </p>
           </div>
@@ -328,13 +328,13 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
           <div className="mb-6">
             <button
               onClick={() => setShowPrevious(!showPrevious)}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              className="text-primary-700 hover:text-primary-800 text-sm font-medium"
             >
               {showPrevious ? '− Hide' : '+ Show'} Previous Responses
             </button>
             
             {showPrevious && (
-              <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded">
+              <div className="mt-3 p-4 bg-primary-50 border border-primary-200 rounded">
                 <h4 className="font-medium text-gray-800 mb-2">Previous Responses:</h4>
                 <div className="space-y-2 text-sm">
                   {previousResponses.map((resp, idx) => (
@@ -361,7 +361,7 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
               onChange={(e) => !viewOnly && setTextResponse(e.target.value)}
               disabled={viewOnly}
               placeholder={questionnaire.text_field_placeholder || 'Share what brings you to therapy or what you\'d like to work on...'}
-              className={`w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+              className={`w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none ${
                 viewOnly ? 'bg-gray-50 cursor-not-allowed' : ''
               }`}
               rows="6"
@@ -424,8 +424,8 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
               <div key={groupIndex}>
                 {/* Sub-heading */}
                 {group.sub_heading && (
-                  <div className="mb-4 pb-2 border-b-2 border-blue-500">
-                    <h2 className="text-lg font-bold text-blue-700">
+                  <div className="mb-4 pb-2 border-b-2 border-primary-600">
+                    <h2 className="text-lg font-bold text-primary-800">
                       {group.sub_heading}
                     </h2>
                   </div>
@@ -533,7 +533,7 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
               )}
               <button
                 onClick={handleSubmit}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={submitting || getAnsweredCount() !== getTotalQuestions()}
               >
                 {submitting ? 'Submitting...' : 'Submit Questionnaire'}

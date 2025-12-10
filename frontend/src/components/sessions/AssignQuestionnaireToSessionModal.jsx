@@ -96,7 +96,7 @@ const AssignQuestionnaireToSessionModal = ({ session, partnerId, userId, onClose
           </div>
 
           {/* Session Info */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-lg">
             <p className="text-sm text-gray-700">
               <strong>Session:</strong> {session.session_title}
             </p>

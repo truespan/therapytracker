@@ -96,7 +96,7 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
               </h4>
               <div className="flex items-center space-x-2">
                 {session.from_appointment && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-900">
                     <Tag className="h-3 w-3 mr-1" />
                     From Appointment
                   </span>
@@ -280,7 +280,7 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
             </h4>
             <div className="flex items-center space-x-2 flex-wrap">
               {session.from_appointment && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-900">
                   <Tag className="h-3 w-3 mr-1" />
                   From Appointment
                 </span>

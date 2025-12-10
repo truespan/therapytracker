@@ -139,7 +139,7 @@ const PartnerCalendar = ({ partnerId, users }) => {
 
   const eventStyleGetter = (event) => {
     const style = {
-      backgroundColor: '#0ea5e9',
+      backgroundColor: '#00F0A8',
       borderRadius: '5px',
       opacity: 0.8,
       color: 'white',

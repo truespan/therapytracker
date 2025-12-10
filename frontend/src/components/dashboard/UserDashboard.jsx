@@ -304,10 +304,10 @@ const UserDashboard = () => {
                 </h3>
                 <div className="space-y-3">
                   {allUpcoming.slice(0, 5).map((apt, index) => (
-                    <div key={apt.isVideoSession ? `video-${apt.id}` : `apt-${apt.id}`} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div key={apt.isVideoSession ? `video-${apt.id}` : `apt-${apt.id}`} className="flex items-center justify-between p-3 bg-primary-50 rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          {apt.isVideoSession && <Video className="h-4 w-4 text-blue-600" />}
+                          {apt.isVideoSession && <Video className="h-4 w-4 text-primary-700" />}
                           <p className="font-medium text-gray-900">{apt.title}</p>
                         </div>
                         <p className="text-sm text-gray-600">
@@ -487,11 +487,11 @@ const UserDashboard = () => {
 
           {/* Latest Shared Chart Notification */}
           {latestSharedChart && (
-            <div className="card mb-6 border-l-4 border-l-blue-500 bg-blue-50">
+            <div className="card mb-6 border-l-4 border-l-primary-600 bg-primary-50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-                    <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                    <BarChart3 className="h-5 w-5 mr-2 text-primary-700" />
                     New Chart Shared with You
                   </h3>
                   <div className="space-y-1 text-sm text-gray-700">
@@ -629,7 +629,7 @@ const UserDashboard = () => {
                   setSelectedAssignment(null);
                   setViewingQuestionnaireChart(null);
                 }}
-                className="mb-4 text-blue-600 hover:text-blue-700 font-medium"
+                className="mb-4 text-primary-700 hover:text-primary-800 font-medium"
               >
                 ← Back to Questionnaires
               </button>

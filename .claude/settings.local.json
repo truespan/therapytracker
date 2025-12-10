@@ -4,7 +4,10 @@
       "Bash(timeout 5 sleep:*)",
       "Bash(taskkill:*)",
       "Bash(netstat:*)",
-      "Bash(timeout 2 sleep 2:*)"
+      "Bash(timeout 2 sleep 2:*)",
+      "Bash(npm run build:*)",
+      "Bash(node replace-colors.js:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []

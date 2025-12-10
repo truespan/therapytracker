@@ -163,7 +163,7 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -196,7 +196,7 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
             <select
               value={chartType}
               onChange={(e) => setChartType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="line">Line Chart</option>
               <option value="bar">Bar Chart</option>
@@ -213,7 +213,7 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
               <select
                 value={selectedQuestion}
                 onChange={(e) => setSelectedQuestion(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="all">All Questions</option>
                 {questions.map((q) => (
@@ -357,9 +357,9 @@ const QuestionnaireChart = ({ questionnaireId, userId, questionnaireName }) => {
 
       {/* Summary Stats */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-blue-50 rounded-lg">
+        <div className="p-4 bg-primary-50 rounded-lg">
           <div className="text-sm text-gray-600">Total Responses</div>
-          <div className="text-2xl font-bold text-blue-600">{chartData.length}</div>
+          <div className="text-2xl font-bold text-primary-700">{chartData.length}</div>
         </div>
         <div className="p-4 bg-green-50 rounded-lg">
           <div className="text-sm text-gray-600">Questions</div>

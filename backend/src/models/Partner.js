@@ -50,17 +50,17 @@ class Partner {
   }
 
   static async create(partnerData, client = null) {
-    const { name, sex, age, email, contact, qualification, address, photo_url, organization_id, verification_token, verification_token_expires } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, organization_id, verification_token, verification_token_expires } = partnerData;
 
     // Generate unique Partner ID
     const partnerId = await this.generatePartnerId(organization_id);
 
     const query = `
-      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, address, photo_url, organization_id, verification_token, verification_token_expires)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, organization_id, verification_token, verification_token_expires)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *
     `;
-    const values = [partnerId, name, sex, age, email, contact, qualification, address, photo_url, organization_id, verification_token, verification_token_expires];
+    const values = [partnerId, name, sex, age, email, contact, qualification, license_id || null, address, photo_url, organization_id, verification_token, verification_token_expires];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
     return result.rows[0];
@@ -91,7 +91,7 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, qualification, address, photo_url, email_verified, default_report_template_id, default_report_background } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, email_verified, default_report_template_id, default_report_background } = partnerData;
     const query = `
       UPDATE partners
       SET name = COALESCE($1, name),
@@ -100,15 +100,16 @@ class Partner {
           email = COALESCE($4, email),
           contact = COALESCE($5, contact),
           qualification = COALESCE($6, qualification),
-          address = COALESCE($7, address),
-          photo_url = COALESCE($8, photo_url),
-          email_verified = COALESCE($9, email_verified),
-          default_report_template_id = CASE WHEN $10::INTEGER IS NULL THEN default_report_template_id ELSE $10 END,
-          default_report_background = COALESCE($11, default_report_background)
-      WHERE id = $12
+          license_id = $7,
+          address = COALESCE($8, address),
+          photo_url = COALESCE($9, photo_url),
+          email_verified = COALESCE($10, email_verified),
+          default_report_template_id = CASE WHEN $11::INTEGER IS NULL THEN default_report_template_id ELSE $11 END,
+          default_report_background = COALESCE($12, default_report_background)
+      WHERE id = $13
       RETURNING *
     `;
-    const values = [name, sex, age, email, contact, qualification, address, photo_url, email_verified, default_report_template_id, default_report_background, id];
+    const values = [name, sex, age, email, contact, qualification, license_id !== undefined ? license_id : null, address, photo_url, email_verified, default_report_template_id, default_report_background, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }

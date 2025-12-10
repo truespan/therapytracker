@@ -302,7 +302,7 @@ const ReportTemplatesTab = () => {
                       <div className="flex items-center space-x-3">
                         <button
                           onClick={() => handleDownload(template)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-primary-700 hover:text-primary-900"
                           title="Download"
                         >
                           <Download className="h-5 w-5" />

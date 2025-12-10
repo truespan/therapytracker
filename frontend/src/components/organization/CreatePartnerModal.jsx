@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, MapPin, Lock, Calendar, Users, Award } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Lock, Calendar, Users, Award, FileText } from 'lucide-react';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 
 const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
@@ -11,6 +11,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     countryCode: '+91',
     contact: '',
     qualification: '',
+    license_id: '',
     address: '',
     password: '',
     photo_url: '',
@@ -98,6 +99,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
       countryCode: '+91',
       contact: '',
       qualification: '',
+      license_id: '',
       address: '',
       password: '',
       photo_url: '',
@@ -270,6 +272,25 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
               />
             </div>
             {errors.qualification && <p className="mt-1 text-sm text-red-500">{errors.qualification}</p>}
+          </div>
+
+          {/* Practitioner License ID */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Practitioner License ID (Optional)
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                name="license_id"
+                value={formData.license_id}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="e.g., PSY-12345, MED-67890"
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
           {/* Address */}

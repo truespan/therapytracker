@@ -282,8 +282,8 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
           </div>
 
           {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+            <p className="text-sm text-primary-900">
               <strong>Note:</strong> Changes to email will require the organization to use the new email for login.
             </p>
           </div>

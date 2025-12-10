@@ -263,7 +263,7 @@ const AppointmentsTab = ({ partnerId }) => {
                         className={`p-3 sm:p-2 rounded border text-sm sm:text-xs ${
                           item.has_session
                             ? 'bg-green-50 border-green-200'
-                            : 'bg-blue-50 border-blue-200 hover:bg-blue-100 cursor-pointer'
+                            : 'bg-primary-50 border-primary-200 hover:bg-primary-100 cursor-pointer'
                         }`}
                         onClick={() => !item.has_session && handleStartSession(item)}
                       >
@@ -485,7 +485,7 @@ const AppointmentsTab = ({ partnerId }) => {
         <div className="mt-6 pt-4 border-t border-gray-200">
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-50 border border-blue-200 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-primary-50 border border-primary-200 rounded"></div>
               <span className="text-gray-600">Scheduled</span>
             </div>
             <div className="flex items-center space-x-2">

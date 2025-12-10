@@ -7,16 +7,16 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#e6fff9',
+          100: '#ccfff3',
+          200: '#99ffe7',
+          300: '#66ffdb',
+          400: '#33f8cf',
+          500: '#00F0A8',  // Main spring green
+          600: '#00d999',  // Slightly darker for primary buttons
+          700: '#00a878',  // Darker for hover states
+          800: '#008a63',  // Dark for white bg buttons
+          900: '#006b4d',  // Very dark green
         }
       }
     },

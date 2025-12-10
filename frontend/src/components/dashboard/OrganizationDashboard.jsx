@@ -679,7 +679,7 @@ const OrganizationDashboard = () => {
                   {!selectedPartner.email_verified && (
                     <button
                       onClick={() => handleResendVerification(selectedPartner)}
-                      className="px-3 py-2 text-xs sm:text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
+                      className="px-3 py-2 text-xs sm:text-sm text-primary-800 bg-primary-50 hover:bg-primary-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                     >
                       <Send className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Resend Email</span>

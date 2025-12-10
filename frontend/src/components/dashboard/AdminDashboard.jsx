@@ -185,21 +185,21 @@ const AdminDashboard = () => {
     // Icon color classes for dynamic colors
     const iconBgClass = {
       'indigo': 'bg-indigo-100',
-      'blue': 'bg-blue-100',
+      'blue': 'bg-primary-100',
       'green': 'bg-green-100',
       'purple': 'bg-purple-100'
     }[color] || 'bg-indigo-100';
 
     const iconColorClass = {
       'indigo': 'text-indigo-600',
-      'blue': 'text-blue-600',
+      'blue': 'text-primary-700',
       'green': 'text-green-600',
       'purple': 'text-purple-600'
     }[color] || 'text-indigo-600';
 
     const borderClass = {
       'indigo': 'border-indigo-600',
-      'blue': 'border-blue-600',
+      'blue': 'border-primary-600',
       'green': 'border-green-600',
       'purple': 'border-purple-600'
     }[color] || 'border-indigo-600';
@@ -475,7 +475,7 @@ const AdminDashboard = () => {
                             setSelectedOrg(org);
                             setShowEditModal(true);
                           }}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                          className="text-primary-700 hover:text-primary-900 p-1 rounded hover:bg-primary-50"
                           title="Edit"
                         >
                           <Edit2 className="h-5 w-5" />

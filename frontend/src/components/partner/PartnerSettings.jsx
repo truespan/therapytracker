@@ -289,12 +289,12 @@ const PartnerSettings = () => {
                 )}
               </div>
             ) : (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
-                      <AlertCircle className="h-5 w-5 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-700">Not Connected</span>
+                      <AlertCircle className="h-5 w-5 text-primary-700" />
+                      <span className="text-sm font-medium text-primary-800">Not Connected</span>
                     </div>
                     <p className="text-xs text-gray-600 mb-4">
                       Connect your Google Calendar to automatically sync appointments when you create or update them.

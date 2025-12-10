@@ -481,7 +481,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                 <div className="flex items-center space-x-2 ml-4">
                   <button
                     onClick={() => handleViewReport(report)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="p-2 text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
                     title="View Report"
                   >
                     <Eye className="h-5 w-5" />

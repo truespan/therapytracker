@@ -296,7 +296,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
   if (loading && questionnaireId) {
     return (
       <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -328,7 +328,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
           type="text"
           value={questionnaire.name}
           onChange={(e) => setQuestionnaire({ ...questionnaire, name: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Enter questionnaire name"
         />
       </div>
@@ -340,7 +340,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
         <textarea
           value={questionnaire.description || ''}
           onChange={(e) => setQuestionnaire({ ...questionnaire, description: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
           rows="3"
           placeholder="Enter questionnaire description (optional)"
         />
@@ -359,7 +359,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
               text_field_label: e.target.checked ? questionnaire.text_field_label : '',
               text_field_placeholder: e.target.checked ? questionnaire.text_field_placeholder : ''
             })}
-            className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+            className="w-4 h-4 text-primary-700 rounded focus:ring-2 focus:ring-primary-500"
           />
           <label htmlFor="has_text_field" className="ml-2 text-sm font-medium text-gray-700">
             Add a text box at the top (max 200 words)
@@ -376,7 +376,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
                 type="text"
                 value={questionnaire.text_field_label}
                 onChange={(e) => setQuestionnaire({ ...questionnaire, text_field_label: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="e.g., Please describe your key issue(s) briefly here."
               />
             </div>
@@ -388,7 +388,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
                 type="text"
                 value={questionnaire.text_field_placeholder}
                 onChange={(e) => setQuestionnaire({ ...questionnaire, text_field_placeholder: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="e.g., Share what brings you to therapy or what you'd like to work on..."
               />
             </div>
@@ -411,7 +411,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
               name="color_coding"
               checked={!questionnaire.color_coding_scheme}
               onChange={() => setQuestionnaire({ ...questionnaire, color_coding_scheme: null })}
-              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+              className="w-4 h-4 text-primary-700 focus:ring-2 focus:ring-primary-500"
             />
             <span className="ml-3 text-sm font-medium text-gray-700">No Color Coding</span>
           </label>
@@ -427,7 +427,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
               checked={questionnaire.color_coding_scheme === '4-point'}
               onChange={() => setQuestionnaire({ ...questionnaire, color_coding_scheme: '4-point' })}
               disabled={getMostCommonOptionCount() !== 4 && getMostCommonOptionCount() !== 0}
-              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-4 h-4 text-primary-700 focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
             />
             <div className="ml-3 flex-1">
               <span className="text-sm font-medium text-gray-700 block">4-Point Color Scale</span>
@@ -457,7 +457,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
               checked={questionnaire.color_coding_scheme === '5-point'}
               onChange={() => setQuestionnaire({ ...questionnaire, color_coding_scheme: '5-point' })}
               disabled={getMostCommonOptionCount() !== 5 && getMostCommonOptionCount() !== 0}
-              className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="w-4 h-4 text-primary-700 focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
             />
             <div className="ml-3 flex-1">
               <span className="text-sm font-medium text-gray-700 block">5-Point Color Scale</span>
@@ -485,7 +485,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
           <h3 className="text-lg font-semibold">Questions</h3>
           <button
             onClick={handleAddQuestion}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
           >
             + Add Question
           </button>
@@ -538,7 +538,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
                       newQuestions[questionIndex].sub_heading = e.target.value;
                       setQuestionnaire({ ...questionnaire, questions: newQuestions });
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-primary-50"
                     placeholder="e.g., Emotional Well-being, Physical Health, etc."
                   />
                 </div>
@@ -547,7 +547,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
                   type="text"
                   value={question.question_text}
                   onChange={(e) => handleQuestionChange(questionIndex, e.target.value)}
-                  className="w-full px-3 py-2 mb-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 mb-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Enter question text"
                 />
 
@@ -570,14 +570,14 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
                           type="text"
                           value={option.option_text}
                           onChange={(e) => handleOptionChange(questionIndex, optionIndex, 'option_text', e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                           placeholder="Enter option text"
                         />
                         <input
                           type="number"
                           value={option.option_value}
                           onChange={(e) => handleOptionChange(questionIndex, optionIndex, 'option_value', parseInt(e.target.value))}
-                          className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                           placeholder="Value"
                         />
                         {question.options.length > 1 && (
@@ -609,7 +609,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
         </button>
         <button
           onClick={handleSave}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={loading}
         >
           {loading ? 'Saving...' : 'Save Questionnaire'}
@@ -656,7 +656,7 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
               </button>
               <button
                 onClick={() => setShowColorCodingWarning(false)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
               >
                 I'll Fix the Order
               </button>

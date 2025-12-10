@@ -168,7 +168,7 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
             </p>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
             <h3 className="font-semibold text-gray-900 mb-2">{session.title}</h3>
             <p className="text-sm text-gray-600">
               {new Date(session.session_date).toLocaleString('en-US', {
@@ -237,7 +237,7 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
           <p className="text-gray-600">with {session.partner_name}</p>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+        <div className="bg-primary-50 border border-primary-200 rounded-lg p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-600 mb-1">Date & Time</p>
@@ -259,7 +259,7 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
           </div>
 
           {session.notes && (
-            <div className="mt-4 pt-4 border-t border-blue-200">
+            <div className="mt-4 pt-4 border-t border-primary-200">
               <p className="text-gray-600 mb-1">Notes</p>
               <p className="text-gray-900">{session.notes}</p>
             </div>

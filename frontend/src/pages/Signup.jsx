@@ -136,8 +136,8 @@ const Signup = () => {
             <p className="text-sm sm:text-base text-gray-600 mt-2">Join TheraP Track today</p>
           </div>
 
-          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs sm:text-sm text-blue-800">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary-50 border border-primary-200 rounded-lg">
+            <p className="text-xs sm:text-sm text-primary-900">
               <strong>Note:</strong> This signup is for patients/clients only. Therapists are added by their organization administrators.
             </p>
           </div>

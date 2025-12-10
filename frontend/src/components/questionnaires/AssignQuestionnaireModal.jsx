@@ -109,7 +109,7 @@ const AssignQuestionnaireModal = ({ questionnaire, partnerId, onClose, onSuccess
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search users by name or email..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
@@ -120,7 +120,7 @@ const AssignQuestionnaireModal = ({ questionnaire, partnerId, onClose, onSuccess
                 type="checkbox"
                 checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
                 onChange={handleSelectAll}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-4 h-4 text-primary-700 rounded focus:ring-2 focus:ring-primary-500"
               />
               <span className="ml-2 text-sm font-medium text-gray-700">
                 Select All ({filteredUsers.length} users)
@@ -147,7 +147,7 @@ const AssignQuestionnaireModal = ({ questionnaire, partnerId, onClose, onSuccess
                     type="checkbox"
                     checked={selectedUsers.includes(user.id)}
                     onChange={() => handleUserToggle(user.id)}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    className="w-4 h-4 text-primary-700 rounded focus:ring-2 focus:ring-primary-500"
                   />
                   <div className="ml-3 flex-1">
                     <div className="font-medium text-gray-800">{user.name}</div>
@@ -179,7 +179,7 @@ const AssignQuestionnaireModal = ({ questionnaire, partnerId, onClose, onSuccess
               </button>
               <button
                 onClick={handleAssign}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading || selectedUsers.length === 0}
               >
                 {loading ? 'Assigning...' : 'Assign Questionnaire'}

@@ -69,21 +69,21 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
           </div>
 
           {/* Appointment Info Display */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mb-6 p-4 bg-primary-50 border border-primary-200 rounded-lg">
             <h3 className="font-semibold text-gray-900 mb-3">Appointment Details</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center text-gray-700">
-                <User className="h-4 w-4 mr-2 text-blue-600" />
+                <User className="h-4 w-4 mr-2 text-primary-700" />
                 <span className="font-medium mr-2">Client:</span>
                 <span>{appointment.user_name}</span>
               </div>
               <div className="flex items-center text-gray-700">
-                <Calendar className="h-4 w-4 mr-2 text-blue-600" />
+                <Calendar className="h-4 w-4 mr-2 text-primary-700" />
                 <span className="font-medium mr-2">Date:</span>
                 <span>{new Date(appointment.appointment_date).toLocaleDateString()}</span>
               </div>
               <div className="flex items-center text-gray-700">
-                <Clock className="h-4 w-4 mr-2 text-blue-600" />
+                <Clock className="h-4 w-4 mr-2 text-primary-700" />
                 <span className="font-medium mr-2">Time:</span>
                 <span>{new Date(appointment.appointment_date).toLocaleTimeString([], {
                   hour: '2-digit',

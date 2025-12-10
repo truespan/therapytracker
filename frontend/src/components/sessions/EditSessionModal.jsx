@@ -88,7 +88,7 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
 
           {/* Session Info Display */}
           {session.from_appointment && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+            <div className="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-lg text-sm text-primary-900">
               <strong>Note:</strong> This session was created from an appointment
             </div>
           )}

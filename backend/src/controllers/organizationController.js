@@ -108,7 +108,7 @@ const getOrganizationUsers = async (req, res) => {
 const createPartner = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, sex, age, email, contact, qualification, address, password, photo_url } = req.body;
+    const { name, sex, age, email, contact, qualification, license_id, address, password, photo_url } = req.body;
 
     // Check authorization
     if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
@@ -165,6 +165,7 @@ const createPartner = async (req, res) => {
         email,
         contact,
         qualification,
+        license_id,
         address,
         photo_url,
         organization_id: id,

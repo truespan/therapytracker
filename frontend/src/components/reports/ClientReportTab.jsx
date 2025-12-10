@@ -102,12 +102,12 @@ const ClientReportTab = ({ userId, userName, partnerId }) => {
 
   return (
     <div className="space-y-6">
-      <div className="card bg-blue-50 border-2 border-blue-200">
+      <div className="card bg-primary-50 border-2 border-primary-200">
         <div className="flex items-start space-x-3">
-          <AlertCircle className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="h-6 w-6 text-primary-700 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <h3 className="font-semibold text-blue-900">Generate Report for {userName}</h3>
-            <p className="text-blue-800 text-sm mt-1">
+            <h3 className="font-semibold text-primary-900">Generate Report for {userName}</h3>
+            <p className="text-primary-900 text-sm mt-1">
               Select a report template below to download and fill in with client information.
               The template will be customized with the client's name for easy identification.
             </p>

@@ -101,7 +101,7 @@ export const transformMultipleSessionsForRadar = (profileHistory) => {
 // Get color for session line in chart
 export const getSessionColor = (index) => {
   const colors = [
-    '#0ea5e9', // primary blue
+    '#00F0A8', // primary blue
     '#10b981', // green
     '#f59e0b', // amber
     '#ef4444', // red

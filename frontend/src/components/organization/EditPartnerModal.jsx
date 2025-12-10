@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, MapPin, Calendar, Users, Award } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Calendar, Users, Award, FileText } from 'lucide-react';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import ImageUpload from '../common/ImageUpload';
 
@@ -12,6 +12,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
     countryCode: '+91',
     contact: '',
     qualification: '',
+    license_id: '',
     address: '',
     photo_url: '',
   });
@@ -40,6 +41,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
         countryCode: countryCode,
         contact: number,
         qualification: partner.qualification || '',
+        license_id: partner.license_id || '',
         address: partner.address || '',
         photo_url: partner.photo_url || '',
       });
@@ -109,6 +111,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
         email: formData.email,
         contact: `${formData.countryCode}${formData.contact}`,
         qualification: formData.qualification,
+        license_id: formData.license_id,
         address: formData.address,
         photo_url: formData.photo_url,
       };
@@ -312,6 +315,25 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
               />
             </div>
             {errors.qualification && <p className="mt-1 text-sm text-red-500">{errors.qualification}</p>}
+          </div>
+
+          {/* Practitioner License ID */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Practitioner License ID (Optional)
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                name="license_id"
+                value={formData.license_id}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="e.g., PSY-12345, MED-67890"
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
           {/* Address */}

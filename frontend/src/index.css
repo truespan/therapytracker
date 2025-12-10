@@ -54,7 +54,7 @@ code {
 }
 
 .rbc-today {
-  background-color: #eff6ff;
+  background-color: #e6fff9;
 }
 
 .rbc-event {
@@ -64,7 +64,7 @@ code {
 }
 
 .rbc-event:focus {
-  outline: 2px solid #0ea5e9;
+  outline: 2px solid #00F0A8;
 }
 
 .rbc-toolbar button {
@@ -83,13 +83,13 @@ code {
 }
 
 .rbc-toolbar button.rbc-active {
-  background-color: #0ea5e9;
+  background-color: #00F0A8;
   color: white;
-  border-color: #0ea5e9;
+  border-color: #00F0A8;
 }
 
 .rbc-toolbar button.rbc-active:hover {
-  background-color: #0284c7;
+  background-color: #00d999;
 }
 
 /* Thin scrollbar for questionnaire option containers */

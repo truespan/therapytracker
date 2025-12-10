@@ -317,9 +317,16 @@ const downloadReport = async (req, res) => {
     doc.fontSize(10).font('Helvetica');
     doc.text(partner.qualification, 50, 80);
 
+    // Add License ID if available (between qualification and email)
+    let currentY = 95;
     doc.fontSize(9).font('Helvetica');
-    doc.text(`Email: ${partner.email}`, 50, 95);
-    doc.text(`Phone: ${partnerContact.code} ${partnerContact.number}`, 50, 110);
+    if (partner.license_id) {
+      doc.text(`License ID: ${partner.license_id}`, 50, currentY);
+      currentY += 15;
+    }
+
+    doc.text(`Email: ${partner.email}`, 50, currentY);
+    doc.text(`Phone: ${partnerContact.code} ${partnerContact.number}`, 50, currentY + 15);
 
     // --- CLIENT DETAILS SECTION (Horizontal) ---
     // Shifted down to avoid overlapping with colored header background (4+ lines = 80 points)

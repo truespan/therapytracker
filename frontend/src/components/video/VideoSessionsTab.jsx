@@ -113,7 +113,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
       return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Completed</span>;
     }
     if (now >= start && now <= end) {
-      return <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">In Progress</span>;
+      return <span className="px-2 py-1 text-xs font-medium bg-primary-100 text-primary-900 rounded-full">In Progress</span>;
     }
     if (now < start) {
       return <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Scheduled</span>;

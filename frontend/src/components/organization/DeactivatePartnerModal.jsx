@@ -194,7 +194,7 @@ const DeactivatePartnerModal = ({
 
           {/* Reassignment Partner Selection */}
           {deactivationType === 'reassign' && hasClients && availablePartners.length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
               <label className="block text-sm font-medium text-gray-900 mb-2">
                 Select Therapist for Reassignment <span className="text-red-500">*</span>
               </label>
@@ -215,7 +215,7 @@ const DeactivatePartnerModal = ({
                 ))}
               </select>
               {selectedPartnerId && (
-                <div className="mt-3 p-3 bg-white rounded-lg border border-blue-300">
+                <div className="mt-3 p-3 bg-white rounded-lg border border-primary-300">
                   <div className="flex items-center space-x-2 text-sm">
                     <span className="font-medium text-gray-700">{clients.length} client{clients.length !== 1 ? 's' : ''}</span>
                     <ArrowRight className="h-4 w-4 text-gray-400" />

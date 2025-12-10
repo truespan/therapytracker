@@ -151,8 +151,8 @@ const PartnerReportsTab = () => {
 
       {/* Current Default Display */}
       {defaultBackground && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-blue-900 text-sm">
+        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+          <p className="text-primary-900 text-sm">
             <span className="font-medium">Current default: </span>
             {defaultBackground}
           </p>
