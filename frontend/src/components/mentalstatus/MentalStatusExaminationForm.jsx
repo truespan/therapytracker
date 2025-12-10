@@ -135,7 +135,10 @@ const INITIAL_FORM_STATE = {
   insight_details: '',
 
   // Section 15: Verbatim Report
-  verbatim_report: ''
+  verbatim_report: '',
+
+  // Section 16: Behavior Observation (BO)
+  behavior_observation: ''
 };
 
 const MentalStatusExaminationForm = ({ userId, partnerId }) => {
@@ -725,6 +728,22 @@ const MentalStatusExaminationForm = ({ userId, partnerId }) => {
         {expandedSections.has(15) && (
           <div className="space-y-4">
             {renderField('Verbatim Report', 'verbatim_report', 'textarea')}
+          </div>
+        )}
+      </div>
+
+      {/* Section 16: Behavior Observation (BO) */}
+      <div className="card">
+        <button
+          onClick={() => toggleSection(16)}
+          className="w-full flex items-center justify-between text-left mb-4"
+        >
+          <h3 className="text-lg font-semibold">16. Behavior Observation (BO)</h3>
+          {expandedSections.has(16) ? <ChevronUp /> : <ChevronDown />}
+        </button>
+        {expandedSections.has(16) && (
+          <div className="space-y-4">
+            {renderField('Behavior Observation', 'behavior_observation', 'textarea')}
           </div>
         )}
       </div>

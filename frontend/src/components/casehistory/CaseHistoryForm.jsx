@@ -577,7 +577,7 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
               };
             } else if (member.member_type === 'sibling') {
               newFamilyMembers.siblings.push({
-                name: member.name || '', age: member.age || '', education: member.education || '',
+                name: member.name || '', age: member.age || '', sex: member.sex || '', education: member.education || '',
                 occupation: member.occupation || '', religion: member.religion || '', nationality: member.nationality || '',
                 mother_tongue: member.mother_tongue || '', health: member.health || '', personality: member.personality || '',
                 relationship_attitude: member.relationship_attitude || '', sibling_number: member.sibling_number || newFamilyMembers.siblings.length + 1
@@ -627,7 +627,7 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
     setFamilyMembers(prev => ({
       ...prev,
       siblings: [...prev.siblings, {
-        name: '', age: '', education: '', occupation: '', religion: '',
+        name: '', age: '', sex: '', education: '', occupation: '', religion: '',
         nationality: '', mother_tongue: '', health: '', personality: '',
         relationship_attitude: '', sibling_number: prev.siblings.length + 1
       }]
@@ -856,6 +856,11 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {renderField(`${prefix} - Name`, 'name', 'text', null, type, index)}
           {renderField(`${prefix} - Age`, 'age', 'number', null, type, index)}
+          {isSibling && renderField(`${prefix} - Sex`, 'sex', 'select', [
+            { value: 'Male', label: 'Male' },
+            { value: 'Female', label: 'Female' },
+            { value: 'Others', label: 'Others' }
+          ], type, index)}
           {renderField(`${prefix} - Education`, 'education', 'text', null, type, index)}
           {renderField(`${prefix} - Occupation`, 'occupation', 'text', null, type, index)}
           {renderField(`${prefix} - Religion`, 'religion', 'text', null, type, index)}
