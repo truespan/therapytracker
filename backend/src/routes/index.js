@@ -198,6 +198,7 @@ router.get('/reports', authenticateToken, checkRole('partner'), generatedReportC
 router.get('/reports/client/:userId', authenticateToken, checkRole('partner'), generatedReportController.getClientReports);
 router.get('/reports/:id', authenticateToken, generatedReportController.getReportById);
 router.get('/reports/:id/download', authenticateToken, generatedReportController.downloadReport);
+router.get('/reports/:id/download-docx', authenticateToken, generatedReportController.downloadReportDocx);
 router.put('/reports/:id', authenticateToken, checkRole('partner'), generatedReportController.updateReport);
 router.post('/reports/:id/share', authenticateToken, checkRole('partner'), generatedReportController.shareReport);
 router.post('/reports/:id/unshare', authenticateToken, checkRole('partner'), generatedReportController.unshareReport);

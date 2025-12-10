@@ -14,6 +14,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
   const [previewPdfUrl, setPreviewPdfUrl] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [downloadingReportId, setDownloadingReportId] = useState(null);
+  const [downloadingDocxReportId, setDownloadingDocxReportId] = useState(null);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -257,6 +258,31 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       alert(err.response?.data?.error || 'Failed to download report. Please try again.');
     } finally {
       setDownloadingReportId(null);
+    }
+  };
+
+  const handleDownloadReportDocx = async (report) => {
+    try {
+      setDownloadingDocxReportId(report.id);
+      const response = await generatedReportAPI.downloadDocx(report.id);
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const date = new Date(report.report_date).toISOString().split('T')[0];
+      const sanitizedName = (report.report_name || 'report').replace(/[^a-z0-9_\-]/gi, '_');
+      link.href = url;
+      link.download = `${sanitizedName}_${date}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download report DOCX:', err);
+      alert(err.response?.data?.error || 'Failed to download report DOCX. Please try again.');
+    } finally {
+      setDownloadingDocxReportId(null);
     }
   };
 
@@ -578,6 +604,14 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
               >
                 <Download className="h-5 w-5" />
                 <span>{downloadingReportId === previewReport.id ? 'Preparing...' : 'Download PDF'}</span>
+              </button>
+              <button
+                onClick={() => handleDownloadReportDocx(previewReport)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-60"
+                disabled={downloadingDocxReportId === previewReport.id}
+              >
+                <Download className="h-5 w-5" />
+                <span>{downloadingDocxReportId === previewReport.id ? 'Preparing...' : 'Download Docx'}</span>
               </button>
               <button
                 onClick={() => handleShareReport(previewReport)}

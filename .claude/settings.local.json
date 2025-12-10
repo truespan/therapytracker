@@ -8,7 +8,8 @@
       "Bash(npm run build:*)",
       "Bash(node replace-colors.js:*)",
       "Bash(kill:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": []
