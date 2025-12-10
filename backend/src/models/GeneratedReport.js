@@ -120,11 +120,28 @@ class GeneratedReport {
     const query = `
       SELECT COUNT(*)::int as count
       FROM generated_reports
-      WHERE user_id = $1 AND is_shared = TRUE
+      WHERE user_id = $1 AND is_shared = TRUE AND viewed_at IS NULL
     `;
 
     const result = await db.query(query, [userId]);
     return result.rows[0].count;
+  }
+
+  /**
+   * Mark report as viewed by client
+   * @param {number} id - Report ID
+   * @returns {Object} Updated report
+   */
+  static async markAsViewed(id) {
+    const query = `
+      UPDATE generated_reports
+      SET viewed_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND viewed_at IS NULL
+      RETURNING *
+    `;
+
+    const result = await db.query(query, [id]);
+    return result.rows[0];
   }
 
   /**

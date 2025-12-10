@@ -164,6 +164,7 @@ export const generatedReportAPI = {
   // User APIs
   getUserSharedReports: () => api.get('/user/reports'),
   getUnreadCount: () => api.get('/user/reports/unread-count'),
+  markAsViewed: (id) => api.post(`/user/reports/${id}/mark-viewed`),
 };
 
 // Appointment APIs
@@ -288,6 +289,25 @@ export const caseHistoryAPI = {
 export const mentalStatusAPI = {
   get: (userId) => api.get(`/users/${userId}/mental-status`),
   save: (userId, data) => api.post(`/users/${userId}/mental-status`, data)
+};
+
+// Background Image APIs
+export const backgroundAPI = {
+  // Get all available background images
+  getAvailable: () => api.get('/backgrounds/available'),
+
+  // Get background image preview URL
+  getPreviewUrl: (filename) => `/api/backgrounds/preview/${filename}`,
+
+  // Set partner's default background
+  setDefault: (partnerId, backgroundFilename) =>
+    api.post(`/partners/${partnerId}/default-report-background`, {
+      background_filename: backgroundFilename
+    }),
+
+  // Get partner's default background
+  getDefault: (partnerId) =>
+    api.get(`/partners/${partnerId}/default-report-background`),
 };
 
 export default api;

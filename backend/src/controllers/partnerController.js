@@ -206,12 +206,169 @@ const getDefaultReportTemplate = async (req, res) => {
   }
 };
 
+/**
+ * Get all available background images from assets folder
+ */
+const getAvailableBackgrounds = async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+
+    const assetsDir = path.join(__dirname, '../../assets');
+
+    // Read all files from assets directory
+    const files = fs.readdirSync(assetsDir);
+
+    // Filter only image files (jpg, jpeg, png)
+    const imageFiles = files.filter(file => {
+      const ext = path.extname(file).toLowerCase();
+      return ['.jpg', '.jpeg', '.png'].includes(ext) && file.startsWith('report-background');
+    });
+
+    // Create response with file info
+    const backgrounds = imageFiles.map(filename => ({
+      filename,
+      path: `/api/backgrounds/preview/${filename}`,
+    }));
+
+    res.json({
+      success: true,
+      backgrounds
+    });
+  } catch (error) {
+    console.error('Error fetching backgrounds:', error);
+    res.status(500).json({
+      error: 'Failed to fetch background images',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Get preview image for a background
+ */
+const getBackgroundPreview = async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const fs = require('fs');
+    const path = require('path');
+
+    // Security: only allow files starting with report-background
+    if (!filename.startsWith('report-background')) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const filePath = path.join(__dirname, '../../assets', filename);
+
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Background image not found' });
+    }
+
+    // Determine content type
+    const ext = path.extname(filename).toLowerCase();
+    const contentType = ext === '.png' ? 'image/png' : 'image/jpeg';
+
+    // Send image file
+    res.setHeader('Content-Type', contentType);
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error serving background preview:', error);
+    res.status(500).json({
+      error: 'Failed to load background image',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Set default report background for partner
+ */
+const setDefaultReportBackground = async (req, res) => {
+  try {
+    const partnerId = parseInt(req.params.id);
+    const { background_filename } = req.body;
+
+    // Verify partner ownership
+    if (req.user.userType !== 'partner' || req.user.id !== partnerId) {
+      return res.status(403).json({
+        error: 'You can only set your own default background'
+      });
+    }
+
+    // Validate background filename exists
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = path.join(__dirname, '../../assets', background_filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(400).json({
+        error: 'Selected background image does not exist'
+      });
+    }
+
+    // Update partner's default background
+    const updatedPartner = await Partner.setDefaultReportBackground(partnerId, background_filename);
+
+    res.json({
+      success: true,
+      message: 'Default report background updated successfully',
+      partner: updatedPartner
+    });
+  } catch (error) {
+    console.error('Error setting default background:', error);
+    res.status(500).json({
+      error: 'Failed to set default background',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Get partner's default report background
+ */
+const getDefaultReportBackground = async (req, res) => {
+  try {
+    const partnerId = parseInt(req.params.id);
+
+    // Verify partner ownership
+    if (req.user.userType !== 'partner' || req.user.id !== partnerId) {
+      return res.status(403).json({
+        error: 'Access denied'
+      });
+    }
+
+    const partner = await Partner.getDefaultReportBackground(partnerId);
+
+    if (!partner) {
+      return res.status(404).json({
+        error: 'Partner not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      default_background: partner.default_report_background || 'report-background.jpg'
+    });
+  } catch (error) {
+    console.error('Error fetching default background:', error);
+    res.status(500).json({
+      error: 'Failed to fetch default background',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getPartnerById,
   updatePartner,
   getPartnerUsers,
   getUserProfileForPartner,
   setDefaultReportTemplate,
-  getDefaultReportTemplate
+  getDefaultReportTemplate,
+  getAvailableBackgrounds,
+  getBackgroundPreview,
+  setDefaultReportBackground,
+  getDefaultReportBackground
 };
 

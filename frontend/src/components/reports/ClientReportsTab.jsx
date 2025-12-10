@@ -4,9 +4,6 @@ import { FileText, AlertCircle, Save, Eye, Send, X, Trash2, Edit, Share, Ban, Pl
 
 const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCreated }) => {
   const [reports, setReports] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [defaultTemplateId, setDefaultTemplateId] = useState(null);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -14,6 +11,8 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewReport, setPreviewReport] = useState(null);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [downloadingReportId, setDownloadingReportId] = useState(null);
 
   // Form data
@@ -27,18 +26,32 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
   });
 
   useEffect(() => {
-    loadReports();
-    loadTemplates();
-    loadDefaultTemplate();
-    loadClientData();
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        await Promise.all([loadReports(), loadClientData()]);
+      } catch (err) {
+        console.error('Failed to load data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+
+    // Cleanup blob URL on unmount
+    return () => {
+      if (previewPdfUrl) {
+        window.URL.revokeObjectURL(previewPdfUrl);
+      }
+    };
   }, [userId]);
 
   // If sessionId prop is provided, auto-open form
   useEffect(() => {
-    if (sessionId && !showForm) {
+    if (sessionId && !showForm && !loading) {
       handleCreateNewReport();
     }
-  }, [sessionId]);
+  }, [sessionId, loading]);
 
   const loadReports = async () => {
     try {
@@ -47,31 +60,6 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
     } catch (err) {
       console.error('Failed to load reports:', err);
       setError('Failed to load reports. Please try again.');
-    }
-  };
-
-  const loadTemplates = async () => {
-    try {
-      setLoading(true);
-      const response = await reportTemplateAPI.getAll();
-      setTemplates(response.data.templates || []);
-    } catch (err) {
-      console.error('Failed to load templates:', err);
-      setError('Failed to load report templates. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadDefaultTemplate = async () => {
-    try {
-      const response = await partnerAPI.getDefaultReportTemplate(partnerId);
-      setDefaultTemplateId(response.data.default_template_id);
-      if (response.data.template) {
-        setSelectedTemplate(response.data.template.id);
-      }
-    } catch (err) {
-      console.error('Failed to load default template:', err);
     }
   };
 
@@ -103,10 +91,6 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       report_date: new Date().toISOString().split('T')[0],
       description: ''
     });
-    // Set default template
-    if (defaultTemplateId) {
-      setSelectedTemplate(defaultTemplateId);
-    }
   };
 
   const handleEditReport = (report) => {
@@ -119,14 +103,28 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       report_date: new Date(report.report_date).toISOString().split('T')[0],
       description: report.description
     });
-    setSelectedTemplate(report.template_id);
     setShowForm(true);
     setError(null);
   };
 
-  const handleViewReport = (report) => {
+  const handleViewReport = async (report) => {
     setPreviewReport(report);
     setShowPreview(true);
+    setLoadingPreview(true);
+    setPreviewPdfUrl(null);
+
+    try {
+      // Fetch the PDF as a blob
+      const response = await generatedReportAPI.download(report.id);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const pdfUrl = window.URL.createObjectURL(blob);
+      setPreviewPdfUrl(pdfUrl);
+    } catch (err) {
+      console.error('Failed to load PDF preview:', err);
+      alert('Failed to load PDF preview. Please try downloading instead.');
+    } finally {
+      setLoadingPreview(false);
+    }
   };
 
   const handleFormChange = (e) => {
@@ -155,7 +153,6 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
 
       const reportData = {
         user_id: userId,
-        template_id: selectedTemplate || null,
         ...formData
       };
 
@@ -167,8 +164,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       }
 
       // Show preview
-      setPreviewReport(response.data.report);
-      setShowPreview(true);
+      await handleViewReport(response.data.report);
       setShowForm(false);
 
       // Reload reports list
@@ -223,21 +219,21 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       setDownloadingReportId(report.id);
       const response = await generatedReportAPI.download(report.id);
       const blob = new Blob([response.data], {
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        type: 'application/pdf'
       });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       const date = new Date(report.report_date).toISOString().split('T')[0];
       const sanitizedName = (report.report_name || 'report').replace(/[^a-z0-9_\-]/gi, '_');
       link.href = url;
-      link.download = `${sanitizedName}_${date}.docx`;
+      link.download = `${sanitizedName}_${date}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to download report:', err);
-      alert(err.response?.data?.error || 'Failed to download report with template. Please try again.');
+      alert(err.response?.data?.error || 'Failed to download report. Please try again.');
     } finally {
       setDownloadingReportId(null);
     }
@@ -285,24 +281,6 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
 
         <div className="card">
           <form className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Template
-              </label>
-              <select
-                value={selectedTemplate || ''}
-                onChange={(e) => setSelectedTemplate(parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value="">Select a template (optional)</option>
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name} {template.description ? `- ${template.description}` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -508,7 +486,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                   <button
                     onClick={() => handleDownloadReport(report)}
                     className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                    title="Download with Template"
+                    title="Download PDF"
                     disabled={downloadingReportId === report.id}
                   >
                     <Download className="h-5 w-5" />
@@ -530,69 +508,67 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       {/* Preview Modal */}
       {showPreview && previewReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Report Preview</h2>
+          <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full h-[95vh] overflow-hidden flex flex-col">
+            <div className="bg-white border-b border-gray-200 p-6 flex items-center justify-between flex-shrink-0">
+              <h2 className="text-xl font-bold text-gray-900">Report Preview - {previewReport.report_name}</h2>
               <button
-                onClick={() => setShowPreview(false)}
+                onClick={() => {
+                  setShowPreview(false);
+                  if (previewPdfUrl) {
+                    window.URL.revokeObjectURL(previewPdfUrl);
+                    setPreviewPdfUrl(null);
+                  }
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="h-6 w-6" />
               </button>
             </div>
 
-            <div className="p-6">
-              <div className="border-2 border-gray-200 rounded-lg p-6 mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{previewReport.report_name}</h3>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <span className="font-medium text-gray-700">Client Name:</span>
-                    <span className="ml-2 text-gray-900">{previewReport.client_name}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Age:</span>
-                    <span className="ml-2 text-gray-900">{previewReport.client_age || 'N/A'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Sex:</span>
-                    <span className="ml-2 text-gray-900">{previewReport.client_sex || 'N/A'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Date:</span>
-                    <span className="ml-2 text-gray-900">
-                      {new Date(previewReport.report_date).toLocaleDateString()}
-                    </span>
+            <div className="flex-1 overflow-hidden flex flex-col p-6">
+              {loadingPreview ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading PDF preview...</p>
                   </div>
                 </div>
-                <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Report Details:</h4>
-                  <div className="text-gray-900 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
-                    {previewReport.description}
+              ) : previewPdfUrl ? (
+                <iframe
+                  src={previewPdfUrl}
+                  className="w-full h-full border-2 border-gray-200 rounded-lg"
+                  title="Report Preview"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Failed to load PDF preview</p>
                   </div>
                 </div>
-              </div>
+              )}
+            </div>
 
-              <div className="flex items-center justify-end space-x-3">
-                <button
-                  onClick={() => handleDownloadReport(previewReport)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-60"
-                  disabled={downloadingReportId === previewReport.id}
-                >
-                  <Download className="h-5 w-5" />
-                  <span>{downloadingReportId === previewReport.id ? 'Preparing...' : 'Download (.docx)'}</span>
-                </button>
-                <button
-                  onClick={() => handleShareReport(previewReport)}
-                  className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
-                    previewReport.is_shared
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-primary-600 text-white hover:bg-primary-700'
-                  }`}
-                >
-                  {previewReport.is_shared ? <Ban className="h-5 w-5" /> : <Send className="h-5 w-5" />}
-                  <span>{previewReport.is_shared ? 'Unshare with Client' : 'Share with Client'}</span>
-                </button>
-              </div>
+            <div className="border-t border-gray-200 p-6 flex items-center justify-end space-x-3 flex-shrink-0">
+              <button
+                onClick={() => handleDownloadReport(previewReport)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-60"
+                disabled={downloadingReportId === previewReport.id}
+              >
+                <Download className="h-5 w-5" />
+                <span>{downloadingReportId === previewReport.id ? 'Preparing...' : 'Download PDF'}</span>
+              </button>
+              <button
+                onClick={() => handleShareReport(previewReport)}
+                className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
+                  previewReport.is_shared
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                }`}
+              >
+                {previewReport.is_shared ? <Ban className="h-5 w-5" /> : <Send className="h-5 w-5" />}
+                <span>{previewReport.is_shared ? 'Unshare with Client' : 'Share with Client'}</span>
+              </button>
             </div>
           </div>
         </div>

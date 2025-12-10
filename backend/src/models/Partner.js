@@ -91,7 +91,7 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, qualification, address, photo_url, email_verified, default_report_template_id } = partnerData;
+    const { name, sex, age, email, contact, qualification, address, photo_url, email_verified, default_report_template_id, default_report_background } = partnerData;
     const query = `
       UPDATE partners
       SET name = COALESCE($1, name),
@@ -103,11 +103,12 @@ class Partner {
           address = COALESCE($7, address),
           photo_url = COALESCE($8, photo_url),
           email_verified = COALESCE($9, email_verified),
-          default_report_template_id = CASE WHEN $10::INTEGER IS NULL THEN default_report_template_id ELSE $10 END
-      WHERE id = $11
+          default_report_template_id = CASE WHEN $10::INTEGER IS NULL THEN default_report_template_id ELSE $10 END,
+          default_report_background = COALESCE($11, default_report_background)
+      WHERE id = $12
       RETURNING *
     `;
-    const values = [name, sex, age, email, contact, qualification, address, photo_url, email_verified, default_report_template_id, id];
+    const values = [name, sex, age, email, contact, qualification, address, photo_url, email_verified, default_report_template_id, default_report_background, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -287,6 +288,38 @@ class Partner {
       FROM partners p
       LEFT JOIN report_templates rt ON p.default_report_template_id = rt.id
       WHERE p.id = $1
+    `;
+    const result = await db.query(query, [partnerId]);
+    return result.rows[0];
+  }
+
+  /**
+   * Set default report background image for a partner
+   * @param {number} partnerId - Partner ID
+   * @param {string} backgroundFilename - Background image filename
+   * @returns {Object} Updated partner record
+   */
+  static async setDefaultReportBackground(partnerId, backgroundFilename) {
+    const query = `
+      UPDATE partners
+      SET default_report_background = $2
+      WHERE id = $1
+      RETURNING *
+    `;
+    const result = await db.query(query, [partnerId, backgroundFilename]);
+    return result.rows[0];
+  }
+
+  /**
+   * Get partner with default report background
+   * @param {number} partnerId - Partner ID
+   * @returns {Object} Partner record with background info
+   */
+  static async getDefaultReportBackground(partnerId) {
+    const query = `
+      SELECT id, name, default_report_background
+      FROM partners
+      WHERE id = $1
     `;
     const result = await db.query(query, [partnerId]);
     return result.rows[0];

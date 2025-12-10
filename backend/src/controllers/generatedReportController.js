@@ -1,10 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const PDFDocument = require('pdfkit');
 const Docxtemplater = require('docxtemplater');
 const PizZip = require('pizzip');
 const GeneratedReport = require('../models/GeneratedReport');
 const ReportTemplate = require('../models/ReportTemplate');
 const Partner = require('../models/Partner');
+const User = require('../models/User');
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -52,10 +54,10 @@ const createReport = async (req, res) => {
       description
     } = req.body;
 
-    // Validate required fields
-    if (!user_id || !report_name || !client_name || !report_date || !description) {
+    // Validate required fields (template_id is now optional since we use PDF generation)
+    if (!user_id || !report_name || !report_date) {
       return res.status(400).json({
-        error: 'User ID, report name, client name, report date, and description are required'
+        error: 'User ID, report name, and report date are required'
       });
     }
 
@@ -214,7 +216,7 @@ const getReportById = async (req, res) => {
 };
 
 /**
- * Download a report merged with its template (keeps header/footer design)
+ * Download a report as PDF with background image
  */
 const downloadReport = async (req, res) => {
   try {
@@ -240,64 +242,141 @@ const downloadReport = async (req, res) => {
       });
     }
 
-    const template = await getTemplateForReport(report);
-    if (!template || !template.file_path) {
-      return res.status(400).json({
-        error: 'No report template configured for this report. Please select a template or set a default template first.'
-      });
-    }
-
-    let templateBuffer;
-    try {
-      templateBuffer = fs.readFileSync(path.resolve(template.file_path));
-    } catch (fileError) {
-      console.error('Template file read error:', fileError);
+    // Fetch partner (therapist) data
+    const partner = await Partner.findById(report.partner_id);
+    if (!partner) {
       return res.status(404).json({
-        error: 'Template file not found on server'
+        error: 'Partner not found'
       });
     }
 
-    let docBuffer;
-    try {
-      const zip = new PizZip(templateBuffer);
-      const doc = new Docxtemplater(zip, {
-        paragraphLoop: true,
-        linebreaks: true
-      });
-
-      doc.setData({
-        report_name: report.report_name || '',
-        client_name: report.client_name || '',
-        client_age: report.client_age || '',
-        client_sex: report.client_sex || '',
-        report_date: formatDate(report.report_date),
-        description: report.description || '',
-        partner_name: report.partner_name || '',
-        template_name: template.name || '',
-        generated_on: formatDate(new Date())
-      });
-
-      doc.render();
-      docBuffer = doc.getZip().generate({
-        type: 'nodebuffer',
-        compression: 'DEFLATE'
-      });
-    } catch (renderError) {
-      console.error('Error rendering report template:', renderError);
-      return res.status(500).json({
-        error: 'Failed to generate report document',
-        details: renderError.message
+    // Fetch client data
+    const client = await User.findById(report.user_id);
+    if (!client) {
+      return res.status(404).json({
+        error: 'Client not found'
       });
     }
 
-    const safeFileName = `${(report.report_name || 'report').replace(/[^a-z0-9_\-]+/gi, '_')}.docx`;
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    // Parse contact number (format: +91xxxxxxxxxx)
+    const parseContact = (contact) => {
+      if (!contact) return { code: '', number: '' };
+      const match = contact.match(/^(\+\d{1,3})(\d+)$/);
+      if (match) {
+        return { code: match[1], number: match[2] };
+      }
+      return { code: '', number: contact };
+    };
+
+    const partnerContact = parseContact(partner.contact);
+
+    // Create PDF document
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: {
+        top: 50,
+        bottom: 50,
+        left: 50,
+        right: 50
+      }
+    });
+
+    // Set response headers for PDF download
+    const safeFileName = `${(report.report_name || 'report').replace(/[^a-z0-9_\-]+/gi, '_')}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${safeFileName}"`);
-    return res.send(docBuffer);
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Add background image (first page only) - use partner's selected background
+    const backgroundFilename = partner.default_report_background || 'report-background.jpg';
+    const backgroundPath = path.join(__dirname, '../../assets', backgroundFilename);
+
+    if (fs.existsSync(backgroundPath)) {
+      doc.image(backgroundPath, 0, 0, {
+        width: 595.28,  // A4 width in points
+        height: 841.89  // A4 height in points
+      });
+    } else {
+      console.warn('Background image not found at:', backgroundPath, '- using default');
+      // Fallback to default
+      const defaultPath = path.join(__dirname, '../../assets/report-background.jpg');
+      if (fs.existsSync(defaultPath)) {
+        doc.image(defaultPath, 0, 0, {
+          width: 595.28,
+          height: 841.89
+        });
+      }
+    }
+
+    // --- HEADER SECTION (Top-Left) ---
+    doc.fontSize(14).font('Helvetica-Bold');
+    doc.text(partner.name, 50, 60);
+
+    doc.fontSize(10).font('Helvetica');
+    doc.text(partner.qualification, 50, 80);
+
+    doc.fontSize(9).font('Helvetica');
+    doc.text(`Email: ${partner.email}`, 50, 95);
+    doc.text(`Phone: ${partnerContact.code} ${partnerContact.number}`, 50, 110);
+
+    // --- CLIENT DETAILS SECTION (Horizontal) ---
+    // Shifted down to avoid overlapping with colored header background (4+ lines = 80 points)
+    const clientDetailsY = 240;
+    doc.fontSize(11).font('Helvetica-Bold');
+    doc.text('Client Details', 50, clientDetailsY);
+
+    doc.fontSize(10).font('Helvetica');
+    const detailsY = clientDetailsY + 20;
+
+    // Name
+    doc.text('Name:', 50, detailsY);
+    doc.text(report.client_name || client.name, 120, detailsY);
+
+    // Age (next column)
+    doc.text('Age:', 280, detailsY);
+    doc.text(report.client_age?.toString() || client.age?.toString() || 'N/A', 320, detailsY);
+
+    // Sex
+    doc.text('Sex:', 50, detailsY + 20);
+    doc.text(report.client_sex || client.sex || 'N/A', 120, detailsY + 20);
+
+    // Date (next column)
+    doc.text('Date:', 280, detailsY + 20);
+    const reportDate = new Date(report.report_date).toLocaleDateString('en-GB');
+    doc.text(reportDate, 320, detailsY + 20);
+
+    // --- REPORT NAME SECTION ---
+    const reportNameY = detailsY + 60;
+    doc.fontSize(12).font('Helvetica-Bold');
+    doc.text('Report Name:', 50, reportNameY);
+
+    doc.fontSize(11).font('Helvetica');
+    doc.text(report.report_name, 50, reportNameY + 20, {
+      width: 495,
+      align: 'left'
+    });
+
+    // --- DESCRIPTION/PRESCRIPTION SECTION ---
+    const descriptionY = reportNameY + 60;
+    doc.fontSize(12).font('Helvetica-Bold');
+    doc.text('Prescription Details:', 50, descriptionY);
+
+    doc.fontSize(10).font('Helvetica');
+    doc.text(report.description || 'No prescription details provided.', 50, descriptionY + 25, {
+      width: 495,
+      align: 'left',
+      lineGap: 5
+    });
+
+    // Finalize PDF
+    doc.end();
+
   } catch (error) {
-    console.error('Error downloading report:', error);
+    console.error('Error generating PDF report:', error);
     res.status(500).json({
-      error: 'Failed to download report',
+      error: 'Failed to generate report PDF',
       details: error.message
     });
   }
@@ -451,6 +530,43 @@ const deleteReport = async (req, res) => {
   }
 };
 
+/**
+ * Mark report as viewed (for clients)
+ */
+const markReportAsViewed = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const report = await GeneratedReport.findById(id);
+    if (!report) {
+      return res.status(404).json({
+        error: 'Report not found'
+      });
+    }
+
+    // Check if user owns this report
+    if (report.user_id !== req.user.id || !report.is_shared) {
+      return res.status(403).json({
+        error: 'Access denied'
+      });
+    }
+
+    const updatedReport = await GeneratedReport.markAsViewed(id);
+
+    res.json({
+      success: true,
+      message: 'Report marked as viewed',
+      report: updatedReport
+    });
+  } catch (error) {
+    console.error('Error marking report as viewed:', error);
+    res.status(500).json({
+      error: 'Failed to mark report as viewed',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   createReport,
   getPartnerReports,
@@ -462,5 +578,6 @@ module.exports = {
   updateReport,
   shareReport,
   unshareReport,
-  deleteReport
+  deleteReport,
+  markReportAsViewed
 };

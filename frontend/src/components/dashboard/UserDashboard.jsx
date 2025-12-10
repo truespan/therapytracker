@@ -765,7 +765,7 @@ const UserDashboard = () => {
 
       {/* Reports Tab */}
       {activeTab === 'reports' && (
-        <UserReportsTab userId={user.id} />
+        <UserReportsTab userId={user.id} onReportViewed={loadReportsCount} />
       )}
     </div>
   );

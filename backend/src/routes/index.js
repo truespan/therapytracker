@@ -66,6 +66,12 @@ router.get('/partners/:partnerId/users/:userId/profile', authenticateToken, chec
 router.post('/partners/:id/default-report-template', authenticateToken, checkRole('partner'), partnerController.setDefaultReportTemplate);
 router.get('/partners/:id/default-report-template', authenticateToken, checkRole('partner'), partnerController.getDefaultReportTemplate);
 
+// Background image management routes
+router.get('/backgrounds/available', authenticateToken, checkRole('partner'), partnerController.getAvailableBackgrounds);
+router.get('/backgrounds/preview/:filename', authenticateToken, partnerController.getBackgroundPreview);
+router.post('/partners/:id/default-report-background', authenticateToken, checkRole('partner'), partnerController.setDefaultReportBackground);
+router.get('/partners/:id/default-report-background', authenticateToken, checkRole('partner'), partnerController.getDefaultReportBackground);
+
 // ==================== CASE HISTORY ROUTES ====================
 router.get('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.getCaseHistory);
 router.post('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.saveCaseHistory);
@@ -200,6 +206,7 @@ router.delete('/reports/:id', authenticateToken, checkRole('partner'), generated
 // User routes for shared reports
 router.get('/user/reports', authenticateToken, checkRole('user'), generatedReportController.getUserSharedReports);
 router.get('/user/reports/unread-count', authenticateToken, checkRole('user'), generatedReportController.getUserUnreadCount);
+router.post('/user/reports/:id/mark-viewed', authenticateToken, checkRole('user'), generatedReportController.markReportAsViewed);
 
 // Health check
 router.get('/health', (req, res) => {
