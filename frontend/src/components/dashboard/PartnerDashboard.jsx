@@ -17,7 +17,8 @@ import MentalStatusExaminationForm from '../mentalstatus/MentalStatusExamination
 import SessionNotesTab from '../sessions/SessionNotesTab';
 import PartnerReportsTab from '../reports/PartnerReportsTab';
 import ClientReportsTab from '../reports/ClientReportsTab';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote } from 'lucide-react';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon } from 'lucide-react';
+import CreatePatientModal from '../partner/CreatePatientModal';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -59,6 +60,8 @@ const PartnerDashboard = () => {
   const [activeTab, setActiveTab] = useState('appointments');
   const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(true);
   const [copiedPartnerId, setCopiedPartnerId] = useState(false);
+  const [showCreatePatientModal, setShowCreatePatientModal] = useState(false);
+  const [copiedSignupUrl, setCopiedSignupUrl] = useState(false);
 
   // Questionnaire state
   const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
@@ -159,6 +162,21 @@ const PartnerDashboard = () => {
       navigator.clipboard.writeText(user.partner_id);
       setCopiedPartnerId(true);
       setTimeout(() => setCopiedPartnerId(false), 2000);
+    }
+  };
+
+  const handleCreatePatientSuccess = () => {
+    // Reload the users list after creating a new patient
+    loadPartnerUsers();
+  };
+
+  const handleCopySignupUrl = () => {
+    if (user?.partner_id) {
+      const baseUrl = window.location.origin;
+      const signupUrl = `${baseUrl}/signup?partner_id=${user.partner_id}`;
+      navigator.clipboard.writeText(signupUrl);
+      setCopiedSignupUrl(true);
+      setTimeout(() => setCopiedSignupUrl(false), 2000);
     }
   };
 
@@ -470,7 +488,35 @@ const PartnerDashboard = () => {
 
       {/* Clients Tab */}
       {activeTab === 'clients' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="space-y-4">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setShowCreatePatientModal(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+            >
+              <UserPlus className="h-5 w-5" />
+              Create New Client
+            </button>
+            <button
+              onClick={handleCopySignupUrl}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+            >
+              {copiedSignupUrl ? (
+                <>
+                  <Check className="h-5 w-5" />
+                  URL Copied!
+                </>
+              ) : (
+                <>
+                  <LinkIcon className="h-5 w-5" />
+                  Get Signup URL
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Mobile Dropdown - Show only on mobile/tablet */}
         <div className="lg:hidden mb-4">
           {users.length === 0 ? (
@@ -695,8 +741,17 @@ const PartnerDashboard = () => {
             </div>
           )}
         </div>
-      </div>
+          </div>
+        </div>
       )}
+
+      {/* Create Patient Modal */}
+      <CreatePatientModal
+        isOpen={showCreatePatientModal}
+        onClose={() => setShowCreatePatientModal(false)}
+        partnerId={user?.partner_id}
+        onSuccess={handleCreatePatientSuccess}
+      />
 
       {/* Charts & Insights Tab */}
       {activeTab === 'charts' && (

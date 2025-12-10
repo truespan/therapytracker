@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Activity, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Signup = () => {
+  const [searchParams] = useSearchParams();
+  const partnerIdFromUrl = searchParams.get('partner_id') || '';
+
   const [formData, setFormData] = useState({
     name: '',
     sex: 'Male',
@@ -14,8 +17,18 @@ const Signup = () => {
     address: '',
     password: '',
     confirmPassword: '',
-    partner_id: '',
+    partner_id: partnerIdFromUrl,
   });
+
+  // Update partner_id when URL parameter changes
+  useEffect(() => {
+    if (partnerIdFromUrl) {
+      setFormData(prev => ({
+        ...prev,
+        partner_id: partnerIdFromUrl,
+      }));
+    }
+  }, [partnerIdFromUrl]);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -257,13 +270,16 @@ const Signup = () => {
                   name="partner_id"
                   value={formData.partner_id}
                   onChange={handleChange}
-                  className="input"
+                  className={`input ${partnerIdFromUrl ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   placeholder="e.g., AB12345"
                   maxLength="7"
+                  readOnly={!!partnerIdFromUrl}
                 />
                 {errors.partner_id && <p className="text-red-600 text-sm mt-1">{errors.partner_id}</p>}
                 <p className="text-gray-500 text-xs mt-1">
-                  Enter the 7-character Partner ID provided by your therapist (2 letters + 5 digits)
+                  {partnerIdFromUrl 
+                    ? 'Partner ID has been pre-filled from the signup link'
+                    : 'Enter the 7-character Partner ID provided by your therapist (2 letters + 5 digits)'}
                 </p>
               </div>
 
