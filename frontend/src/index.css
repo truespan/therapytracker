@@ -20,25 +20,25 @@ code {
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
   }
-  
+
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply bg-primary-700 text-white hover:bg-primary-800 active:bg-primary-900 focus:ring-2 focus:ring-primary-400 focus:ring-offset-2;
   }
-  
+
   .btn-secondary {
-    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+    @apply bg-porcelain-500 text-umbra-900 hover:bg-porcelain-600 border border-umbra-200;
   }
-  
+
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none;
+    @apply w-full px-4 py-2 border border-umbra-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-umbra-900;
   }
-  
+
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-sm font-medium text-umbra-800 mb-1;
   }
-  
+
   .card {
-    @apply bg-white rounded-lg shadow-md p-4 sm:p-6;
+    @apply bg-porcelain-500 rounded-lg shadow-md p-4 sm:p-6;
   }
 }
 
@@ -50,11 +50,11 @@ code {
 .rbc-header {
   padding: 10px 3px;
   font-weight: 600;
-  color: #374151;
+  color: #1F1F1F; /* Umbra */
 }
 
 .rbc-today {
-  background-color: #e6fff9;
+  background-color: #f6f8fc; /* primary-50 */
 }
 
 .rbc-event {
@@ -64,12 +64,12 @@ code {
 }
 
 .rbc-event:focus {
-  outline: 2px solid #00F0A8;
+  outline: 2px solid #B9C7E0; /* primary-500 */
 }
 
 .rbc-toolbar button {
-  color: #374151;
-  border: 1px solid #d1d5db;
+  color: #1F1F1F; /* Umbra */
+  border: 1px solid #c5c4cf; /* porcelain-700 */
   padding: 6px 12px;
   border-radius: 6px;
   background-color: white;
@@ -78,24 +78,24 @@ code {
 }
 
 .rbc-toolbar button:hover {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
+  background-color: #F5F4F7; /* porcelain-500 */
+  border-color: #96a8c9; /* primary-600 */
 }
 
 .rbc-toolbar button.rbc-active {
-  background-color: #00F0A8;
+  background-color: #B9C7E0; /* primary-500 */
   color: white;
-  border-color: #00F0A8;
+  border-color: #B9C7E0;
 }
 
 .rbc-toolbar button.rbc-active:hover {
-  background-color: #00d999;
+  background-color: #96a8c9; /* primary-600 */
 }
 
 /* Thin scrollbar for questionnaire option containers */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  scrollbar-color: rgba(185, 199, 224, 0.5) transparent; /* primary-500 with opacity */
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -107,12 +107,12 @@ code {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.5);
+  background-color: rgba(185, 199, 224, 0.5); /* primary-500 with opacity */
   border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(107, 114, 128, 0.7);
+  background-color: rgba(150, 168, 201, 0.7); /* primary-600 with opacity */
 }
 
 /* Mobile responsive calendar styles */

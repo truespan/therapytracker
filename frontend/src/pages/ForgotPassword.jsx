@@ -45,14 +45,14 @@ const ForgotPassword = () => {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
+            <div className="mb-4 p-3 bg-error-50 border border-error-200 rounded-lg flex items-center space-x-2 text-error-700">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2 text-green-700">
+            <div className="mb-4 p-3 bg-success-50 border border-success-200 rounded-lg flex items-center space-x-2 text-success-700">
               <CheckCircle className="h-5 w-5 flex-shrink-0" />
               <div className="text-sm">
                 <p className="font-medium">Email sent!</p>

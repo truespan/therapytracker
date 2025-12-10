@@ -143,7 +143,7 @@ const Signup = () => {
           </div>
 
           {apiError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
+            <div className="mb-4 p-3 bg-error-50 border border-error-200 rounded-lg flex items-center space-x-2 text-error-700">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm">{apiError}</span>
             </div>

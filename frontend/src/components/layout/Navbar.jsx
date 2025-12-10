@@ -99,10 +99,10 @@ const Navbar = () => {
 
             {/* Partner ID Section - Only for partners */}
             {user.userType === 'partner' && user.partner_id && (
-              <div className="px-4 py-4 bg-gray-800 border-2 border-cyan-500 rounded-lg">
+              <div className="px-4 py-4 bg-gray-800 border-2 border-primary-500 rounded-lg">
                 <p className="text-sm text-gray-300 mb-2">Your Partner ID</p>
                 <div className="flex items-center justify-between">
-                  <p className="text-2xl font-bold text-cyan-400 tracking-wider">
+                  <p className="text-2xl font-bold text-primary-400 tracking-wider">
                     {user.partner_id}
                   </p>
                   <button
@@ -111,14 +111,14 @@ const Navbar = () => {
                     title="Copy Partner ID"
                   >
                     {copied ? (
-                      <Check className="h-6 w-6 text-green-400" />
+                      <Check className="h-6 w-6 text-success-500" />
                     ) : (
-                      <Copy className="h-6 w-6 text-cyan-400" />
+                      <Copy className="h-6 w-6 text-primary-400" />
                     )}
                   </button>
                 </div>
                 {copied && (
-                  <p className="text-xs text-green-400 mt-1">Copied to clipboard!</p>
+                  <p className="text-xs text-success-500 mt-1">Copied to clipboard!</p>
                 )}
               </div>
             )}
