@@ -107,7 +107,28 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
     setError(null);
   };
 
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
   const handleViewReport = async (report) => {
+    // On mobile, open PDF in new tab instead of iframe
+    if (isMobileDevice()) {
+      try {
+        const response = await generatedReportAPI.download(report.id);
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const pdfUrl = window.URL.createObjectURL(blob);
+        window.open(pdfUrl, '_blank');
+        // Cleanup after a delay
+        setTimeout(() => window.URL.revokeObjectURL(pdfUrl), 100);
+      } catch (err) {
+        console.error('Failed to open PDF:', err);
+        alert('Failed to open PDF. Please try downloading instead.');
+      }
+      return;
+    }
+
+    // Desktop: Show in modal
     setPreviewReport(report);
     setShowPreview(true);
     setLoadingPreview(true);
