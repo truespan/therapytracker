@@ -96,17 +96,17 @@ class Partner {
       UPDATE partners
       SET name = COALESCE($1, name),
           sex = COALESCE($2, sex),
-          age = CASE WHEN $3 IS NULL THEN age ELSE $3 END,
+          age = CASE WHEN $3::INTEGER IS NULL THEN age ELSE $3::INTEGER END,
           email = COALESCE($4, email),
           contact = COALESCE($5, contact),
           qualification = COALESCE($6, qualification),
           license_id = $7,
           address = COALESCE($8, address),
           photo_url = COALESCE($9, photo_url),
-          work_experience = CASE WHEN $10 IS NULL THEN work_experience ELSE $10 END,
-          other_practice_details = CASE WHEN $11 IS NULL THEN other_practice_details ELSE $11 END,
+          work_experience = CASE WHEN $10::TEXT IS NULL THEN work_experience ELSE $10::TEXT END,
+          other_practice_details = CASE WHEN $11::TEXT IS NULL THEN other_practice_details ELSE $11::TEXT END,
           email_verified = COALESCE($12, email_verified),
-          default_report_template_id = CASE WHEN $13::INTEGER IS NULL THEN default_report_template_id ELSE $13 END,
+          default_report_template_id = CASE WHEN $13::INTEGER IS NULL THEN default_report_template_id ELSE $13::INTEGER END,
           default_report_background = COALESCE($14, default_report_background)
       WHERE id = $15
       RETURNING *
