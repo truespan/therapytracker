@@ -35,9 +35,9 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
       const response = await therapySessionAPI.getByPartnerAndUser(partnerId, userId);
       console.log('SessionsSection: Sessions loaded:', response.data.sessions);
 
-      // Sort sessions by date and assign session numbers
+      // Sort sessions by date (newest first) and assign session numbers
       const sortedSessions = (response.data.sessions || [])
-        .sort((a, b) => new Date(a.session_date) - new Date(b.session_date))
+        .sort((a, b) => new Date(b.session_date) - new Date(a.session_date))
         .map((session, index) => ({
           ...session,
           session_number: index + 1
