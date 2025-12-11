@@ -258,6 +258,10 @@ const CreatePatientModal = ({ isOpen, onClose, partnerId, onSuccess }) => {
               />
             </div>
             {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+            <p className="mt-1 text-xs text-amber-600 flex items-center">
+              <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
+              Note: Email will not be verified for this user
+            </p>
           </div>
 
           {/* Contact Number */}

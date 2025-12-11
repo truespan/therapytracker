@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, MapPin, Lock, Calendar, Users, Award, FileText } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Lock, Calendar, Users, Award, FileText, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 
 const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
@@ -14,12 +14,15 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     license_id: '',
     address: '',
     password: '',
+    confirmPassword: '',
     photo_url: '',
     work_experience: '',
     other_practice_details: '',
   });
 
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -74,6 +77,12 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
       newErrors.password = 'Password must be at least 6 characters';
     }
 
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -87,6 +96,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         contact: `${formData.countryCode}${formData.contact}`,
       };
       delete submitData.countryCode;
+      delete submitData.confirmPassword;
       onSubmit(submitData);
     }
   };
@@ -103,11 +113,14 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
       license_id: '',
       address: '',
       password: '',
+      confirmPassword: '',
       photo_url: '',
       work_experience: '',
       other_practice_details: '',
     });
     setErrors({});
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     onClose();
   };
 
@@ -361,21 +374,58 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.password ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter initial password"
                 disabled={isLoading}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
             {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
-            <p className="mt-1 text-xs text-gray-500">
-              The therapist will use this password for initial login after email verification
+            <p className="mt-1 text-xs text-amber-600 flex items-center">
+              <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
+              <span>The therapist will use this password for initial login <strong>after email verification</strong></span>
             </p>
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm Password <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                  errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Confirm password"
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            {errors.confirmPassword && <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>}
           </div>
 
           {/* Actions */}

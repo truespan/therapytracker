@@ -215,6 +215,10 @@ const Signup = () => {
                   required
                 />
                 {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
+                <p className="text-amber-600 text-xs mt-1 flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
+                  Note: Email will not be verified for this user
+                </p>
               </div>
 
               {/* Contact */}
