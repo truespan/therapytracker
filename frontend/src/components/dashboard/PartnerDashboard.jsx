@@ -674,12 +674,12 @@ const PartnerDashboard = () => {
               <div className="mt-6">
                 {/* Case History Tab */}
                 {clientDetailTab === 'caseHistory' && selectedUser && (
-                  <CaseHistoryForm key={selectedUser.id} userId={selectedUser.id} partnerId={user.id} />
+                  <CaseHistoryForm key={selectedUser.id} userId={selectedUser.id} partnerId={user.id} userName={selectedUser.name} />
                 )}
 
                 {/* Mental Status Examination & BO Tab */}
                 {clientDetailTab === 'mentalStatus' && selectedUser && (
-                  <MentalStatusExaminationForm key={selectedUser.id} userId={selectedUser.id} partnerId={user.id} />
+                  <MentalStatusExaminationForm key={selectedUser.id} userId={selectedUser.id} partnerId={user.id} userName={selectedUser.name} />
                 )}
 
                 {/* General Notes Tab */}

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { caseHistoryAPI } from '../../services/api';
-import { Save, Loader2, Plus, Trash2, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Save, Loader2, Plus, Trash2, ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Download } from 'lucide-react';
+import { generateCaseHistoryPDF } from '../../utils/pdfGenerator';
 
-const CaseHistoryForm = ({ userId, partnerId }) => {
+const CaseHistoryForm = ({ userId, partnerId, userName }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autosaveStatus, setAutosaveStatus] = useState(null); // 'saving', 'saved', 'error', null
@@ -846,6 +847,10 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
     await performAutosave(true);
   };
 
+  const handleDownloadPDF = () => {
+    generateCaseHistoryPDF(formData, familyMembers, userName);
+  };
+
   const renderField = (label, fieldName, type = 'text', options = null, memberType = null, memberIndex = null) => {
     const value = memberType 
       ? (memberType === 'father' || memberType === 'mother'
@@ -984,23 +989,32 @@ const CaseHistoryForm = ({ userId, partnerId }) => {
       {/* Save Button and Autosave Status - Sticky at top */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 py-3 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
         <div className="flex items-center justify-between gap-4">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                Save Case History
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Case History
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Download PDF
+            </button>
+          </div>
           
           {/* Autosave Status Indicator */}
           {autosaveStatus && (
