@@ -16,15 +16,16 @@ class GeneratedReport {
       client_age,
       client_sex,
       report_date,
-      description
+      description,
+      background_filename
     } = reportData;
 
     const query = `
       INSERT INTO generated_reports (
         partner_id, user_id, template_id, report_name,
-        client_name, client_age, client_sex, report_date, description
+        client_name, client_age, client_sex, report_date, description, background_filename
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
     `;
 
@@ -37,7 +38,8 @@ class GeneratedReport {
       client_age || null,
       client_sex || null,
       report_date,
-      description
+      description,
+      background_filename || 'report-background.jpg'
     ];
 
     const result = await db.query(query, values);

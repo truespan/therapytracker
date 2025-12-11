@@ -62,6 +62,10 @@ const createReport = async (req, res) => {
       });
     }
 
+    // Get partner's current background setting to store with the report
+    const partner = await Partner.getDefaultReportBackground(req.user.id);
+    const backgroundFilename = partner?.default_report_background || 'report-background.jpg';
+
     const reportData = {
       partner_id: req.user.id, // Partner ID from auth middleware
       user_id,
@@ -71,7 +75,8 @@ const createReport = async (req, res) => {
       client_age,
       client_sex,
       report_date,
-      description
+      description,
+      background_filename: backgroundFilename // Store the background used at creation time
     };
 
     const report = await GeneratedReport.create(reportData);
@@ -290,8 +295,9 @@ const downloadReport = async (req, res) => {
     // Pipe PDF to response
     doc.pipe(res);
 
-    // Add background image (first page only) - use partner's selected background
-    const backgroundFilename = partner.default_report_background || 'report-background.jpg';
+    // Add background image (first page only) - use the background stored with the report
+    // This preserves the original background even if partner changes their default setting
+    const backgroundFilename = report.background_filename || partner.default_report_background || 'report-background.jpg';
     const backgroundPath = path.join(__dirname, '../../assets', backgroundFilename);
 
     if (fs.existsSync(backgroundPath)) {
@@ -446,8 +452,9 @@ const downloadReportDocx = async (req, res) => {
     const partnerContact = parseContact(partner.contact);
     const reportDate = new Date(report.report_date).toLocaleDateString('en-GB');
 
-    // Get background image path
-    const backgroundFilename = partner.default_report_background || 'report-background.jpg';
+    // Get background image path - use the background stored with the report
+    // This preserves the original background even if partner changes their default setting
+    const backgroundFilename = report.background_filename || partner.default_report_background || 'report-background.jpg';
     const backgroundPath = path.join(__dirname, '../../assets', backgroundFilename);
     
     let backgroundImageBuffer = null;
