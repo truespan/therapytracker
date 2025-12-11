@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText, DollarSign } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import { googleCalendarAPI, partnerAPI } from '../../services/api';
@@ -20,8 +20,12 @@ const PartnerSettings = () => {
     contact: '',
     address: '',
     qualification: '',
+    license_id: '',
     work_experience: '',
-    other_practice_details: ''
+    other_practice_details: '',
+    fee_min: '',
+    fee_max: '',
+    fee_currency: 'USD'
   });
 
   // Initialize form data from user
@@ -45,8 +49,12 @@ const PartnerSettings = () => {
         contact: number,
         address: user.address || '',
         qualification: user.qualification || '',
+        license_id: user.license_id || '',
         work_experience: user.work_experience || '',
-        other_practice_details: user.other_practice_details || ''
+        other_practice_details: user.other_practice_details || '',
+        fee_min: user.fee_min || '',
+        fee_max: user.fee_max || '',
+        fee_currency: user.fee_currency || 'USD'
       });
     }
   }, [user]);
@@ -133,8 +141,12 @@ const PartnerSettings = () => {
         contact: contact,
         address: formData.address || null,
         qualification: formData.qualification || null,
+        license_id: formData.license_id || null,
         work_experience: formData.work_experience || null,
-        other_practice_details: formData.other_practice_details || null
+        other_practice_details: formData.other_practice_details || null,
+        fee_min: formData.fee_min ? parseFloat(formData.fee_min) : null,
+        fee_max: formData.fee_max ? parseFloat(formData.fee_max) : null,
+        fee_currency: formData.fee_currency || 'USD'
       };
 
       await partnerAPI.update(user.id, updateData);
@@ -305,6 +317,24 @@ const PartnerSettings = () => {
               </div>
             </div>
 
+            {/* Practitioner License ID - Editable */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Practitioner License ID (Optional)
+              </label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  name="license_id"
+                  value={formData.license_id}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="e.g., PSY-12345, MED-67890"
+                />
+              </div>
+            </div>
+
             {/* Address - Editable */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -356,6 +386,70 @@ const PartnerSettings = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Enter other significant work related details"
                 />
+              </div>
+            </div>
+
+            {/* Fee Range */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fee Range (Optional)
+              </label>
+              <div className="space-y-2">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Min</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="number"
+                        name="fee_min"
+                        value={formData.fee_min}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Max</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="number"
+                        name="fee_max"
+                        value={formData.fee_max}
+                        onChange={handleChange}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-32">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
+                    <select
+                      name="fee_currency"
+                      value={formData.fee_currency}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="INR">INR (₹)</option>
+                      <option value="CAD">CAD (C$)</option>
+                      <option value="AUD">AUD (A$)</option>
+                      <option value="JPY">JPY (¥)</option>
+                      <option value="CNY">CNY (¥)</option>
+                    </select>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  This information will appear on the therapist's profile as part of the search feature used by individual clients.
+                </p>
               </div>
             </div>
 
