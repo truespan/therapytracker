@@ -162,6 +162,21 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
     return Math.round((getAnsweredCount() / total) * 100);
   };
 
+  // Calculate total sum of all response values
+  const getTotalSum = () => {
+    let total = 0;
+    Object.values(responses).forEach(response => {
+      if (response && response.response_value !== null && response.response_value !== undefined) {
+        // Convert to number and add to total
+        const value = parseFloat(response.response_value);
+        if (!isNaN(value)) {
+          total += value;
+        }
+      }
+    });
+    return total;
+  };
+
   // Get option color based on color coding scheme
   const getOptionColor = (questionnaire, questionOptions, optionIndex, isSelected, isHovered) => {
     const scheme = questionnaire?.color_coding_scheme;
@@ -510,6 +525,16 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
             ));
           })()}
         </div>
+
+        {/* Total Sum - Only show in viewOnly mode when responses are submitted */}
+        {viewOnly && Object.keys(responses).length > 0 && (
+          <div className="mb-6 p-4 bg-primary-50 border-2 border-primary-200 rounded-lg">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-semibold text-gray-800">Total Sum:</span>
+              <span className="text-2xl font-bold text-primary-700">{getTotalSum()}</span>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
