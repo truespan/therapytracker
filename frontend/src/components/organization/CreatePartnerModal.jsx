@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, MapPin, Lock, Calendar, Users, Award, FileText, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Lock, Calendar, Users, Award, FileText, Eye, EyeOff, AlertCircle, DollarSign } from 'lucide-react';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 
 const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
@@ -18,6 +18,9 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     photo_url: '',
     work_experience: '',
     other_practice_details: '',
+    fee_min: '',
+    fee_max: '',
+    fee_currency: 'USD',
   });
 
   const [errors, setErrors] = useState({});
@@ -53,6 +56,19 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     // Age is now optional, but if provided, must be valid
     if (formData.age && (formData.age < 18 || formData.age > 100)) {
       newErrors.age = 'Age must be between 18 and 100';
+    }
+
+    // Fee range validation (optional, but if provided, must be valid)
+    if (formData.fee_min || formData.fee_max) {
+      if (formData.fee_min && (isNaN(formData.fee_min) || parseFloat(formData.fee_min) < 0)) {
+        newErrors.fee_min = 'Minimum fee must be a valid positive number';
+      }
+      if (formData.fee_max && (isNaN(formData.fee_max) || parseFloat(formData.fee_max) < 0)) {
+        newErrors.fee_max = 'Maximum fee must be a valid positive number';
+      }
+      if (formData.fee_min && formData.fee_max && parseFloat(formData.fee_min) > parseFloat(formData.fee_max)) {
+        newErrors.fee_max = 'Maximum fee must be greater than or equal to minimum fee';
+      }
     }
 
     if (!formData.email.trim()) {
@@ -117,6 +133,9 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
       photo_url: '',
       work_experience: '',
       other_practice_details: '',
+      fee_min: '',
+      fee_max: '',
+      fee_currency: 'USD',
     });
     setErrors({});
     setShowPassword(false);
@@ -363,6 +382,79 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 placeholder="Enter other significant work related details"
                 disabled={isLoading}
               />
+            </div>
+          </div>
+
+          {/* Fee Range */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fee Range (Optional)
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Min</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="number"
+                      name="fee_min"
+                      value={formData.fee_min}
+                      onChange={handleChange}
+                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        errors.fee_min ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  {errors.fee_min && <p className="mt-1 text-xs text-red-500">{errors.fee_min}</p>}
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Max</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="number"
+                      name="fee_max"
+                      value={formData.fee_max}
+                      onChange={handleChange}
+                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        errors.fee_max ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  {errors.fee_max && <p className="mt-1 text-xs text-red-500">{errors.fee_max}</p>}
+                </div>
+                <div className="w-32">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
+                  <select
+                    name="fee_currency"
+                    value={formData.fee_currency}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    disabled={isLoading}
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="CAD">CAD (C$)</option>
+                    <option value="AUD">AUD (A$)</option>
+                    <option value="JPY">JPY (¥)</option>
+                    <option value="CNY">CNY (¥)</option>
+                  </select>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                This information will appear on the therapist's profile as part of the search feature used by individual clients.
+              </p>
             </div>
           </div>
 

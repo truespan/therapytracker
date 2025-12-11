@@ -108,7 +108,7 @@ const getOrganizationUsers = async (req, res) => {
 const createPartner = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, sex, age, email, contact, qualification, license_id, address, password, photo_url, work_experience, other_practice_details } = req.body;
+    const { name, sex, age, email, contact, qualification, license_id, address, password, photo_url, work_experience, other_practice_details, fee_min, fee_max, fee_currency } = req.body;
 
     // Check authorization
     if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
@@ -145,6 +145,28 @@ const createPartner = async (req, res) => {
       return res.status(400).json({ error: 'Sex must be one of: Male, Female, Others' });
     }
 
+    // Validate fee range (optional, but if provided, must be valid)
+    if (fee_min !== undefined && fee_min !== null && fee_min !== '') {
+      const feeMinNum = parseFloat(fee_min);
+      if (isNaN(feeMinNum) || feeMinNum < 0) {
+        return res.status(400).json({ error: 'Minimum fee must be a valid positive number' });
+      }
+    }
+    if (fee_max !== undefined && fee_max !== null && fee_max !== '') {
+      const feeMaxNum = parseFloat(fee_max);
+      if (isNaN(feeMaxNum) || feeMaxNum < 0) {
+        return res.status(400).json({ error: 'Maximum fee must be a valid positive number' });
+      }
+    }
+    if (fee_min !== undefined && fee_min !== null && fee_min !== '' && 
+        fee_max !== undefined && fee_max !== null && fee_max !== '') {
+      const feeMinNum = parseFloat(fee_min);
+      const feeMaxNum = parseFloat(fee_max);
+      if (feeMinNum > feeMaxNum) {
+        return res.status(400).json({ error: 'Maximum fee must be greater than or equal to minimum fee' });
+      }
+    }
+
     // Check if email already exists
     const existingAuth = await Auth.findByEmail(email);
     if (existingAuth) {
@@ -175,7 +197,10 @@ const createPartner = async (req, res) => {
         other_practice_details,
         organization_id: id,
         verification_token: verificationToken,
-        verification_token_expires: tokenExpiry
+        verification_token_expires: tokenExpiry,
+        fee_min: fee_min !== undefined && fee_min !== null && fee_min !== '' ? parseFloat(fee_min) : null,
+        fee_max: fee_max !== undefined && fee_max !== null && fee_max !== '' ? parseFloat(fee_max) : null,
+        fee_currency: fee_currency || 'USD'
       }, client);
 
       // Create auth credentials

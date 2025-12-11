@@ -50,17 +50,21 @@ class Partner {
   }
 
   static async create(partnerData, client = null) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency } = partnerData;
 
     // Generate unique Partner ID
     const partnerId = await this.generatePartnerId(organization_id);
 
     const query = `
-      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *
     `;
-    const values = [partnerId, name, sex, age || null, email, contact, qualification, license_id || null, address, photo_url, work_experience || null, other_practice_details || null, organization_id, verification_token, verification_token_expires];
+    const values = [
+      partnerId, name, sex, age || null, email, contact, qualification, license_id || null, address, photo_url, 
+      work_experience || null, other_practice_details || null, organization_id, verification_token, verification_token_expires,
+      fee_min || null, fee_max || null, fee_currency || 'USD'
+    ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
     return result.rows[0];
@@ -91,7 +95,7 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency } = partnerData;
     const query = `
       UPDATE partners
       SET name = COALESCE($1, name),
@@ -107,11 +111,21 @@ class Partner {
           other_practice_details = CASE WHEN $11::TEXT IS NULL THEN other_practice_details ELSE $11::TEXT END,
           email_verified = COALESCE($12, email_verified),
           default_report_template_id = CASE WHEN $13::INTEGER IS NULL THEN default_report_template_id ELSE $13::INTEGER END,
-          default_report_background = COALESCE($14, default_report_background)
-      WHERE id = $15
+          default_report_background = COALESCE($14, default_report_background),
+          fee_min = CASE WHEN $15::DECIMAL IS NULL THEN fee_min ELSE $15::DECIMAL END,
+          fee_max = CASE WHEN $16::DECIMAL IS NULL THEN fee_max ELSE $16::DECIMAL END,
+          fee_currency = COALESCE($17, fee_currency)
+      WHERE id = $18
       RETURNING *
     `;
-    const values = [name, sex, age !== undefined ? age : null, email, contact, qualification, license_id !== undefined ? license_id : null, address, photo_url, work_experience !== undefined ? work_experience : null, other_practice_details !== undefined ? other_practice_details : null, email_verified, default_report_template_id, default_report_background, id];
+    const values = [
+      name, sex, age !== undefined ? age : null, email, contact, qualification, 
+      license_id !== undefined ? license_id : null, address, photo_url, 
+      work_experience !== undefined ? work_experience : null, 
+      other_practice_details !== undefined ? other_practice_details : null, 
+      email_verified, default_report_template_id, default_report_background,
+      fee_min !== undefined ? fee_min : null, fee_max !== undefined ? fee_max : null, fee_currency, id
+    ];
     const result = await db.query(query, values);
     return result.rows[0];
   }
