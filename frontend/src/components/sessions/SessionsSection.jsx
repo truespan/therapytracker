@@ -35,15 +35,11 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
       const response = await therapySessionAPI.getByPartnerAndUser(partnerId, userId);
       console.log('SessionsSection: Sessions loaded:', response.data.sessions);
 
-      // Sort sessions by date (newest first) and assign session numbers
+      // Sort sessions by date (newest first) - session_number is already stored in database
       const sortedSessions = (response.data.sessions || [])
-        .sort((a, b) => new Date(b.session_date) - new Date(a.session_date))
-        .map((session, index) => ({
-          ...session,
-          session_number: index + 1
-        }));
+        .sort((a, b) => new Date(b.session_date) - new Date(a.session_date));
 
-      console.log('SessionsSection: Sorted sessions with numbers:', sortedSessions);
+      console.log('SessionsSection: Sorted sessions with stored session numbers:', sortedSessions);
       setSessions(sortedSessions);
     } catch (err) {
       console.error('Failed to load sessions:', err);
@@ -64,11 +60,6 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
   const handleAssignQuestionnaire = (session) => {
     setSelectedSession(session);
     setShowAssignModal(true);
-  };
-
-  const handleDeleteSession = (sessionId) => {
-    // Remove session from list immediately
-    setSessions(prev => prev.filter(s => s.id !== sessionId));
   };
 
   const handleModalClose = () => {
@@ -200,7 +191,6 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
                   key={session.id}
                   session={session}
                   onEdit={handleEditSession}
-                  onDelete={handleDeleteSession}
                   onAssignQuestionnaire={handleAssignQuestionnaire}
                   onQuestionnaireDeleted={loadSessions}
                   onCreateNote={onNavigateToNotes}

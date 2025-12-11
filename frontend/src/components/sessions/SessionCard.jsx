@@ -3,9 +3,8 @@ import { therapySessionAPI, questionnaireAPI } from '../../services/api';
 import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList, Video, X, Plus } from 'lucide-react';
 import QuestionnaireViewModal from '../questionnaires/QuestionnaireViewModal';
 
-const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuestionnaireDeleted, onCreateNote, onViewNote, onGenerateReport }) => {
+const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDeleted, onCreateNote, onViewNote, onGenerateReport }) => {
   const [showPaymentNotes, setShowPaymentNotes] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
   const [deleteConfirmQuestionnaire, setDeleteConfirmQuestionnaire] = useState(null);
   const [deletingQuestionnaire, setDeletingQuestionnaire] = useState(false);
@@ -15,24 +14,6 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
 
   // Debug logging
   console.log('Session:', session.session_title, 'Assigned questionnaires:', assignedQuestionnaires);
-
-  const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
-      return;
-    }
-
-    setDeleting(true);
-    try {
-      await therapySessionAPI.delete(session.id);
-      if (onDelete) {
-        onDelete(session.id);
-      }
-    } catch (err) {
-      console.error('Delete session error:', err);
-      alert('Failed to delete session: ' + (err.response?.data?.error || 'Unknown error'));
-      setDeleting(false);
-    }
-  };
 
   const handleDeleteQuestionnaire = async (assignmentId) => {
     try {
@@ -123,14 +104,6 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
                 title="Assign Questionnaire"
               >
                 <Send className="h-4 w-4" />
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Delete Session"
-              >
-                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -307,14 +280,6 @@ const SessionCard = ({ session, onEdit, onDelete, onAssignQuestionnaire, onQuest
               title="Assign Questionnaire"
             >
               <Send className="h-4 w-4" />
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Delete Session"
-            >
-              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         </div>

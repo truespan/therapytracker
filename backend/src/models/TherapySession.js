@@ -1,6 +1,17 @@
 const db = require('../config/database');
 
 class TherapySession {
+  // Get the next session number for a user-partner pair
+  static async getNextSessionNumber(partnerId, userId) {
+    const query = `
+      SELECT COALESCE(MAX(session_number), 0) + 1 as next_session_number
+      FROM therapy_sessions
+      WHERE partner_id = $1 AND user_id = $2
+    `;
+    const result = await db.query(query, [partnerId, userId]);
+    return result.rows[0].next_session_number;
+  }
+
   // Create a new therapy session from an appointment
   static async create(sessionData) {
     const {
@@ -14,12 +25,15 @@ class TherapySession {
       payment_notes
     } = sessionData;
 
+    // Get the next session number for this user-partner pair
+    const session_number = await this.getNextSessionNumber(partner_id, user_id);
+
     const query = `
       INSERT INTO therapy_sessions (
         appointment_id, partner_id, user_id,
-        session_title, session_date, session_duration, session_notes, payment_notes
+        session_title, session_date, session_duration, session_notes, payment_notes, session_number
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
     const values = [
@@ -30,7 +44,8 @@ class TherapySession {
       session_date,
       session_duration || null,
       session_notes || null,
-      payment_notes || null
+      payment_notes || null,
+      session_number
     ];
 
     const result = await db.query(query, values);
@@ -41,12 +56,15 @@ class TherapySession {
   static async createStandalone(sessionData) {
     const { partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id } = sessionData;
 
+    // Get the next session number for this user-partner pair
+    const session_number = await this.getNextSessionNumber(partner_id, user_id);
+
     const query = `
-      INSERT INTO therapy_sessions (partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO therapy_sessions (partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id, session_number)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
-    const values = [partner_id, user_id, session_title, session_date, session_duration || null, session_notes || null, payment_notes || null, video_session_id || null];
+    const values = [partner_id, user_id, session_title, session_date, session_duration || null, session_notes || null, payment_notes || null, video_session_id || null, session_number];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -104,6 +122,7 @@ class TherapySession {
         ts.session_duration,
         ts.session_notes,
         ts.payment_notes,
+        ts.session_number,
         ts.created_at,
         ts.updated_at,
         u.name as user_name,
@@ -130,7 +149,7 @@ class TherapySession {
       LEFT JOIN questionnaires q ON uqa.questionnaire_id = q.id
       WHERE ts.partner_id = $1 AND ts.user_id = $2
       GROUP BY ts.id, ts.appointment_id, ts.video_session_id, ts.partner_id, ts.user_id, ts.session_title,
-               ts.session_date, ts.session_duration, ts.session_notes, ts.payment_notes,
+               ts.session_date, ts.session_duration, ts.session_notes, ts.payment_notes, ts.session_number,
                ts.created_at, ts.updated_at, u.name, a.appointment_date, a.title
       ORDER BY ts.session_date DESC
     `;
