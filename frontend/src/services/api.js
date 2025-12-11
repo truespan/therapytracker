@@ -243,11 +243,26 @@ export const videoSessionAPI = {
 export const questionnaireAPI = {
   // Questionnaire management
   create: (data) => api.post('/questionnaires', data),
+  getByAdmin: (adminId) => api.get(`/questionnaires/admin/${adminId}`),
+  getByOrganization: (organizationId) => api.get(`/questionnaires/organization/${organizationId}`),
   getByPartner: (partnerId) => api.get(`/questionnaires/partner/${partnerId}`),
   getById: (id) => api.get(`/questionnaires/${id}`),
   update: (id, data) => api.put(`/questionnaires/${id}`, data),
   delete: (id) => api.delete(`/questionnaires/${id}`),
   getStats: (id) => api.get(`/questionnaires/${id}/stats`),
+
+  // Sharing management
+  shareWithOrganizations: (questionnaireId, organizationIds) =>
+    api.post(`/questionnaires/${questionnaireId}/share-organizations`, { organization_ids: organizationIds }),
+  shareWithPartners: (questionnaireId, partnerIds) =>
+    api.post(`/questionnaires/${questionnaireId}/share-partners`, { partner_ids: partnerIds }),
+  unshareFromOrganizations: (questionnaireId, organizationIds) =>
+    api.post(`/questionnaires/${questionnaireId}/unshare-organizations`, { organization_ids: organizationIds }),
+  unshareFromPartners: (questionnaireId, partnerIds) =>
+    api.post(`/questionnaires/${questionnaireId}/unshare-partners`, { partner_ids: partnerIds }),
+  copyQuestionnaire: (questionnaireId) => api.post(`/questionnaires/${questionnaireId}/copy`),
+  getSharedOrganizations: (questionnaireId) => api.get(`/questionnaires/${questionnaireId}/shared-organizations`),
+  getSharedPartners: (questionnaireId) => api.get(`/questionnaires/${questionnaireId}/shared-partners`),
 
   // Assignment management
   assign: (data) => api.post('/questionnaires/assign', data),

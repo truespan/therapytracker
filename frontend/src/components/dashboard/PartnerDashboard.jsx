@@ -7,6 +7,7 @@ import VideoSessionsTab from '../video/VideoSessionsTab';
 import QuestionnaireList from '../questionnaires/QuestionnaireList';
 import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import AssignQuestionnaireModal from '../questionnaires/AssignQuestionnaireModal';
+import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
 import LatestChartDisplay from '../charts/LatestChartDisplay';
 import UserAssignmentsSection from '../questionnaires/UserAssignmentsSection';
 import SessionsSection from '../sessions/SessionsSection';
@@ -869,7 +870,8 @@ const PartnerDashboard = () => {
               {/* Questionnaires Section */}
               <div>
                 <QuestionnaireList
-                  partnerId={user.id}
+                  ownerType="partner"
+                  ownerId={user.id}
                   onCreateNew={() => {
                     setQuestionnaireView('create');
                     setEditingQuestionnaireId(null);
@@ -877,6 +879,9 @@ const PartnerDashboard = () => {
                   onEdit={(questionnaireId) => {
                     setQuestionnaireView('edit');
                     setEditingQuestionnaireId(questionnaireId);
+                  }}
+                  onCopy={() => {
+                    // Reload is handled by QuestionnaireList
                   }}
                   onAssign={(questionnaire) => {
                     setAssigningQuestionnaire(questionnaire);

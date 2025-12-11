@@ -5,15 +5,29 @@ const QuestionnaireAssignment = require('../models/QuestionnaireAssignment');
 exports.createQuestionnaire = async (req, res) => {
   try {
     const { name, description, questions, has_text_field, text_field_label, text_field_placeholder, color_coding_scheme } = req.body;
-    const partnerId = req.user.id;
+    const userType = req.user.userType;
+    const userId = req.user.id;
 
     if (!name || !questions || questions.length === 0) {
       return res.status(400).json({ error: 'Name and questions are required' });
     }
 
+    // Determine created_by_type based on user type
+    let createdByType;
+    if (userType === 'admin') {
+      createdByType = 'admin';
+    } else if (userType === 'organization') {
+      createdByType = 'organization';
+    } else if (userType === 'partner') {
+      createdByType = 'partner';
+    } else {
+      return res.status(403).json({ error: 'Invalid user type for creating questionnaires' });
+    }
+
     // Create questionnaire
     const questionnaireId = await Questionnaire.create(
-      partnerId,
+      createdByType,
+      userId,
       name,
       description,
       has_text_field || false,
@@ -59,14 +73,56 @@ exports.createQuestionnaire = async (req, res) => {
   }
 };
 
-// Get all questionnaires for a partner
+// Get all questionnaires for a partner (own + preset)
 exports.getPartnerQuestionnaires = async (req, res) => {
   try {
     const partnerId = req.user.userType === 'partner' ? req.user.id : req.params.partnerId;
-    const questionnaires = await Questionnaire.findByPartner(partnerId);
-    res.json(questionnaires);
+    const [ownQuestionnaires, presetQuestionnaires] = await Promise.all([
+      Questionnaire.findByPartner(partnerId),
+      Questionnaire.findPresetForPartner(partnerId)
+    ]);
+    res.json({
+      own: ownQuestionnaires,
+      preset: presetQuestionnaires
+    });
   } catch (error) {
     console.error('Error getting partner questionnaires:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all questionnaires for an admin
+exports.getAdminQuestionnaires = async (req, res) => {
+  try {
+    const adminId = req.user.userType === 'admin' ? req.user.id : req.params.adminId;
+    if (req.user.userType !== 'admin' && req.user.userType !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    const questionnaires = await Questionnaire.findByAdmin(adminId);
+    res.json(questionnaires);
+  } catch (error) {
+    console.error('Error getting admin questionnaires:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all questionnaires for an organization (own + preset)
+exports.getOrganizationQuestionnaires = async (req, res) => {
+  try {
+    const organizationId = req.user.userType === 'organization' ? req.user.id : req.params.organizationId;
+    if (req.user.userType !== 'organization' && req.user.userType !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    const [ownQuestionnaires, presetQuestionnaires] = await Promise.all([
+      Questionnaire.findByOrganization(organizationId),
+      Questionnaire.findPresetForOrganization(organizationId)
+    ]);
+    res.json({
+      own: ownQuestionnaires,
+      preset: presetQuestionnaires
+    });
+  } catch (error) {
+    console.error('Error getting organization questionnaires:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -81,8 +137,40 @@ exports.getQuestionnaire = async (req, res) => {
       return res.status(404).json({ error: 'Questionnaire not found' });
     }
 
-    // Verify ownership if partner
-    if (req.user.userType === 'partner' && questionnaire.partner_id !== req.user.id) {
+    // Verify access based on user type
+    const userType = req.user.userType;
+    const userId = req.user.id;
+    let hasAccess = false;
+
+    if (userType === 'partner') {
+      // Partner can access if they own it or if it's shared with them
+      if (questionnaire.created_by_type === 'partner' && questionnaire.partner_id === userId) {
+        hasAccess = true;
+      } else {
+        // Check if shared with this partner
+        const presetQuestionnaires = await Questionnaire.findPresetForPartner(userId);
+        hasAccess = presetQuestionnaires.some(q => q.id === parseInt(id));
+      }
+    } else if (userType === 'organization') {
+      // Organization can access if they own it or if it's shared with them
+      if (questionnaire.created_by_type === 'organization' && questionnaire.organization_id === userId) {
+        hasAccess = true;
+      } else {
+        // Check if shared with this organization
+        const presetQuestionnaires = await Questionnaire.findPresetForOrganization(userId);
+        hasAccess = presetQuestionnaires.some(q => q.id === parseInt(id));
+      }
+    } else if (userType === 'admin') {
+      // Admin can access if they own it
+      if (questionnaire.created_by_type === 'admin' && questionnaire.admin_id === userId) {
+        hasAccess = true;
+      } else {
+        // Admin can access any questionnaire
+        hasAccess = true;
+      }
+    }
+
+    if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -98,10 +186,11 @@ exports.updateQuestionnaire = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, questions, has_text_field, text_field_label, text_field_placeholder, color_coding_scheme } = req.body;
-    const partnerId = req.user.id;
+    const userType = req.user.userType;
+    const userId = req.user.id;
 
     // Verify ownership
-    const isOwner = await Questionnaire.verifyOwnership(id, partnerId);
+    const isOwner = await Questionnaire.verifyOwnership(id, userType, userId);
     if (!isOwner) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -208,10 +297,11 @@ exports.updateQuestionnaire = async (req, res) => {
 exports.deleteQuestionnaire = async (req, res) => {
   try {
     const { id } = req.params;
-    const partnerId = req.user.id;
+    const userType = req.user.userType;
+    const userId = req.user.id;
 
     // Verify ownership
-    const isOwner = await Questionnaire.verifyOwnership(id, partnerId);
+    const isOwner = await Questionnaire.verifyOwnership(id, userType, userId);
     if (!isOwner) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -228,16 +318,41 @@ exports.deleteQuestionnaire = async (req, res) => {
 exports.assignQuestionnaire = async (req, res) => {
   try {
     const { questionnaire_id, user_ids } = req.body;
-    const partnerId = req.user.id;
+    const userType = req.user.userType;
+    const userId = req.user.id;
 
     if (!questionnaire_id || !user_ids || user_ids.length === 0) {
       return res.status(400).json({ error: 'Questionnaire ID and user IDs are required' });
     }
 
-    // Verify ownership
-    const isOwner = await Questionnaire.verifyOwnership(questionnaire_id, partnerId);
-    if (!isOwner) {
+    // Verify ownership or access (partners can assign their own or preset questionnaires)
+    const questionnaire = await Questionnaire.findById(questionnaire_id);
+    if (!questionnaire) {
+      return res.status(404).json({ error: 'Questionnaire not found' });
+    }
+
+    let hasAccess = false;
+    if (userType === 'partner') {
+      // Partner can assign if they own it or if it's a preset
+      if (questionnaire.created_by_type === 'partner' && questionnaire.partner_id === userId) {
+        hasAccess = true;
+      } else {
+        // Check if it's shared with this partner
+        const presetQuestionnaires = await Questionnaire.findPresetForPartner(userId);
+        hasAccess = presetQuestionnaires.some(q => q.id === parseInt(questionnaire_id));
+      }
+    } else {
+      hasAccess = await Questionnaire.verifyOwnership(questionnaire_id, userType, userId);
+    }
+
+    if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // For assignment, we still need partner_id (the assigner)
+    const partnerId = userType === 'partner' ? userId : null;
+    if (!partnerId) {
+      return res.status(400).json({ error: 'Only partners can assign questionnaires to users' });
     }
 
     // Assign to each user
@@ -368,13 +483,18 @@ exports.getUserHistory = async (req, res) => {
 exports.getQuestionnaireStats = async (req, res) => {
   try {
     const { id } = req.params;
-    const partnerId = req.user.id;
+    const userType = req.user.userType;
+    const userId = req.user.id;
 
     // Verify ownership
-    const isOwner = await Questionnaire.verifyOwnership(id, partnerId);
+    const isOwner = await Questionnaire.verifyOwnership(id, userType, userId);
     if (!isOwner) {
       return res.status(403).json({ error: 'Access denied' });
     }
+
+    // For stats, we need partner_id - get it from questionnaire
+    const questionnaire = await Questionnaire.findById(id);
+    const partnerId = questionnaire.partner_id || userId; // Fallback to userId if not partner-owned
 
     const stats = await QuestionnaireAssignment.getQuestionnaireStats(id, partnerId);
     res.json(stats);
@@ -513,6 +633,235 @@ exports.getResponsesForComparison = async (req, res) => {
     res.json({ responses });
   } catch (error) {
     console.error('Error getting responses for comparison:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Share questionnaire with organizations (admin only)
+exports.shareWithOrganizations = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { organization_ids } = req.body;
+    const adminId = req.user.id;
+
+    if (req.user.userType !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can share questionnaires with organizations' });
+    }
+
+    if (!organization_ids || !Array.isArray(organization_ids) || organization_ids.length === 0) {
+      return res.status(400).json({ error: 'Organization IDs array is required' });
+    }
+
+    // Verify ownership
+    const isOwner = await Questionnaire.verifyOwnership(id, 'admin', adminId);
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const shareIds = await Questionnaire.shareWithOrganizations(id, organization_ids, adminId);
+    res.json({
+      message: 'Questionnaire shared successfully',
+      shares_created: shareIds.length
+    });
+  } catch (error) {
+    console.error('Error sharing questionnaire with organizations:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Share questionnaire with partners (organization only)
+exports.shareWithPartners = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { partner_ids } = req.body;
+    const organizationId = req.user.id;
+
+    if (req.user.userType !== 'organization') {
+      return res.status(403).json({ error: 'Only organizations can share questionnaires with partners' });
+    }
+
+    if (!partner_ids || !Array.isArray(partner_ids) || partner_ids.length === 0) {
+      return res.status(400).json({ error: 'Partner IDs array is required' });
+    }
+
+    // Verify ownership
+    const isOwner = await Questionnaire.verifyOwnership(id, 'organization', organizationId);
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const shareIds = await Questionnaire.shareWithPartners(id, partner_ids, organizationId);
+    res.json({
+      message: 'Questionnaire shared successfully',
+      shares_created: shareIds.length
+    });
+  } catch (error) {
+    console.error('Error sharing questionnaire with partners:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Unshare questionnaire from organizations (admin only)
+exports.unshareFromOrganizations = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { organization_ids } = req.body;
+    const adminId = req.user.id;
+
+    if (req.user.userType !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can unshare questionnaires from organizations' });
+    }
+
+    if (!organization_ids || !Array.isArray(organization_ids) || organization_ids.length === 0) {
+      return res.status(400).json({ error: 'Organization IDs array is required' });
+    }
+
+    // Verify ownership
+    const isOwner = await Questionnaire.verifyOwnership(id, 'admin', adminId);
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const unsharedCount = await Questionnaire.unshareFromOrganizations(id, organization_ids, adminId);
+    res.json({
+      message: 'Questionnaire unshared successfully',
+      unshared_count: unsharedCount
+    });
+  } catch (error) {
+    console.error('Error unsharing questionnaire from organizations:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Unshare questionnaire from partners (organization only)
+exports.unshareFromPartners = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { partner_ids } = req.body;
+    const organizationId = req.user.id;
+
+    if (req.user.userType !== 'organization') {
+      return res.status(403).json({ error: 'Only organizations can unshare questionnaires from partners' });
+    }
+
+    if (!partner_ids || !Array.isArray(partner_ids) || partner_ids.length === 0) {
+      return res.status(400).json({ error: 'Partner IDs array is required' });
+    }
+
+    // Verify ownership
+    const isOwner = await Questionnaire.verifyOwnership(id, 'organization', organizationId);
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const unsharedCount = await Questionnaire.unshareFromPartners(id, partner_ids, organizationId);
+    res.json({
+      message: 'Questionnaire unshared successfully',
+      unshared_count: unsharedCount
+    });
+  } catch (error) {
+    console.error('Error unsharing questionnaire from partners:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Copy a preset questionnaire
+exports.copyQuestionnaire = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userType = req.user.userType;
+    const userId = req.user.id;
+
+    if (!['partner', 'organization'].includes(userType)) {
+      return res.status(403).json({ error: 'Only partners and organizations can copy questionnaires' });
+    }
+
+    // Verify the questionnaire exists and is accessible
+    const original = await Questionnaire.getQuestionnaireWithQuestions(id);
+    if (!original) {
+      return res.status(404).json({ error: 'Questionnaire not found' });
+    }
+
+    // Check if user has access (either owns it or it's shared with them)
+    let hasAccess = false;
+    if (userType === 'partner') {
+      if (original.created_by_type === 'partner' && original.partner_id === userId) {
+        hasAccess = true;
+      } else {
+        const presetQuestionnaires = await Questionnaire.findPresetForPartner(userId);
+        hasAccess = presetQuestionnaires.some(q => q.id === parseInt(id));
+      }
+    } else if (userType === 'organization') {
+      if (original.created_by_type === 'organization' && original.organization_id === userId) {
+        hasAccess = true;
+      } else {
+        const presetQuestionnaires = await Questionnaire.findPresetForOrganization(userId);
+        hasAccess = presetQuestionnaires.some(q => q.id === parseInt(id));
+      }
+    }
+
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Copy the questionnaire
+    const newQuestionnaireId = await Questionnaire.copyQuestionnaire(id, userType, userId);
+    const newQuestionnaire = await Questionnaire.getQuestionnaireWithQuestions(newQuestionnaireId);
+
+    res.status(201).json({
+      message: 'Questionnaire copied successfully',
+      questionnaire: newQuestionnaire
+    });
+  } catch (error) {
+    console.error('Error copying questionnaire:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get shared organizations for a questionnaire (admin only)
+exports.getSharedOrganizations = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminId = req.user.id;
+
+    if (req.user.userType !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Verify ownership
+    const isOwner = await Questionnaire.verifyOwnership(id, 'admin', adminId);
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const sharedOrgs = await Questionnaire.getSharedOrganizations(id);
+    res.json(sharedOrgs);
+  } catch (error) {
+    console.error('Error getting shared organizations:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get shared partners for a questionnaire (organization only)
+exports.getSharedPartners = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const organizationId = req.user.id;
+
+    if (req.user.userType !== 'organization') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Verify ownership
+    const isOwner = await Questionnaire.verifyOwnership(id, 'organization', organizationId);
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const sharedPartners = await Questionnaire.getSharedPartners(id);
+    res.json(sharedPartners);
+  } catch (error) {
+    console.error('Error getting shared partners:', error);
     res.status(500).json({ error: error.message });
   }
 };

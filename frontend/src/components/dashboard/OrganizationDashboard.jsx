@@ -5,7 +5,7 @@ import {
   Building2, Users, UserCheck, Activity, Plus, Edit, UserX,
   UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail,
   AlertCircle, Send, Trash2, Settings, Calendar as CalendarIcon,
-  Clock, Video as VideoIcon, User as UserIcon
+  Clock, Video as VideoIcon, User as UserIcon, ClipboardList
 } from 'lucide-react';
 import CreatePartnerModal from '../organization/CreatePartnerModal';
 import EditPartnerModal from '../organization/EditPartnerModal';
@@ -13,6 +13,9 @@ import DeactivatePartnerModal from '../organization/DeactivatePartnerModal';
 import ReassignClientsModal from '../organization/ReassignClientsModal';
 import DeleteClientModal from '../organization/DeleteClientModal';
 import OrganizationSettings from '../organization/OrganizationSettings';
+import QuestionnaireList from '../questionnaires/QuestionnaireList';
+import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
+import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -77,7 +80,16 @@ const OrganizationDashboard = () => {
     totalUsers: 0
   });
 
-  const [activeView, setActiveView] = useState('partners'); // 'partners' or 'settings'
+  const [activeView, setActiveView] = useState('partners'); // 'partners', 'settings', or 'questionnaires'
+
+  // Questionnaire states
+  const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
+  const [editingQuestionnaireId, setEditingQuestionnaireId] = useState(null);
+  const [sharingQuestionnaire, setSharingQuestionnaire] = useState(null);
+
+  const handleQuestionnaireCopy = () => {
+    // Reload is handled by QuestionnaireList
+  };
 
   useEffect(() => {
     loadOrganizationData();
@@ -465,6 +477,17 @@ const OrganizationDashboard = () => {
           >
             <Users className="inline h-5 w-5 mr-2" />
             Therapists Management
+          </button>
+          <button
+            onClick={() => setActiveView('questionnaires')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeView === 'questionnaires'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <ClipboardList className="inline h-5 w-5 mr-2" />
+            Questionnaires
           </button>
           <button
             onClick={() => setActiveView('settings')}
@@ -895,11 +918,68 @@ const OrganizationDashboard = () => {
       )}
 
       {/* Settings View */}
+      {activeView === 'questionnaires' && (
+        <div>
+          {questionnaireView === 'list' && (
+            <QuestionnaireList
+              ownerType="organization"
+              ownerId={user.id}
+              onEdit={(id) => {
+                setEditingQuestionnaireId(id);
+                setQuestionnaireView('edit');
+              }}
+              onShare={setSharingQuestionnaire}
+              onCopy={handleQuestionnaireCopy}
+              onCreateNew={() => setQuestionnaireView('create')}
+            />
+          )}
+          {questionnaireView === 'create' && (
+            <QuestionnaireBuilder
+              onSave={() => {
+                setQuestionnaireView('list');
+                setEditingQuestionnaireId(null);
+              }}
+              onCancel={() => {
+                setQuestionnaireView('list');
+                setEditingQuestionnaireId(null);
+              }}
+            />
+          )}
+          {questionnaireView === 'edit' && editingQuestionnaireId && (
+            <QuestionnaireBuilder
+              questionnaireId={editingQuestionnaireId}
+              onSave={() => {
+                setQuestionnaireView('list');
+                setEditingQuestionnaireId(null);
+              }}
+              onCancel={() => {
+                setQuestionnaireView('list');
+                setEditingQuestionnaireId(null);
+              }}
+            />
+          )}
+        </div>
+      )}
+
       {activeView === 'settings' && (
         <OrganizationSettings />
       )}
 
       {/* Modals */}
+      {sharingQuestionnaire && (
+        <ShareQuestionnaireModal
+          isOpen={!!sharingQuestionnaire}
+          onClose={(success) => {
+            setSharingQuestionnaire(null);
+            if (success) {
+              // Optionally reload questionnaires
+            }
+          }}
+          questionnaire={sharingQuestionnaire}
+          ownerType="organization"
+          ownerId={user.id}
+        />
+      )}
       <CreatePartnerModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}

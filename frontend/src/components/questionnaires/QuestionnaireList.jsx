@@ -1,22 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { questionnaireAPI } from '../../services/api';
+import { Copy, Share2 } from 'lucide-react';
 
-const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
-  const [questionnaires, setQuestionnaires] = useState([]);
+const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, onShare, onCopy }) => {
+  const [ownQuestionnaires, setOwnQuestionnaires] = useState([]);
+  const [presetQuestionnaires, setPresetQuestionnaires] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [copyingId, setCopyingId] = useState(null);
 
   useEffect(() => {
     loadQuestionnaires();
-  }, [partnerId]);
+  }, [ownerType, ownerId]);
 
   const loadQuestionnaires = async () => {
     try {
       setLoading(true);
-      const response = await questionnaireAPI.getByPartner(partnerId);
-      setQuestionnaires(response.data);
+      let response;
+      
+      if (ownerType === 'admin') {
+        response = await questionnaireAPI.getByAdmin(ownerId);
+        setOwnQuestionnaires(response.data || []);
+        setPresetQuestionnaires([]);
+      } else if (ownerType === 'organization') {
+        response = await questionnaireAPI.getByOrganization(ownerId);
+        setOwnQuestionnaires(response.data.own || []);
+        setPresetQuestionnaires(response.data.preset || []);
+      } else if (ownerType === 'partner') {
+        response = await questionnaireAPI.getByPartner(ownerId);
+        setOwnQuestionnaires(response.data.own || []);
+        setPresetQuestionnaires(response.data.preset || []);
+      } else {
+        // Fallback for backward compatibility
+        response = await questionnaireAPI.getByPartner(ownerId);
+        if (response.data.own) {
+          setOwnQuestionnaires(response.data.own || []);
+          setPresetQuestionnaires(response.data.preset || []);
+        } else {
+          setOwnQuestionnaires(response.data || []);
+          setPresetQuestionnaires([]);
+        }
+      }
     } catch (err) {
       setError('Failed to load questionnaires');
       console.error(err);
@@ -25,10 +51,28 @@ const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
     }
   };
 
+  const handleCopy = async (questionnaireId) => {
+    try {
+      setCopyingId(questionnaireId);
+      await questionnaireAPI.copyQuestionnaire(questionnaireId);
+      if (onCopy) {
+        onCopy();
+      }
+      // Reload questionnaires after copying
+      await loadQuestionnaires();
+      alert('Questionnaire copied successfully!');
+    } catch (err) {
+      console.error('Failed to copy questionnaire:', err);
+      alert(err.response?.data?.error || 'Failed to copy questionnaire');
+    } finally {
+      setCopyingId(null);
+    }
+  };
+
   const handleDelete = async (id) => {
     try {
       await questionnaireAPI.delete(id);
-      setQuestionnaires(questionnaires.filter(q => q.id !== id));
+      setOwnQuestionnaires(ownQuestionnaires.filter(q => q.id !== id));
       setDeleteConfirm(null);
     } catch (err) {
       setError('Failed to delete questionnaire');
@@ -36,10 +80,160 @@ const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
     }
   };
 
-  const filteredQuestionnaires = questionnaires.filter(q =>
-    q.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (q.description && q.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const renderQuestionnaireCard = (questionnaire, isPreset = false) => {
+    const canEdit = !isPreset && onEdit;
+    const canDelete = !isPreset;
+    const canShare = !isPreset && onShare && (ownerType === 'admin' || ownerType === 'organization');
+    const canCopy = isPreset && onCopy;
+
+    return (
+      <div
+        key={questionnaire.id}
+        className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border ${
+          isPreset ? 'border-blue-200 bg-blue-50' : 'border-gray-200'
+        }`}
+      >
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {questionnaire.name}
+            </h3>
+            {isPreset && (
+              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                Preset
+              </span>
+            )}
+          </div>
+          {questionnaire.description && (
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {questionnaire.description}
+            </p>
+          )}
+        </div>
+
+        {/* Statistics */}
+        <div className="mb-4 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Questions:</span>
+            <span className="font-medium text-gray-800">
+              {questionnaire.question_count || 0}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Assigned to:</span>
+            <span className="font-medium text-gray-800">
+              {questionnaire.assignment_count || 0} users
+            </span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Completed:</span>
+            <span className="font-medium text-gray-800">
+              {questionnaire.completed_count || 0}
+            </span>
+          </div>
+          <div className="mt-2">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-gray-600">Completion Rate:</span>
+              <span className="font-medium text-gray-800">
+                {getCompletionRate(questionnaire)}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-green-600 h-2 rounded-full transition-all"
+                style={{ width: `${getCompletionRate(questionnaire)}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Created Date */}
+        <div className="text-xs text-gray-500 mb-4">
+          Created: {new Date(questionnaire.created_at).toLocaleDateString()}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 flex-wrap">
+          {onAssign && (
+            <button
+              onClick={() => onAssign(questionnaire)}
+              className="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-full hover:bg-green-700 transition-colors"
+            >
+              Assign
+            </button>
+          )}
+          {canEdit && (
+            <button
+              onClick={() => onEdit(questionnaire.id)}
+              className="flex-1 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-full hover:bg-primary-700 transition-colors"
+            >
+              Edit
+            </button>
+          )}
+          {canShare && (
+            <button
+              onClick={() => onShare(questionnaire)}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <Share2 className="h-4 w-4" />
+              Share
+            </button>
+          )}
+          {canCopy && (
+            <button
+              onClick={() => handleCopy(questionnaire.id)}
+              disabled={copyingId === questionnaire.id}
+              className="flex-1 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-full hover:bg-purple-700 transition-colors flex items-center justify-center gap-1 disabled:opacity-50"
+            >
+              <Copy className="h-4 w-4" />
+              {copyingId === questionnaire.id ? 'Copying...' : 'Copy'}
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={() => setDeleteConfirm(questionnaire.id)}
+              className="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-full hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          )}
+        </div>
+
+        {/* Delete Confirmation */}
+        {deleteConfirm === questionnaire.id && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+            <p className="text-sm text-red-800 mb-2">
+              Are you sure you want to delete this questionnaire?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleDelete(questionnaire.id)}
+                className="flex-1 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const filterQuestionnaires = (questionnaires) => {
+    return questionnaires.filter(q =>
+      q.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (q.description && q.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  };
+
+  const filteredOwn = filterQuestionnaires(ownQuestionnaires);
+  const filteredPreset = filterQuestionnaires(presetQuestionnaires);
 
   const getCompletionRate = (questionnaire) => {
     const total = parseInt(questionnaire.assignment_count) || 0;
@@ -84,13 +278,36 @@ const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
         />
       </div>
 
-      {/* Questionnaires Grid */}
-      {filteredQuestionnaires.length === 0 ? (
+      {/* My Questionnaires Section */}
+      {filteredOwn.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">My Questionnaires</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredOwn.map((questionnaire) => renderQuestionnaireCard(questionnaire, false))}
+          </div>
+        </div>
+      )}
+
+      {/* Preset Questionnaires Section */}
+      {filteredPreset.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Preset Questionnaires</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            These questionnaires are shared with you. You can copy them to create your own editable version.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPreset.map((questionnaire) => renderQuestionnaireCard(questionnaire, true))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {filteredOwn.length === 0 && filteredPreset.length === 0 && (
         <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
           <p className="text-gray-500 text-lg mb-4">
             {searchTerm ? 'No questionnaires found matching your search' : 'No questionnaires yet'}
           </p>
-          {!searchTerm && (
+          {!searchTerm && onCreateNew && (
             <button
               onClick={onCreateNew}
               className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -98,112 +315,6 @@ const QuestionnaireList = ({ partnerId, onEdit, onAssign, onCreateNew }) => {
               Create Your First Questionnaire
             </button>
           )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredQuestionnaires.map((questionnaire) => (
-            <div
-              key={questionnaire.id}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200"
-            >
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  {questionnaire.name}
-                </h3>
-                {questionnaire.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {questionnaire.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Statistics */}
-              <div className="mb-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Questions:</span>
-                  <span className="font-medium text-gray-800">
-                    {questionnaire.question_count || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Assigned to:</span>
-                  <span className="font-medium text-gray-800">
-                    {questionnaire.assignment_count || 0} users
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Completed:</span>
-                  <span className="font-medium text-gray-800">
-                    {questionnaire.completed_count || 0}
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Completion Rate:</span>
-                    <span className="font-medium text-gray-800">
-                      {getCompletionRate(questionnaire)}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-green-600 h-2 rounded-full transition-all"
-                      style={{ width: `${getCompletionRate(questionnaire)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Created Date */}
-              <div className="text-xs text-gray-500 mb-4">
-                Created: {new Date(questionnaire.created_at).toLocaleDateString()}
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onAssign(questionnaire)}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-full hover:bg-green-700 transition-colors"
-                >
-                  Assign
-                </button>
-                <button
-                  onClick={() => onEdit(questionnaire.id)}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-full hover:bg-primary-700 transition-colors"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => setDeleteConfirm(questionnaire.id)}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-full hover:bg-red-700 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-
-              {/* Delete Confirmation */}
-              {deleteConfirm === questionnaire.id && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
-                  <p className="text-sm text-red-800 mb-2">
-                    Are you sure you want to delete this questionnaire?
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleDelete(questionnaire.id)}
-                      className="flex-1 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                    >
-                      Yes, Delete
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm(null)}
-                      className="flex-1 px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
         </div>
       )}
     </div>

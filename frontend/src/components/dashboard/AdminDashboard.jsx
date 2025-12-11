@@ -11,14 +11,20 @@ import {
   AlertTriangle,
   Users,
   UserCheck,
-  Activity
+  Activity,
+  ClipboardList
 } from 'lucide-react';
 import { adminAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import CreateOrganizationModal from '../admin/CreateOrganizationModal';
 import EditOrganizationModal from '../admin/EditOrganizationModal';
 import OrganizationMetricsModal from '../admin/OrganizationMetricsModal';
+import QuestionnaireList from '../questionnaires/QuestionnaireList';
+import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
+import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
   const [organizations, setOrganizations] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +32,7 @@ const AdminDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, inactive
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [metricsData, setMetricsData] = useState(null);
+  const [activeTab, setActiveTab] = useState('organizations'); // 'organizations', 'questionnaires'
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -33,6 +40,11 @@ const AdminDashboard = () => {
   const [showMetricsModal, setShowMetricsModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [metricsLoading, setMetricsLoading] = useState(false);
+
+  // Questionnaire states
+  const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
+  const [editingQuestionnaireId, setEditingQuestionnaireId] = useState(null);
+  const [sharingQuestionnaire, setSharingQuestionnaire] = useState(null);
 
   // Helper function to format plan display names
   const getPlanDisplayName = (plan) => {
@@ -230,6 +242,29 @@ const AdminDashboard = () => {
     );
   }
 
+  const handleQuestionnaireEdit = (questionnaireId) => {
+    setEditingQuestionnaireId(questionnaireId);
+    setQuestionnaireView('edit');
+  };
+
+  const handleQuestionnaireShare = (questionnaire) => {
+    setSharingQuestionnaire(questionnaire);
+  };
+
+  const handleQuestionnaireCopy = () => {
+    // Reload is handled by QuestionnaireList
+  };
+
+  const handleQuestionnaireSave = () => {
+    setQuestionnaireView('list');
+    setEditingQuestionnaireId(null);
+  };
+
+  const handleQuestionnaireCancel = () => {
+    setQuestionnaireView('list');
+    setEditingQuestionnaireId(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -238,14 +273,50 @@ const AdminDashboard = () => {
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600 mt-1">Manage organizations and view system statistics</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2 font-medium shadow-md"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Create Organization</span>
-        </button>
+        {activeTab === 'organizations' && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2 font-medium shadow-md"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Create Organization</span>
+          </button>
+        )}
       </div>
+
+      {/* Tabs */}
+      <div className="bg-white rounded-lg shadow-md">
+        <div className="border-b border-gray-200">
+          <nav className="flex -mb-px overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('organizations')}
+              className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'organizations'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Building2 className="h-5 w-5" />
+              Organizations
+            </button>
+            <button
+              onClick={() => setActiveTab('questionnaires')}
+              className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'questionnaires'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <ClipboardList className="h-5 w-5" />
+              Questionnaires
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'organizations' && (
+        <>
 
       {/* Stats Overview */}
       {stats && (
@@ -513,8 +584,52 @@ const AdminDashboard = () => {
           </table>
         </div>
       </div>
+        </>
+      )}
+
+      {activeTab === 'questionnaires' && (
+        <div>
+          {questionnaireView === 'list' && (
+            <QuestionnaireList
+              ownerType="admin"
+              ownerId={user.id}
+              onEdit={handleQuestionnaireEdit}
+              onShare={handleQuestionnaireShare}
+              onCreateNew={() => setQuestionnaireView('create')}
+            />
+          )}
+          {questionnaireView === 'create' && (
+            <QuestionnaireBuilder
+              onSave={handleQuestionnaireSave}
+              onCancel={handleQuestionnaireCancel}
+            />
+          )}
+          {questionnaireView === 'edit' && editingQuestionnaireId && (
+            <QuestionnaireBuilder
+              questionnaireId={editingQuestionnaireId}
+              onSave={handleQuestionnaireSave}
+              onCancel={handleQuestionnaireCancel}
+            />
+          )}
+        </div>
+      )}
 
       {/* Modals */}
+      {sharingQuestionnaire && (
+        <ShareQuestionnaireModal
+          isOpen={!!sharingQuestionnaire}
+          onClose={(success) => {
+            setSharingQuestionnaire(null);
+            if (success) {
+              // Optionally reload questionnaires
+            }
+          }}
+          questionnaire={sharingQuestionnaire}
+          ownerType="admin"
+          ownerId={user.id}
+        />
+      )}
+
       <CreateOrganizationModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}

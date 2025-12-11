@@ -20,7 +20,24 @@ const AssignQuestionnaireToSessionModal = ({ session, partnerId, userId, onClose
       setLoadingQuestionnaires(true);
       const response = await questionnaireAPI.getByPartner(partnerId);
       console.log('Questionnaires response:', response.data);
-      setQuestionnaires(response.data || []);
+      
+      // Handle new response structure: { own: [], preset: [] }
+      // Combine both own and preset questionnaires for assignment
+      let questionnairesList = [];
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          // Backward compatibility: if it's still an array
+          questionnairesList = response.data;
+        } else if (response.data.own || response.data.preset) {
+          // New structure: combine own and preset
+          questionnairesList = [
+            ...(response.data.own || []),
+            ...(response.data.preset || [])
+          ];
+        }
+      }
+      
+      setQuestionnaires(questionnairesList);
     } catch (err) {
       console.error('Failed to load questionnaires:', err);
       setError('Failed to load questionnaires');

@@ -144,12 +144,14 @@ router.post('/video-sessions/:id/verify-password', videoSessionController.verify
 
 // ==================== QUESTIONNAIRE ROUTES ====================
 // Questionnaire management
-router.post('/questionnaires', authenticateToken, checkRole('partner'), questionnaireController.createQuestionnaire);
+router.post('/questionnaires', authenticateToken, checkRole('admin', 'organization', 'partner'), questionnaireController.createQuestionnaire);
+router.get('/questionnaires/admin/:adminId', authenticateToken, checkRole('admin'), questionnaireController.getAdminQuestionnaires);
+router.get('/questionnaires/organization/:organizationId', authenticateToken, checkRole('admin', 'organization'), questionnaireController.getOrganizationQuestionnaires);
 router.get('/questionnaires/partner/:partnerId', authenticateToken, questionnaireController.getPartnerQuestionnaires);
 router.get('/questionnaires/:id', authenticateToken, questionnaireController.getQuestionnaire);
-router.put('/questionnaires/:id', authenticateToken, checkRole('partner'), questionnaireController.updateQuestionnaire);
-router.delete('/questionnaires/:id', authenticateToken, checkRole('partner'), questionnaireController.deleteQuestionnaire);
-router.get('/questionnaires/:id/stats', authenticateToken, checkRole('partner'), questionnaireController.getQuestionnaireStats);
+router.put('/questionnaires/:id', authenticateToken, checkRole('admin', 'organization', 'partner'), questionnaireController.updateQuestionnaire);
+router.delete('/questionnaires/:id', authenticateToken, checkRole('admin', 'organization', 'partner'), questionnaireController.deleteQuestionnaire);
+router.get('/questionnaires/:id/stats', authenticateToken, checkRole('admin', 'organization', 'partner'), questionnaireController.getQuestionnaireStats);
 
 // Questionnaire assignments
 router.post('/questionnaires/assign', authenticateToken, checkRole('partner'), questionnaireController.assignQuestionnaire);
@@ -167,6 +169,15 @@ router.get('/questionnaires/:questionnaireId/user/:userId/aggregated', authentic
 // Questionnaire comparison routes (for Charts & Insights)
 router.get('/questionnaires/completed-by-type/user/:userId', authenticateToken, checkRole('partner'), questionnaireController.getCompletedByTypeForUser);
 router.post('/questionnaires/responses-for-comparison', authenticateToken, questionnaireController.getResponsesForComparison);
+
+// Questionnaire sharing routes
+router.post('/questionnaires/:id/share-organizations', authenticateToken, checkRole('admin'), questionnaireController.shareWithOrganizations);
+router.post('/questionnaires/:id/share-partners', authenticateToken, checkRole('organization'), questionnaireController.shareWithPartners);
+router.post('/questionnaires/:id/unshare-organizations', authenticateToken, checkRole('admin'), questionnaireController.unshareFromOrganizations);
+router.post('/questionnaires/:id/unshare-partners', authenticateToken, checkRole('organization'), questionnaireController.unshareFromPartners);
+router.post('/questionnaires/:id/copy', authenticateToken, checkRole('partner', 'organization'), questionnaireController.copyQuestionnaire);
+router.get('/questionnaires/:id/shared-organizations', authenticateToken, checkRole('admin'), questionnaireController.getSharedOrganizations);
+router.get('/questionnaires/:id/shared-partners', authenticateToken, checkRole('organization'), questionnaireController.getSharedPartners);
 
 // ==================== ADMIN ROUTES ====================
 // Admin management routes - require admin role
