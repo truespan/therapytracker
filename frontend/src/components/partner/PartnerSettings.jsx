@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText, DollarSign } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import { googleCalendarAPI, partnerAPI } from '../../services/api';
@@ -25,7 +25,7 @@ const PartnerSettings = () => {
     other_practice_details: '',
     fee_min: '',
     fee_max: '',
-    fee_currency: 'USD'
+    fee_currency: 'INR'
   });
 
   // Initialize form data from user
@@ -54,7 +54,7 @@ const PartnerSettings = () => {
         other_practice_details: user.other_practice_details || '',
         fee_min: user.fee_min || '',
         fee_max: user.fee_max || '',
-        fee_currency: user.fee_currency || 'USD'
+        fee_currency: user.fee_currency || 'INR'
       });
     }
   }, [user]);
@@ -146,7 +146,7 @@ const PartnerSettings = () => {
         other_practice_details: formData.other_practice_details || null,
         fee_min: formData.fee_min ? parseFloat(formData.fee_min) : null,
         fee_max: formData.fee_max ? parseFloat(formData.fee_max) : null,
-        fee_currency: formData.fee_currency || 'USD'
+        fee_currency: formData.fee_currency || 'INR'
       };
 
       await partnerAPI.update(user.id, updateData);
@@ -399,7 +399,7 @@ const PartnerSettings = () => {
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-gray-600 mb-1">Min</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium">₹</span>
                       <input
                         type="number"
                         name="fee_min"
@@ -415,7 +415,7 @@ const PartnerSettings = () => {
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-gray-600 mb-1">Max</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium">₹</span>
                       <input
                         type="number"
                         name="fee_max"

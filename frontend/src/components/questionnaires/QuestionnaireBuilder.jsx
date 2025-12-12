@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { questionnaireAPI } from '../../services/api';
 
 const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
@@ -11,29 +11,117 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
     color_coding_scheme: null,
     questions: []
   });
+  const [currentQuestionnaireId, setCurrentQuestionnaireId] = useState(questionnaireId || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showColorCodingWarning, setShowColorCodingWarning] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState(''); // 'saving', 'saved', 'error'
+  const autosaveTimeoutRef = useRef(null);
+  const hasInitialLoad = useRef(false);
+  const questionnaireRef = useRef(questionnaire);
+  const currentQuestionnaireIdRef = useRef(currentQuestionnaireId);
 
   useEffect(() => {
     if (questionnaireId) {
       loadQuestionnaire();
+      setCurrentQuestionnaireId(questionnaireId);
     }
   }, [questionnaireId]);
+
+  // Autosave effect - debounced
+  useEffect(() => {
+    // Don't autosave on initial load - mark as loaded and skip this run
+    if (!hasInitialLoad.current) {
+      hasInitialLoad.current = true;
+      return;
+    }
+
+    // Don't autosave if questionnaire name is empty (required field)
+    if (!questionnaire.name.trim()) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (autosaveTimeoutRef.current) {
+      clearTimeout(autosaveTimeoutRef.current);
+    }
+
+    // Set new timeout for autosave (2 seconds after last change)
+    autosaveTimeoutRef.current = setTimeout(() => {
+      performAutosave();
+    }, 2000);
+
+    // Cleanup function
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionnaire]);
 
   const loadQuestionnaire = async () => {
     try {
       setLoading(true);
+      hasInitialLoad.current = false; // Reset to prevent autosave on load
       const response = await questionnaireAPI.getById(questionnaireId);
-      setQuestionnaire(response.data);
+      const loadedQuestionnaire = response.data;
+      setQuestionnaire(loadedQuestionnaire);
+      questionnaireRef.current = loadedQuestionnaire;
+      // Set hasInitialLoad after state update completes
+      // This ensures the next user change will trigger autosave
+      setTimeout(() => {
+        hasInitialLoad.current = true;
+      }, 500);
     } catch (err) {
       setError('Failed to load questionnaire');
       console.error(err);
+      hasInitialLoad.current = true; // Allow autosave even if load fails
     } finally {
       setLoading(false);
     }
   };
+
+  // Update refs when state changes
+  useEffect(() => {
+    questionnaireRef.current = questionnaire;
+  }, [questionnaire]);
+
+  useEffect(() => {
+    currentQuestionnaireIdRef.current = currentQuestionnaireId;
+  }, [currentQuestionnaireId]);
+
+  const performAutosave = useCallback(async () => {
+    try {
+      setAutosaveStatus('saving');
+      const currentQuestionnaire = questionnaireRef.current;
+      const currentId = currentQuestionnaireIdRef.current;
+      
+      if (currentId) {
+        // Update existing questionnaire
+        await questionnaireAPI.update(currentId, currentQuestionnaire);
+        setAutosaveStatus('saved');
+        setTimeout(() => setAutosaveStatus(''), 2000);
+      } else {
+        // Create new questionnaire if name is provided
+        if (currentQuestionnaire.name.trim()) {
+          const response = await questionnaireAPI.create(currentQuestionnaire);
+          const newId = response.data.id || response.data.questionnaire?.id;
+          if (newId) {
+            setCurrentQuestionnaireId(newId);
+            currentQuestionnaireIdRef.current = newId;
+            setAutosaveStatus('saved');
+            setTimeout(() => setAutosaveStatus(''), 2000);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Autosave failed:', err);
+      setAutosaveStatus('error');
+      setTimeout(() => setAutosaveStatus(''), 3000);
+    }
+  }, []);
 
   const handleAddQuestion = () => {
     const colorCoding = questionnaire.color_coding_scheme;
@@ -274,15 +362,21 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
     try {
       setLoading(true);
       
-      if (questionnaireId) {
-        await questionnaireAPI.update(questionnaireId, questionnaire);
+      if (currentQuestionnaireId) {
+        await questionnaireAPI.update(currentQuestionnaireId, questionnaire);
         setSuccess('Questionnaire updated successfully');
       } else {
-        await questionnaireAPI.create(questionnaire);
+        const response = await questionnaireAPI.create(questionnaire);
+        const newId = response.data.id || response.data.questionnaire?.id;
+        if (newId) {
+          setCurrentQuestionnaireId(newId);
+        }
         setSuccess('Questionnaire created successfully');
       }
 
+      setAutosaveStatus('saved');
       setTimeout(() => {
+        setAutosaveStatus('');
         if (onSave) onSave();
       }, 1000);
     } catch (err) {
@@ -303,9 +397,24 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6">
-        {questionnaireId ? 'Edit Questionnaire' : 'Create New Questionnaire'}
-      </h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">
+          {currentQuestionnaireId ? 'Edit Questionnaire' : 'Create New Questionnaire'}
+        </h2>
+        {autosaveStatus && (
+          <div className={`text-sm px-3 py-1 rounded ${
+            autosaveStatus === 'saving' 
+              ? 'bg-blue-100 text-blue-700' 
+              : autosaveStatus === 'saved'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-700'
+          }`}>
+            {autosaveStatus === 'saving' && '💾 Saving...'}
+            {autosaveStatus === 'saved' && '✓ Saved'}
+            {autosaveStatus === 'error' && '✗ Save failed'}
+          </div>
+        )}
+      </div>
 
       {error && (
         <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
