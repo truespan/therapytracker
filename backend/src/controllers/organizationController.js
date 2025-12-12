@@ -37,6 +37,8 @@ const updateOrganization = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
+    console.log('Update organization request:', { id, updates });
+
     // Check if organization exists
     const organization = await Organization.findById(id);
     if (!organization) {
@@ -48,7 +50,9 @@ const updateOrganization = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized to update this organization' });
     }
 
+    console.log('Calling Organization.update with:', updates);
     const updatedOrganization = await Organization.update(id, updates);
+    console.log('Updated organization:', updatedOrganization);
     res.json({ 
       message: 'Organization updated successfully',
       organization: updatedOrganization 

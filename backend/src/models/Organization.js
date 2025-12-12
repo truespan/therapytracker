@@ -46,6 +46,8 @@ class Organization {
   static async update(id, orgData) {
     const { name, email, contact, address, photo_url, gst_no, subscription_plan, video_sessions_enabled } = orgData;
 
+    console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
+
     // Build dynamic update query to handle undefined vs explicit values
     const updates = [];
     const values = [];
@@ -64,8 +66,11 @@ class Organization {
       values.push(contact);
     }
     if (address !== undefined) {
+      console.log('Adding address to update:', address);
       updates.push(`address = $${paramIndex++}`);
       values.push(address);
+    } else {
+      console.log('Address is undefined, not including in update');
     }
     if (photo_url !== undefined) {
       updates.push(`photo_url = $${paramIndex++}`);
@@ -97,7 +102,11 @@ class Organization {
       RETURNING *
     `;
 
+    console.log('Executing update query:', query);
+    console.log('Query values:', values);
+
     const result = await db.query(query, values);
+    console.log('Update result:', result.rows[0]);
     return result.rows[0];
   }
 
