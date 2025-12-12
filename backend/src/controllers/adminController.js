@@ -38,6 +38,8 @@ const createOrganization = async (req, res) => {
       gst_no,
       subscription_plan,
       video_sessions_enabled,
+      theraptrack_controlled,
+      number_of_therapists,
       password
     } = req.body;
 
@@ -81,7 +83,9 @@ const createOrganization = async (req, res) => {
         photo_url: null,
         gst_no: gst_no || null,
         subscription_plan: subscription_plan || null,
-        video_sessions_enabled: video_sessions_enabled !== undefined ? video_sessions_enabled : true
+        video_sessions_enabled: video_sessions_enabled !== undefined ? video_sessions_enabled : true,
+        theraptrack_controlled: theraptrack_controlled !== undefined ? theraptrack_controlled : false,
+        number_of_therapists: number_of_therapists ? parseInt(number_of_therapists) : null
       }, client);
 
       // Create auth credentials
