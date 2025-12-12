@@ -3,9 +3,14 @@
 -- Date: 2025-01-27
 
 -- Update existing NULL fee_currency values to INR
-UPDATE partners 
-SET fee_currency = 'INR' 
+UPDATE partners
+SET fee_currency = 'INR'
 WHERE fee_currency IS NULL;
+
+-- Update existing USD fee_currency values to INR (for partners created before this migration)
+UPDATE partners
+SET fee_currency = 'INR'
+WHERE fee_currency = 'USD';
 
 -- Change the default value for new records
 ALTER TABLE partners 
