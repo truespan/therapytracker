@@ -209,7 +209,7 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
 
             <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-xs text-yellow-800">
-                <strong>Note:</strong> This action is permanent. Make sure all information is correct before proceeding.
+                <strong>Note:</strong> You can edit session notes later.
               </p>
             </div>
 
