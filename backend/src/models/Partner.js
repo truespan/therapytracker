@@ -63,7 +63,7 @@ class Partner {
     const values = [
       partnerId, name, sex, age || null, email, contact, qualification, license_id || null, address, photo_url, 
       work_experience || null, other_practice_details || null, organization_id, verification_token, verification_token_expires,
-      fee_min || null, fee_max || null, fee_currency || 'USD'
+      fee_min || null, fee_max || null, fee_currency || 'INR'
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);

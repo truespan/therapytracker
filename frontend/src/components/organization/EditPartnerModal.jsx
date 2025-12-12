@@ -19,7 +19,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
     other_practice_details: '',
     fee_min: '',
     fee_max: '',
-    fee_currency: 'USD',
+    fee_currency: 'INR',
   });
 
   const [errors, setErrors] = useState({});
@@ -53,7 +53,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
         other_practice_details: partner.other_practice_details || '',
         fee_min: partner.fee_min || '',
         fee_max: partner.fee_max || '',
-        fee_currency: partner.fee_currency || 'USD',
+        fee_currency: partner.fee_currency || 'INR',
       });
     }
   }, [partner, isOpen]);

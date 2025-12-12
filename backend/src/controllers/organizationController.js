@@ -204,7 +204,7 @@ const createPartner = async (req, res) => {
         verification_token_expires: tokenExpiry,
         fee_min: fee_min !== undefined && fee_min !== null && fee_min !== '' ? parseFloat(fee_min) : null,
         fee_max: fee_max !== undefined && fee_max !== null && fee_max !== '' ? parseFloat(fee_max) : null,
-        fee_currency: fee_currency || 'USD'
+        fee_currency: fee_currency || 'INR'
       }, client);
 
       // Create auth credentials
