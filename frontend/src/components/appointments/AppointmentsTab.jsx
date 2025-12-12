@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { appointmentAPI, videoSessionAPI } from '../../services/api';
 import StartSessionModal from './StartSessionModal';
 import StartSessionFromVideoModal from '../video/StartSessionFromVideoModal';
-import { Calendar, Clock, User, AlertCircle, CheckCircle, PlayCircle, Video, Trash2, X } from 'lucide-react';
+import { Calendar, Clock, User, AlertCircle, CheckCircle, PlayCircle, Video, Trash2, X, ArrowRight } from 'lucide-react';
 
-const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true }) => {
+const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToSession }) => {
   const [appointments, setAppointments] = useState([]);
   const [videoSessions, setVideoSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -311,7 +311,19 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true }) => {
                           {item.has_session ? (
                             <div className="flex items-center space-x-1 text-green-700 mt-2">
                               <CheckCircle className="h-3 w-3" />
-                              <span className="font-medium">Session Completed</span>
+                              <span className="font-medium">Session Created</span>
+                              {item.session_id && onNavigateToSession && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onNavigateToSession(item.user_id, item.session_id);
+                                  }}
+                                  className="ml-1 p-0.5 text-green-700 hover:text-green-900 hover:bg-green-100 rounded transition-colors"
+                                  title="View Session Details"
+                                >
+                                  <ArrowRight className="h-3 w-3" />
+                                </button>
+                              )}
                             </div>
                           ) : (
                             <button
@@ -358,7 +370,19 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true }) => {
                           {item.has_session ? (
                             <div className="flex items-center space-x-2 text-green-700">
                               <CheckCircle className="h-4 w-4" />
-                              <span className="font-medium text-sm">Session Completed</span>
+                              <span className="font-medium text-sm">Session Created</span>
+                              {item.session_id && onNavigateToSession && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onNavigateToSession(item.user_id, item.session_id);
+                                  }}
+                                  className="ml-1 p-1 text-green-700 hover:text-green-900 hover:bg-green-100 rounded transition-colors"
+                                  title="View Session Details"
+                                >
+                                  <ArrowRight className="h-4 w-4" />
+                                </button>
+                              )}
                             </div>
                           ) : (
                             <div className="flex justify-center">
@@ -596,6 +620,16 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true }) => {
               </div>
             </div>
 
+            {itemToDelete.itemType === 'appointment' && itemToDelete.has_session && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800 font-medium mb-1">
+                  ⚠️ Important: This appointment has a session created
+                </p>
+                <p className="text-xs text-yellow-700">
+                  The session created from this appointment will <strong>not be deleted</strong>. It will remain in the client's session history and can be accessed from the Clients tab.
+                </p>
+              </div>
+            )}
             <p className="text-xs text-gray-500 mb-4">
               This will remove the {itemToDelete.itemType === 'video' ? 'video session' : 'appointment'} from your calendar, upcoming appointments, and the client's dashboard.
             </p>

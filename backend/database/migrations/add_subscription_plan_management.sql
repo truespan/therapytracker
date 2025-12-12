@@ -77,3 +77,4 @@ UPDATE organizations
 SET theraptrack_controlled = FALSE
 WHERE theraptrack_controlled IS NULL;
 
+

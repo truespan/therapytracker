@@ -143,17 +143,17 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
                 className="text-sm px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 font-medium flex items-center space-x-1 transition-colors"
               >
                 <Plus className="h-4 w-4" />
-                <span>Create Note</span>
+                <span>Take Notes</span>
               </button>
             )}
             {onGenerateReport && (
               <button
                 onClick={() => onGenerateReport()}
                 className="text-sm px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center space-x-1 transition-colors"
-                title="Generate Report"
+                title="Create Report"
               >
                 <FileText className="h-4 w-4" />
-                <span>Generate Report</span>
+                <span>Create Report</span>
               </button>
             )}
           </div>

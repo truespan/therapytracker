@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
 import { therapySessionAPI } from '../../services/api';
 import { ChevronDown, ChevronUp, FileText, Plus } from 'lucide-react';
 import SessionCard from './SessionCard';
@@ -10,6 +10,7 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const sessionRefs = useRef({});
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -23,9 +24,25 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
     }
   }, [userId, partnerId]);
 
-  // Expose loadSessions to parent via ref
+  // Expose loadSessions and expandAndScrollToSession to parent via ref
   useImperativeHandle(ref, () => ({
-    loadSessions
+    loadSessions,
+    expandAndScrollToSession: (sessionId) => {
+      // Expand the section
+      setIsExpanded(true);
+      // Wait a bit for the DOM to update, then scroll to the session
+      setTimeout(() => {
+        const sessionElement = sessionRefs.current[sessionId];
+        if (sessionElement) {
+          sessionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Add a highlight effect
+          sessionElement.classList.add('ring-2', 'ring-primary-500', 'ring-offset-2', 'rounded-lg');
+          setTimeout(() => {
+            sessionElement.classList.remove('ring-2', 'ring-primary-500', 'ring-offset-2', 'rounded-lg');
+          }, 2000);
+        }
+      }, 500);
+    }
   }));
 
   const loadSessions = async () => {
@@ -187,16 +204,26 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
           ) : (
             <div className="space-y-4 mt-4">
               {sessions.map(session => (
-                <SessionCard
+                <div
                   key={session.id}
-                  session={session}
-                  onEdit={handleEditSession}
-                  onAssignQuestionnaire={handleAssignQuestionnaire}
-                  onQuestionnaireDeleted={loadSessions}
-                  onCreateNote={onNavigateToNotes}
-                  onViewNote={onNavigateToNotes}
-                  onGenerateReport={() => onGenerateReport(session.id)}
-                />
+                  ref={(el) => {
+                    if (el) {
+                      sessionRefs.current[session.id] = el;
+                    } else {
+                      delete sessionRefs.current[session.id];
+                    }
+                  }}
+                >
+                  <SessionCard
+                    session={session}
+                    onEdit={handleEditSession}
+                    onAssignQuestionnaire={handleAssignQuestionnaire}
+                    onQuestionnaireDeleted={loadSessions}
+                    onCreateNote={onNavigateToNotes}
+                    onViewNote={onNavigateToNotes}
+                    onGenerateReport={() => onGenerateReport(session.id)}
+                  />
+                </div>
               ))}
             </div>
           )}

@@ -133,6 +133,40 @@ const PartnerDashboard = () => {
     setReportSessionId(sessionId);
   };
 
+  const handleNavigateToSession = async (userId, sessionId) => {
+    // Find and select the user
+    const userToSelect = users.find(u => u.id === userId);
+    if (userToSelect) {
+      // Load user data (charts, etc.) similar to handleUserSelect
+      try {
+        setLoading(true);
+        setSelectedUser(userToSelect);
+        const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, userId);
+        setSentCharts(chartsResponse.data.charts || []);
+        setLoading(false);
+      } catch (err) {
+        console.error('Failed to load user data:', err);
+        setLoading(false);
+      }
+      
+      // Switch to Clients tab
+      setActiveTab('clients');
+      // Switch to Session Details tab
+      setClientDetailTab('sessionDetails');
+      
+      // Wait for SessionsSection to load, then expand and scroll to session
+      // Use multiple timeouts to ensure the component is fully rendered
+      setTimeout(() => {
+        if (sessionsSectionRef.current) {
+          // Expand the sessions section if it has a method to do so
+          if (sessionsSectionRef.current.expandAndScrollToSession) {
+            sessionsSectionRef.current.expandAndScrollToSession(sessionId);
+          }
+        }
+      }, 500);
+    }
+  };
+
 
   const handleSendChart = async (chartType, selectedSessions) => {
     if (!selectedUser) return;
@@ -485,6 +519,7 @@ const PartnerDashboard = () => {
         <AppointmentsTab
           partnerId={user.id}
           videoSessionsEnabled={videoSessionsEnabled}
+          onNavigateToSession={handleNavigateToSession}
         />
       )}
 

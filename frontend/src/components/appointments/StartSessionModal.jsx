@@ -10,6 +10,7 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,6 +29,12 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
       return;
     }
 
+    // Show confirmation dialog first
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmCreate = async () => {
+    setShowConfirmDialog(false);
     setLoading(true);
 
     try {
@@ -166,12 +173,66 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
                 className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
-                {loading ? 'Creating Session...' : 'Submit Session'}
+                {loading ? 'Creating Session...' : 'Create Session'}
               </button>
             </div>
           </form>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-start space-x-3 mb-4">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100">
+                  <FileText className="h-5 w-5 text-yellow-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Confirm Session Creation
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Once a session is created, it <strong>cannot be deleted</strong>. The session will be permanently recorded in the client's session history.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                disabled={loading}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-xs text-yellow-800">
+                <strong>Note:</strong> This action is permanent. Make sure all information is correct before proceeding.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                disabled={loading}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmCreate}
+                disabled={loading}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Creating...' : 'Yes, Create Session'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

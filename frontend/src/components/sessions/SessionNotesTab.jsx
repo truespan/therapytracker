@@ -322,7 +322,7 @@ const SessionNotesTab = ({
             Session notes will appear here once you add them to your sessions.
           </p>
           <p className="text-sm text-gray-500">
-            Go to Session Details tab and click &quot;Create Note&quot; on any session to get started.
+            Go to Session Details tab and click &quot;Take Notes&quot; on any session to get started.
           </p>
         </div>
       ) : (

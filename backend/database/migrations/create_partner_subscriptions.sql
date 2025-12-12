@@ -19,3 +19,4 @@ CREATE INDEX IF NOT EXISTS idx_partner_subscriptions_billing ON partner_subscrip
 -- Add comment
 COMMENT ON TABLE partner_subscriptions IS 'Stores subscription plan assignments for therapists in TheraPTrack controlled organizations';
 
+
