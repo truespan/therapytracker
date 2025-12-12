@@ -11,6 +11,20 @@ const getPartnerById = async (req, res) => {
       return res.status(404).json({ error: 'Partner not found' });
     }
 
+    // If partner has organization_id, get organization subscription details
+    if (partner.organization_id) {
+      const Organization = require('../models/Organization');
+      const organization = await Organization.getSubscriptionDetails(partner.organization_id);
+      partner.organization = organization;
+
+      // If organization is TheraPTrack controlled, get or create partner's individual subscription assignment
+      if (organization.theraptrack_controlled) {
+        const PartnerSubscription = require('../models/PartnerSubscription');
+        // Get or create Free Plan subscription if partner doesn't have one
+        partner.subscription = await PartnerSubscription.getOrCreateFreePlan(id);
+      }
+    }
+
     res.json({ partner });
   } catch (error) {
     console.error('Get partner error:', error);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, CreditCard } from 'lucide-react';
+import { X, Building2, Mail, Phone, MapPin, FileText, CreditCard, Users, Shield } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 
 const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organization }) => {
@@ -11,6 +11,8 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     gst_no: '',
     subscription_plan: '',
     video_sessions_enabled: true,
+    theraptrack_controlled: false,
+    number_of_therapists: '',
     photo_url: '',
   });
 
@@ -26,6 +28,8 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         gst_no: organization.gst_no || '',
         subscription_plan: organization.subscription_plan || '',
         video_sessions_enabled: organization.video_sessions_enabled ?? true,
+        theraptrack_controlled: organization.theraptrack_controlled ?? false,
+        number_of_therapists: organization.number_of_therapists || '',
         photo_url: organization.photo_url || '',
       });
     }
@@ -279,6 +283,57 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
                 </p>
               </div>
             </label>
+          </div>
+
+          {/* TheraPTrack Controlled */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <label className="flex items-start space-x-3 cursor-pointer">
+              <div className="flex items-center h-5">
+                <input
+                  type="checkbox"
+                  name="theraptrack_controlled"
+                  checked={formData.theraptrack_controlled}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center">
+                  <Shield className="h-4 w-4 text-indigo-600 mr-2" />
+                  <span className="text-sm font-medium text-gray-900">
+                    TheraPTrack Controlled
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  If enabled, therapists in this organization can view subscription details in their settings.
+                  If disabled, only organization users can see subscription information.
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {/* Number of Therapists */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Number of Therapists (Optional)
+            </label>
+            <div className="relative">
+              <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="number"
+                name="number_of_therapists"
+                value={formData.number_of_therapists}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Enter number of therapists"
+                min="1"
+                disabled={isLoading}
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              This will be used to calculate subscription pricing
+            </p>
           </div>
 
           {/* Info Box */}

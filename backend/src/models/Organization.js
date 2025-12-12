@@ -2,10 +2,18 @@ const db = require('../config/database');
 
 class Organization {
   static async create(orgData, client = null) {
-    const { name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, video_sessions_enabled } = orgData;
+    const { 
+      name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, 
+      video_sessions_enabled, theraptrack_controlled, number_of_therapists, 
+      subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date 
+    } = orgData;
     const query = `
-      INSERT INTO organizations (name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, is_active, video_sessions_enabled)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      INSERT INTO organizations (
+        name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, 
+        is_active, video_sessions_enabled, theraptrack_controlled, number_of_therapists,
+        subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *
     `;
     const values = [
@@ -18,7 +26,13 @@ class Organization {
       gst_no || null,
       subscription_plan || null,
       true,
-      video_sessions_enabled !== undefined ? video_sessions_enabled : true
+      video_sessions_enabled !== undefined ? video_sessions_enabled : true,
+      theraptrack_controlled !== undefined ? theraptrack_controlled : false,
+      number_of_therapists || null,
+      subscription_plan_id || null,
+      subscription_billing_period || null,
+      subscription_start_date || null,
+      subscription_end_date || null
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
@@ -44,7 +58,11 @@ class Organization {
   }
 
   static async update(id, orgData) {
-    const { name, email, contact, address, photo_url, gst_no, subscription_plan, video_sessions_enabled } = orgData;
+    const { 
+      name, email, contact, address, photo_url, gst_no, subscription_plan, video_sessions_enabled,
+      theraptrack_controlled, number_of_therapists, subscription_plan_id, 
+      subscription_billing_period, subscription_start_date, subscription_end_date 
+    } = orgData;
 
     console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
 
@@ -87,6 +105,30 @@ class Organization {
     if (video_sessions_enabled !== undefined) {
       updates.push(`video_sessions_enabled = $${paramIndex++}`);
       values.push(video_sessions_enabled);
+    }
+    if (theraptrack_controlled !== undefined) {
+      updates.push(`theraptrack_controlled = $${paramIndex++}`);
+      values.push(theraptrack_controlled);
+    }
+    if (number_of_therapists !== undefined) {
+      updates.push(`number_of_therapists = $${paramIndex++}`);
+      values.push(number_of_therapists);
+    }
+    if (subscription_plan_id !== undefined) {
+      updates.push(`subscription_plan_id = $${paramIndex++}`);
+      values.push(subscription_plan_id);
+    }
+    if (subscription_billing_period !== undefined) {
+      updates.push(`subscription_billing_period = $${paramIndex++}`);
+      values.push(subscription_billing_period);
+    }
+    if (subscription_start_date !== undefined) {
+      updates.push(`subscription_start_date = $${paramIndex++}`);
+      values.push(subscription_start_date);
+    }
+    if (subscription_end_date !== undefined) {
+      updates.push(`subscription_end_date = $${paramIndex++}`);
+      values.push(subscription_end_date);
     }
 
     if (updates.length === 0) {
@@ -321,6 +363,48 @@ class Organization {
     `;
     const result = await db.query(query, [partnerId]);
     return result.rows[0]?.video_sessions_enabled ?? false;
+  }
+
+  /**
+   * Get subscription details for an organization including plan information
+   * @param {number} id - Organization ID
+   * @returns {Promise<Object>} Organization with subscription plan details
+   */
+  static async getSubscriptionDetails(id) {
+    const query = `
+      SELECT 
+        o.*,
+        sp.plan_name,
+        sp.min_sessions,
+        sp.max_sessions,
+        sp.has_video,
+        sp.individual_yearly_price,
+        sp.individual_quarterly_price,
+        sp.individual_monthly_price,
+        sp.organization_yearly_price,
+        sp.organization_quarterly_price,
+        sp.organization_monthly_price
+      FROM organizations o
+      LEFT JOIN subscription_plans sp ON o.subscription_plan_id = sp.id
+      WHERE o.id = $1
+    `;
+    const result = await db.query(query, [id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Check if organization is TheraPTrack controlled
+   * @param {number} id - Organization ID
+   * @returns {Promise<boolean>} Whether organization is TheraPTrack controlled
+   */
+  static async isTheraPTrackControlled(id) {
+    const query = `
+      SELECT theraptrack_controlled
+      FROM organizations
+      WHERE id = $1
+    `;
+    const result = await db.query(query, [id]);
+    return result.rows[0]?.theraptrack_controlled ?? false;
   }
 }
 

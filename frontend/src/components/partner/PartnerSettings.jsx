@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText, CreditCard } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import { googleCalendarAPI, partnerAPI } from '../../services/api';
@@ -12,6 +12,8 @@ const PartnerSettings = () => {
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
+  const [organizationSubscription, setOrganizationSubscription] = useState(null);
+  const [partnerSubscription, setPartnerSubscription] = useState(null);
 
   // Form state for editable fields
   const [formData, setFormData] = useState({
@@ -62,7 +64,37 @@ const PartnerSettings = () => {
   // Load Google Calendar status
   useEffect(() => {
     checkGoogleCalendarStatus();
-  }, []);
+    loadOrganizationSubscription();
+  }, [user]);
+
+  const loadOrganizationSubscription = async () => {
+    if (!user?.organization_id) return;
+    
+    try {
+      const response = await partnerAPI.getById(user.id);
+      const partnerData = response.data.partner;
+      
+      // Always load organization subscription if organization exists
+      if (partnerData?.organization) {
+        setOrganizationSubscription(partnerData.organization);
+        
+        // If organization is TheraPTrack controlled, also load partner's individual subscription
+        if (partnerData.organization.theraptrack_controlled) {
+          setPartnerSubscription(partnerData.subscription || null);
+        } else {
+          // For non-TheraPTrack controlled orgs, partners inherit organization subscription
+          setPartnerSubscription(null);
+        }
+      } else {
+        setOrganizationSubscription(null);
+        setPartnerSubscription(null);
+      }
+    } catch (err) {
+      console.error('Failed to load organization subscription:', err);
+      setOrganizationSubscription(null);
+      setPartnerSubscription(null);
+    }
+  };
 
   const checkGoogleCalendarStatus = async () => {
     try {
@@ -583,6 +615,103 @@ const PartnerSettings = () => {
             </div>
           </div>
         </form>
+
+        {/* Subscription Details Section - Show for all partners with organizations */}
+        {organizationSubscription && (
+          <div className="border-t border-gray-200 pt-6 mt-6">
+            <div className="flex items-center mb-4">
+              <CreditCard className="h-6 w-6 mr-2 text-primary-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Subscription Details</h3>
+            </div>
+
+            {/* For TheraPTrack Controlled Organizations: Always show partner's individual subscription (Free Plan if not explicitly assigned) */}
+            {organizationSubscription.theraptrack_controlled && partnerSubscription && partnerSubscription.plan_name && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Your Assigned Plan: </span>
+                    <span className="text-lg font-bold text-indigo-600">
+                      {partnerSubscription.plan_name}
+                    </span>
+                    {partnerSubscription.min_sessions !== null && partnerSubscription.max_sessions !== null && (
+                      <span className="text-sm text-gray-600 ml-2">
+                        ({partnerSubscription.min_sessions === 0 && partnerSubscription.max_sessions === 0 
+                          ? 'No session limit' 
+                          : `${partnerSubscription.min_sessions} - ${partnerSubscription.max_sessions} sessions/month`})
+                      </span>
+                    )}
+                  </div>
+                  {partnerSubscription.has_video && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Video Enabled
+                    </span>
+                  )}
+                </div>
+                {partnerSubscription.billing_period && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    Billing Period: <span className="font-medium capitalize">{partnerSubscription.billing_period}</span>
+                  </div>
+                )}
+                {partnerSubscription.assigned_at && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    Assigned: {new Date(partnerSubscription.assigned_at).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* For Non-TheraPTrack Controlled Organizations: Show organization subscription (inherited) */}
+            {!organizationSubscription.theraptrack_controlled && organizationSubscription.plan_name && (
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Organization Plan (Inherited): </span>
+                    <span className="text-lg font-bold text-primary-600">
+                      {organizationSubscription.plan_name}
+                    </span>
+                    {organizationSubscription.min_sessions !== null && organizationSubscription.max_sessions !== null && (
+                      <span className="text-sm text-gray-600 ml-2">
+                        ({organizationSubscription.min_sessions} - {organizationSubscription.max_sessions} sessions/month)
+                      </span>
+                    )}
+                  </div>
+                  {organizationSubscription.has_video && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Video Enabled
+                    </span>
+                  )}
+                </div>
+                {organizationSubscription.subscription_billing_period && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    Billing Period: <span className="font-medium capitalize">{organizationSubscription.subscription_billing_period}</span>
+                  </div>
+                )}
+                {organizationSubscription.number_of_therapists && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    Number of Therapists: <span className="font-medium">{organizationSubscription.number_of_therapists}</span>
+                  </div>
+                )}
+                {organizationSubscription.subscription_start_date && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    Start Date: {new Date(organizationSubscription.subscription_start_date).toLocaleDateString()}
+                  </div>
+                )}
+                {organizationSubscription.subscription_end_date && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    End Date: {new Date(organizationSubscription.subscription_end_date).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* No subscription message for non-TheraPTrack controlled orgs */}
+            {!organizationSubscription.theraptrack_controlled && !organizationSubscription.plan_name && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-600">No subscription plan assigned to your organization.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

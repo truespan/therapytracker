@@ -1,6 +1,7 @@
 const Organization = require('../models/Organization');
 const Partner = require('../models/Partner');
 const Auth = require('../models/Auth');
+const SubscriptionPlan = require('../models/SubscriptionPlan');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const db = require('../config/database');
@@ -177,6 +178,12 @@ const createPartner = async (req, res) => {
       return res.status(409).json({ error: 'Email already registered' });
     }
 
+    // Check if organization exists and get TheraPTrack controlled status
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
@@ -214,6 +221,12 @@ const createPartner = async (req, res) => {
         email,
         password_hash: passwordHash
       }, client);
+
+      // If organization is TheraPTrack controlled, automatically assign Free Plan
+      if (organization.theraptrack_controlled) {
+        const PartnerSubscription = require('../models/PartnerSubscription');
+        await PartnerSubscription.getOrCreateFreePlan(partner.id, client);
+      }
 
       return partner;
     });
@@ -759,6 +772,184 @@ const deleteClient = async (req, res) => {
   }
 };
 
+/**
+ * Get subscription details for an organization
+ */
+const getSubscriptionDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to view this organization\'s subscription' });
+    }
+
+    // Get subscription details with plan information
+    const subscriptionDetails = await Organization.getSubscriptionDetails(id);
+
+    res.json({
+      success: true,
+      subscription: subscriptionDetails
+    });
+  } catch (error) {
+    console.error('Get subscription details error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch subscription details',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Update subscription for an organization
+ */
+const updateSubscription = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      subscription_plan_id,
+      subscription_billing_period,
+      subscription_start_date,
+      subscription_end_date,
+      number_of_therapists
+    } = req.body;
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization - only organization itself or admin can update
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to update this organization\'s subscription' });
+    }
+
+    // Validate billing period if provided
+    if (subscription_billing_period) {
+      const validPeriods = ['yearly', 'quarterly', 'monthly'];
+      if (!validPeriods.includes(subscription_billing_period)) {
+        return res.status(400).json({
+          error: 'Invalid billing period. Must be one of: yearly, quarterly, monthly'
+        });
+      }
+    }
+
+    // Validate subscription plan if provided
+    if (subscription_plan_id) {
+      const plan = await SubscriptionPlan.findById(subscription_plan_id);
+      if (!plan) {
+        return res.status(404).json({ error: 'Subscription plan not found' });
+      }
+    }
+
+    // Validate number of therapists
+    if (number_of_therapists !== undefined && number_of_therapists < 1) {
+      return res.status(400).json({
+        error: 'number_of_therapists must be >= 1'
+      });
+    }
+
+    // Build update object
+    const updateData = {};
+    if (subscription_plan_id !== undefined) {
+      updateData.subscription_plan_id = subscription_plan_id;
+    }
+    if (subscription_billing_period !== undefined) {
+      updateData.subscription_billing_period = subscription_billing_period;
+    }
+    if (subscription_start_date !== undefined) {
+      updateData.subscription_start_date = subscription_start_date;
+    }
+    if (subscription_end_date !== undefined) {
+      updateData.subscription_end_date = subscription_end_date;
+    }
+    if (number_of_therapists !== undefined) {
+      updateData.number_of_therapists = number_of_therapists;
+    }
+
+    // Update organization
+    const updatedOrganization = await Organization.update(id, updateData);
+
+    res.json({
+      success: true,
+      message: 'Subscription updated successfully',
+      organization: updatedOrganization
+    });
+  } catch (error) {
+    console.error('Update subscription error:', error);
+    res.status(500).json({
+      error: 'Failed to update subscription',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Calculate subscription price for an organization
+ */
+const calculateSubscriptionPrice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { plan_id, number_of_therapists, billing_period } = req.body;
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to calculate price for this organization' });
+    }
+
+    // Use provided values or organization's current values
+    const planId = plan_id || organization.subscription_plan_id;
+    const numTherapists = number_of_therapists || organization.number_of_therapists || 1;
+    const billingPeriod = billing_period || organization.subscription_billing_period || 'monthly';
+
+    if (!planId) {
+      return res.status(400).json({
+        error: 'Subscription plan ID is required'
+      });
+    }
+
+    // Calculate price
+    const totalPrice = await SubscriptionPlan.calculateOrganizationPrice(
+      planId,
+      numTherapists,
+      billingPeriod
+    );
+
+    // Get plan details
+    const plan = await SubscriptionPlan.findById(planId);
+    const pricePerTherapist = await SubscriptionPlan.getPrice(planId, 'organization', billingPeriod);
+
+    res.json({
+      success: true,
+      plan_id: planId,
+      plan_name: plan?.plan_name,
+      number_of_therapists: numTherapists,
+      billing_period: billingPeriod,
+      price_per_therapist: pricePerTherapist,
+      total_price: totalPrice
+    });
+  } catch (error) {
+    console.error('Calculate subscription price error:', error);
+    res.status(500).json({
+      error: 'Failed to calculate subscription price',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   getOrganizationById,
@@ -773,6 +964,9 @@ module.exports = {
   reassignClients,
   resendVerificationEmail,
   deletePartner,
-  deleteClient
+  deleteClient,
+  getSubscriptionDetails,
+  updateSubscription,
+  calculateSubscriptionPrice
 };
 

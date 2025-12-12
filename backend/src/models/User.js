@@ -26,6 +26,12 @@ class User {
     return result.rows[0];
   }
 
+  static async findByContact(contact) {
+    const query = 'SELECT * FROM users WHERE contact = $1';
+    const result = await db.query(query, [contact]);
+    return result.rows[0];
+  }
+
   static async update(id, userData) {
     const { name, sex, age, email, contact, address, photo_url } = userData;
     const query = `

@@ -21,10 +21,10 @@ const signup = async (req, res) => {
       email = email.trim();
     }
 
-    // Validate required fields
-    if (!userType || !email || !password) {
+    // Validate required fields - email is now optional for users
+    if (!userType || !password) {
       return res.status(400).json({
-        error: 'User type, email, and password are required'
+        error: 'User type and password are required'
       });
     }
 
@@ -41,29 +41,59 @@ const signup = async (req, res) => {
       });
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ 
-        error: 'Please provide a valid email address' 
-      });
-    }
-
-    // Validate contact number format if provided
-    if (userData.contact) {
-      // Contact should be in format: +[country code][number]
-      const phoneRegex = /^\+\d{1,4}\d{7,15}$/;
-      if (!phoneRegex.test(userData.contact)) {
+    // Validate email format if provided
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
         return res.status(400).json({ 
-          error: 'Please provide a valid contact number with country code (e.g., +919876543210)' 
+          error: 'Please provide a valid email address' 
         });
       }
     }
 
-    // Check if email already exists
-    const existingAuth = await Auth.findByEmail(email);
-    if (existingAuth) {
-      return res.status(409).json({ error: 'Email already registered' });
+    // Validate contact number format - required for users
+    if (!userData.contact) {
+      return res.status(400).json({ 
+        error: 'Contact number is required' 
+      });
+    }
+    
+    // Contact should be in format: +[country code][number]
+    const phoneRegex = /^\+\d{1,4}\d{7,15}$/;
+    if (!phoneRegex.test(userData.contact)) {
+      return res.status(400).json({ 
+        error: 'Please provide a valid contact number with country code (e.g., +919876543210)' 
+      });
+    }
+
+    // Determine username for auth_credentials (email or phone)
+    // If email is not provided, use phone number as username
+    const usernameForAuth = email || userData.contact;
+
+    // Check if email already exists (if email is provided)
+    if (email) {
+      const existingAuth = await Auth.findByEmail(email);
+      if (existingAuth) {
+        return res.status(409).json({ error: 'Email already registered' });
+      }
+    }
+
+    // Check if phone number already exists in users table
+    const existingUserByPhone = await User.findByContact(userData.contact);
+    if (existingUserByPhone) {
+      // Check if this phone number already has auth credentials
+      const existingAuthByPhone = await Auth.findByEmailOrPhone(userData.contact);
+      if (existingAuthByPhone) {
+        return res.status(409).json({ error: 'Phone number already registered' });
+      }
+    }
+
+    // Check if username (email or phone) already exists in auth_credentials
+    const existingAuthByUsername = await Auth.findByEmail(usernameForAuth);
+    if (existingAuthByUsername) {
+      return res.status(409).json({ 
+        error: email ? 'Email already registered' : 'Phone number already registered' 
+      });
     }
 
     // Hash password
@@ -126,11 +156,11 @@ const signup = async (req, res) => {
         throw new Error(`Failed to link user to partner: ${assignError.message}`);
       }
 
-      // Create auth credentials
+      // Create auth credentials using email or phone as username
       await Auth.createCredentials({
         user_type: userType,
         reference_id: referenceId,
-        email,
+        email: usernameForAuth, // Use email if provided, otherwise use phone number
         password_hash: passwordHash
       }, client);
       
@@ -147,21 +177,21 @@ const signup = async (req, res) => {
     const token = jwt.sign(
       { 
         id: referenceId, 
-        email, 
+        email: usernameForAuth, // Use email or phone as identifier
         userType 
       },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    console.log(`[SIGNUP] Signup successful for ${userType}: ${email}`);
+    console.log(`[SIGNUP] Signup successful for ${userType}: ${usernameForAuth}`);
 
     res.status(201).json({
       message: 'Signup successful',
       token,
       user: {
         id: referenceId,
-        email,
+        email: email || null, // Return email if provided, null otherwise
         userType,
         ...newRecord
       }

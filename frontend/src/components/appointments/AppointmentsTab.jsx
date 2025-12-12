@@ -4,7 +4,7 @@ import StartSessionModal from './StartSessionModal';
 import StartSessionFromVideoModal from '../video/StartSessionFromVideoModal';
 import { Calendar, Clock, User, AlertCircle, CheckCircle, PlayCircle, Video, Trash2, X } from 'lucide-react';
 
-const AppointmentsTab = ({ partnerId }) => {
+const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true }) => {
   const [appointments, setAppointments] = useState([]);
   const [videoSessions, setVideoSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,9 +33,16 @@ const AppointmentsTab = ({ partnerId }) => {
   const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
+
+      // Fetch appointments and video sessions only when enabled
+      const appointmentsPromise = appointmentAPI.getUpcoming(partnerId, 7);
+      const videoSessionsPromise = videoSessionsEnabled
+        ? videoSessionAPI.getByPartner(partnerId)
+        : Promise.resolve({ data: { sessions: [] } });
+
       const [appointmentsResponse, videoSessionsResponse] = await Promise.all([
-        appointmentAPI.getUpcoming(partnerId, 7),
-        videoSessionAPI.getByPartner(partnerId)
+        appointmentsPromise,
+        videoSessionsPromise
       ]);
 
       setAppointments(appointmentsResponse.data.appointments || []);
@@ -56,9 +63,12 @@ const AppointmentsTab = ({ partnerId }) => {
       setError('');
     } catch (err) {
       console.error('Failed to load appointments:', err);
-      // Don't show error if it's just that there are no clients or appointments
-      // Only show error for actual failures (network errors, server errors, etc.)
-      if (err.response && err.response.status !== 404 && err.response.status !== 400) {
+
+      // If video sessions are disabled for the org, hide the error instead of showing a failure banner
+      if (err.response?.data?.featureDisabled) {
+        setVideoSessions([]);
+        setError('');
+      } else if (err.response && err.response.status !== 404 && err.response.status !== 400) {
         setError('Failed to load appointments');
       } else {
         // No error message for empty state - just show empty appointments
@@ -69,7 +79,7 @@ const AppointmentsTab = ({ partnerId }) => {
     } finally {
       setLoading(false);
     }
-  }, [partnerId]);
+  }, [partnerId, videoSessionsEnabled]);
 
   useEffect(() => {
     loadAppointments();

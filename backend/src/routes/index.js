@@ -20,6 +20,8 @@ const caseHistoryController = require('../controllers/caseHistoryController');
 const mentalStatusExaminationController = require('../controllers/mentalStatusExaminationController');
 const reportTemplateController = require('../controllers/reportTemplateController');
 const generatedReportController = require('../controllers/generatedReportController');
+const subscriptionPlanRoutes = require('./subscriptionPlanRoutes');
+const partnerSubscriptionController = require('../controllers/partnerSubscriptionController');
 
 // Upload middleware
 const upload = require('../middleware/upload');
@@ -100,6 +102,17 @@ router.post('/organizations/:id/reassign-clients', authenticateToken, checkRole(
 
 // Organization client management
 router.delete('/organizations/:id/clients/:clientId', authenticateToken, checkRole('organization'), organizationController.deleteClient);
+
+// Organization subscription management
+router.get('/organizations/:id/subscription', authenticateToken, organizationController.getSubscriptionDetails);
+router.put('/organizations/:id/subscription', authenticateToken, organizationController.updateSubscription);
+router.post('/organizations/:id/subscription/calculate-price', authenticateToken, organizationController.calculateSubscriptionPrice);
+
+// Organization partner subscription management (for TheraPTrack controlled organizations)
+router.get('/organizations/:id/partner-subscriptions', authenticateToken, checkRole('organization'), partnerSubscriptionController.getOrganizationPartnerSubscriptions);
+router.post('/organizations/:id/partner-subscriptions/assign', authenticateToken, checkRole('organization'), partnerSubscriptionController.assignSubscriptions);
+router.put('/organizations/:id/partner-subscriptions/:subscriptionId', authenticateToken, checkRole('organization'), partnerSubscriptionController.updateSubscription);
+router.post('/organizations/:id/partner-subscriptions/remove', authenticateToken, checkRole('organization'), partnerSubscriptionController.removeSubscriptions);
 
 // ==================== APPOINTMENT ROUTES ====================
 router.post('/appointments', authenticateToken, appointmentController.createAppointment);
@@ -201,6 +214,9 @@ router.get('/admin/report-templates/:id/download', authenticateToken, checkRole(
 // Partner routes for report templates
 router.get('/report-templates', authenticateToken, checkRole('partner', 'organization'), reportTemplateController.getAllTemplates);
 router.get('/report-templates/:id/download', authenticateToken, checkRole('partner', 'organization'), reportTemplateController.downloadTemplate);
+
+// ==================== SUBSCRIPTION PLAN ROUTES ====================
+router.use('/subscription-plans', subscriptionPlanRoutes);
 
 // ==================== GENERATED REPORTS ROUTES ====================
 // Partner routes for generated reports

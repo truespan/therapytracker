@@ -59,7 +59,7 @@ const PartnerDashboard = () => {
   }, [user]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('appointments');
-  const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(true);
+  const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(false);
   const [copiedPartnerId, setCopiedPartnerId] = useState(false);
   const [showCreatePatientModal, setShowCreatePatientModal] = useState(false);
   const [copiedSignupUrl, setCopiedSignupUrl] = useState(false);
@@ -81,10 +81,8 @@ const PartnerDashboard = () => {
 
   useEffect(() => {
     // Check if video sessions are enabled for this partner's organization
-    if (user && user.organization_video_sessions_enabled !== undefined) {
-      setVideoSessionsEnabled(user.organization_video_sessions_enabled);
-    }
-  }, [user]);
+    setVideoSessionsEnabled(!!user?.organization_video_sessions_enabled);
+  }, [user?.organization_video_sessions_enabled]);
 
   const loadPartnerUsers = async () => {
     try {
@@ -484,7 +482,10 @@ const PartnerDashboard = () => {
 
       {/* Appointments Tab */}
       {activeTab === 'appointments' && (
-        <AppointmentsTab partnerId={user.id} />
+        <AppointmentsTab
+          partnerId={user.id}
+          videoSessionsEnabled={videoSessionsEnabled}
+        />
       )}
 
       {/* Clients Tab */}

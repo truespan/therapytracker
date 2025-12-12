@@ -5,7 +5,7 @@ import {
   Building2, Users, UserCheck, Activity, Plus, Edit, UserX,
   UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail,
   AlertCircle, Send, Trash2, Settings, Calendar as CalendarIcon,
-  Clock, Video as VideoIcon, User as UserIcon, ClipboardList
+  Clock, Video as VideoIcon, User as UserIcon, ClipboardList, CreditCard
 } from 'lucide-react';
 import CreatePartnerModal from '../organization/CreatePartnerModal';
 import EditPartnerModal from '../organization/EditPartnerModal';
@@ -16,6 +16,7 @@ import OrganizationSettings from '../organization/OrganizationSettings';
 import QuestionnaireList from '../questionnaires/QuestionnaireList';
 import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
+import SubscriptionManagement from '../organization/SubscriptionManagement';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -478,6 +479,19 @@ const OrganizationDashboard = () => {
             <Users className="inline h-5 w-5 mr-2" />
             Therapists Management
           </button>
+          {user.theraptrack_controlled && (
+            <button
+              onClick={() => setActiveView('subscriptions')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeView === 'subscriptions'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <CreditCard className="inline h-5 w-5 mr-2" />
+              Subscription Management
+            </button>
+          )}
           <button
             onClick={() => setActiveView('questionnaires')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -959,6 +973,13 @@ const OrganizationDashboard = () => {
             />
           )}
         </div>
+      )}
+
+      {activeView === 'subscriptions' && (
+        <SubscriptionManagement 
+          organizationId={user.id} 
+          isTheraPTrackControlled={user.theraptrack_controlled}
+        />
       )}
 
       {activeView === 'settings' && (

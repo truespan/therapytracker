@@ -53,11 +53,8 @@ const Signup = () => {
     // Common validations
     if (!formData.name.trim()) newErrors.name = 'Name is required';
 
-    // Email validation - now required
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else {
-      // Validate email format
+    // Email is optional, but if provided, validate format
+    if (formData.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email.trim())) {
         newErrors.email = 'Please enter a valid email address';
@@ -112,7 +109,7 @@ const Signup = () => {
     // Prepare data for user signup - trim email and contact
     const submitData = {
       userType: 'user',
-      email: formData.email.trim(),
+      email: formData.email.trim() || null, // Email is optional
       contact: `${formData.countryCode}${formData.contact.trim()}`, // Combine country code with phone number
       password: formData.password,
       name: formData.name.trim(),
@@ -207,20 +204,18 @@ const Signup = () => {
 
               {/* Email */}
               <div>
-                <label className="label">Email *</label>
+                <label className="label">Email (Optional)</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   className="input"
-                  placeholder="you@example.com"
-                  required
+                  placeholder="you@example.com (optional)"
                 />
                 {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
-                <p className="text-amber-600 text-xs mt-1 flex items-center">
-                  <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
-                  Note: Email will not be verified for this user
+                <p className="text-gray-500 text-xs mt-1">
+                  If not provided, mobile number will be used as username for login
                 </p>
               </div>
 

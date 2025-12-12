@@ -98,9 +98,18 @@ export const partnerAPI = {
 export const organizationAPI = {
   getAll: () => api.get('/organizations'),
   getById: (id) => api.get(`/organizations/${id}`),
+  getSubscriptionDetails: (id) => api.get(`/organizations/${id}/subscription`),
+  updateSubscription: (id, data) => api.put(`/organizations/${id}/subscription`, data),
+  calculateSubscriptionPrice: (id, data) => api.post(`/organizations/${id}/subscription/calculate-price`, data),
   update: (id, data) => api.put(`/organizations/${id}`, data),
   getPartners: (id) => api.get(`/organizations/${id}/partners`),
   getUsers: (id) => api.get(`/organizations/${id}/users`),
+  
+  // Partner subscription management (for TheraPTrack controlled organizations)
+  getPartnerSubscriptions: (id) => api.get(`/organizations/${id}/partner-subscriptions`),
+  assignPartnerSubscriptions: (id, data) => api.post(`/organizations/${id}/partner-subscriptions/assign`, data),
+  updatePartnerSubscription: (id, subscriptionId, data) => api.put(`/organizations/${id}/partner-subscriptions/${subscriptionId}`, data),
+  removePartnerSubscriptions: (id, data) => api.post(`/organizations/${id}/partner-subscriptions/remove`, data),
 
   // Partner management
   createPartner: (organizationId, data) => api.post(`/organizations/${organizationId}/partners`, data),
@@ -137,6 +146,17 @@ export const adminAPI = {
   downloadTemplate: (id) => api.get(`/admin/report-templates/${id}/download`, {
     responseType: 'blob'
   }),
+};
+
+// Subscription Plan APIs
+export const subscriptionPlanAPI = {
+  getAll: () => api.get('/subscription-plans'),
+  getActive: () => api.get('/subscription-plans/active'),
+  getById: (id) => api.get(`/subscription-plans/${id}`),
+  create: (data) => api.post('/subscription-plans', data),
+  update: (id, data) => api.put(`/subscription-plans/${id}`, data),
+  delete: (id) => api.delete(`/subscription-plans/${id}`),
+  calculatePrice: (data) => api.post('/subscription-plans/calculate', data),
 };
 
 // Report Template APIs (for partners)

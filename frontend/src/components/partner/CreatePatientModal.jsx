@@ -55,9 +55,8 @@ const CreatePatientModal = ({ isOpen, onClose, partnerId, onSuccess }) => {
       newErrors.age = 'Age must be between 1 and 150';
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    // Email is optional, but if provided, validate format
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       newErrors.email = 'Invalid email format';
     }
 
@@ -97,7 +96,7 @@ const CreatePatientModal = ({ isOpen, onClose, partnerId, onSuccess }) => {
       // Prepare data for user signup
       const submitData = {
         userType: 'user',
-        email: formData.email.trim(),
+        email: formData.email.trim() || null, // Email is optional
         contact: `${formData.countryCode}${formData.contact.trim()}`,
         password: formData.password,
         name: formData.name.trim(),
@@ -241,7 +240,7 @@ const CreatePatientModal = ({ isOpen, onClose, partnerId, onSuccess }) => {
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email <span className="text-red-500">*</span>
+              Email (Optional)
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -253,14 +252,13 @@ const CreatePatientModal = ({ isOpen, onClose, partnerId, onSuccess }) => {
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="patient@example.com"
+                placeholder="patient@example.com (optional)"
                 disabled={loading}
               />
             </div>
             {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
-            <p className="mt-1 text-xs text-amber-600 flex items-center">
-              <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
-              Note: Email will not be verified for this user
+            <p className="mt-1 text-xs text-gray-500">
+              If not provided, mobile number will be used as username for login
             </p>
           </div>
 

@@ -16,6 +16,7 @@ import PartnerDashboardPage from './pages/PartnerDashboardPage';
 import OrganizationDashboardPage from './pages/OrganizationDashboardPage';
 import AdminDashboard from './components/dashboard/AdminDashboard';
 import ReportTemplatesTab from './components/admin/ReportTemplatesTab';
+import SubscriptionPlansTab from './components/admin/SubscriptionPlansTab';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 
@@ -73,6 +74,7 @@ function AppRoutes() {
                 <Route index element={<AdminDashboard />} />
                 <Route path="organizations" element={<AdminDashboard />} />
                 <Route path="report-templates" element={<ReportTemplatesTab />} />
+                <Route path="subscription-plans" element={<SubscriptionPlansTab />} />
                 <Route path="*" element={<Navigate to="/admin" />} />
               </Routes>
             </AdminLayout>
