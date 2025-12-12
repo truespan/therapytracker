@@ -681,18 +681,8 @@ const PartnerSettings = () => {
                     </span>
                   )}
                 </div>
-                {organizationSubscription.subscription_billing_period && (
-                  <div className="mt-2 text-sm text-gray-600">
-                    Billing Period: <span className="font-medium capitalize">{organizationSubscription.subscription_billing_period}</span>
-                  </div>
-                )}
-                {organizationSubscription.number_of_therapists && (
-                  <div className="mt-1 text-sm text-gray-600">
-                    Number of Therapists: <span className="font-medium">{organizationSubscription.number_of_therapists}</span>
-                  </div>
-                )}
                 {organizationSubscription.subscription_start_date && (
-                  <div className="mt-1 text-sm text-gray-600">
+                  <div className="mt-2 text-sm text-gray-600">
                     Start Date: {new Date(organizationSubscription.subscription_start_date).toLocaleDateString()}
                   </div>
                 )}
