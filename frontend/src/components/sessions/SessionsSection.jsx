@@ -101,7 +101,7 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
             <FileText className="h-6 w-6 text-primary-600" />
             <div className="text-left">
               <h3 className="text-lg font-semibold text-gray-900">
-                Therapy Sessions
+                Sessions
               </h3>
               <p className="text-sm text-gray-600">
                 {sessions.length === 0
@@ -150,7 +150,7 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
               <FileText className="h-6 w-6 text-primary-600" />
               <div className="text-left">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Therapy Sessions
+                  Sessions
                 </h3>
                 <p className="text-sm text-gray-600">
                   {sessions.length === 0
