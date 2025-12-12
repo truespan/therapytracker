@@ -334,7 +334,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
               className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center space-x-1"
             >
               <FileText className="h-4 w-4" />
-              <span>View Note</span>
+              <span>View Notes</span>
             </button>
           ) : (
             <button
