@@ -31,3 +31,4 @@ INSERT INTO subscription_plans (
 COMMENT ON TABLE subscription_plans IS 'Subscription plans including Free Plan for TheraPTrack controlled organizations';
 
 
+

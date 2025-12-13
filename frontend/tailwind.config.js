@@ -6,32 +6,32 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // PRIMARY COLOR: Penna (Soft Blue) - Main accent for buttons, links, active states
+        // PRIMARY COLOR: Teal - Main accent for buttons, links, active states
         primary: {
-          50: '#f6f8fc',   // Lightest - subtle backgrounds
-          100: '#eef2f9',  // Very light - hover backgrounds
-          200: '#dce5f3',  // Light - disabled states
-          300: '#c5d5ea',  // Medium light - borders
-          400: '#aac4e3',  // Medium - secondary elements
-          500: '#B9C7E0',  // BASE - Main primary color (Penna)
-          600: '#96a8c9',  // Medium dark - hover states
-          700: '#7689b1',  // Dark - active states (USE FOR BUTTONS - accessibility)
-          800: '#5c6d94',  // Darker - pressed states
-          900: '#475776',  // Darkest - high contrast elements
+          50: '#e0f2f1',   // Lightest - subtle backgrounds
+          100: '#b2dfdb',  // Very light - hover backgrounds
+          200: '#80cbc4',  // Light - disabled states
+          300: '#4db6ac',  // Medium light - borders
+          400: '#26a69a',  // Medium - secondary elements
+          500: '#009688',  // BASE - Main primary color (Teal)
+          600: '#00897b',  // Medium dark - hover states
+          700: '#00796b',  // Dark - active states (USE FOR BUTTONS - accessibility)
+          800: '#00695c',  // Darker - pressed states
+          900: '#004d40',  // Darkest - high contrast elements
         },
 
-        // BACKGROUND COLOR: Hudson (Soft Peachy/Beige) - Main application background
+        // BACKGROUND COLOR: Light Gray/Beige - Main application background
         hudson: {
-          50: '#fdfcfc',   // Almost white
-          100: '#faf8f7',  // Very light
-          200: '#f5f1ef',  // Light
-          300: '#f0e7e3',  // Medium light
-          400: '#ebe0d8',  // Medium
-          500: '#EBDBD3',  // BASE - Main background color (Hudson)
-          600: '#d4bfb3',  // Medium dark
-          700: '#bda393',  // Dark
-          800: '#a68777',  // Darker
-          900: '#8a6f5f',  // Darkest
+          50: '#fafaf9',   // Almost white
+          100: '#f7f6f5',  // Very light
+          200: '#f5f4f2',  // Light
+          300: '#f3f2f0',  // Medium light
+          400: '#f2f0ef',  // Medium
+          500: '#F2F0EF',  // BASE - Main background color
+          600: '#d8d6d4',  // Medium dark
+          700: '#bebbb9',  // Dark
+          800: '#a4a09e',  // Darker
+          900: '#8a8683',  // Darkest
         },
 
         // CARD/SURFACE COLOR: French Porcelain (Light Lavender/White) - Elevated surfaces
@@ -76,18 +76,32 @@ module.exports = {
           900: '#70563f',  // Darkest
         },
 
-        // TEXT/NEUTRAL COLOR: Umbra (Dark Charcoal) - Primary text, dark UI elements
+        // TEXT/NEUTRAL COLOR: Dark Gray - Primary text, dark UI elements
         umbra: {
           50: '#f5f5f5',   // Very light gray (for subtle backgrounds)
           100: '#e8e8e8',  // Light gray
           200: '#d1d1d1',  // Medium light gray
           300: '#bababa',  // Medium gray
-          400: '#a3a3a3',  // Gray
-          500: '#8c8c8c',  // Medium dark gray
-          600: '#757575',  // Dark gray
-          700: '#5e5e5e',  // Darker gray
-          800: '#474747',  // Very dark gray
-          900: '#1F1F1F',  // BASE - Main text color (Umbra)
+          400: '#999999',  // Gray
+          500: '#666666',  // Medium dark gray
+          600: '#4d4d4d',  // Dark gray
+          700: '#404040',  // Darker gray
+          800: '#333333',  // Very dark gray
+          900: '#333333',  // BASE - Main text color
+        },
+
+        // SECONDARY/ACCENT COLOR: Yellow - For buttons and accents
+        secondary: {
+          50: '#fffbf0',   // Lightest
+          100: '#fff7e0',  // Very light
+          200: '#fff3d1',  // Light
+          300: '#ffefc2',  // Medium light
+          400: '#ffdf93',  // Medium
+          500: '#ffcb56',  // BASE - Secondary/accent color
+          600: '#ffc142',  // Medium dark - hover states
+          700: '#ffb72e',  // Dark - active states
+          800: '#e6a84d',  // Darker - pressed states
+          900: '#cc9544',  // Darkest - high contrast
         },
 
         // ERROR COLOR: Custom red for consistency
