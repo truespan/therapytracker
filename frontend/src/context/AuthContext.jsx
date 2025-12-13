@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback((shouldNavigate = false) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('lastActivityTimestamp');
     setUser(null);
     
     // Clear inactivity timer
@@ -42,6 +43,9 @@ export const AuthProvider = ({ children }) => {
 
     // Function to reset the inactivity timer
     const resetInactivityTimer = () => {
+      // Store current timestamp as last activity
+      localStorage.setItem('lastActivityTimestamp', Date.now().toString());
+      
       // Clear existing timer
       if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
@@ -82,9 +86,29 @@ export const AuthProvider = ({ children }) => {
     // Check if user is logged in on mount
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
+    const lastActivityTimestamp = localStorage.getItem('lastActivityTimestamp');
     
     if (token && savedUser) {
+      // Check if user has been inactive for too long (e.g., overnight)
+      if (lastActivityTimestamp) {
+        const timeSinceLastActivity = Date.now() - parseInt(lastActivityTimestamp, 10);
+        if (timeSinceLastActivity >= INACTIVITY_TIMEOUT) {
+          // User has been inactive longer than timeout, log them out
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('lastActivityTimestamp');
+          setUser(null);
+          setLoading(false);
+          // Trigger logout event for navigation
+          window.dispatchEvent(new CustomEvent('userLoggedOut'));
+          return;
+        }
+      }
+      
+      // User is still within inactivity timeout, restore session
       setUser(JSON.parse(savedUser));
+      // Update last activity timestamp to now since we're restoring the session
+      localStorage.setItem('lastActivityTimestamp', Date.now().toString());
       setLoading(false);
     } else {
       setLoading(false);
@@ -98,6 +122,7 @@ export const AuthProvider = ({ children }) => {
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('lastActivityTimestamp', Date.now().toString());
       setUser(userData);
       
       return { success: true, user: userData };
@@ -116,6 +141,7 @@ export const AuthProvider = ({ children }) => {
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.setItem('lastActivityTimestamp', Date.now().toString());
       setUser(newUser);
       
       return { success: true, user: newUser };
