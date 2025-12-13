@@ -665,7 +665,7 @@ const PartnerSettings = () => {
               <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Organization Plan (Inherited): </span>
+                    <span className="text-sm font-medium text-gray-700">Subscription Plan: </span>
                     <span className="text-lg font-bold text-primary-600">
                       {organizationSubscription.plan_name}
                     </span>

@@ -53,6 +53,12 @@ const createOrganization = async (req, res) => {
     // Convert empty strings to null for optional fields
     if (gst_no === '') gst_no = null;
     if (subscription_plan === '') subscription_plan = null;
+    if (number_of_therapists === '' || number_of_therapists === undefined) {
+      number_of_therapists = null;
+    } else if (number_of_therapists !== null) {
+      // Convert to integer if it's a string
+      number_of_therapists = parseInt(number_of_therapists, 10);
+    }
 
     // Validate subscription plan if provided
     const validPlans = ['basic', 'basic_silver', 'basic_gold', 'pro_silver', 'pro_gold', 'pro_platinum'];
@@ -126,6 +132,12 @@ const updateOrganization = async (req, res) => {
     // Convert empty strings to null for optional fields
     if (updateData.gst_no === '') updateData.gst_no = null;
     if (updateData.subscription_plan === '') updateData.subscription_plan = null;
+    if (updateData.number_of_therapists === '' || updateData.number_of_therapists === undefined) {
+      updateData.number_of_therapists = null;
+    } else if (updateData.number_of_therapists !== null) {
+      // Convert to integer if it's a string
+      updateData.number_of_therapists = parseInt(updateData.number_of_therapists, 10);
+    }
 
     // Validate subscription plan if provided
     const validPlans = ['basic', 'basic_silver', 'basic_gold', 'pro_silver', 'pro_gold', 'pro_platinum'];

@@ -52,7 +52,7 @@ class Organization {
   }
 
   static async getAll() {
-    const query = 'SELECT id, name, email, contact, address, photo_url, gst_no, subscription_plan, is_active, video_sessions_enabled, created_at FROM organizations ORDER BY name';
+    const query = 'SELECT id, name, email, contact, address, photo_url, gst_no, subscription_plan, is_active, video_sessions_enabled, theraptrack_controlled, number_of_therapists, created_at FROM organizations ORDER BY name';
     const result = await db.query(query);
     return result.rows;
   }
@@ -111,8 +111,12 @@ class Organization {
       values.push(theraptrack_controlled);
     }
     if (number_of_therapists !== undefined) {
+      // Convert empty string to null for integer field
+      const therapistsValue = (number_of_therapists === '' || number_of_therapists === null) 
+        ? null 
+        : parseInt(number_of_therapists, 10);
       updates.push(`number_of_therapists = $${paramIndex++}`);
-      values.push(number_of_therapists);
+      values.push(therapistsValue);
     }
     if (subscription_plan_id !== undefined) {
       updates.push(`subscription_plan_id = $${paramIndex++}`);
@@ -278,6 +282,8 @@ class Organization {
           o.subscription_plan,
           o.is_active,
           o.video_sessions_enabled,
+          o.theraptrack_controlled,
+          o.number_of_therapists,
           o.deactivated_at,
           o.deactivated_by,
           o.created_at,
@@ -293,8 +299,8 @@ class Organization {
         LEFT JOIN users u ON upa.user_id = u.id
         LEFT JOIN video_sessions vs ON p.id = vs.partner_id
         GROUP BY o.id, o.name, o.email, o.contact, o.address, o.gst_no,
-                 o.subscription_plan, o.is_active, o.video_sessions_enabled, o.deactivated_at,
-                 o.deactivated_by, o.created_at
+                 o.subscription_plan, o.is_active, o.video_sessions_enabled, o.theraptrack_controlled,
+                 o.number_of_therapists, o.deactivated_at, o.deactivated_by, o.created_at
       )
       SELECT
         om.*,

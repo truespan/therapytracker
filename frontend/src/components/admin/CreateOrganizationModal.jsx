@@ -68,7 +68,14 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit(formData);
+      // Convert empty strings to null for optional numeric fields
+      const submitData = {
+        ...formData,
+        number_of_therapists: formData.number_of_therapists === '' ? null : (formData.number_of_therapists ? parseInt(formData.number_of_therapists, 10) : null),
+        gst_no: formData.gst_no === '' ? null : formData.gst_no,
+        subscription_plan: formData.subscription_plan === '' ? null : formData.subscription_plan,
+      };
+      onSubmit(submitData);
     }
   };
 
