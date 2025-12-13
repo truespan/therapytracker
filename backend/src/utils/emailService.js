@@ -271,7 +271,103 @@ const sendPartnerVerificationEmail = async (email, token) => {
   }
 };
 
+const sendContactEmail = async (name, email, message) => {
+  const apiInstance = getBrevoApiInstance();
+  
+  if (!apiInstance) {
+    throw new Error('Email service not configured');
+  }
+
+  const contactEmail = process.env.CONTACT_EMAIL || process.env.EMAIL_USER || 'vakshreem@gmail.com';
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #00897b; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 5px 5px; }
+        .info-box { background-color: #fff; padding: 15px; margin: 15px 0; border-left: 4px solid #00897b; border-radius: 3px; }
+        .message-box { background-color: #fff; padding: 15px; margin: 15px 0; border: 1px solid #ddd; border-radius: 3px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>New Contact Form Submission</h1>
+        </div>
+        <div class="content">
+          <p>You have received a new contact form submission from TheraP Track website.</p>
+          
+          <div class="info-box">
+            <strong>Name:</strong> ${name}<br>
+            <strong>Email:</strong> ${email}
+          </div>
+          
+          ${message ? `
+          <div class="message-box">
+            <strong>Message:</strong><br>
+            ${message.replace(/\n/g, '<br>')}
+          </div>
+          ` : '<p><em>No message provided.</em></p>'}
+          
+          <p>Please respond to this inquiry at your earliest convenience.</p>
+        </div>
+        <div class="footer">
+          <p>This is an automated email from TheraP Track contact form.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const textContent = `
+    New Contact Form Submission
+    
+    You have received a new contact form submission from TheraP Track website.
+    
+    Name: ${name}
+    Email: ${email}
+    ${message ? `\nMessage:\n${message}` : '\nNo message provided.'}
+    
+    Please respond to this inquiry at your earliest convenience.
+    
+    This is an automated email from TheraP Track contact form.
+  `;
+
+  const sendSmtpEmail = new brevo.SendSmtpEmail();
+  sendSmtpEmail.sender = { email: 'vakshreem@gmail.com', name: 'TheraP Track Contact Form' };
+  sendSmtpEmail.to = [{ email: contactEmail }];
+  sendSmtpEmail.subject = `New Contact Form Submission from ${name}`;
+  sendSmtpEmail.htmlContent = htmlContent;
+  sendSmtpEmail.textContent = textContent;
+  sendSmtpEmail.replyTo = { email: email, name: name };
+
+  try {
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log('Contact form email sent:', data.messageId);
+    return data;
+  } catch (error) {
+    let errorMessage = 'Failed to send contact email';
+    
+    if (error.response) {
+      const statusCode = error.response.statusCode || error.response.status;
+      const errorBody = error.response.body || error.response.text || {};
+      errorMessage = errorBody.message || `Failed to send email. Status: ${statusCode}`;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    console.error('Error sending contact email:', errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
 module.exports = {
   sendPasswordResetEmail,
-  sendPartnerVerificationEmail
+  sendPartnerVerificationEmail,
+  sendContactEmail
 };

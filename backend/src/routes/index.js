@@ -236,6 +236,10 @@ router.get('/user/reports', authenticateToken, checkRole('user'), generatedRepor
 router.get('/user/reports/unread-count', authenticateToken, checkRole('user'), generatedReportController.getUserUnreadCount);
 router.post('/user/reports/:id/mark-viewed', authenticateToken, checkRole('user'), generatedReportController.markReportAsViewed);
 
+// ==================== CONTACT FORM ROUTES ====================
+const contactController = require('../controllers/contactController');
+router.post('/contact', contactController.submitContact);
+
 // Health check
 router.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

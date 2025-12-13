@@ -1,6 +1,7 @@
 -- TheraP Track Database Schema
 
 -- Drop tables if they exist (for clean setup)
+DROP TABLE IF EXISTS contact_submissions CASCADE;
 DROP TABLE IF EXISTS user_profiles CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
 DROP TABLE IF EXISTS user_partner_assignments CASCADE;
@@ -105,6 +106,15 @@ CREATE TABLE user_profiles (
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Contact submissions table
+CREATE TABLE contact_submissions (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better query performance
 CREATE INDEX idx_partners_organization ON partners(organization_id);
 CREATE INDEX idx_partners_partner_id ON partners(partner_id);
@@ -115,6 +125,8 @@ CREATE INDEX idx_user_profiles_session ON user_profiles(session_id);
 CREATE INDEX idx_auth_credentials_email ON auth_credentials(email);
 CREATE INDEX idx_profile_fields_user_session ON profile_fields(user_id, session_id);
 CREATE INDEX idx_profile_fields_session ON profile_fields(session_id);
+CREATE INDEX idx_contact_submissions_email ON contact_submissions(email);
+CREATE INDEX idx_contact_submissions_created_at ON contact_submissions(created_at);
 
 -- Insert default profile fields
 -- Rating scale: "Excellent", "Good", "Fair", "Poor", "Very Poor"

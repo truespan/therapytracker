@@ -24,7 +24,8 @@ api.interceptors.request.use(
                              config.url.includes('/auth/login') ||
                              config.url.includes('/auth/forgot-password') ||
                              config.url.includes('/auth/reset-password') ||
-                             config.url.includes('/google-calendar/callback');
+                             config.url.includes('/google-calendar/callback') ||
+                             config.url.includes('/contact');
 
     if (token && !isPublicEndpoint) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -55,7 +56,8 @@ api.interceptors.response.use(
                              error.config?.url?.includes('/auth/login') ||
                              error.config?.url?.includes('/auth/forgot-password') ||
                              error.config?.url?.includes('/auth/reset-password') ||
-                             error.config?.url?.includes('/google-calendar/callback');
+                             error.config?.url?.includes('/google-calendar/callback') ||
+                             error.config?.url?.includes('/contact');
 
     if (error.response?.status === 401 && !isPublicEndpoint) {
       localStorage.removeItem('token');
@@ -346,6 +348,11 @@ export const backgroundAPI = {
   // Get partner's default background
   getDefault: (partnerId) =>
     api.get(`/partners/${partnerId}/default-report-background`),
+};
+
+// Contact API
+export const contactAPI = {
+  submit: (formData) => api.post('/contact', formData),
 };
 
 export default api;
