@@ -13,7 +13,6 @@ import {
   UserCheck,
   Activity,
   ClipboardList,
-  CreditCard
 } from 'lucide-react';
 import { adminAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -23,7 +22,6 @@ import OrganizationMetricsModal from '../admin/OrganizationMetricsModal';
 import QuestionnaireList from '../questionnaires/QuestionnaireList';
 import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
-import SubscriptionPlansTab from '../admin/SubscriptionPlansTab';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -34,7 +32,7 @@ const AdminDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, inactive
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [metricsData, setMetricsData] = useState(null);
-  const [activeTab, setActiveTab] = useState('organizations'); // 'organizations', 'questionnaires', 'subscription-plans'
+  const [activeTab, setActiveTab] = useState('organizations'); // 'organizations', 'questionnaires'
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -195,28 +193,28 @@ const AdminDashboard = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const StatCard = ({ icon: Icon, label, value, subValue, color = 'indigo' }) => {
+  const StatCard = ({ icon: Icon, label, value, subValue, color = 'primary' }) => {
     // Icon color classes for dynamic colors
     const iconBgClass = {
-      'indigo': 'bg-indigo-100',
+      'primary': 'bg-primary-100',
       'blue': 'bg-primary-100',
       'green': 'bg-green-100',
-      'purple': 'bg-purple-100'
-    }[color] || 'bg-indigo-100';
+      'purple': 'bg-primary-200'
+    }[color] || 'bg-primary-100';
 
     const iconColorClass = {
-      'indigo': 'text-indigo-600',
+      'primary': 'text-primary-700',
       'blue': 'text-primary-700',
       'green': 'text-green-600',
-      'purple': 'text-purple-600'
-    }[color] || 'text-indigo-600';
+      'purple': 'text-primary-600'
+    }[color] || 'text-primary-700';
 
     const borderClass = {
-      'indigo': 'border-indigo-600',
+      'primary': 'border-primary-600',
       'blue': 'border-primary-600',
       'green': 'border-green-600',
-      'purple': 'border-purple-600'
-    }[color] || 'border-indigo-600';
+      'purple': 'border-primary-500'
+    }[color] || 'border-primary-600';
 
     return (
       <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${borderClass} flex-shrink-0 w-full lg:w-auto`}>
@@ -239,7 +237,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -278,7 +276,7 @@ const AdminDashboard = () => {
         {activeTab === 'organizations' && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2 font-medium shadow-md"
+            className="bg-primary-700 text-white px-6 py-3 rounded-lg hover:bg-primary-800 transition-colors flex items-center space-x-2 font-medium shadow-md"
           >
             <Plus className="h-5 w-5" />
             <span>Create Organization</span>
@@ -294,8 +292,8 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('organizations')}
               className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'organizations'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-600 text-primary-700'
+                  : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300'
               }`}
             >
               <Building2 className="h-5 w-5" />
@@ -305,23 +303,12 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('questionnaires')}
               className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'questionnaires'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-600 text-primary-700'
+                  : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300'
               }`}
             >
               <ClipboardList className="h-5 w-5" />
               Questionnaires
-            </button>
-            <button
-              onClick={() => setActiveTab('subscription-plans')}
-              className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'subscription-plans'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <CreditCard className="h-5 w-5" />
-              Subscription Plans
             </button>
           </nav>
         </div>
@@ -343,7 +330,7 @@ const AdminDashboard = () => {
                   label="Total Organizations"
                   value={stats.total_organizations || 0}
                   subValue={`${stats.active_organizations || 0} active`}
-                  color="indigo"
+                  color="primary"
                 />
               </div>
               <div className="w-[70%] flex-shrink-0">
@@ -368,7 +355,7 @@ const AdminDashboard = () => {
                   label="Total Sessions"
                   value={stats.total_sessions || 0}
                   subValue={`${stats.sessions_this_month || 0} this month`}
-                  color="purple"
+                  color="primary"
                 />
               </div>
             </div>
@@ -417,7 +404,7 @@ const AdminDashboard = () => {
               placeholder="Search organizations by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-umbra-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
 
@@ -427,8 +414,8 @@ const AdminDashboard = () => {
               onClick={() => setFilterStatus('all')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filterStatus === 'all'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-primary-700 text-white'
+                  : 'bg-umbra-100 text-umbra-700 hover:bg-umbra-200'
               }`}
             >
               All ({organizations.length})
@@ -516,7 +503,7 @@ const AdminDashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {org.subscription_plan ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                           {getPlanDisplayName(org.subscription_plan)}
                         </span>
                       ) : (
@@ -549,7 +536,7 @@ const AdminDashboard = () => {
                       <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => handleViewMetrics(org)}
-                          className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
+                          className="text-primary-700 hover:text-primary-900 p-1 rounded hover:bg-primary-50"
                           title="View Metrics"
                         >
                           <TrendingUp className="h-5 w-5" />
@@ -625,10 +612,6 @@ const AdminDashboard = () => {
             />
           )}
         </div>
-      )}
-
-      {activeTab === 'subscription-plans' && (
-        <SubscriptionPlansTab />
       )}
 
       {/* Modals */}

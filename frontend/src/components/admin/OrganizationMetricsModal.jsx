@@ -17,19 +17,55 @@ const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
     return planMap[plan] || plan;
   };
 
-  const StatCard = ({ icon: Icon, label, value, color = 'indigo' }) => (
-    <div className="bg-white rounded-lg border-2 border-gray-200 p-4 hover:border-indigo-300 transition-colors">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600">{label}</p>
-          <p className={`text-3xl font-bold text-${color}-600 mt-1`}>{value}</p>
-        </div>
-        <div className={`bg-${color}-100 p-3 rounded-full`}>
-          <Icon className={`h-6 w-6 text-${color}-600`} />
+  const StatCard = ({ icon: Icon, label, value, color = 'primary' }) => {
+    const colorClasses = {
+      'primary': {
+        text: 'text-primary-700',
+        bg: 'bg-primary-100',
+        border: 'border-primary-300',
+        value: 'text-primary-700'
+      },
+      'blue': {
+        text: 'text-primary-700',
+        bg: 'bg-primary-100',
+        border: 'border-primary-300',
+        value: 'text-primary-700'
+      },
+      'green': {
+        text: 'text-green-700',
+        bg: 'bg-green-100',
+        border: 'border-green-300',
+        value: 'text-green-700'
+      },
+      'purple': {
+        text: 'text-primary-600',
+        bg: 'bg-primary-200',
+        border: 'border-primary-300',
+        value: 'text-primary-600'
+      },
+      'orange': {
+        text: 'text-orange-700',
+        bg: 'bg-orange-100',
+        border: 'border-orange-300',
+        value: 'text-orange-700'
+      }
+    };
+    const classes = colorClasses[color] || colorClasses['primary'];
+    
+    return (
+      <div className={`bg-white rounded-lg border-2 border-gray-200 p-4 hover:border-primary-300 transition-colors`}>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600">{label}</p>
+            <p className={`text-3xl font-bold ${classes.value} mt-1`}>{value}</p>
+          </div>
+          <div className={`${classes.bg} p-3 rounded-full`}>
+            <Icon className={`h-6 w-6 ${classes.text}`} />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -38,7 +74,7 @@ const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-              <TrendingUp className="h-6 w-6 mr-2 text-indigo-600" />
+              <TrendingUp className="h-6 w-6 mr-2 text-primary-700" />
               Organization Metrics
             </h2>
             {metrics?.organization && (
@@ -57,7 +93,7 @@ const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
         <div className="p-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
             </div>
           ) : metrics ? (
             <div className="space-y-6">
@@ -69,7 +105,7 @@ const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
                     icon={UserCheck}
                     label="Total Partners"
                     value={metrics.metrics?.total_partners || 0}
-                    color="blue"
+                    color="primary"
                   />
                   <StatCard
                     icon={Users}
@@ -81,7 +117,7 @@ const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
                     icon={Activity}
                     label="Total Sessions"
                     value={metrics.metrics?.total_sessions || 0}
-                    color="purple"
+                    color="primary"
                   />
                   <StatCard
                     icon={Calendar}
@@ -165,7 +201,7 @@ const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
                                 )}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                                   {partner.partner_id}
                                 </span>
                               </td>
@@ -219,7 +255,7 @@ const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
                     {metrics.organization.subscription_plan && (
                       <div>
                         <p className="text-sm text-gray-600">Subscription Plan</p>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                           {getPlanDisplayName(metrics.organization.subscription_plan)}
                         </span>
                       </div>

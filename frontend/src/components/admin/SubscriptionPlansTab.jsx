@@ -193,7 +193,7 @@ const SubscriptionPlansTab = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
       </div>
     );
   }
@@ -208,7 +208,7 @@ const SubscriptionPlansTab = () => {
         </div>
         <button
           onClick={handleCreate}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2 font-medium shadow-md"
+          className="bg-primary-700 text-white px-6 py-3 rounded-lg hover:bg-primary-800 transition-colors flex items-center space-x-2 font-medium shadow-md"
         >
           <Plus className="h-5 w-5" />
           <span>Create Plan</span>
@@ -309,7 +309,7 @@ const SubscriptionPlansTab = () => {
                       <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => handleEdit(plan)}
-                          className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
+                          className="text-primary-700 hover:text-primary-900 p-1 rounded hover:bg-primary-50"
                           title="Edit"
                         >
                           <Edit2 className="h-5 w-5" />
@@ -363,7 +363,7 @@ const SubscriptionPlansTab = () => {
                   name="plan_name"
                   value={formData.plan_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="e.g., Plan 1, Plan 2"
                   required
                 />
@@ -380,7 +380,7 @@ const SubscriptionPlansTab = () => {
                     name="min_sessions"
                     value={formData.min_sessions}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="0"
                     min="0"
                     required
@@ -395,7 +395,7 @@ const SubscriptionPlansTab = () => {
                     name="max_sessions"
                     value={formData.max_sessions}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="100"
                     min="0"
                     required
@@ -410,7 +410,7 @@ const SubscriptionPlansTab = () => {
                   name="has_video"
                   checked={formData.has_video}
                   onChange={handleChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
                 />
                 <label className="ml-2 block text-sm text-gray-700">
                   Includes Video Feature
@@ -432,7 +432,7 @@ const SubscriptionPlansTab = () => {
                         name="individual_yearly_price"
                         value={formData.individual_yearly_price}
                         onChange={handleChange}
-                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="0.00"
                         step="0.01"
                         min="0"
@@ -451,7 +451,7 @@ const SubscriptionPlansTab = () => {
                         name="individual_quarterly_price"
                         value={formData.individual_quarterly_price}
                         onChange={handleChange}
-                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="0.00"
                         step="0.01"
                         min="0"
@@ -470,7 +470,7 @@ const SubscriptionPlansTab = () => {
                         name="individual_monthly_price"
                         value={formData.individual_monthly_price}
                         onChange={handleChange}
-                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="0.00"
                         step="0.01"
                         min="0"
@@ -496,7 +496,7 @@ const SubscriptionPlansTab = () => {
                         name="organization_yearly_price"
                         value={formData.organization_yearly_price}
                         onChange={handleChange}
-                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="0.00"
                         step="0.01"
                         min="0"
@@ -515,7 +515,7 @@ const SubscriptionPlansTab = () => {
                         name="organization_quarterly_price"
                         value={formData.organization_quarterly_price}
                         onChange={handleChange}
-                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="0.00"
                         step="0.01"
                         min="0"
@@ -534,7 +534,7 @@ const SubscriptionPlansTab = () => {
                         name="organization_monthly_price"
                         value={formData.organization_monthly_price}
                         onChange={handleChange}
-                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="0.00"
                         step="0.01"
                         min="0"
@@ -552,7 +552,7 @@ const SubscriptionPlansTab = () => {
                   name="is_active"
                   checked={formData.is_active}
                   onChange={handleChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
                 />
                 <label className="ml-2 block text-sm text-gray-700">
                   Plan is Active
@@ -584,7 +584,7 @@ const SubscriptionPlansTab = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save className="h-4 w-4" />
                   <span>{saving ? 'Saving...' : editingPlan ? 'Update Plan' : 'Create Plan'}</span>
@@ -599,6 +599,8 @@ const SubscriptionPlansTab = () => {
 };
 
 export default SubscriptionPlansTab;
+
+
 
 
 

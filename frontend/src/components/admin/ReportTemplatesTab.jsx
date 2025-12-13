@@ -190,7 +190,7 @@ const ReportTemplatesTab = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading templates...</p>
         </div>
       </div>
@@ -213,7 +213,7 @@ const ReportTemplatesTab = () => {
           className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
             templateCount >= maxLimit
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-indigo-600 text-white hover:bg-indigo-700'
+              : 'bg-primary-700 text-white hover:bg-primary-800'
           }`}
         >
           <Plus className="h-5 w-5" />
@@ -243,7 +243,7 @@ const ReportTemplatesTab = () => {
           <p className="text-gray-600 mb-6">Upload your first report template to get started</p>
           <button
             onClick={() => setShowUploadModal(true)}
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors"
           >
             <Upload className="h-5 w-5" />
             <span>Upload Template</span>
@@ -280,7 +280,7 @@ const ReportTemplatesTab = () => {
                   <tr key={template.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <FileText className="h-5 w-5 text-indigo-600 mr-3" />
+                        <FileText className="h-5 w-5 text-primary-700 mr-3" />
                         <div className="text-sm font-medium text-gray-900">{template.name}</div>
                       </div>
                     </td>
@@ -309,7 +309,7 @@ const ReportTemplatesTab = () => {
                         </button>
                         <button
                           onClick={() => handleEdit(template)}
-                          className="text-indigo-600 hover:text-indigo-900"
+                          className="text-primary-700 hover:text-primary-900"
                           title="Edit"
                         >
                           <Edit2 className="h-5 w-5" />
@@ -358,7 +358,7 @@ const ReportTemplatesTab = () => {
                   type="text"
                   value={uploadData.name}
                   onChange={(e) => setUploadData({ ...uploadData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="e.g., Therapy Session Report"
                   required
                 />
@@ -371,7 +371,7 @@ const ReportTemplatesTab = () => {
                 <textarea
                   value={uploadData.description}
                   onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Brief description of the template..."
                   rows="3"
                 />
@@ -385,7 +385,7 @@ const ReportTemplatesTab = () => {
                   type="file"
                   accept=".docx"
                   onChange={handleFileChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">Maximum file size: 10MB</p>
@@ -406,7 +406,7 @@ const ReportTemplatesTab = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
+                  className="px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors disabled:bg-gray-400"
                   disabled={uploading}
                 >
                   {uploading ? 'Uploading...' : 'Upload'}
@@ -445,7 +445,7 @@ const ReportTemplatesTab = () => {
                   type="text"
                   value={editData.name}
                   onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="e.g., Therapy Session Report"
                   required
                 />
@@ -458,7 +458,7 @@ const ReportTemplatesTab = () => {
                 <textarea
                   value={editData.description}
                   onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="Brief description of the template..."
                   rows="3"
                 />
@@ -480,7 +480,7 @@ const ReportTemplatesTab = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
+                  className="px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors disabled:bg-gray-400"
                   disabled={uploading}
                 >
                   {uploading ? 'Updating...' : 'Update'}

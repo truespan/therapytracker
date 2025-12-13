@@ -97,7 +97,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
           <h2 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center">
-            <Building2 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-indigo-600" />
+            <Building2 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-primary-700" />
             <span className="hidden sm:inline">Create New Organization</span>
             <span className="sm:hidden">New Organization</span>
           </h2>
@@ -124,7 +124,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter organization name"
@@ -146,7 +146,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="organization@example.com"
@@ -168,7 +168,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="contact"
                 value={formData.contact}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.contact ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="1234567890"
@@ -190,7 +190,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 value={formData.address}
                 onChange={handleChange}
                 rows="3"
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.address ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter full address"
@@ -212,7 +212,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="gst_no"
                 value={formData.gst_no}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="GST registration number"
                 disabled={isLoading}
               />
@@ -230,7 +230,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="subscription_plan"
                 value={formData.subscription_plan}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 disabled={isLoading}
               >
                 <option value="">No plan</option>
@@ -253,7 +253,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                   name="video_sessions_enabled"
                   checked={formData.video_sessions_enabled}
                   onChange={handleChange}
-                  className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                  className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
                   disabled={isLoading}
                 />
               </div>
@@ -278,13 +278,13 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                   name="theraptrack_controlled"
                   checked={formData.theraptrack_controlled}
                   onChange={handleChange}
-                  className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                  className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
                   disabled={isLoading}
                 />
               </div>
               <div className="flex-1">
                 <div className="flex items-center">
-                  <Shield className="h-4 w-4 text-indigo-600 mr-2" />
+                  <Shield className="h-4 w-4 text-primary-700 mr-2" />
                   <span className="text-sm font-medium text-gray-900">
                     TheraPTrack Controlled
                   </span>
@@ -309,7 +309,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="number_of_therapists"
                 value={formData.number_of_therapists}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Enter number of therapists"
                 min="1"
                 disabled={isLoading}
@@ -332,7 +332,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.password ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter initial password"
@@ -357,7 +357,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading ? 'Creating...' : 'Create Organization'}
