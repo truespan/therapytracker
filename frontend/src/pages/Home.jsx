@@ -151,11 +151,8 @@ const Home = () => {
               />
             </div>
             <h1 className="text-5xl font-bold mb-6">TheraP Track</h1>
-            <p className="text-xl mb-4 text-primary-100 max-w-3xl mx-auto">
-              Manage all your client information in one unified space, featuring industry-standard metrics, reports, and impactful tools to visualise your client's therapy progress.
-            </p>
-            <p className="text-lg mb-8 text-primary-200 max-w-2xl mx-auto">
-              Streamline your practice with comprehensive client management, data analytics, and professional reporting tools designed for modern therapy practices.
+            <p className="text-xl mb-8 text-primary-100 max-w-3xl mx-auto">
+              Streamline your practice with comprehensive client management, data analytics, and professional reporting tools designed for modern therapy practices and effective client communication.
             </p>
             <div className="flex justify-center space-x-4 flex-wrap gap-4">
               <Link to="/signup" className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-primary-50 transition">
