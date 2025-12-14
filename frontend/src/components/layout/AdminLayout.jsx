@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, User, LayoutDashboard, Building2, FileText, CreditCard } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, FileText, CreditCard } from 'lucide-react';
 
 const AdminLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -15,7 +15,6 @@ const AdminLayout = ({ children }) => {
 
   const navItems = [
     { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/admin/organizations', label: 'Organizations', icon: Building2 },
     { path: '/admin/report-templates', label: 'Reports Template', icon: FileText },
     { path: '/admin/subscription-plans', label: 'Subscription Plans', icon: CreditCard },
   ];

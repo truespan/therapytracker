@@ -72,7 +72,6 @@ function AppRoutes() {
             <AdminLayout>
               <Routes>
                 <Route index element={<AdminDashboard />} />
-                <Route path="organizations" element={<AdminDashboard />} />
                 <Route path="report-templates" element={<ReportTemplatesTab />} />
                 <Route path="subscription-plans" element={<SubscriptionPlansTab />} />
                 <Route path="*" element={<Navigate to="/admin" />} />
