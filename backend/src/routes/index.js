@@ -116,6 +116,7 @@ router.post('/organizations/:id/partner-subscriptions/remove', authenticateToken
 
 // ==================== APPOINTMENT ROUTES ====================
 router.post('/appointments', authenticateToken, appointmentController.createAppointment);
+router.get('/appointments/check-conflicts', authenticateToken, appointmentController.checkAppointmentConflicts);
 router.get('/appointments/:id', authenticateToken, appointmentController.getAppointmentById);
 router.get('/partners/:partnerId/appointments', authenticateToken, appointmentController.getPartnerAppointments);
 router.get('/partners/:partnerId/upcoming-appointments', authenticateToken, appointmentController.getUpcomingAppointments);

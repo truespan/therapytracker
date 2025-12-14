@@ -115,17 +115,96 @@ class Appointment {
     return videoResult.rows.length > 0;
   }
 
+  static async getConflictDetails(partnerId, appointmentDate, endDate, excludeId = null) {
+    // Get conflicting appointments with user details
+    let appointmentQuery = `
+      SELECT a.*, u.name as user_name, u.email as user_email
+      FROM appointments a
+      JOIN users u ON a.user_id = u.id
+      WHERE a.partner_id = $1
+      AND a.status != 'cancelled'
+      AND (
+        (a.appointment_date <= $2 AND a.end_date > $2)
+        OR (a.appointment_date < $3 AND a.end_date >= $3)
+        OR (a.appointment_date >= $2 AND a.end_date <= $3)
+      )
+    `;
+    const appointmentValues = [partnerId, appointmentDate, endDate];
+
+    if (excludeId) {
+      appointmentQuery += ` AND a.id != $4`;
+      appointmentValues.push(excludeId);
+    }
+
+    const appointmentResult = await db.query(appointmentQuery, appointmentValues);
+    const conflicts = [...appointmentResult.rows];
+
+    // Get conflicting video sessions with user details
+    const videoQuery = `
+      SELECT v.*, u.name as user_name, u.email as user_email,
+             v.session_date as appointment_date, v.end_date
+      FROM video_sessions v
+      JOIN users u ON v.user_id = u.id
+      WHERE v.partner_id = $1
+      AND v.status != 'cancelled'
+      AND (
+        (v.session_date <= $2 AND v.end_date > $2)
+        OR (v.session_date < $3 AND v.end_date >= $3)
+        OR (v.session_date >= $2 AND v.end_date <= $3)
+      )
+    `;
+    const videoResult = await db.query(videoQuery, [partnerId, appointmentDate, endDate]);
+
+    // Add video sessions to conflicts with a type flag
+    const videoConflicts = videoResult.rows.map(v => ({
+      ...v,
+      conflict_type: 'video_session'
+    }));
+
+    conflicts.push(...videoConflicts);
+
+    return conflicts;
+  }
+
   static async findUpcomingByPartner(partnerId, daysAhead = 7) {
     const query = `
       SELECT
         a.*,
         u.name as user_name,
         u.email as user_email,
-        ts.id as session_id,
-        CASE WHEN ts.id IS NOT NULL THEN true ELSE false END as has_session
+        (
+          SELECT ts.id
+          FROM therapy_sessions ts
+          WHERE (
+            ts.appointment_id = a.id
+            OR (
+              ts.appointment_id IS NULL
+              AND ts.partner_id = a.partner_id
+              AND ts.user_id = a.user_id
+              AND DATE(ts.session_date) = DATE(a.appointment_date)
+              AND ABS(EXTRACT(EPOCH FROM (ts.session_date - a.appointment_date))) < 300
+            )
+          )
+          ORDER BY CASE WHEN ts.appointment_id IS NOT NULL THEN 0 ELSE 1 END
+          LIMIT 1
+        ) as session_id,
+        CASE WHEN (
+          SELECT ts.id
+          FROM therapy_sessions ts
+          WHERE (
+            ts.appointment_id = a.id
+            OR (
+              ts.appointment_id IS NULL
+              AND ts.partner_id = a.partner_id
+              AND ts.user_id = a.user_id
+              AND DATE(ts.session_date) = DATE(a.appointment_date)
+              AND ABS(EXTRACT(EPOCH FROM (ts.session_date - a.appointment_date))) < 300
+            )
+          )
+          LIMIT 1
+        ) IS NOT NULL THEN true ELSE false END as has_session
       FROM appointments a
       JOIN users u ON a.user_id = u.id
-      LEFT JOIN therapy_sessions ts ON a.id = ts.appointment_id
       WHERE a.partner_id = $1
         AND a.appointment_date >= CURRENT_DATE
         AND a.appointment_date < CURRENT_DATE + INTERVAL '${daysAhead} days'

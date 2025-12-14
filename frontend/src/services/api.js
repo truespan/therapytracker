@@ -209,7 +209,18 @@ export const appointmentAPI = {
   },
   getByUser: (userId) => api.get(`/users/${userId}/appointments`),
   update: (id, data) => api.put(`/appointments/${id}`, data),
-  delete: (id) => api.delete(`/appointments/${id}`)
+  delete: (id) => api.delete(`/appointments/${id}`),
+  checkConflicts: (partnerId, appointmentDate, endDate, excludeId = null) => {
+    const params = {
+      partner_id: partnerId,
+      appointment_date: appointmentDate,
+      end_date: endDate
+    };
+    if (excludeId) {
+      params.exclude_id = excludeId;
+    }
+    return api.get('/appointments/check-conflicts', { params });
+  }
 };
 
 // Chart APIs

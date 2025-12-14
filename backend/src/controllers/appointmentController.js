@@ -179,6 +179,36 @@ const getUpcomingAppointments = async (req, res) => {
   }
 };
 
+const checkAppointmentConflicts = async (req, res) => {
+  try {
+    const { partner_id, appointment_date, end_date, exclude_id } = req.query;
+
+    if (!partner_id || !appointment_date || !end_date) {
+      return res.status(400).json({
+        error: 'partner_id, appointment_date, and end_date are required'
+      });
+    }
+
+    const conflicts = await Appointment.getConflictDetails(
+      parseInt(partner_id),
+      appointment_date,
+      end_date,
+      exclude_id ? parseInt(exclude_id) : null
+    );
+
+    res.json({
+      hasConflict: conflicts.length > 0,
+      conflicts: conflicts
+    });
+  } catch (error) {
+    console.error('Check conflicts error:', error);
+    res.status(500).json({
+      error: 'Failed to check conflicts',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   createAppointment,
   getAppointmentById,
@@ -186,6 +216,7 @@ module.exports = {
   getUserAppointments,
   updateAppointment,
   deleteAppointment,
-  getUpcomingAppointments
+  getUpcomingAppointments,
+  checkAppointmentConflicts
 };
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { therapySessionAPI, appointmentAPI } from '../../services/api';
 import { X, FileText, DollarSign, User, Calendar, Clock, AlertTriangle } from 'lucide-react';
 import moment from 'moment-timezone';
+import ConflictConfirmationModal from './ConflictConfirmationModal';
 
 const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,9 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
+  const [conflictData, setConflictData] = useState(null);
+  const [sessionCreationData, setSessionCreationData] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,51 +61,68 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
     setLoading(true);
 
     try {
-      // Get user's timezone
+      // Timezone handling
       const userTimezone = moment.tz.guess();
 
-      // Create datetime in user's local timezone
+      // Combine date and time in user's timezone
       const localDateTime = moment.tz(
         `${formData.session_date} ${formData.session_time}`,
         'YYYY-MM-DD HH:mm',
         userTimezone
       );
-
-      // Calculate end time
       const localEndDateTime = localDateTime.clone().add(parseInt(formData.session_duration), 'minutes');
 
       // Convert to UTC for storage
       const utcDateTime = localDateTime.clone().utc();
       const utcEndDateTime = localEndDateTime.clone().utc();
+      const sessionDateTime = utcDateTime.format('YYYY-MM-DD HH:mm:ss');
 
-      // Check for appointment conflicts
-      try {
-        const conflictCheck = await appointmentAPI.getByPartner(partnerId, {
-          start_date: utcDateTime.format('YYYY-MM-DD'),
-          end_date: utcDateTime.format('YYYY-MM-DD')
+      // Store session creation data for later use
+      const creationData = {
+        userTimezone,
+        localDateTime,
+        localEndDateTime,
+        utcDateTime,
+        utcEndDateTime,
+        sessionDateTime
+      };
+      setSessionCreationData(creationData);
+
+      // Check for appointment conflicts using the new API
+      const conflictCheck = await appointmentAPI.checkConflicts(
+        partnerId,
+        utcDateTime.format('YYYY-MM-DD HH:mm:ss'),
+        utcEndDateTime.format('YYYY-MM-DD HH:mm:ss')
+      );
+
+      if (conflictCheck.data.hasConflict && conflictCheck.data.conflicts.length > 0) {
+        // Show conflict dialog
+        setConflictData({
+          conflicts: conflictCheck.data.conflicts,
+          proposedTime: utcDateTime.format(),
+          proposedEndTime: utcEndDateTime.format()
         });
-
-        if (conflictCheck.data.appointments) {
-          const hasConflict = conflictCheck.data.appointments.some(apt => {
-            const aptStart = moment.utc(apt.appointment_date);
-            const aptEnd = moment.utc(apt.end_date);
-            return (utcDateTime.isBefore(aptEnd) && utcEndDateTime.isAfter(aptStart));
-          });
-
-          if (hasConflict) {
-            setError('This time slot conflicts with an existing appointment. Please choose a different time.');
-            setLoading(false);
-            return;
-          }
-        }
-      } catch (conflictErr) {
-        console.warn('Could not check for conflicts:', conflictErr);
-        // Continue anyway - don't block if conflict check fails
+        setShowConflictDialog(true);
+        setLoading(false);
+      } else {
+        // No conflicts - proceed with both session and appointment
+        await createSessionAndAppointment(creationData, true);
       }
+    } catch (error) {
+      console.error('Session creation error:', error);
+      setError(error.response?.data?.error || 'Failed to create session');
+      setLoading(false);
+    }
+  };
+
+  const createSessionAndAppointment = async (creationData, createAppointment) => {
+    setLoading(true);
+
+    try {
+      const { userTimezone, utcDateTime, utcEndDateTime, sessionDateTime } = creationData;
 
       // Create the therapy session
-      const sessionDateTime = utcDateTime.format('YYYY-MM-DD HH:mm:ss');
-      const sessionResponse = await therapySessionAPI.createStandalone({
+      await therapySessionAPI.createStandalone({
         partner_id: partnerId,
         user_id: formData.user_id,
         session_title: formData.session_title,
@@ -110,21 +131,23 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
         payment_notes: formData.payment_notes || null
       });
 
-      // Create corresponding appointment so it appears in calendar
-      try {
-        await appointmentAPI.create({
-          partner_id: partnerId,
-          user_id: formData.user_id,
-          title: formData.session_title,
-          appointment_date: utcDateTime.format('YYYY-MM-DD HH:mm:ss'),
-          end_date: utcEndDateTime.format('YYYY-MM-DD HH:mm:ss'),
-          duration_minutes: parseInt(formData.session_duration),
-          notes: formData.session_notes || '',
-          timezone: userTimezone
-        });
-      } catch (aptErr) {
-        console.error('Failed to create appointment:', aptErr);
-        // Session was created, so we continue - just log the error
+      // Create appointment only if requested
+      if (createAppointment) {
+        try {
+          await appointmentAPI.create({
+            partner_id: partnerId,
+            user_id: formData.user_id,
+            title: formData.session_title,
+            appointment_date: utcDateTime.format('YYYY-MM-DD HH:mm:ss'),
+            end_date: utcEndDateTime.format('YYYY-MM-DD HH:mm:ss'),
+            duration_minutes: parseInt(formData.session_duration),
+            notes: formData.session_notes || '',
+            timezone: userTimezone
+          });
+        } catch (aptErr) {
+          console.error('Failed to create appointment:', aptErr);
+          // Don't fail the entire operation if appointment creation fails
+        }
       }
 
       if (onSuccess) {
@@ -136,6 +159,23 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       setError(err.response?.data?.error || 'Failed to create session');
       setLoading(false);
     }
+  };
+
+  const handleCreateAppointmentAnyway = async () => {
+    setShowConflictDialog(false);
+    await createSessionAndAppointment(sessionCreationData, true);
+  };
+
+  const handleSkipAppointment = async () => {
+    setShowConflictDialog(false);
+    await createSessionAndAppointment(sessionCreationData, false);
+  };
+
+  const handleCancelConflictDialog = () => {
+    setShowConflictDialog(false);
+    setConflictData(null);
+    setSessionCreationData(null);
+    setLoading(false);
   };
 
   return (
@@ -346,6 +386,20 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
             </div>
           </div>
         </div>
+      )}
+
+      {/* Conflict Confirmation Modal */}
+      {showConflictDialog && conflictData && (
+        <ConflictConfirmationModal
+          isOpen={showConflictDialog}
+          conflicts={conflictData.conflicts}
+          proposedTime={conflictData.proposedTime}
+          proposedEndTime={conflictData.proposedEndTime}
+          onCreateAppointment={handleCreateAppointmentAnyway}
+          onSkipAppointment={handleSkipAppointment}
+          onCancel={handleCancelConflictDialog}
+          loading={loading}
+        />
       )}
     </div>
   );
