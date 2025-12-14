@@ -3,8 +3,10 @@ import { therapySessionAPI, appointmentAPI } from '../../services/api';
 import { X, FileText, DollarSign, User, Calendar, Clock, AlertTriangle } from 'lucide-react';
 import moment from 'moment-timezone';
 import ConflictConfirmationModal from './ConflictConfirmationModal';
+import { useAuth } from '../../context/AuthContext';
 
 const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSuccess }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     user_id: selectedUser?.id || '',
     session_title: '',
@@ -16,6 +18,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showFutureDateWarning, setShowFutureDateWarning] = useState(false);
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [conflictData, setConflictData] = useState(null);
   const [sessionCreationData, setSessionCreationData] = useState(null);
@@ -26,6 +29,59 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       ...prev,
       [name]: value
     }));
+    // Clear error when user changes date/time
+    if (name === 'session_date' || name === 'session_time') {
+      setError('');
+    }
+  };
+
+  // Check if the selected date/time is in the future
+  const isFutureDateTime = () => {
+    if (!formData.session_date || !formData.session_time) {
+      return false;
+    }
+
+    const userTimezone = moment.tz.guess();
+    const selectedDateTime = moment.tz(
+      `${formData.session_date} ${formData.session_time}`,
+      'YYYY-MM-DD HH:mm',
+      userTimezone
+    );
+    const now = moment.tz(userTimezone);
+
+    return selectedDateTime.isAfter(now);
+  };
+
+  // Check if the future date/time is more than 30 minutes away
+  const isFutureDateTimeMoreThan30Mins = () => {
+    if (!formData.session_date || !formData.session_time) {
+      return false;
+    }
+
+    const userTimezone = moment.tz.guess();
+    const selectedDateTime = moment.tz(
+      `${formData.session_date} ${formData.session_time}`,
+      'YYYY-MM-DD HH:mm',
+      userTimezone
+    );
+    const now = moment.tz(userTimezone);
+    const diffInMinutes = selectedDateTime.diff(now, 'minutes');
+
+    // Return true if it's in the future AND more than 30 minutes away
+    return selectedDateTime.isAfter(now) && diffInMinutes > 30;
+  };
+
+  // Get max date (today) for date input
+  const getMaxDate = () => {
+    return moment().format('YYYY-MM-DD');
+  };
+
+  // Get max time for time input (if date is today)
+  const getMaxTime = () => {
+    if (formData.session_date === moment().format('YYYY-MM-DD')) {
+      return moment().format('HH:mm');
+    }
+    return null; // No restriction if date is in the past
   };
 
   const handleSubmit = async (e) => {
@@ -52,8 +108,14 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       return;
     }
 
-    // Show confirmation dialog first
-    setShowConfirmDialog(true);
+    // Check if session is in the future and more than 30 minutes away
+    if (isFutureDateTimeMoreThan30Mins()) {
+      // Show future date warning dialog first
+      setShowFutureDateWarning(true);
+    } else {
+      // Show confirmation dialog directly
+      setShowConfirmDialog(true);
+    }
   };
 
   const handleConfirmCreate = async () => {
@@ -176,6 +238,16 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
     setConflictData(null);
     setSessionCreationData(null);
     setLoading(false);
+  };
+
+  const handleConfirmFutureDate = () => {
+    setShowFutureDateWarning(false);
+    // Proceed to confirmation dialog
+    setShowConfirmDialog(true);
+  };
+
+  const handleCancelFutureDate = () => {
+    setShowFutureDateWarning(false);
   };
 
   return (
@@ -334,9 +406,63 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
         </div>
       </div>
 
+      {/* Future Date Warning Dialog */}
+      {showFutureDateWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-start space-x-3 mb-4">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100">
+                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Future Date and Time Warning
+                </h3>
+                <p className="text-sm text-gray-600">
+                  You are creating a session with a future date and time. Please confirm that you want to proceed with creating this session.
+                </p>
+              </div>
+              <button
+                onClick={handleCancelFutureDate}
+                disabled={loading}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-xs text-orange-800">
+                <strong>Session Date & Time:</strong> {formData.session_date} at {formData.session_time}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCancelFutureDate}
+                disabled={loading}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmFutureDate}
+                disabled={loading}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Dialog */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-start space-x-3 mb-4">
               <div className="flex-shrink-0">
