@@ -10,7 +10,8 @@ const createTherapySession = async (req, res) => {
       user_id,
       session_title,
       session_notes,
-      payment_notes
+      payment_notes,
+      session_date
     } = req.body;
 
     // Validation
@@ -42,13 +43,16 @@ const createTherapySession = async (req, res) => {
       });
     }
 
-    // Create the therapy session with date from appointment
+    // Use override session_date if provided, otherwise use appointment date
+    const effectiveSessionDate = session_date || appointment.appointment_date;
+
+    // Create the therapy session with date from appointment or override
     const newSession = await TherapySession.create({
       appointment_id,
       partner_id,
       user_id,
       session_title,
-      session_date: appointment.appointment_date,
+      session_date: effectiveSessionDate,
       session_duration: appointment.duration_minutes,
       session_notes,
       payment_notes

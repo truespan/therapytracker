@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { appointmentAPI, videoSessionAPI } from '../../services/api';
 import StartSessionModal from './StartSessionModal';
 import StartSessionFromVideoModal from '../video/StartSessionFromVideoModal';
+import TimeConfirmationModal from '../common/TimeConfirmationModal';
+import { isFutureDate, isWithinTimeWindow, getCurrentDateTime } from '../../utils/sessionTimeValidation';
 import { Calendar, Clock, User, AlertCircle, CheckCircle, PlayCircle, Video, Trash2, X, ArrowRight } from 'lucide-react';
 
 const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToSession }) => {
@@ -15,6 +17,8 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
   const [showStartVideoSessionModal, setShowStartVideoSessionModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null); // Can be appointment or video session
   const [deleting, setDeleting] = useState(false);
+  const [showTimeConfirmModal, setShowTimeConfirmModal] = useState(false);
+  const [timeValidationData, setTimeValidationData] = useState(null);
 
   // Generate array of next 7 days starting from today
   const getNext7Days = () => {
@@ -86,13 +90,49 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
   }, [loadAppointments]);
 
   const handleStartSession = (appointment) => {
-    setSelectedAppointment(appointment);
-    setShowStartSessionModal(true);
+    // Check if future date (shouldn't happen as button is disabled)
+    if (isFutureDate(appointment.appointment_date)) return;
+
+    // Check time window
+    const { withinWindow, minutesDifference } = isWithinTimeWindow(appointment.appointment_date);
+
+    if (withinWindow) {
+      // Within ±15 min - proceed normally
+      setSelectedAppointment(appointment);
+      setShowStartSessionModal(true);
+    } else {
+      // Outside window - show time confirmation
+      setTimeValidationData({
+        item: appointment,
+        itemType: 'appointment',
+        minutesDifference,
+        scheduledTime: appointment.appointment_date
+      });
+      setShowTimeConfirmModal(true);
+    }
   };
 
   const handleStartVideoSession = (videoSession) => {
-    setSelectedVideoSession(videoSession);
-    setShowStartVideoSessionModal(true);
+    // Check if future date (shouldn't happen as button is disabled)
+    if (isFutureDate(videoSession.session_date)) return;
+
+    // Check time window
+    const { withinWindow, minutesDifference } = isWithinTimeWindow(videoSession.session_date);
+
+    if (withinWindow) {
+      // Within ±15 min - proceed normally
+      setSelectedVideoSession(videoSession);
+      setShowStartVideoSessionModal(true);
+    } else {
+      // Outside window - show time confirmation
+      setTimeValidationData({
+        item: videoSession,
+        itemType: 'video',
+        minutesDifference,
+        scheduledTime: videoSession.session_date
+      });
+      setShowTimeConfirmModal(true);
+    }
   };
 
   const handleCloseModal = () => {
@@ -107,6 +147,44 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
 
   const handleSessionCreated = () => {
     loadAppointments(); // Reload appointments to update status
+  };
+
+  const handleTimeConfirmYes = () => {
+    // User wants to update time to current time
+    const { item, itemType } = timeValidationData;
+
+    if (itemType === 'appointment') {
+      setSelectedAppointment({ ...item, overrideSessionTime: getCurrentDateTime() });
+      setShowStartSessionModal(true);
+    } else {
+      setSelectedVideoSession({ ...item, overrideSessionTime: getCurrentDateTime() });
+      setShowStartVideoSessionModal(true);
+    }
+
+    setShowTimeConfirmModal(false);
+    setTimeValidationData(null);
+  };
+
+  const handleTimeConfirmNo = () => {
+    // User wants to keep original time
+    const { item, itemType } = timeValidationData;
+
+    if (itemType === 'appointment') {
+      setSelectedAppointment(item);
+      setShowStartSessionModal(true);
+    } else {
+      setSelectedVideoSession(item);
+      setShowStartVideoSessionModal(true);
+    }
+
+    setShowTimeConfirmModal(false);
+    setTimeValidationData(null);
+  };
+
+  const handleTimeConfirmCancel = () => {
+    // User cancelled - don't open session modal
+    setShowTimeConfirmModal(false);
+    setTimeValidationData(null);
   };
 
   const handleDeleteItem = async () => {
@@ -331,7 +409,13 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                 e.stopPropagation();
                                 handleStartSession(item);
                               }}
-                              className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
+                              disabled={isFutureDate(item.appointment_date)}
+                              className={`w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 rounded-full transition-colors ${
+                                isFutureDate(item.appointment_date)
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                  : 'bg-primary-600 text-white hover:bg-primary-700'
+                              }`}
+                              title={isFutureDate(item.appointment_date) ? "Cannot start future sessions" : ""}
                             >
                               <PlayCircle className="h-3 w-3" />
                               <span className="font-medium">Start Session</span>
@@ -391,7 +475,13 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                   e.stopPropagation();
                                   handleStartSession(item);
                                 }}
-                                className="inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors whitespace-nowrap text-sm font-medium"
+                                disabled={isFutureDate(item.appointment_date)}
+                                className={`inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 rounded-full transition-colors whitespace-nowrap text-sm font-medium ${
+                                  isFutureDate(item.appointment_date)
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                                }`}
+                                title={isFutureDate(item.appointment_date) ? "Cannot start future sessions" : ""}
                               >
                                 <PlayCircle className="h-3.5 w-3.5 flex-shrink-0" />
                                 <span>Start Session</span>
@@ -451,7 +541,13 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                           ) : (
                             <button
                               onClick={() => handleStartVideoSession(item)}
-                              className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
+                              disabled={isFutureDate(item.session_date)}
+                              className={`w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 rounded-full transition-colors ${
+                                isFutureDate(item.session_date)
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                  : 'bg-purple-600 text-white hover:bg-purple-700'
+                              }`}
+                              title={isFutureDate(item.session_date) ? "Cannot start future sessions" : ""}
                             >
                               <PlayCircle className="h-3 w-3" />
                               <span className="font-medium">Start Session</span>
@@ -497,7 +593,13 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                             <div className="flex justify-center">
                               <button
                                 onClick={() => handleStartVideoSession(item)}
-                                className="inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors whitespace-nowrap text-sm font-medium"
+                                disabled={isFutureDate(item.session_date)}
+                                className={`inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 rounded-full transition-colors whitespace-nowrap text-sm font-medium ${
+                                  isFutureDate(item.session_date)
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                                }`}
+                                title={isFutureDate(item.session_date) ? "Cannot start future sessions" : ""}
                               >
                                 <PlayCircle className="h-3.5 w-3.5 flex-shrink-0" />
                                 <span>Start Session</span>
@@ -555,6 +657,19 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
           partnerId={partnerId}
           onClose={handleCloseVideoModal}
           onSuccess={handleSessionCreated}
+        />
+      )}
+
+      {/* Time Confirmation Modal */}
+      {showTimeConfirmModal && timeValidationData && (
+        <TimeConfirmationModal
+          isOpen={showTimeConfirmModal}
+          scheduledTime={timeValidationData.scheduledTime}
+          minutesDifference={timeValidationData.minutesDifference}
+          onConfirm={handleTimeConfirmYes}
+          onDecline={handleTimeConfirmNo}
+          onCancel={handleTimeConfirmCancel}
+          loading={false}
         />
       )}
 

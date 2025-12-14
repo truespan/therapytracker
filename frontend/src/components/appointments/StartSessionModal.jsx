@@ -38,13 +38,19 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
     setLoading(true);
 
     try {
+      // Use override time if provided, otherwise use scheduled time
+      const sessionDate = appointment.overrideSessionTime
+        ? appointment.overrideSessionTime
+        : appointment.appointment_date;
+
       await therapySessionAPI.create({
         appointment_id: appointment.id,
         partner_id: partnerId,
         user_id: appointment.user_id,
         session_title: formData.session_title,
         session_notes: formData.session_notes || null,
-        payment_notes: formData.payment_notes || null
+        payment_notes: formData.payment_notes || null,
+        session_date: sessionDate
       });
 
       if (onSuccess) {

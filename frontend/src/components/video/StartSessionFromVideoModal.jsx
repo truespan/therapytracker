@@ -38,11 +38,16 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
     setLoading(true);
 
     try {
+      // Use override time if provided, otherwise use scheduled time
+      const sessionDate = videoSession.overrideSessionTime
+        ? videoSession.overrideSessionTime
+        : videoSession.session_date;
+
       await therapySessionAPI.createStandalone({
         partner_id: partnerId,
         user_id: videoSession.user_id,
         session_title: formData.session_title,
-        session_date: videoSession.session_date,
+        session_date: sessionDate,
         session_duration: videoSession.duration_minutes,
         session_notes: formData.session_notes || null,
         payment_notes: formData.payment_notes || null,
