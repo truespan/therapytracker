@@ -472,6 +472,9 @@ const AdminDashboard = () => {
                   Status
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  TheraPTrack Controlled
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -479,7 +482,7 @@ const AdminDashboard = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredOrganizations.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center">
+                  <td colSpan="9" className="px-6 py-12 text-center">
                     <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-600">
                       {searchTerm ? 'No organizations found matching your search' : 'No organizations yet'}
@@ -529,6 +532,19 @@ const AdminDashboard = () => {
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                           <XCircle className="h-3 w-3 mr-1" />
                           Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      {org.theraptrack_controlled ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Yes
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          <XCircle className="h-3 w-3 mr-1" />
+                          No
                         </span>
                       )}
                     </td>

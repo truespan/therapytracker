@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Users, UserCheck, Activity, CheckCircle, Clock, Calendar, TrendingUp } from 'lucide-react';
+import { X, Users, UserCheck, Activity, CheckCircle, XCircle, Clock, Calendar, TrendingUp } from 'lucide-react';
 
 const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
   if (!isOpen) return null;
@@ -266,6 +266,20 @@ const OrganizationMetricsModal = ({ isOpen, onClose, metrics, isLoading }) => {
                         <p className="text-sm font-medium text-gray-900">{metrics.organization.gst_no}</p>
                       </div>
                     )}
+                    <div>
+                      <p className="text-sm text-gray-600">TheraPTrack Controlled</p>
+                      {metrics.organization.theraptrack_controlled ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Yes
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-1">
+                          <XCircle className="h-3 w-3 mr-1" />
+                          No
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
