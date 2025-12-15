@@ -37,6 +37,7 @@ router.post('/auth/forgot-password', authController.forgotPassword);
 router.post('/auth/reset-password', authController.resetPassword);
 router.get('/auth/verify-email', authController.verifyEmail);
 router.post('/auth/change-password', authenticateToken, authController.changePassword);
+router.post('/auth/therapist-signup', authController.therapistSignup);
 
 // ==================== GOOGLE CALENDAR ROUTES ====================
 router.get('/google-calendar/auth', authenticateToken, googleCalendarController.initiateOAuth);
@@ -86,6 +87,8 @@ router.post('/users/:userId/mental-status', authenticateToken, checkRole('partne
 // ==================== ORGANIZATION ROUTES ====================
 // Public route for signup - get all organizations
 router.get('/organizations', organizationController.getAllOrganizations);
+// Public route for verifying therapist signup tokens
+router.get('/organizations/verify-signup-token/:token', organizationController.verifyTherapistSignupToken);
 router.get('/organizations/:id', authenticateToken, organizationController.getOrganizationById);
 router.put('/organizations/:id', authenticateToken, organizationController.updateOrganization);
 router.get('/organizations/:id/partners', authenticateToken, checkRole('organization'), organizationController.getOrganizationPartners);
@@ -108,6 +111,9 @@ router.delete('/organizations/:id/clients/:clientId', authenticateToken, checkRo
 router.get('/organizations/:id/subscription', authenticateToken, organizationController.getSubscriptionDetails);
 router.put('/organizations/:id/subscription', authenticateToken, organizationController.updateSubscription);
 router.post('/organizations/:id/subscription/calculate-price', authenticateToken, organizationController.calculateSubscriptionPrice);
+
+// Organization therapist signup management
+router.get('/organizations/:id/therapist-signup-token', authenticateToken, checkRole('organization'), organizationController.getTherapistSignupToken);
 
 // Organization partner subscription management (for TheraPTrack controlled organizations)
 router.get('/organizations/:id/partner-subscriptions', authenticateToken, checkRole('organization'), partnerSubscriptionController.getOrganizationPartnerSubscriptions);

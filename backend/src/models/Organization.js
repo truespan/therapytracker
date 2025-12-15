@@ -412,6 +412,82 @@ class Organization {
     const result = await db.query(query, [id]);
     return result.rows[0]?.theraptrack_controlled ?? false;
   }
+
+  /**
+   * Get or create a signup token for therapist self-registration
+   * @param {number} organizationId - Organization ID
+   * @returns {Promise<Object>} Token object with token string and URL
+   */
+  static async getOrCreateSignupToken(organizationId) {
+    const crypto = require('crypto');
+
+    // Check if there's already an active token
+    const existingQuery = `
+      SELECT token, created_at
+      FROM organization_signup_tokens
+      WHERE organization_id = $1 AND is_active = TRUE
+      LIMIT 1
+    `;
+    const existingResult = await db.query(existingQuery, [organizationId]);
+
+    if (existingResult.rows.length > 0) {
+      return {
+        token: existingResult.rows[0].token,
+        created_at: existingResult.rows[0].created_at,
+        is_new: false
+      };
+    }
+
+    // Generate a new token (32 bytes = 64 hex characters)
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // Create the token
+    const insertQuery = `
+      INSERT INTO organization_signup_tokens (organization_id, token, is_active)
+      VALUES ($1, $2, TRUE)
+      RETURNING token, created_at
+    `;
+    const insertResult = await db.query(insertQuery, [organizationId, token]);
+
+    return {
+      token: insertResult.rows[0].token,
+      created_at: insertResult.rows[0].created_at,
+      is_new: true
+    };
+  }
+
+  /**
+   * Verify a signup token and get organization details
+   * @param {string} token - Signup token
+   * @returns {Promise<Object|null>} Organization details if token is valid, null otherwise
+   */
+  static async verifySignupToken(token) {
+    const query = `
+      SELECT o.id, o.name, o.theraptrack_controlled
+      FROM organization_signup_tokens ost
+      JOIN organizations o ON ost.organization_id = o.id
+      WHERE ost.token = $1
+        AND ost.is_active = TRUE
+        AND o.theraptrack_controlled = TRUE
+    `;
+    const result = await db.query(query, [token]);
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Deactivate a signup token
+   * @param {number} organizationId - Organization ID
+   * @returns {Promise<boolean>} Success status
+   */
+  static async deactivateSignupToken(organizationId) {
+    const query = `
+      UPDATE organization_signup_tokens
+      SET is_active = FALSE
+      WHERE organization_id = $1 AND is_active = TRUE
+    `;
+    await db.query(query, [organizationId]);
+    return true;
+  }
 }
 
 module.exports = Organization;

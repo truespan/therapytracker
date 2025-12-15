@@ -126,6 +126,9 @@ export const organizationAPI = {
 
   // Client management
   deleteClient: (organizationId, clientId) => api.delete(`/organizations/${organizationId}/clients/${clientId}`),
+
+  // Therapist signup URL management
+  getTherapistSignupToken: (organizationId) => api.get(`/organizations/${organizationId}/therapist-signup-token`),
 };
 
 // Admin APIs

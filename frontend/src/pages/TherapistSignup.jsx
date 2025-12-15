@@ -1,0 +1,596 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { User, Mail, Phone, MapPin, Lock, Calendar, Award, FileText, Eye, EyeOff, AlertCircle, CheckCircle, Building2 } from 'lucide-react';
+import CountryCodeSelect from '../components/common/CountryCodeSelect';
+import api from '../services/api';
+
+const TherapistSignup = () => {
+  const { token } = useParams();
+  const navigate = useNavigate();
+
+  const [tokenValid, setTokenValid] = useState(null);
+  const [organizationName, setOrganizationName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    sex: 'Male',
+    age: '',
+    email: '',
+    countryCode: '+91',
+    contact: '',
+    qualification: '',
+    license_id: '',
+    address: '',
+    password: '',
+    confirmPassword: '',
+    photo_url: '',
+    work_experience: '',
+    other_practice_details: '',
+    fee_min: '',
+    fee_max: '',
+    fee_currency: 'INR',
+  });
+
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Verify token on mount
+  useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        const response = await api.get(`/organizations/verify-signup-token/${token}`);
+        if (response.data.valid) {
+          setTokenValid(true);
+          setOrganizationName(response.data.organization_name);
+        } else {
+          setTokenValid(false);
+        }
+      } catch (err) {
+        console.error('Token verification error:', err);
+        setTokenValid(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) {
+      verifyToken();
+    } else {
+      setTokenValid(false);
+      setLoading(false);
+    }
+  }, [token]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
+
+    if (!formData.sex) {
+      newErrors.sex = 'Sex is required';
+    }
+
+    // Age is optional, but if provided, must be valid
+    if (formData.age && (formData.age < 18 || formData.age > 100)) {
+      newErrors.age = 'Age must be between 18 and 100';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    if (!formData.contact.trim()) {
+      newErrors.contact = 'Contact number is required';
+    } else if (!/^\d{7,15}$/.test(formData.contact)) {
+      newErrors.contact = 'Contact number must be 7-15 digits';
+    }
+
+    if (!formData.qualification.trim()) {
+      newErrors.qualification = 'Qualification is required';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!validate()) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      // Combine country code with contact number
+      const submitData = {
+        ...formData,
+        contact: `${formData.countryCode}${formData.contact}`,
+        token: token
+      };
+      delete submitData.countryCode;
+      delete submitData.confirmPassword;
+
+      await api.post('/auth/therapist-signup', submitData);
+
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+    } catch (err) {
+      console.error('Therapist signup error:', err);
+      setError(err.response?.data?.error || 'Failed to create account. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying signup link...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tokenValid) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Signup Link</h2>
+          <p className="text-gray-600 mb-6">
+            This signup link is invalid or has expired. Please contact your organization to get a new signup link.
+          </p>
+          <Link
+            to="/"
+            className="inline-block px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Go to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Created Successfully!</h2>
+          <p className="text-gray-600 mb-6">
+            Please check your email to verify your account. You will be redirected to the login page shortly.
+          </p>
+          <Link
+            to="/login"
+            className="inline-block px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 py-8 px-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+          {/* Header */}
+          <div className="bg-primary-600 text-white px-6 py-8 text-center">
+            <Building2 className="h-12 w-12 mx-auto mb-3" />
+            <h1 className="text-3xl font-bold mb-2">Join as a Therapist</h1>
+            <p className="text-primary-100">Create your therapist account</p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
+                <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter your full name"
+                  disabled={submitting}
+                />
+              </div>
+              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+            </div>
+
+            {/* Sex and Age */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sex <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="sex"
+                  value={formData.sex}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.sex ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  disabled={submitting}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Others">Others</option>
+                </select>
+                {errors.sex && <p className="mt-1 text-sm text-red-500">{errors.sex}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Age (Optional)
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="number"
+                    name="age"
+                    value={formData.age}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      errors.age ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="Age"
+                    min="18"
+                    max="100"
+                    disabled={submitting}
+                  />
+                </div>
+                {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="your.email@example.com"
+                  disabled={submitting}
+                />
+              </div>
+              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+            </div>
+
+            {/* Contact Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contact Number <span className="text-red-500">*</span>
+              </label>
+              <div className="flex space-x-2">
+                <CountryCodeSelect
+                  value={formData.countryCode}
+                  onChange={handleChange}
+                  name="countryCode"
+                />
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="tel"
+                    name="contact"
+                    value={formData.contact}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      errors.contact ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    placeholder="1234567890"
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+              {errors.contact && <p className="mt-1 text-sm text-red-500">{errors.contact}</p>}
+            </div>
+
+            {/* Qualification */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Qualification <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  name="qualification"
+                  value={formData.qualification}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.qualification ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g., M.D. Psychiatry, Clinical Psychologist"
+                  disabled={submitting}
+                />
+              </div>
+              {errors.qualification && <p className="mt-1 text-sm text-red-500">{errors.qualification}</p>}
+            </div>
+
+            {/* License ID */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Practitioner License ID (Optional)
+              </label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  name="license_id"
+                  value={formData.license_id}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="e.g., PSY-12345, MED-67890"
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Address (Optional)
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  rows="3"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Enter full address"
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            {/* Work Experience */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Work Experience (Optional)
+              </label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <textarea
+                  name="work_experience"
+                  value={formData.work_experience}
+                  onChange={handleChange}
+                  rows="3"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Enter work experience details"
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            {/* Other Practice Details */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Other Practice Details (Optional)
+              </label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <textarea
+                  name="other_practice_details"
+                  value={formData.other_practice_details}
+                  onChange={handleChange}
+                  rows="3"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="Enter other significant work related details"
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            {/* Fee Range */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fee Range (Optional)
+              </label>
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Min</label>
+                  <input
+                    type="number"
+                    name="fee_min"
+                    value={formData.fee_min}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    disabled={submitting}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Max</label>
+                  <input
+                    type="number"
+                    name="fee_max"
+                    value={formData.fee_max}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="0.00"
+                    min="0"
+                    step="0.01"
+                    disabled={submitting}
+                  />
+                </div>
+                <div className="w-32">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
+                  <select
+                    name="fee_currency"
+                    value={formData.fee_currency}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    disabled={submitting}
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="CAD">CAD (C$)</option>
+                    <option value="AUD">AUD (A$)</option>
+                    <option value="JPY">JPY (¥)</option>
+                    <option value="CNY">CNY (¥)</option>
+                  </select>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                This information will appear in the Therapist's profile when Therapists are displayed in the portal for Google based search by individual clients (Phase 2)
+              </p>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter password"
+                  disabled={submitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+              <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Confirm password"
+                  disabled={submitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>}
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-4">
+              <button
+                type="submit"
+                className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={submitting}
+              >
+                {submitting ? 'Creating Account...' : 'Create Account'}
+              </button>
+            </div>
+
+            <div className="text-center text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+                Login here
+              </Link>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TherapistSignup;

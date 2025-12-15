@@ -7,6 +7,7 @@ import AdminLayout from './components/layout/AdminLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import TherapistSignup from './pages/TherapistSignup';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
@@ -57,6 +58,7 @@ function AppRoutes() {
       <Route path="/" element={user ? <Navigate to={getRedirectPath()} /> : <Home />} />
       <Route path="/login" element={user ? <Navigate to={getRedirectPath()} /> : <Login />} />
       <Route path="/signup" element={user ? <Navigate to={getRedirectPath()} /> : <Signup />} />
+      <Route path="/therapist-signup/:token" element={user ? <Navigate to={getRedirectPath()} /> : <TherapistSignup />} />
       <Route path="/forgot-password" element={user ? <Navigate to={getRedirectPath()} /> : <ForgotPassword />} />
       <Route path="/reset-password" element={user ? <Navigate to={getRedirectPath()} /> : <ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />

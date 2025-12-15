@@ -514,6 +514,139 @@ const verifyEmail = async (req, res) => {
   }
 };
 
+/**
+ * Therapist signup using organization signup token
+ */
+const therapistSignup = async (req, res) => {
+  try {
+    const { token, password, ...partnerData } = req.body;
+
+    // Validate required fields
+    if (!token) {
+      return res.status(400).json({ error: 'Signup token is required' });
+    }
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    if (!partnerData.name || !partnerData.sex || !partnerData.email || !partnerData.contact || !partnerData.qualification) {
+      return res.status(400).json({
+        error: 'Name, sex, email, contact, and qualification are required'
+      });
+    }
+
+    // Verify signup token and get organization
+    const organization = await Organization.verifySignupToken(token);
+    if (!organization) {
+      return res.status(404).json({
+        error: 'Invalid or expired signup link. Please contact your organization for a new link.'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(partnerData.email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Validate contact format (must include country code)
+    const contactRegex = /^\+\d{1,3}\d{7,15}$/;
+    if (!contactRegex.test(partnerData.contact)) {
+      return res.status(400).json({
+        error: 'Invalid contact format. Must include country code (e.g., +911234567890)'
+      });
+    }
+
+    // Validate age range (if provided)
+    if (partnerData.age !== undefined && partnerData.age !== null && partnerData.age !== '') {
+      const ageNum = parseInt(partnerData.age);
+      if (isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
+        return res.status(400).json({ error: 'Age must be between 18 and 100' });
+      }
+    }
+
+    // Validate sex values
+    if (!['Male', 'Female', 'Others'].includes(partnerData.sex)) {
+      return res.status(400).json({ error: 'Sex must be one of: Male, Female, Others' });
+    }
+
+    // Check if email already exists
+    const existingAuth = await Auth.findByEmail(partnerData.email);
+    if (existingAuth) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // Generate verification token
+    const crypto = require('crypto');
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Create partner and auth credentials in transaction
+    const result = await db.transaction(async (client) => {
+      // Create partner with verification token
+      const partner = await Partner.create({
+        ...partnerData,
+        age: partnerData.age !== undefined && partnerData.age !== null && partnerData.age !== '' ? parseInt(partnerData.age) : null,
+        organization_id: organization.id,
+        verification_token: verificationToken,
+        verification_token_expires: tokenExpiry,
+        fee_min: partnerData.fee_min !== undefined && partnerData.fee_min !== null && partnerData.fee_min !== '' ? parseFloat(partnerData.fee_min) : null,
+        fee_max: partnerData.fee_max !== undefined && partnerData.fee_max !== null && partnerData.fee_max !== '' ? parseFloat(partnerData.fee_max) : null,
+        fee_currency: partnerData.fee_currency || 'INR'
+      }, client);
+
+      // Create auth credentials
+      await Auth.createCredentials({
+        user_type: 'partner',
+        reference_id: partner.id,
+        email: partnerData.email,
+        password_hash: passwordHash
+      }, client);
+
+      // If organization is TheraPTrack controlled, automatically assign Free Plan
+      const PartnerSubscription = require('../models/PartnerSubscription');
+      await PartnerSubscription.getOrCreateFreePlan(partner.id, client);
+
+      return partner;
+    });
+
+    // Send verification email
+    const { sendPartnerVerificationEmail } = require('../utils/emailService');
+    let emailSent = false;
+    try {
+      await sendPartnerVerificationEmail(partnerData.email, verificationToken);
+      emailSent = true;
+    } catch (emailError) {
+      console.error('Error sending partner verification email:', emailError.message || emailError);
+      // Don't fail the request if email fails - partner is still created
+    }
+
+    res.status(201).json({
+      message: emailSent
+        ? 'Account created successfully! Please check your email to verify your account.'
+        : 'Account created successfully, but verification email could not be sent. Please contact your organization.',
+      emailSent: emailSent,
+      partner: {
+        id: result.id,
+        partner_id: result.partner_id,
+        name: result.name,
+        email: result.email,
+        email_verified: result.email_verified
+      }
+    });
+  } catch (error) {
+    console.error('Therapist signup error:', error);
+    res.status(500).json({
+      error: 'Failed to create account',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -521,6 +654,7 @@ module.exports = {
   forgotPassword,
   resetPassword,
   changePassword,
-  verifyEmail
+  verifyEmail,
+  therapistSignup
 };
 

@@ -5,7 +5,7 @@ import {
   Building2, Users, UserCheck, Activity, Plus, Edit, UserX,
   UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail,
   AlertCircle, Send, Trash2, Settings, Calendar as CalendarIcon,
-  Clock, Video as VideoIcon, User as UserIcon, ClipboardList, CreditCard
+  Clock, Video as VideoIcon, User as UserIcon, ClipboardList, CreditCard, Link as LinkIcon, Copy
 } from 'lucide-react';
 import CreatePartnerModal from '../organization/CreatePartnerModal';
 import EditPartnerModal from '../organization/EditPartnerModal';
@@ -87,6 +87,11 @@ const OrganizationDashboard = () => {
   const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
   const [editingQuestionnaireId, setEditingQuestionnaireId] = useState(null);
   const [sharingQuestionnaire, setSharingQuestionnaire] = useState(null);
+
+  // Therapist signup URL states
+  const [showSignupUrlModal, setShowSignupUrlModal] = useState(false);
+  const [signupUrl, setSignupUrl] = useState('');
+  const [loadingSignupUrl, setLoadingSignupUrl] = useState(false);
 
   const handleQuestionnaireCopy = () => {
     // Reload is handled by QuestionnaireList
@@ -399,6 +404,27 @@ const OrganizationDashboard = () => {
     }
   };
 
+  const handleGetSignupUrl = async () => {
+    try {
+      setLoadingSignupUrl(true);
+      setError('');
+      const response = await organizationAPI.getTherapistSignupToken(user.id);
+      setSignupUrl(response.data.signup_url);
+      setShowSignupUrlModal(true);
+    } catch (err) {
+      console.error('Failed to get signup URL:', err);
+      setError(err.response?.data?.error || 'Failed to generate signup URL');
+    } finally {
+      setLoadingSignupUrl(false);
+    }
+  };
+
+  const handleCopySignupUrl = () => {
+    navigator.clipboard.writeText(signupUrl);
+    setSuccessMessage('Signup URL copied to clipboard!');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
   if (loading && partners.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -443,14 +469,27 @@ const OrganizationDashboard = () => {
               <p className="text-sm sm:text-base text-gray-600 mt-1">Organization Overview and Management</p>
             </div>
           </div>
-          {/* Add Therapist Button - Hidden on mobile, visible on desktop */}
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="hidden lg:flex items-center space-x-2 btn btn-primary whitespace-nowrap"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Add Therapist</span>
-          </button>
+          {/* Action Buttons - Hidden on mobile, visible on desktop */}
+          <div className="hidden lg:flex items-center space-x-3">
+            {user.theraptrack_controlled && (
+              <button
+                onClick={handleGetSignupUrl}
+                disabled={loadingSignupUrl}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50"
+                title="Get signup URL for therapists to join your organization"
+              >
+                <LinkIcon className="h-5 w-5" />
+                <span>Get Therapist Signup URL</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center space-x-2 btn btn-primary whitespace-nowrap"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Add Therapist</span>
+            </button>
+          </div>
         </div>
 
         {/* Add Therapist Button - Mobile Only (Floating Action Button style) */}
@@ -1055,6 +1094,70 @@ const OrganizationDashboard = () => {
         client={clientToDelete}
         isLoading={actionLoading}
       />
+
+      {/* Therapist Signup URL Modal */}
+      {showSignupUrlModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <LinkIcon className="h-6 w-6 mr-2 text-green-600" />
+                Therapist Signup URL
+              </h2>
+              <button
+                onClick={() => setShowSignupUrlModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-600 mb-4">
+                Share this URL with therapists who want to join your organization. They can use it to create their account and will be automatically linked to your organization.
+              </p>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-sm text-gray-500 mb-1">Signup URL:</p>
+                    <p className="text-sm font-mono text-gray-900 break-all">{signupUrl}</p>
+                  </div>
+                  <button
+                    onClick={handleCopySignupUrl}
+                    className="ml-4 flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span>Copy</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-1">Important Notes:</p>
+                  <ul className="list-disc ml-5 space-y-1">
+                    <li>This URL is unique to your organization and can be used multiple times</li>
+                    <li>Therapists who sign up using this link will NOT see your organization name during signup</li>
+                    <li>They will be automatically linked to your organization after account creation</li>
+                    <li>Therapists will need to verify their email address before they can log in</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowSignupUrlModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

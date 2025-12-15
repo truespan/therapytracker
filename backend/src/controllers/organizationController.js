@@ -950,6 +950,89 @@ const calculateSubscriptionPrice = async (req, res) => {
   }
 };
 
+/**
+ * Get or create therapist signup token for an organization
+ */
+const getTherapistSignupToken = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to get signup token for this organization' });
+    }
+
+    // Check if organization is TheraPTrack controlled
+    if (!organization.theraptrack_controlled) {
+      return res.status(403).json({
+        error: 'Therapist signup URLs are only available for TheraPTrack controlled organizations'
+      });
+    }
+
+    // Get or create token
+    const tokenData = await Organization.getOrCreateSignupToken(id);
+
+    // Construct the signup URL
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const signupUrl = `${frontendUrl}/therapist-signup/${tokenData.token}`;
+
+    res.json({
+      success: true,
+      token: tokenData.token,
+      signup_url: signupUrl,
+      created_at: tokenData.created_at,
+      is_new: tokenData.is_new
+    });
+  } catch (error) {
+    console.error('Get therapist signup token error:', error);
+    res.status(500).json({
+      error: 'Failed to get signup token',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Verify a therapist signup token (public endpoint)
+ */
+const verifyTherapistSignupToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      return res.status(400).json({ error: 'Token is required' });
+    }
+
+    const organization = await Organization.verifySignupToken(token);
+
+    if (!organization) {
+      return res.status(404).json({
+        error: 'Invalid or expired signup link',
+        valid: false
+      });
+    }
+
+    res.json({
+      success: true,
+      valid: true,
+      organization_id: organization.id,
+      organization_name: organization.name
+    });
+  } catch (error) {
+    console.error('Verify therapist signup token error:', error);
+    res.status(500).json({
+      error: 'Failed to verify token',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   getOrganizationById,
@@ -967,6 +1050,8 @@ module.exports = {
   deleteClient,
   getSubscriptionDetails,
   updateSubscription,
-  calculateSubscriptionPrice
+  calculateSubscriptionPrice,
+  getTherapistSignupToken,
+  verifyTherapistSignupToken
 };
 
