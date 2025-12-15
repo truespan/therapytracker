@@ -21,6 +21,7 @@ const mentalStatusExaminationController = require('../controllers/mentalStatusEx
 const reportTemplateController = require('../controllers/reportTemplateController');
 const generatedReportController = require('../controllers/generatedReportController');
 const subscriptionPlanRoutes = require('./subscriptionPlanRoutes');
+const subscriptionPlanController = require('../controllers/subscriptionPlanController');
 const partnerSubscriptionController = require('../controllers/partnerSubscriptionController');
 
 // Upload middleware
@@ -114,6 +115,9 @@ router.post('/organizations/:id/subscription/calculate-price', authenticateToken
 
 // Organization therapist signup management
 router.get('/organizations/:id/therapist-signup-token', authenticateToken, checkRole('organization'), organizationController.getTherapistSignupToken);
+
+// Subscription plans for individual therapists (public endpoint for signup)
+router.get('/subscription-plans/individual', subscriptionPlanController.getIndividualTherapistPlans);
 
 // Organization partner subscription management (for TheraPTrack controlled organizations)
 router.get('/organizations/:id/partner-subscriptions', authenticateToken, checkRole('organization'), partnerSubscriptionController.getOrganizationPartnerSubscriptions);

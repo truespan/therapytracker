@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { User, Mail, Phone, MapPin, Lock, Calendar, Award, FileText, Eye, EyeOff, AlertCircle, CheckCircle, Building2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Lock, Calendar, Award, FileText, Eye, EyeOff, AlertCircle, CheckCircle, Building2, CreditCard } from 'lucide-react';
 import CountryCodeSelect from '../components/common/CountryCodeSelect';
 import api from '../services/api';
 
@@ -14,6 +14,8 @@ const TherapistSignup = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -33,13 +35,14 @@ const TherapistSignup = () => {
     fee_min: '',
     fee_max: '',
     fee_currency: 'INR',
+    subscription_plan_id: '',
   });
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Verify token on mount
+  // Verify token on mount and fetch subscription plans
   useEffect(() => {
     const verifyToken = async () => {
       try {
@@ -58,11 +61,32 @@ const TherapistSignup = () => {
       }
     };
 
+    const fetchSubscriptionPlans = async () => {
+      try {
+        const response = await api.get('/subscription-plans/individual');
+        if (response.data.success) {
+          setSubscriptionPlans(response.data.plans);
+          // Set default to Free Plan if available
+          const freePlan = response.data.plans.find(plan => plan.plan_name === 'Free Plan');
+          if (freePlan) {
+            setFormData(prev => ({ ...prev, subscription_plan_id: freePlan.id }));
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching subscription plans:', err);
+        // Don't show error to user, just log it
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+
     if (token) {
       verifyToken();
+      fetchSubscriptionPlans();
     } else {
       setTokenValid(false);
       setLoading(false);
+      setLoadingPlans(false);
     }
   }, [token]);
 
@@ -123,6 +147,10 @@ const TherapistSignup = () => {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    if (!formData.subscription_plan_id) {
+      newErrors.subscription_plan_id = 'Please select a subscription plan';
     }
 
     setErrors(newErrors);
@@ -508,6 +536,34 @@ const TherapistSignup = () => {
               <p className="mt-2 text-xs text-gray-500">
                 This information will appear in the Therapist's profile when Therapists are displayed in the portal for Google based search by individual clients (Phase 2)
               </p>
+            </div>
+
+            {/* Subscription Plan Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Subscription Plan <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <select
+                  name="subscription_plan_id"
+                  value={formData.subscription_plan_id}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    errors.subscription_plan_id ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  disabled={submitting || loadingPlans}
+                >
+                  <option value="">-- Select a plan --</option>
+                  {subscriptionPlans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.plan_name} - ₹{plan.individual_monthly_price}/month ({plan.min_sessions}-{plan.max_sessions} sessions, {plan.has_video ? 'Video enabled' : 'No video'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {errors.subscription_plan_id && <p className="mt-1 text-sm text-red-500">{errors.subscription_plan_id}</p>}
+              {loadingPlans && <p className="mt-1 text-xs text-gray-500">Loading plans...</p>}
             </div>
 
             {/* Password */}

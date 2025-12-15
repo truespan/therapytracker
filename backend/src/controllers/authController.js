@@ -607,9 +607,19 @@ const therapistSignup = async (req, res) => {
         password_hash: passwordHash
       }, client);
 
-      // If organization is TheraPTrack controlled, automatically assign Free Plan
+      // Assign selected subscription plan or default to Free Plan
       const PartnerSubscription = require('../models/PartnerSubscription');
-      await PartnerSubscription.getOrCreateFreePlan(partner.id, client);
+      if (partnerData.subscription_plan_id) {
+        // Use the selected subscription plan
+        await PartnerSubscription.create({
+          partner_id: partner.id,
+          subscription_plan_id: parseInt(partnerData.subscription_plan_id),
+          billing_period: 'monthly' // Always monthly for individual therapists
+        }, client);
+      } else {
+        // Fallback to Free Plan if no plan selected
+        await PartnerSubscription.getOrCreateFreePlan(partner.id, client);
+      }
 
       return partner;
     });

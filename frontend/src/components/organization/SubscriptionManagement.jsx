@@ -186,6 +186,23 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     return labels[period] || period;
   };
 
+  const getAvailableBillingPeriods = (planId) => {
+    const plan = subscriptionPlans.find(p => p.id === parseInt(planId));
+    if (!plan) return ['monthly']; // Default to monthly only
+    
+    // Special handling for Free Plan - only monthly allowed
+    if (plan.plan_name && plan.plan_name.toLowerCase() === 'free plan') {
+      return ['monthly'];
+    }
+    
+    const periods = ['monthly']; // Always include monthly
+    
+    if (plan.individual_quarterly_enabled) periods.push('quarterly');
+    if (plan.individual_yearly_enabled) periods.push('yearly');
+    
+    return periods;
+  };
+
   if (!isTheraPTrackControlled) {
     return null;
   }
@@ -339,9 +356,11 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
               onChange={(e) => setSelectedBillingPeriod(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="yearly">Yearly</option>
+              {getAvailableBillingPeriods(selectedPlanId).map(period => (
+                <option key={period} value={period}>
+                  {getBillingPeriodLabel(period)}
+                </option>
+              ))}
             </select>
           </div>
 

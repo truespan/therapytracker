@@ -1,4 +1,5 @@
 const SubscriptionPlan = require('../models/SubscriptionPlan');
+const db = require('../config/database');
 
 /**
  * Get all subscription plans
@@ -81,7 +82,13 @@ const createPlan = async (req, res) => {
       organization_yearly_price,
       organization_quarterly_price,
       organization_monthly_price,
-      is_active
+      is_active,
+      individual_yearly_enabled,
+      individual_quarterly_enabled,
+      individual_monthly_enabled,
+      organization_yearly_enabled,
+      organization_quarterly_enabled,
+      organization_monthly_enabled
     } = req.body;
 
     // Validate required fields
@@ -114,6 +121,23 @@ const createPlan = async (req, res) => {
       });
     }
 
+    // Validate enable/disable fields - monthly must be true
+    if (individual_monthly_enabled === false || organization_monthly_enabled === false) {
+      return res.status(400).json({
+        error: 'Monthly billing periods cannot be disabled'
+      });
+    }
+
+    // Special validation for Free Plan - only monthly billing allowed
+    if (plan_name && plan_name.toLowerCase() === 'free plan') {
+      if (individual_yearly_enabled !== false || individual_quarterly_enabled !== false ||
+          organization_yearly_enabled !== false || organization_quarterly_enabled !== false) {
+        return res.status(400).json({
+          error: 'Free Plan can only have monthly billing. Quarterly and yearly billing must be disabled.'
+        });
+      }
+    }
+
     // Create plan
     const newPlan = await SubscriptionPlan.create({
       plan_name,
@@ -126,7 +150,13 @@ const createPlan = async (req, res) => {
       organization_yearly_price: parseFloat(organization_yearly_price),
       organization_quarterly_price: parseFloat(organization_quarterly_price),
       organization_monthly_price: parseFloat(organization_monthly_price),
-      is_active: is_active !== undefined ? is_active : true
+      is_active: is_active !== undefined ? is_active : true,
+      individual_yearly_enabled: individual_yearly_enabled !== undefined ? Boolean(individual_yearly_enabled) : true,
+      individual_quarterly_enabled: individual_quarterly_enabled !== undefined ? Boolean(individual_quarterly_enabled) : true,
+      individual_monthly_enabled: true, // Force to true
+      organization_yearly_enabled: organization_yearly_enabled !== undefined ? Boolean(organization_yearly_enabled) : true,
+      organization_quarterly_enabled: organization_quarterly_enabled !== undefined ? Boolean(organization_quarterly_enabled) : true,
+      organization_monthly_enabled: true // Force to true
     });
 
     console.log(`[ADMIN] Subscription plan created: ${newPlan.plan_name} (ID: ${newPlan.id})`);
@@ -198,12 +228,53 @@ const updatePlan = async (req, res) => {
       }
     }
 
+    // Validate enable/disable fields - monthly must be true
+    if (updateData.individual_monthly_enabled === false || updateData.organization_monthly_enabled === false) {
+      return res.status(400).json({
+        error: 'Monthly billing periods cannot be disabled'
+      });
+    }
+
+    // Special validation for Free Plan - only monthly billing allowed
+    // Check if this is the Free Plan being updated (existingPlan already fetched above)
+    if (existingPlan && existingPlan.plan_name.toLowerCase() === 'free plan') {
+      // If any non-monthly periods are being enabled, reject the update
+      if ((updateData.individual_yearly_enabled === true) ||
+          (updateData.individual_quarterly_enabled === true) ||
+          (updateData.organization_yearly_enabled === true) ||
+          (updateData.organization_quarterly_enabled === true)) {
+        return res.status(400).json({
+          error: 'Free Plan can only have monthly billing. Quarterly and yearly billing cannot be enabled.'
+        });
+      }
+    }
+
     // Convert boolean fields
     if (updateData.has_video !== undefined) {
       updateData.has_video = Boolean(updateData.has_video);
     }
     if (updateData.is_active !== undefined) {
       updateData.is_active = Boolean(updateData.is_active);
+    }
+    if (updateData.individual_yearly_enabled !== undefined) {
+      updateData.individual_yearly_enabled = Boolean(updateData.individual_yearly_enabled);
+    }
+    if (updateData.individual_quarterly_enabled !== undefined) {
+      updateData.individual_quarterly_enabled = Boolean(updateData.individual_quarterly_enabled);
+    }
+    // Force monthly to true
+    if (updateData.individual_monthly_enabled !== undefined) {
+      updateData.individual_monthly_enabled = true;
+    }
+    if (updateData.organization_yearly_enabled !== undefined) {
+      updateData.organization_yearly_enabled = Boolean(updateData.organization_yearly_enabled);
+    }
+    if (updateData.organization_quarterly_enabled !== undefined) {
+      updateData.organization_quarterly_enabled = Boolean(updateData.organization_quarterly_enabled);
+    }
+    // Force monthly to true
+    if (updateData.organization_monthly_enabled !== undefined) {
+      updateData.organization_monthly_enabled = true;
     }
 
     // Update plan
@@ -316,6 +387,33 @@ const calculateOrganizationPrice = async (req, res) => {
   }
 };
 
+/**
+ * Get subscription plans available for individual therapists
+ * Filters plans that have individual_monthly_enabled = TRUE
+ */
+const getIndividualTherapistPlans = async (req, res) => {
+  try {
+    const query = `
+      SELECT * FROM subscription_plans
+      WHERE individual_monthly_enabled = TRUE
+      AND is_active = TRUE
+      ORDER BY individual_monthly_price ASC, plan_name ASC
+    `;
+    const result = await db.query(query);
+    
+    res.json({
+      success: true,
+      plans: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching individual therapist plans:', error);
+    res.status(500).json({
+      error: 'Failed to fetch individual therapist plans',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllPlans,
   getActivePlans,
@@ -323,7 +421,8 @@ module.exports = {
   createPlan,
   updatePlan,
   deletePlan,
-  calculateOrganizationPrice
+  calculateOrganizationPrice,
+  getIndividualTherapistPlans
 };
 
 

@@ -24,7 +24,13 @@ const SubscriptionPlansTab = () => {
     organization_yearly_price: '',
     organization_quarterly_price: '',
     organization_monthly_price: '',
-    is_active: true
+    is_active: true,
+    individual_yearly_enabled: true,
+    individual_quarterly_enabled: true,
+    individual_monthly_enabled: true,
+    organization_yearly_enabled: true,
+    organization_quarterly_enabled: true,
+    organization_monthly_enabled: true
   });
 
   useEffect(() => {
@@ -56,7 +62,13 @@ const SubscriptionPlansTab = () => {
       organization_yearly_price: '',
       organization_quarterly_price: '',
       organization_monthly_price: '',
-      is_active: true
+      is_active: true,
+      individual_yearly_enabled: true,
+      individual_quarterly_enabled: true,
+      individual_monthly_enabled: true,
+      organization_yearly_enabled: true,
+      organization_quarterly_enabled: true,
+      organization_monthly_enabled: true
     });
     setError(null);
     setSuccess(null);
@@ -69,6 +81,10 @@ const SubscriptionPlansTab = () => {
 
   const handleEdit = (plan) => {
     setEditingPlan(plan);
+    
+    // For Free Plan, force disable quarterly/yearly options
+    const isFreePlan = plan.plan_name && plan.plan_name.toLowerCase() === 'free plan';
+    
     setFormData({
       plan_name: plan.plan_name || '',
       min_sessions: plan.min_sessions || '',
@@ -80,7 +96,13 @@ const SubscriptionPlansTab = () => {
       organization_yearly_price: plan.organization_yearly_price || '',
       organization_quarterly_price: plan.organization_quarterly_price || '',
       organization_monthly_price: plan.organization_monthly_price || '',
-      is_active: plan.is_active !== undefined ? plan.is_active : true
+      is_active: plan.is_active !== undefined ? plan.is_active : true,
+      individual_yearly_enabled: isFreePlan ? false : (plan.individual_yearly_enabled !== undefined ? plan.individual_yearly_enabled : true),
+      individual_quarterly_enabled: isFreePlan ? false : (plan.individual_quarterly_enabled !== undefined ? plan.individual_quarterly_enabled : true),
+      individual_monthly_enabled: plan.individual_monthly_enabled !== undefined ? plan.individual_monthly_enabled : true,
+      organization_yearly_enabled: isFreePlan ? false : (plan.organization_yearly_enabled !== undefined ? plan.organization_yearly_enabled : true),
+      organization_quarterly_enabled: isFreePlan ? false : (plan.organization_quarterly_enabled !== undefined ? plan.organization_quarterly_enabled : true),
+      organization_monthly_enabled: plan.organization_monthly_enabled !== undefined ? plan.organization_monthly_enabled : true
     });
     setShowEditModal(true);
   };
@@ -152,7 +174,13 @@ const SubscriptionPlansTab = () => {
         organization_yearly_price: parseFloat(formData.organization_yearly_price),
         organization_quarterly_price: parseFloat(formData.organization_quarterly_price),
         organization_monthly_price: parseFloat(formData.organization_monthly_price),
-        is_active: formData.is_active
+        is_active: formData.is_active,
+        individual_yearly_enabled: formData.individual_yearly_enabled,
+        individual_quarterly_enabled: formData.individual_quarterly_enabled,
+        individual_monthly_enabled: formData.individual_monthly_enabled,
+        organization_yearly_enabled: formData.organization_yearly_enabled,
+        organization_quarterly_enabled: formData.organization_quarterly_enabled,
+        organization_monthly_enabled: formData.organization_monthly_enabled
       };
 
       if (editingPlan) {
@@ -179,6 +207,20 @@ const SubscriptionPlansTab = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Special handling for Free Plan - prevent enabling quarterly/yearly
+    if (formData.plan_name && formData.plan_name.toLowerCase() === 'free plan') {
+      if (name === 'individual_yearly_enabled' || name === 'individual_quarterly_enabled' ||
+          name === 'organization_yearly_enabled' || name === 'organization_quarterly_enabled') {
+        // Force these to remain false for Free Plan
+        setFormData(prev => ({
+          ...prev,
+          [name]: false
+        }));
+        return;
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -439,6 +481,18 @@ const SubscriptionPlansTab = () => {
                         required
                       />
                     </div>
+                    <div className="mt-2 flex items-center">
+                      <input
+                        type="checkbox"
+                        name="individual_yearly_enabled"
+                        checked={formData.individual_yearly_enabled}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label className="ml-2 block text-xs text-gray-600">
+                        Enable Yearly Billing
+                      </label>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -458,6 +512,18 @@ const SubscriptionPlansTab = () => {
                         required
                       />
                     </div>
+                    <div className="mt-2 flex items-center">
+                      <input
+                        type="checkbox"
+                        name="individual_quarterly_enabled"
+                        checked={formData.individual_quarterly_enabled}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label className="ml-2 block text-xs text-gray-600">
+                        Enable Quarterly Billing
+                      </label>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -476,6 +542,19 @@ const SubscriptionPlansTab = () => {
                         min="0"
                         required
                       />
+                    </div>
+                    <div className="mt-2 flex items-center">
+                      <input
+                        type="checkbox"
+                        name="individual_monthly_enabled"
+                        checked={formData.individual_monthly_enabled}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                        disabled
+                      />
+                      <label className="ml-2 block text-xs text-gray-600">
+                        Enable Monthly Billing (Always Enabled)
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -503,6 +582,18 @@ const SubscriptionPlansTab = () => {
                         required
                       />
                     </div>
+                    <div className="mt-2 flex items-center">
+                      <input
+                        type="checkbox"
+                        name="organization_yearly_enabled"
+                        checked={formData.organization_yearly_enabled}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label className="ml-2 block text-xs text-gray-600">
+                        Enable Yearly Billing
+                      </label>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -522,6 +613,18 @@ const SubscriptionPlansTab = () => {
                         required
                       />
                     </div>
+                    <div className="mt-2 flex items-center">
+                      <input
+                        type="checkbox"
+                        name="organization_quarterly_enabled"
+                        checked={formData.organization_quarterly_enabled}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label className="ml-2 block text-xs text-gray-600">
+                        Enable Quarterly Billing
+                      </label>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -540,6 +643,19 @@ const SubscriptionPlansTab = () => {
                         min="0"
                         required
                       />
+                    </div>
+                    <div className="mt-2 flex items-center">
+                      <input
+                        type="checkbox"
+                        name="organization_monthly_enabled"
+                        checked={formData.organization_monthly_enabled}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                        disabled
+                      />
+                      <label className="ml-2 block text-xs text-gray-600">
+                        Enable Monthly Billing (Always Enabled)
+                      </label>
                     </div>
                   </div>
                 </div>

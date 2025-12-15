@@ -13,7 +13,13 @@ class SubscriptionPlan {
       organization_yearly_price,
       organization_quarterly_price,
       organization_monthly_price,
-      is_active
+      is_active,
+      individual_yearly_enabled,
+      individual_quarterly_enabled,
+      individual_monthly_enabled,
+      organization_yearly_enabled,
+      organization_quarterly_enabled,
+      organization_monthly_enabled
     } = planData;
 
     const query = `
@@ -21,9 +27,11 @@ class SubscriptionPlan {
         plan_name, min_sessions, max_sessions, has_video,
         individual_yearly_price, individual_quarterly_price, individual_monthly_price,
         organization_yearly_price, organization_quarterly_price, organization_monthly_price,
-        is_active
+        is_active,
+        individual_yearly_enabled, individual_quarterly_enabled, individual_monthly_enabled,
+        organization_yearly_enabled, organization_quarterly_enabled, organization_monthly_enabled
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *
     `;
 
@@ -38,7 +46,13 @@ class SubscriptionPlan {
       organization_yearly_price,
       organization_quarterly_price,
       organization_monthly_price,
-      is_active !== undefined ? is_active : true
+      is_active !== undefined ? is_active : true,
+      individual_yearly_enabled !== undefined ? individual_yearly_enabled : true,
+      individual_quarterly_enabled !== undefined ? individual_quarterly_enabled : true,
+      individual_monthly_enabled !== undefined ? individual_monthly_enabled : true,
+      organization_yearly_enabled !== undefined ? organization_yearly_enabled : true,
+      organization_quarterly_enabled !== undefined ? organization_quarterly_enabled : true,
+      organization_monthly_enabled !== undefined ? organization_monthly_enabled : true
     ];
 
     const dbClient = client || db;
@@ -76,7 +90,13 @@ class SubscriptionPlan {
       organization_yearly_price,
       organization_quarterly_price,
       organization_monthly_price,
-      is_active
+      is_active,
+      individual_yearly_enabled,
+      individual_quarterly_enabled,
+      individual_monthly_enabled,
+      organization_yearly_enabled,
+      organization_quarterly_enabled,
+      organization_monthly_enabled
     } = planData;
 
     // Build dynamic update query
@@ -127,6 +147,30 @@ class SubscriptionPlan {
     if (is_active !== undefined) {
       updates.push(`is_active = $${paramIndex++}`);
       values.push(is_active);
+    }
+    if (individual_yearly_enabled !== undefined) {
+      updates.push(`individual_yearly_enabled = $${paramIndex++}`);
+      values.push(individual_yearly_enabled);
+    }
+    if (individual_quarterly_enabled !== undefined) {
+      updates.push(`individual_quarterly_enabled = $${paramIndex++}`);
+      values.push(individual_quarterly_enabled);
+    }
+    if (individual_monthly_enabled !== undefined) {
+      updates.push(`individual_monthly_enabled = $${paramIndex++}`);
+      values.push(individual_monthly_enabled);
+    }
+    if (organization_yearly_enabled !== undefined) {
+      updates.push(`organization_yearly_enabled = $${paramIndex++}`);
+      values.push(organization_yearly_enabled);
+    }
+    if (organization_quarterly_enabled !== undefined) {
+      updates.push(`organization_quarterly_enabled = $${paramIndex++}`);
+      values.push(organization_quarterly_enabled);
+    }
+    if (organization_monthly_enabled !== undefined) {
+      updates.push(`organization_monthly_enabled = $${paramIndex++}`);
+      values.push(organization_monthly_enabled);
     }
 
     if (updates.length === 0) {

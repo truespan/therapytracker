@@ -1011,14 +1011,19 @@ const verifyTherapistSignupToken = async (req, res) => {
       return res.status(400).json({ error: 'Token is required' });
     }
 
+    console.log('Verifying therapist signup token:', token);
+
     const organization = await Organization.verifySignupToken(token);
 
     if (!organization) {
+      console.log('Token verification failed - no organization found or token invalid');
       return res.status(404).json({
         error: 'Invalid or expired signup link',
         valid: false
       });
     }
+
+    console.log('Token verification successful for organization:', organization.name);
 
     res.json({
       success: true,

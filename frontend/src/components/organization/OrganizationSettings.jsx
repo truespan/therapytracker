@@ -36,6 +36,16 @@ const OrganizationSettings = () => {
     }
   }, [user]);
 
+  // Reset billing period when plan changes to ensure it's valid
+  useEffect(() => {
+    if (selectedPlanId && subscriptionPlans.length > 0) {
+      const availablePeriods = getAvailableBillingPeriods(selectedPlanId);
+      if (!availablePeriods.includes(billingPeriod)) {
+        setBillingPeriod('monthly'); // Reset to monthly if current period is not available
+      }
+    }
+  }, [selectedPlanId, subscriptionPlans, billingPeriod]);
+
   const loadSubscriptionDetails = async () => {
     if (!user?.id) return;
     try {
@@ -75,6 +85,56 @@ const OrganizationSettings = () => {
     } finally {
       setSubscriptionLoading(false);
     }
+  };
+
+  const getAvailableBillingPeriods = (planId) => {
+    console.log('Getting available periods for planId:', planId);
+    console.log('Available plans:', subscriptionPlans);
+    
+    if (!planId) return ['monthly'];
+    
+    const plan = subscriptionPlans.find(p => {
+      const match = p.id === parseInt(planId);
+      console.log(`Comparing ${p.id} (${typeof p.id}) with ${parseInt(planId)} (${typeof parseInt(planId)}): ${match}`);
+      return match;
+    });
+    
+    console.log('Found plan:', plan);
+    
+    if (!plan) {
+      console.log('No plan found, returning default monthly');
+      return ['monthly']; // Default to monthly only
+    }
+    
+    // Special handling for Free Plan - only monthly allowed
+    if (plan.plan_name && plan.plan_name.toLowerCase() === 'free plan') {
+      console.log('Free Plan detected, returning only monthly');
+      return ['monthly'];
+    }
+    
+    const periods = ['monthly']; // Always include monthly
+    
+    // Check organization-specific enable flags
+    if (plan.organization_quarterly_enabled) {
+      console.log('Quarterly enabled for organization');
+      periods.push('quarterly');
+    }
+    if (plan.organization_yearly_enabled) {
+      console.log('Yearly enabled for organization');
+      periods.push('yearly');
+    }
+    
+    console.log('Available periods:', periods);
+    return periods;
+  };
+
+  const getBillingPeriodLabel = (period) => {
+    const labels = {
+      monthly: 'Monthly',
+      quarterly: 'Quarterly',
+      yearly: 'Yearly'
+    };
+    return labels[period] || period;
   };
 
   useEffect(() => {
@@ -413,9 +473,11 @@ const OrganizationSettings = () => {
                 onChange={(e) => setBillingPeriod(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
-                <option value="monthly">Monthly</option>
-                <option value="quarterly">Quarterly</option>
-                <option value="yearly">Yearly</option>
+                {getAvailableBillingPeriods(selectedPlanId).map(period => (
+                  <option key={period} value={period}>
+                    {getBillingPeriodLabel(period)}
+                  </option>
+                ))}
               </select>
             </div>
 
