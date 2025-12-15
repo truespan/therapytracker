@@ -92,6 +92,17 @@ class Auth {
     return result.rows[0];
   }
 
+  static async updatePasswordByReference(userType, referenceId, newPasswordHash) {
+    const query = `
+      UPDATE auth_credentials
+      SET password_hash = $1
+      WHERE user_type = $2 AND reference_id = $3
+      RETURNING id, user_type, reference_id, email
+    `;
+    const result = await db.query(query, [newPasswordHash, userType, referenceId]);
+    return result.rows[0];
+  }
+
   static async delete(email) {
     const query = 'DELETE FROM auth_credentials WHERE LOWER(email) = LOWER($1) RETURNING *';
     const result = await db.query(query, [email]);

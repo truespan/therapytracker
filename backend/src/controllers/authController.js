@@ -432,6 +432,44 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const { id, userType } = req.user;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters long' });
+    }
+
+    const authRecord = await Auth.findByTypeAndId(userType, id);
+    if (!authRecord) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+
+    const isCurrentValid = await bcrypt.compare(currentPassword, authRecord.password_hash);
+    if (!isCurrentValid) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    const isSamePassword = await bcrypt.compare(newPassword, authRecord.password_hash);
+    if (isSamePassword) {
+      return res.status(400).json({ error: 'New password must be different from the current password' });
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await Auth.updatePasswordByReference(userType, id, newPasswordHash);
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+};
+
 const verifyEmail = async (req, res) => {
   try {
     const { token, type } = req.query;
@@ -482,6 +520,7 @@ module.exports = {
   getCurrentUser,
   forgotPassword,
   resetPassword,
+  changePassword,
   verifyEmail
 };
 

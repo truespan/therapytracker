@@ -4,6 +4,7 @@ import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCir
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import { googleCalendarAPI, partnerAPI } from '../../services/api';
+import ChangePasswordSection from '../common/ChangePasswordSection';
 
 const PartnerSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -615,6 +616,8 @@ const PartnerSettings = () => {
             </div>
           </div>
         </form>
+
+        <ChangePasswordSection />
 
         {/* Subscription Details Section - Show for all partners with organizations */}
         {organizationSubscription && (

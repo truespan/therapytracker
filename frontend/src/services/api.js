@@ -75,6 +75,7 @@ export const authAPI = {
   getCurrentUser: () => api.get('/auth/me'),
   forgotPassword: (identifier) => api.post('/auth/forgot-password', { identifier }),
   resetPassword: (token, newPassword) => api.post('/auth/reset-password', { token, newPassword }),
+  changePassword: (currentPassword, newPassword) => api.post('/auth/change-password', { currentPassword, newPassword }),
   verifyEmail: (token, type) => api.get('/auth/verify-email', { params: { token, type } }),
 };
 

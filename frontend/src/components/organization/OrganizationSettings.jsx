@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Save, CreditCard, Users, Calculator } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import { googleCalendarAPI, organizationAPI, subscriptionPlanAPI } from '../../services/api';
+import ChangePasswordSection from '../common/ChangePasswordSection';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -296,6 +297,8 @@ const OrganizationSettings = () => {
               </button>
             </div>
           )}
+
+          <ChangePasswordSection />
 
           {/* GST Number - Read Only */}
           <div>

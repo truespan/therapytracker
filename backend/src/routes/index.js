@@ -36,6 +36,7 @@ router.get('/auth/me', authenticateToken, authController.getCurrentUser);
 router.post('/auth/forgot-password', authController.forgotPassword);
 router.post('/auth/reset-password', authController.resetPassword);
 router.get('/auth/verify-email', authController.verifyEmail);
+router.post('/auth/change-password', authenticateToken, authController.changePassword);
 
 // ==================== GOOGLE CALENDAR ROUTES ====================
 router.get('/google-calendar/auth', authenticateToken, googleCalendarController.initiateOAuth);
