@@ -978,8 +978,10 @@ const getTherapistSignupToken = async (req, res) => {
     // Get or create token
     const tokenData = await Organization.getOrCreateSignupToken(id);
 
-    // Construct the signup URL
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // Construct the signup URL - use theraptrack.com for production
+    const frontendUrl = process.env.NODE_ENV === 'production'
+      ? 'https://theraptrack.com'
+      : (process.env.FRONTEND_URL || 'http://localhost:3000');
     const signupUrl = `${frontendUrl}/therapist-signup/${tokenData.token}`;
 
     res.json({
