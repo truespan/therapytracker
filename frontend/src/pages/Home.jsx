@@ -289,7 +289,7 @@ const Home = () => {
               <Mail className="h-8 w-8 text-primary-600" />
               <Phone className="h-8 w-8 text-primary-600" />
             </div>
-            <h2 className="text-4xl font-bold mb-4 text-gray-900">Let's Talk</h2>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900">Get in touch to begin your free trial</h2>
             <p className="text-lg text-gray-600">
               Have questions? We're here to help. Get in touch with us today.
             </p>
