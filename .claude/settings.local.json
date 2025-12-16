@@ -9,7 +9,8 @@
       "Bash(node replace-colors.js:*)",
       "Bash(kill:*)",
       "Bash(ls:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

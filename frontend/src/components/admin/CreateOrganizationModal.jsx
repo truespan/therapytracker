@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, CreditCard, Lock, Users, Shield } from 'lucide-react';
+import { X, Building2, Mail, Phone, MapPin, FileText, Lock, Users, Shield } from 'lucide-react';
 
 const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -8,7 +8,6 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     contact: '',
     address: '',
     gst_no: '',
-    subscription_plan: '',
     video_sessions_enabled: true,
     theraptrack_controlled: false,
     number_of_therapists: '',
@@ -73,7 +72,6 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         ...formData,
         number_of_therapists: formData.number_of_therapists === '' ? null : (formData.number_of_therapists ? parseInt(formData.number_of_therapists, 10) : null),
         gst_no: formData.gst_no === '' ? null : formData.gst_no,
-        subscription_plan: formData.subscription_plan === '' ? null : formData.subscription_plan,
       };
       onSubmit(submitData);
     }
@@ -86,7 +84,6 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
       contact: '',
       address: '',
       gst_no: '',
-      subscription_plan: '',
       video_sessions_enabled: true,
       theraptrack_controlled: false,
       number_of_therapists: '',
@@ -226,30 +223,6 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             </div>
           </div>
 
-          {/* Subscription Plan */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Subscription Plan (Optional)
-            </label>
-            <div className="relative">
-              <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <select
-                name="subscription_plan"
-                value={formData.subscription_plan}
-                onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                disabled={isLoading}
-              >
-                <option value="">No plan</option>
-                <option value="basic">Plan Basic</option>
-                <option value="basic_silver">Plan Basic - Silver</option>
-                <option value="basic_gold">Plan Basic - Gold</option>
-                <option value="pro_silver">Plan Pro - Silver</option>
-                <option value="pro_gold">Plan Pro - Gold</option>
-                <option value="pro_platinum">Plan Pro - Platinum</option>
-              </select>
-            </div>
-          </div>
 
           {/* Video Sessions Toggle */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">

@@ -4,6 +4,7 @@ import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, Che
 import ImageUpload from '../common/ImageUpload';
 import { googleCalendarAPI, organizationAPI, subscriptionPlanAPI } from '../../services/api';
 import ChangePasswordSection from '../common/ChangePasswordSection';
+import NonControlledSubscriptionManagement from './NonControlledSubscriptionManagement';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -15,36 +16,16 @@ const OrganizationSettings = () => {
   
   // Subscription state
   const [subscriptionDetails, setSubscriptionDetails] = useState(null);
-  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
-  const [numberOfTherapists, setNumberOfTherapists] = useState('');
-  const [selectedPlanId, setSelectedPlanId] = useState('');
-  const [billingPeriod, setBillingPeriod] = useState('monthly');
-  const [calculatedPrice, setCalculatedPrice] = useState(null);
-  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-  const [subscriptionSaving, setSubscriptionSaving] = useState(false);
 
   // Initialize form fields when user data is available
   useEffect(() => {
     if (user) {
       setContact(user.contact || '');
       setAddress(user.address || '');
-      setNumberOfTherapists(user.number_of_therapists || '');
-      setSelectedPlanId(user.subscription_plan_id || '');
-      setBillingPeriod(user.subscription_billing_period || 'monthly');
       loadSubscriptionDetails();
-      loadSubscriptionPlans();
     }
   }, [user]);
 
-  // Reset billing period when plan changes to ensure it's valid
-  useEffect(() => {
-    if (selectedPlanId && subscriptionPlans.length > 0) {
-      const availablePeriods = getAvailableBillingPeriods(selectedPlanId);
-      if (!availablePeriods.includes(billingPeriod)) {
-        setBillingPeriod('monthly'); // Reset to monthly if current period is not available
-      }
-    }
-  }, [selectedPlanId, subscriptionPlans, billingPeriod]);
 
   const loadSubscriptionDetails = async () => {
     if (!user?.id) return;
@@ -56,121 +37,11 @@ const OrganizationSettings = () => {
     }
   };
 
-  const loadSubscriptionPlans = async () => {
-    try {
-      const response = await subscriptionPlanAPI.getActive();
-      setSubscriptionPlans(response.data.plans || []);
-    } catch (err) {
-      console.error('Failed to load subscription plans:', err);
-    }
-  };
 
-  const calculatePrice = async () => {
-    if (!selectedPlanId || !numberOfTherapists || numberOfTherapists < 1) {
-      setCalculatedPrice(null);
-      return;
-    }
 
-    try {
-      setSubscriptionLoading(true);
-      const response = await organizationAPI.calculateSubscriptionPrice(user.id, {
-        plan_id: selectedPlanId,
-        number_of_therapists: parseInt(numberOfTherapists),
-        billing_period: billingPeriod
-      });
-      setCalculatedPrice(response.data);
-    } catch (err) {
-      console.error('Failed to calculate price:', err);
-      setCalculatedPrice(null);
-    } finally {
-      setSubscriptionLoading(false);
-    }
-  };
 
-  const getAvailableBillingPeriods = (planId) => {
-    console.log('Getting available periods for planId:', planId);
-    console.log('Available plans:', subscriptionPlans);
-    
-    if (!planId) return ['monthly'];
-    
-    const plan = subscriptionPlans.find(p => {
-      const match = p.id === parseInt(planId);
-      console.log(`Comparing ${p.id} (${typeof p.id}) with ${parseInt(planId)} (${typeof parseInt(planId)}): ${match}`);
-      return match;
-    });
-    
-    console.log('Found plan:', plan);
-    
-    if (!plan) {
-      console.log('No plan found, returning default monthly');
-      return ['monthly']; // Default to monthly only
-    }
-    
-    // Special handling for Free Plan - only monthly allowed
-    if (plan.plan_name && plan.plan_name.toLowerCase() === 'free plan') {
-      console.log('Free Plan detected, returning only monthly');
-      return ['monthly'];
-    }
-    
-    const periods = ['monthly']; // Always include monthly
-    
-    // Check organization-specific enable flags
-    if (plan.organization_quarterly_enabled) {
-      console.log('Quarterly enabled for organization');
-      periods.push('quarterly');
-    }
-    if (plan.organization_yearly_enabled) {
-      console.log('Yearly enabled for organization');
-      periods.push('yearly');
-    }
-    
-    console.log('Available periods:', periods);
-    return periods;
-  };
 
-  const getBillingPeriodLabel = (period) => {
-    const labels = {
-      monthly: 'Monthly',
-      quarterly: 'Quarterly',
-      yearly: 'Yearly'
-    };
-    return labels[period] || period;
-  };
 
-  useEffect(() => {
-    if (selectedPlanId && numberOfTherapists && billingPeriod) {
-      calculatePrice();
-    } else {
-      setCalculatedPrice(null);
-    }
-  }, [selectedPlanId, numberOfTherapists, billingPeriod]);
-
-  const handleSubscriptionUpdate = async () => {
-    if (!user?.id) return;
-
-    setSubscriptionSaving(true);
-    setErrorMessage('');
-    setSuccessMessage('');
-
-    try {
-      const updateData = {
-        subscription_plan_id: selectedPlanId || null,
-        number_of_therapists: numberOfTherapists ? parseInt(numberOfTherapists) : null,
-        subscription_billing_period: billingPeriod || null
-      };
-
-      await organizationAPI.updateSubscription(user.id, updateData);
-      setSuccessMessage('Subscription updated successfully!');
-      await refreshUser();
-      await loadSubscriptionDetails();
-      setTimeout(() => setSuccessMessage(''), 5000);
-    } catch (error) {
-      console.error('Failed to update subscription:', error);
-      setErrorMessage(error.response?.data?.error || 'Failed to update subscription. Please try again.');
-    } finally {
-      setSubscriptionSaving(false);
-    }
-  };
 
   const handleSave = async () => {
     if (!user?.id) return;
@@ -390,7 +261,7 @@ const OrganizationSettings = () => {
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Current Plan: </span>
+                    <span className="text-sm font-medium text-gray-700">Current Organization Plan: </span>
                     <span className="text-lg font-bold text-indigo-600">
                       {subscriptionDetails.plan_name}
                     </span>
@@ -424,91 +295,12 @@ const OrganizationSettings = () => {
               </div>
             )}
 
-            {/* Subscription Plan Selection */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subscription Plan
-              </label>
-              <select
-                value={selectedPlanId}
-                onChange={(e) => setSelectedPlanId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                <option value="">Select a plan</option>
-                {subscriptionPlans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.plan_name} ({plan.min_sessions} - {plan.max_sessions} sessions/month)
-                    {plan.has_video ? ' - With Video' : ' - No Video'}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Number of Therapists */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Number of Therapists <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="number"
-                  value={numberOfTherapists}
-                  onChange={(e) => setNumberOfTherapists(e.target.value)}
-                  placeholder="Enter number of therapists"
-                  min="1"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-              </div>
-              <p className="text-gray-500 text-xs mt-1">This will be used to calculate the total subscription amount</p>
-            </div>
-
-            {/* Billing Period */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Billing Period
-              </label>
-              <select
-                value={billingPeriod}
-                onChange={(e) => setBillingPeriod(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                {getAvailableBillingPeriods(selectedPlanId).map(period => (
-                  <option key={period} value={period}>
-                    {getBillingPeriodLabel(period)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Calculated Price */}
-            {calculatedPrice && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center mb-2">
-                  <Calculator className="h-5 w-5 text-green-600 mr-2" />
-                  <span className="text-sm font-medium text-gray-700">Calculated Price:</span>
-                </div>
-                <div className="text-2xl font-bold text-green-700">
-                  ₹{parseFloat(calculatedPrice.total_price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">
-                  ₹{parseFloat(calculatedPrice.price_per_therapist).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per therapist × {calculatedPrice.number_of_therapists} therapists ({calculatedPrice.billing_period})
-                </div>
-              </div>
-            )}
-
-            {/* Update Subscription Button */}
-            <div className="flex justify-end">
-              <button
-                onClick={handleSubscriptionUpdate}
-                disabled={subscriptionSaving || !selectedPlanId || !numberOfTherapists || numberOfTherapists < 1}
-                className={`px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                  subscriptionSaving || !selectedPlanId || !numberOfTherapists || numberOfTherapists < 1 ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                <Save className="h-4 w-4" />
-                <span>{subscriptionSaving ? 'Saving...' : 'Update Subscription'}</span>
-              </button>
+            {/* Therapist Subscription Management */}
+            <div className="mt-6">
+              <NonControlledSubscriptionManagement
+                organizationId={user.id}
+                organizationName={user.name}
+              />
             </div>
           </div>
           )}

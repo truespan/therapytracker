@@ -15,9 +15,15 @@ const SubscriptionPlansTab = () => {
   // Form state
   const [formData, setFormData] = useState({
     plan_name: '',
+    plan_type: 'individual',
     min_sessions: '',
     max_sessions: '',
     has_video: false,
+    video_hours: '',
+    extra_video_rate: '',
+    min_therapists: '',
+    max_therapists: '',
+    plan_order: '',
     individual_yearly_price: '',
     individual_quarterly_price: '',
     individual_monthly_price: '',
@@ -53,9 +59,15 @@ const SubscriptionPlansTab = () => {
   const resetForm = () => {
     setFormData({
       plan_name: '',
+      plan_type: 'individual',
       min_sessions: '',
       max_sessions: '',
       has_video: false,
+      video_hours: '',
+      extra_video_rate: '',
+      min_therapists: '',
+      max_therapists: '',
+      plan_order: '',
       individual_yearly_price: '',
       individual_quarterly_price: '',
       individual_monthly_price: '',
@@ -81,15 +93,21 @@ const SubscriptionPlansTab = () => {
 
   const handleEdit = (plan) => {
     setEditingPlan(plan);
-    
+
     // For Free Plan, force disable quarterly/yearly options
     const isFreePlan = plan.plan_name && plan.plan_name.toLowerCase() === 'free plan';
-    
+
     setFormData({
       plan_name: plan.plan_name || '',
+      plan_type: plan.plan_type || 'individual',
       min_sessions: plan.min_sessions || '',
       max_sessions: plan.max_sessions || '',
       has_video: plan.has_video || false,
+      video_hours: plan.video_hours || '',
+      extra_video_rate: plan.extra_video_rate || '',
+      min_therapists: plan.min_therapists || '',
+      max_therapists: plan.max_therapists || '',
+      plan_order: plan.plan_order || '',
       individual_yearly_price: plan.individual_yearly_price || '',
       individual_quarterly_price: plan.individual_quarterly_price || '',
       individual_monthly_price: plan.individual_monthly_price || '',
@@ -144,6 +162,34 @@ const SubscriptionPlansTab = () => {
         return;
       }
 
+      // Validate organization plan therapist ranges
+      if (formData.plan_type === 'organization') {
+        if (!formData.min_therapists || !formData.max_therapists) {
+          setError('Organization plans require therapist range (min and max therapists)');
+          setSaving(false);
+          return;
+        }
+        if (parseInt(formData.min_therapists) < 1 || parseInt(formData.max_therapists) < parseInt(formData.min_therapists)) {
+          setError('Invalid therapist range. Max must be >= min, and min must be >= 1');
+          setSaving(false);
+          return;
+        }
+      }
+
+      // Validate video fields if video is enabled
+      if (formData.has_video) {
+        if (!formData.video_hours || parseInt(formData.video_hours) < 0) {
+          setError('Video hours is required when video feature is enabled');
+          setSaving(false);
+          return;
+        }
+        if (!formData.extra_video_rate || parseFloat(formData.extra_video_rate) < 0) {
+          setError('Extra video rate is required when video feature is enabled');
+          setSaving(false);
+          return;
+        }
+      }
+
       // Validate all prices
       const priceFields = [
         'individual_yearly_price',
@@ -165,9 +211,11 @@ const SubscriptionPlansTab = () => {
       // Prepare data
       const submitData = {
         plan_name: formData.plan_name,
+        plan_type: formData.plan_type,
         min_sessions: parseInt(formData.min_sessions),
         max_sessions: parseInt(formData.max_sessions),
         has_video: formData.has_video,
+        plan_order: formData.plan_order ? parseInt(formData.plan_order) : 0,
         individual_yearly_price: parseFloat(formData.individual_yearly_price),
         individual_quarterly_price: parseFloat(formData.individual_quarterly_price),
         individual_monthly_price: parseFloat(formData.individual_monthly_price),
@@ -182,6 +230,24 @@ const SubscriptionPlansTab = () => {
         organization_quarterly_enabled: formData.organization_quarterly_enabled,
         organization_monthly_enabled: formData.organization_monthly_enabled
       };
+
+      // Add video fields if enabled
+      if (formData.has_video) {
+        submitData.video_hours = parseInt(formData.video_hours);
+        submitData.extra_video_rate = parseFloat(formData.extra_video_rate);
+      } else {
+        submitData.video_hours = null;
+        submitData.extra_video_rate = null;
+      }
+
+      // Add therapist range for organization plans
+      if (formData.plan_type === 'organization') {
+        submitData.min_therapists = parseInt(formData.min_therapists);
+        submitData.max_therapists = parseInt(formData.max_therapists);
+      } else {
+        submitData.min_therapists = null;
+        submitData.max_therapists = null;
+      }
 
       if (editingPlan) {
         await subscriptionPlanAPI.update(editingPlan.id, submitData);
@@ -278,25 +344,34 @@ const SubscriptionPlansTab = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Order
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Plan Name
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Sessions
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Video
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Therapist Range
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Individual (Monthly)
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Organization (Monthly)
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -304,39 +379,65 @@ const SubscriptionPlansTab = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {plans.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center">
+                  <td colSpan="10" className="px-6 py-12 text-center">
                     <p className="text-gray-600">No subscription plans found. Create your first plan to get started.</p>
                   </td>
                 </tr>
               ) : (
                 plans.map((plan) => (
                   <tr key={plan.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
+                      <div className="text-sm text-gray-900 font-medium">{plan.plan_order || 0}</div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{plan.plan_name}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        plan.plan_type === 'organization'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-purple-100 text-purple-800'
+                      }`}>
+                        {plan.plan_type === 'organization' ? 'Org' : 'Ind'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
                       <div className="text-sm text-gray-900">
-                        {plan.min_sessions} - {plan.max_sessions}
+                        {plan.min_sessions} - {plan.max_sessions >= 999999 ? '∞' : plan.max_sessions}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
                       {plan.has_video ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Yes
-                        </span>
+                        <div className="flex flex-col items-center">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {plan.video_hours}hrs
+                          </span>
+                          {plan.extra_video_rate && (
+                            <span className="text-xs text-gray-500 mt-1">₹{plan.extra_video_rate}/min</span>
+                          )}
+                        </div>
                       ) : (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                           No
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
+                      {plan.plan_type === 'organization' && plan.min_therapists && plan.max_therapists ? (
+                        <div className="text-sm text-gray-900">
+                          {plan.min_therapists} - {plan.max_therapists}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
                       <div className="text-sm text-gray-900">{formatPrice(plan.individual_monthly_price)}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
                       <div className="text-sm text-gray-900">{formatPrice(plan.organization_monthly_price)}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
                       {plan.is_active ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           Active
@@ -347,7 +448,7 @@ const SubscriptionPlansTab = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => handleEdit(plan)}
@@ -411,6 +512,39 @@ const SubscriptionPlansTab = () => {
                 />
               </div>
 
+              {/* Plan Type and Order */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Plan Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="plan_type"
+                    value={formData.plan_type}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="individual">Individual</option>
+                    <option value="organization">Organization</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Display Order
+                  </label>
+                  <input
+                    type="number"
+                    name="plan_order"
+                    value={formData.plan_order}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
+              </div>
+
               {/* Session Limits */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -458,6 +592,77 @@ const SubscriptionPlansTab = () => {
                   Includes Video Feature
                 </label>
               </div>
+
+              {/* Video Details (conditional on has_video) */}
+              {formData.has_video && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Video Hours per Month
+                    </label>
+                    <input
+                      type="number"
+                      name="video_hours"
+                      value={formData.video_hours}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="10"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Extra Video Rate (₹/min)
+                    </label>
+                    <input
+                      type="number"
+                      name="extra_video_rate"
+                      value={formData.extra_video_rate}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="0.75"
+                      step="0.01"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Therapist Range (conditional on plan_type=organization) */}
+              {formData.plan_type === 'organization' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Min Therapists <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="min_therapists"
+                      value={formData.min_therapists}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="2"
+                      min="1"
+                      required={formData.plan_type === 'organization'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Max Therapists <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="max_therapists"
+                      value={formData.max_therapists}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="5"
+                      min="1"
+                      required={formData.plan_type === 'organization'}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Individual Therapist Prices */}
               <div className="border-t border-gray-200 pt-4">

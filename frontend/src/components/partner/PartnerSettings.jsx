@@ -3,8 +3,9 @@ import { useAuth } from '../../context/AuthContext';
 import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText, CreditCard } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
-import { googleCalendarAPI, partnerAPI } from '../../services/api';
+import { googleCalendarAPI, partnerAPI, subscriptionPlanAPI, organizationAPI } from '../../services/api';
 import ChangePasswordSection from '../common/ChangePasswordSection';
+import PlanSelectionModal from '../common/PlanSelectionModal';
 
 const PartnerSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -15,6 +16,9 @@ const PartnerSettings = () => {
   const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
   const [organizationSubscription, setOrganizationSubscription] = useState(null);
   const [partnerSubscription, setPartnerSubscription] = useState(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [availablePlans, setAvailablePlans] = useState([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
 
   // Form state for editable fields
   const [formData, setFormData] = useState({
@@ -83,8 +87,8 @@ const PartnerSettings = () => {
         if (partnerData.organization.theraptrack_controlled) {
           setPartnerSubscription(partnerData.subscription || null);
         } else {
-          // For non-TheraPTrack controlled orgs, partners inherit organization subscription
-          setPartnerSubscription(null);
+          // For non-TheraPTrack controlled orgs, load partner's assigned subscription
+          setPartnerSubscription(partnerData.subscription || null);
         }
       } else {
         setOrganizationSubscription(null);
@@ -96,6 +100,7 @@ const PartnerSettings = () => {
       setPartnerSubscription(null);
     }
   };
+
 
   const checkGoogleCalendarStatus = async () => {
     try {
@@ -195,6 +200,62 @@ const PartnerSettings = () => {
         type: 'error', 
         text: err.response?.data?.error || 'Failed to update profile. Please try again.' 
       });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Load individual plans for selection
+  const loadIndividualPlans = async () => {
+    try {
+      setLoadingPlans(true);
+      const response = await subscriptionPlanAPI.getIndividualPlansForSelection();
+      setAvailablePlans(response.data.plans || []);
+    } catch (err) {
+      console.error('Failed to load individual plans:', err);
+      setSaveMessage({
+        type: 'error',
+        text: 'Failed to load subscription plans. Please try again.'
+      });
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
+
+  // Handle plan selection
+  const handlePlanSelection = async (planId, billingPeriod) => {
+    try {
+      setSaving(true);
+      setSaveMessage({ type: '', text: '' });
+
+      // Assign the plan to this partner
+      await organizationAPI.assignPartnerSubscriptions(user.organization_id, {
+        partner_ids: [user.id],
+        subscription_plan_id: planId,
+        billing_period: billingPeriod
+      });
+
+      setSaveMessage({
+        type: 'success',
+        text: 'Subscription plan updated successfully!'
+      });
+
+      setShowPlanModal(false);
+
+      // Refresh subscription data
+      await loadOrganizationSubscription();
+
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSaveMessage({ type: '', text: '' });
+      }, 5000);
+    } catch (err) {
+      console.error('Failed to assign plan:', err);
+      setSaveMessage({
+        type: 'error',
+        text: err.response?.data?.error || 'Failed to update subscription plan. Please try again.'
+      });
+      setShowPlanModal(false);
     } finally {
       setSaving(false);
     }
@@ -638,9 +699,68 @@ const PartnerSettings = () => {
                     </span>
                     {partnerSubscription.min_sessions !== null && partnerSubscription.max_sessions !== null && (
                       <span className="text-sm text-gray-600 ml-2">
-                        ({partnerSubscription.min_sessions === 0 && partnerSubscription.max_sessions === 0 
-                          ? 'No session limit' 
+                        ({partnerSubscription.min_sessions === 0 && partnerSubscription.max_sessions === 0
+                          ? 'No session limit'
                           : `${partnerSubscription.min_sessions} - ${partnerSubscription.max_sessions} sessions/month`})
+                      </span>
+                    )}
+                  </div>
+                  {partnerSubscription.has_video && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Video Enabled
+                    </span>
+                  )}
+                </div>
+                {partnerSubscription.billing_period && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    Billing Period: <span className="font-medium capitalize">{partnerSubscription.billing_period}</span>
+                  </div>
+                )}
+                {partnerSubscription.assigned_at && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    Assigned: {new Date(partnerSubscription.assigned_at).toLocaleDateString()}
+                  </div>
+                )}
+                {partnerSubscription.video_hours && (
+                  <div className="mt-1 text-sm text-gray-600">
+                    Video Hours: <span className="font-medium">{partnerSubscription.video_hours} hrs/month</span>
+                    {partnerSubscription.extra_video_rate && (
+                      <span className="ml-2">(₹{partnerSubscription.extra_video_rate}/extra min)</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Select Plan Button for TheraPTrack Controlled Organizations */}
+            {organizationSubscription.theraptrack_controlled && (
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    loadIndividualPlans();
+                    setShowPlanModal(true);
+                  }}
+                  disabled={loadingPlans || saving}
+                  className="btn btn-primary flex items-center space-x-2"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>{loadingPlans ? 'Loading Plans...' : 'Select Plan'}</span>
+                </button>
+              </div>
+            )}
+
+            {/* For Non-TheraPTrack Controlled Organizations: Show partner's assigned subscription */}
+            {!organizationSubscription.theraptrack_controlled && partnerSubscription?.plan_name && (
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Your Assigned Plan: </span>
+                    <span className="text-lg font-bold text-primary-600">
+                      {partnerSubscription.plan_name}
+                    </span>
+                    {partnerSubscription.min_sessions !== null && partnerSubscription.max_sessions !== null && (
+                      <span className="text-sm text-gray-600 ml-2">
+                        ({partnerSubscription.min_sessions} - {partnerSubscription.max_sessions} sessions/month)
                       </span>
                     )}
                   </div>
@@ -663,49 +783,26 @@ const PartnerSettings = () => {
               </div>
             )}
 
-            {/* For Non-TheraPTrack Controlled Organizations: Show organization subscription (inherited) */}
-            {!organizationSubscription.theraptrack_controlled && organizationSubscription.plan_name && (
-              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Subscription Plan: </span>
-                    <span className="text-lg font-bold text-primary-600">
-                      {organizationSubscription.plan_name}
-                    </span>
-                    {organizationSubscription.min_sessions !== null && organizationSubscription.max_sessions !== null && (
-                      <span className="text-sm text-gray-600 ml-2">
-                        ({organizationSubscription.min_sessions} - {organizationSubscription.max_sessions} sessions/month)
-                      </span>
-                    )}
-                  </div>
-                  {organizationSubscription.has_video && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Video Enabled
-                    </span>
-                  )}
-                </div>
-                {organizationSubscription.subscription_start_date && (
-                  <div className="mt-2 text-sm text-gray-600">
-                    Start Date: {new Date(organizationSubscription.subscription_start_date).toLocaleDateString()}
-                  </div>
-                )}
-                {organizationSubscription.subscription_end_date && (
-                  <div className="mt-1 text-sm text-gray-600">
-                    End Date: {new Date(organizationSubscription.subscription_end_date).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* No subscription message for non-TheraPTrack controlled orgs */}
-            {!organizationSubscription.theraptrack_controlled && !organizationSubscription.plan_name && (
+            {!organizationSubscription.theraptrack_controlled && !partnerSubscription?.plan_name && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-gray-600">No subscription plan assigned to your organization.</p>
+                <p className="text-sm text-gray-600">No subscription plan assigned to you.</p>
               </div>
             )}
           </div>
         )}
       </div>
+
+      {/* Plan Selection Modal */}
+      {showPlanModal && (
+        <PlanSelectionModal
+          currentPlanId={partnerSubscription?.subscription_plan_id}
+          plans={availablePlans}
+          userType="individual"
+          onClose={() => setShowPlanModal(false)}
+          onSelectPlan={handlePlanSelection}
+        />
+      )}
     </div>
   );
 };

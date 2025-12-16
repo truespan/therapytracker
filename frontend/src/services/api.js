@@ -108,9 +108,10 @@ export const organizationAPI = {
   getPartners: (id) => api.get(`/organizations/${id}/partners`),
   getUsers: (id) => api.get(`/organizations/${id}/users`),
   
-  // Partner subscription management (for TheraPTrack controlled organizations)
+  // Partner subscription management (available for all organizations)
   getPartnerSubscriptions: (id) => api.get(`/organizations/${id}/partner-subscriptions`),
   assignPartnerSubscriptions: (id, data) => api.post(`/organizations/${id}/partner-subscriptions/assign`, data),
+  assignPartnerSubscriptionsToAll: (id, data) => api.post(`/organizations/${id}/partner-subscriptions/assign-all`, data),
   updatePartnerSubscription: (id, subscriptionId, data) => api.put(`/organizations/${id}/partner-subscriptions/${subscriptionId}`, data),
   removePartnerSubscriptions: (id, data) => api.post(`/organizations/${id}/partner-subscriptions/remove`, data),
 
@@ -163,6 +164,9 @@ export const subscriptionPlanAPI = {
   update: (id, data) => api.put(`/subscription-plans/${id}`, data),
   delete: (id) => api.delete(`/subscription-plans/${id}`),
   calculatePrice: (data) => api.post('/subscription-plans/calculate', data),
+  getIndividualPlansForSelection: () => api.get('/subscription-plans/individual/selection'),
+  getOrganizationPlansForSelection: (therapistCount) =>
+    api.get(`/subscription-plans/organization/selection?therapist_count=${therapistCount}`)
 };
 
 // Report Template APIs (for partners)

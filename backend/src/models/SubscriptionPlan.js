@@ -4,9 +4,15 @@ class SubscriptionPlan {
   static async create(planData, client = null) {
     const {
       plan_name,
+      plan_type,
       min_sessions,
       max_sessions,
       has_video,
+      video_hours,
+      extra_video_rate,
+      min_therapists,
+      max_therapists,
+      plan_order,
       individual_yearly_price,
       individual_quarterly_price,
       individual_monthly_price,
@@ -24,22 +30,29 @@ class SubscriptionPlan {
 
     const query = `
       INSERT INTO subscription_plans (
-        plan_name, min_sessions, max_sessions, has_video,
+        plan_name, plan_type, min_sessions, max_sessions, has_video,
+        video_hours, extra_video_rate, min_therapists, max_therapists, plan_order,
         individual_yearly_price, individual_quarterly_price, individual_monthly_price,
         organization_yearly_price, organization_quarterly_price, organization_monthly_price,
         is_active,
         individual_yearly_enabled, individual_quarterly_enabled, individual_monthly_enabled,
         organization_yearly_enabled, organization_quarterly_enabled, organization_monthly_enabled
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
       RETURNING *
     `;
 
     const values = [
       plan_name,
+      plan_type || 'individual',
       min_sessions,
       max_sessions,
       has_video !== undefined ? has_video : false,
+      video_hours || null,
+      extra_video_rate || null,
+      min_therapists || null,
+      max_therapists || null,
+      plan_order !== undefined ? plan_order : 0,
       individual_yearly_price,
       individual_quarterly_price,
       individual_monthly_price,
@@ -81,9 +94,15 @@ class SubscriptionPlan {
   static async update(id, planData) {
     const {
       plan_name,
+      plan_type,
       min_sessions,
       max_sessions,
       has_video,
+      video_hours,
+      extra_video_rate,
+      min_therapists,
+      max_therapists,
+      plan_order,
       individual_yearly_price,
       individual_quarterly_price,
       individual_monthly_price,
@@ -108,6 +127,10 @@ class SubscriptionPlan {
       updates.push(`plan_name = $${paramIndex++}`);
       values.push(plan_name);
     }
+    if (plan_type !== undefined) {
+      updates.push(`plan_type = $${paramIndex++}`);
+      values.push(plan_type);
+    }
     if (min_sessions !== undefined) {
       updates.push(`min_sessions = $${paramIndex++}`);
       values.push(min_sessions);
@@ -119,6 +142,26 @@ class SubscriptionPlan {
     if (has_video !== undefined) {
       updates.push(`has_video = $${paramIndex++}`);
       values.push(has_video);
+    }
+    if (video_hours !== undefined) {
+      updates.push(`video_hours = $${paramIndex++}`);
+      values.push(video_hours);
+    }
+    if (extra_video_rate !== undefined) {
+      updates.push(`extra_video_rate = $${paramIndex++}`);
+      values.push(extra_video_rate);
+    }
+    if (min_therapists !== undefined) {
+      updates.push(`min_therapists = $${paramIndex++}`);
+      values.push(min_therapists);
+    }
+    if (max_therapists !== undefined) {
+      updates.push(`max_therapists = $${paramIndex++}`);
+      values.push(max_therapists);
+    }
+    if (plan_order !== undefined) {
+      updates.push(`plan_order = $${paramIndex++}`);
+      values.push(plan_order);
     }
     if (individual_yearly_price !== undefined) {
       updates.push(`individual_yearly_price = $${paramIndex++}`);
@@ -228,6 +271,66 @@ class SubscriptionPlan {
   static async calculateOrganizationPrice(planId, numTherapists, billingPeriod) {
     const pricePerTherapist = await this.getPrice(planId, 'organization', billingPeriod);
     return pricePerTherapist * numTherapists;
+  }
+
+  /**
+   * Get individual practitioner plans (optionally exclude Free Plan from modal)
+   * @param {boolean} excludeFreePlan - Whether to exclude Free Plan from results
+   * @returns {Promise<Array>} Individual plans
+   */
+  static async getIndividualPlans(excludeFreePlan = false) {
+    let query = `
+      SELECT * FROM subscription_plans
+      WHERE plan_type = 'individual' AND is_active = TRUE
+    `;
+
+    if (excludeFreePlan) {
+      query += ` AND plan_name != 'Free Plan'`;
+    }
+
+    query += ` ORDER BY plan_order ASC`;
+
+    const result = await db.query(query);
+    return result.rows;
+  }
+
+  /**
+   * Get organization plans filtered by therapist count
+   * @param {number} therapistCount - Number of therapists in organization
+   * @returns {Promise<Array>} Filtered organization plans
+   */
+  static async getOrganizationPlans(therapistCount) {
+    const query = `
+      SELECT * FROM subscription_plans
+      WHERE plan_type = 'organization'
+      AND is_active = TRUE
+      AND min_therapists <= $1
+      AND max_therapists >= $1
+      ORDER BY plan_order ASC
+    `;
+
+    const result = await db.query(query, [therapistCount]);
+    return result.rows;
+  }
+
+  /**
+   * Validate if a plan is compatible with organization therapist count
+   * @param {number} planId - Plan ID
+   * @param {number} therapistCount - Number of therapists
+   * @returns {Promise<boolean>} Whether plan is valid for this org
+   */
+  static async validatePlanForOrganization(planId, therapistCount) {
+    const query = `
+      SELECT COUNT(*) as count FROM subscription_plans
+      WHERE id = $1
+      AND plan_type = 'organization'
+      AND min_therapists <= $2
+      AND max_therapists >= $2
+      AND is_active = TRUE
+    `;
+
+    const result = await db.query(query, [planId, therapistCount]);
+    return result.rows[0].count > 0;
   }
 }
 

@@ -119,9 +119,10 @@ router.get('/organizations/:id/therapist-signup-token', authenticateToken, check
 // Subscription plans for individual therapists (public endpoint for signup)
 router.get('/subscription-plans/individual', subscriptionPlanController.getIndividualTherapistPlans);
 
-// Organization partner subscription management (for TheraPTrack controlled organizations)
+// Organization partner subscription management (available for all organizations)
 router.get('/organizations/:id/partner-subscriptions', authenticateToken, checkRole('organization'), partnerSubscriptionController.getOrganizationPartnerSubscriptions);
 router.post('/organizations/:id/partner-subscriptions/assign', authenticateToken, checkRole('organization'), partnerSubscriptionController.assignSubscriptions);
+router.post('/organizations/:id/partner-subscriptions/assign-all', authenticateToken, checkRole('organization'), partnerSubscriptionController.assignToAllPartners);
 router.put('/organizations/:id/partner-subscriptions/:subscriptionId', authenticateToken, checkRole('organization'), partnerSubscriptionController.updateSubscription);
 router.post('/organizations/:id/partner-subscriptions/remove', authenticateToken, checkRole('organization'), partnerSubscriptionController.removeSubscriptions);
 

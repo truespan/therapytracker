@@ -17,6 +17,10 @@ router.delete('/:id', authenticateToken, checkRole('admin'), subscriptionPlanCon
 // Price calculation route (can be used by organizations)
 router.post('/calculate', authenticateToken, subscriptionPlanController.calculateOrganizationPrice);
 
+// Plan selection routes for partners and organizations
+router.get('/individual/selection', authenticateToken, checkRole('partner'), subscriptionPlanController.getIndividualPlansForSelection);
+router.get('/organization/selection', authenticateToken, checkRole('organization'), subscriptionPlanController.getOrganizationPlansForSelection);
+
 module.exports = router;
 
 

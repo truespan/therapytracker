@@ -847,6 +847,17 @@ const updateSubscription = async (req, res) => {
       if (!plan) {
         return res.status(404).json({ error: 'Subscription plan not found' });
       }
+
+      // Validate therapist range for organization plans
+      const therapistCount = number_of_therapists !== undefined ? number_of_therapists : organization.number_of_therapists;
+      if (therapistCount && plan.plan_type === 'organization') {
+        const isValid = await SubscriptionPlan.validatePlanForOrganization(subscription_plan_id, therapistCount);
+        if (!isValid) {
+          return res.status(400).json({
+            error: 'Selected plan is not compatible with your organization size. Please choose a plan that matches your therapist count.'
+          });
+        }
+      }
     }
 
     // Validate number of therapists

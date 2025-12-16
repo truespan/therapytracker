@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, CreditCard, Users, Shield } from 'lucide-react';
+import { X, Building2, Mail, Phone, MapPin, FileText, Users, Shield } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 
 const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organization }) => {
@@ -9,7 +9,6 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     contact: '',
     address: '',
     gst_no: '',
-    subscription_plan: '',
     video_sessions_enabled: true,
     theraptrack_controlled: false,
     number_of_therapists: '',
@@ -26,7 +25,6 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         contact: organization.contact || '',
         address: organization.address || '',
         gst_no: organization.gst_no || '',
-        subscription_plan: organization.subscription_plan || '',
         video_sessions_enabled: organization.video_sessions_enabled ?? true,
         theraptrack_controlled: organization.theraptrack_controlled ?? false,
         number_of_therapists: organization.number_of_therapists != null ? organization.number_of_therapists : '',
@@ -85,7 +83,6 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         ...formData,
         number_of_therapists: formData.number_of_therapists === '' ? null : (formData.number_of_therapists ? parseInt(formData.number_of_therapists, 10) : null),
         gst_no: formData.gst_no === '' ? null : formData.gst_no,
-        subscription_plan: formData.subscription_plan === '' ? null : formData.subscription_plan,
       };
       onSubmit(submitData);
     }
@@ -242,30 +239,6 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
             </div>
           </div>
 
-          {/* Subscription Plan */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Subscription Plan
-            </label>
-            <div className="relative">
-              <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <select
-                name="subscription_plan"
-                value={formData.subscription_plan}
-                onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                disabled={isLoading}
-              >
-                <option value="">No plan</option>
-                <option value="basic">Plan Basic</option>
-                <option value="basic_silver">Plan Basic - Silver</option>
-                <option value="basic_gold">Plan Basic - Gold</option>
-                <option value="pro_silver">Plan Pro - Silver</option>
-                <option value="pro_gold">Plan Pro - Gold</option>
-                <option value="pro_platinum">Plan Pro - Platinum</option>
-              </select>
-            </div>
-          </div>
 
           {/* Video Sessions Toggle */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">

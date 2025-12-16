@@ -73,9 +73,15 @@ const createPlan = async (req, res) => {
   try {
     const {
       plan_name,
+      plan_type,
       min_sessions,
       max_sessions,
       has_video,
+      video_hours,
+      extra_video_rate,
+      min_therapists,
+      max_therapists,
+      plan_order,
       individual_yearly_price,
       individual_quarterly_price,
       individual_monthly_price,
@@ -95,6 +101,34 @@ const createPlan = async (req, res) => {
     if (!plan_name || min_sessions === undefined || max_sessions === undefined) {
       return res.status(400).json({
         error: 'Plan name, min_sessions, and max_sessions are required'
+      });
+    }
+
+    // Validate plan_type
+    if (plan_type && !['individual', 'organization'].includes(plan_type)) {
+      return res.status(400).json({
+        error: 'plan_type must be either "individual" or "organization"'
+      });
+    }
+
+    // Validate therapist ranges for organization plans
+    if (plan_type === 'organization') {
+      if (!min_therapists || !max_therapists) {
+        return res.status(400).json({
+          error: 'Organization plans require min_therapists and max_therapists'
+        });
+      }
+      if (min_therapists < 1 || max_therapists < min_therapists) {
+        return res.status(400).json({
+          error: 'Invalid therapist range. min_therapists must be >= 1 and max_therapists must be >= min_therapists'
+        });
+      }
+    }
+
+    // Validate video hours when has_video is true
+    if (has_video && !video_hours) {
+      return res.status(400).json({
+        error: 'video_hours is required when has_video is true'
       });
     }
 
@@ -141,9 +175,15 @@ const createPlan = async (req, res) => {
     // Create plan
     const newPlan = await SubscriptionPlan.create({
       plan_name,
+      plan_type: plan_type || 'individual',
       min_sessions: parseInt(min_sessions),
       max_sessions: parseInt(max_sessions),
       has_video: has_video !== undefined ? has_video : false,
+      video_hours: video_hours ? parseInt(video_hours) : null,
+      extra_video_rate: extra_video_rate ? parseFloat(extra_video_rate) : null,
+      min_therapists: min_therapists ? parseInt(min_therapists) : null,
+      max_therapists: max_therapists ? parseInt(max_therapists) : null,
+      plan_order: plan_order !== undefined ? parseInt(plan_order) : 0,
       individual_yearly_price: parseFloat(individual_yearly_price),
       individual_quarterly_price: parseFloat(individual_quarterly_price),
       individual_monthly_price: parseFloat(individual_monthly_price),
@@ -400,7 +440,7 @@ const getIndividualTherapistPlans = async (req, res) => {
       ORDER BY individual_monthly_price ASC, plan_name ASC
     `;
     const result = await db.query(query);
-    
+
     res.json({
       success: true,
       plans: result.rows
@@ -414,6 +454,55 @@ const getIndividualTherapistPlans = async (req, res) => {
   }
 };
 
+/**
+ * Get individual practitioner plans for selection modal
+ * Excludes Free Plan from selection (users are auto-assigned or can't manually select it)
+ */
+const getIndividualPlansForSelection = async (req, res) => {
+  try {
+    const plans = await SubscriptionPlan.getIndividualPlans(true); // exclude Free Plan
+    res.json({
+      success: true,
+      plans
+    });
+  } catch (error) {
+    console.error('Error fetching individual plans for selection:', error);
+    res.status(500).json({
+      error: 'Failed to fetch individual plans',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Get organization plans filtered by therapist count
+ */
+const getOrganizationPlansForSelection = async (req, res) => {
+  try {
+    const { therapist_count } = req.query;
+
+    if (!therapist_count || therapist_count < 1) {
+      return res.status(400).json({
+        error: 'therapist_count query parameter is required and must be >= 1'
+      });
+    }
+
+    const plans = await SubscriptionPlan.getOrganizationPlans(parseInt(therapist_count));
+
+    res.json({
+      success: true,
+      plans,
+      therapist_count: parseInt(therapist_count)
+    });
+  } catch (error) {
+    console.error('Error fetching organization plans for selection:', error);
+    res.status(500).json({
+      error: 'Failed to fetch organization plans',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllPlans,
   getActivePlans,
@@ -422,7 +511,9 @@ module.exports = {
   updatePlan,
   deletePlan,
   calculateOrganizationPrice,
-  getIndividualTherapistPlans
+  getIndividualTherapistPlans,
+  getIndividualPlansForSelection,
+  getOrganizationPlansForSelection
 };
 
 

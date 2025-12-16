@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { organizationAPI, subscriptionPlanAPI } from '../../services/api';
 import {
   CreditCard, Users, CheckCircle, XCircle, AlertCircle,
-  Save, Trash2, Edit, Plus, Calendar, Loader
+  Save, Trash2, Edit, Plus, Calendar, Loader, Building2
 } from 'lucide-react';
 import PlanSelectionModal from '../common/PlanSelectionModal';
 
-const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => {
+const NonControlledSubscriptionManagement = ({ organizationId, organizationName }) => {
   const [partners, setPartners] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,12 +20,13 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
   const [organizationPlans, setOrganizationPlans] = useState([]);
   const [organizationTherapistCount, setOrganizationTherapistCount] = useState(0);
   const [loadingPlans, setLoadingPlans] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
 
   useEffect(() => {
-    if (isTheraPTrackControlled && organizationId) {
+    if (organizationId) {
       loadData();
     }
-  }, [organizationId, isTheraPTrackControlled]);
+  }, [organizationId]);
 
   const loadData = async () => {
     try {
@@ -51,6 +52,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     try {
       setLoadingPlans(true);
       setSelectedPartner(partner);
+      setBulkMode(false);
 
       // Fetch organization details to get therapist count
       const orgResponse = await organizationAPI.getById(organizationId);
@@ -70,7 +72,65 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     }
   };
 
-  const handleOrgPlanSelection = async (planId, billingPeriod) => {
+  const openPlanModalForAll = async () => {
+    try {
+      setLoadingPlans(true);
+      setSelectedPartner(null);
+      setBulkMode(true);
+
+      // Fetch organization details to get therapist count
+      const orgResponse = await organizationAPI.getById(organizationId);
+      const therapistCount = orgResponse.data.organization.number_of_therapists || partners.length;
+      setOrganizationTherapistCount(therapistCount);
+
+      // Fetch filtered organization plans based on therapist count
+      const plansResponse = await subscriptionPlanAPI.getOrganizationPlansForSelection(therapistCount);
+      setOrganizationPlans(plansResponse.data.plans || []);
+
+      setShowPlanModal(true);
+    } catch (err) {
+      console.error('Failed to load organization plans:', err);
+      setError(err.response?.data?.error || 'Failed to load subscription plans');
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
+
+  const handlePlanSelection = async (planId, billingPeriod) => {
+    if (bulkMode) {
+      await handleBulkAssignment(planId, billingPeriod);
+    } else {
+      await handleIndividualAssignment(planId, billingPeriod);
+    }
+  };
+
+  const handleBulkAssignment = async (planId, billingPeriod) => {
+    try {
+      setSaving(true);
+      setError('');
+      setSuccessMessage('');
+
+      await organizationAPI.assignPartnerSubscriptionsToAll(organizationId, {
+        subscription_plan_id: planId,
+        billing_period: billingPeriod
+      });
+
+      setSuccessMessage(`Subscription plan assigned to all ${partners.length} therapist(s) successfully`);
+      setShowPlanModal(false);
+      setSelectedPartner(null);
+      setBulkMode(false);
+      await loadData();
+      setTimeout(() => setSuccessMessage(''), 5000);
+    } catch (err) {
+      console.error('Failed to assign plan to all partners:', err);
+      setError(err.response?.data?.error || 'Failed to assign subscription plan to all partners');
+      setShowPlanModal(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleIndividualAssignment = async (planId, billingPeriod) => {
     if (!selectedPartner) return;
 
     try {
@@ -132,10 +192,6 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     return labels[period] || period;
   };
 
-  if (!isTheraPTrackControlled) {
-    return null;
-  }
-
   if (loading) {
     return (
       <div className="card p-8 text-center">
@@ -158,6 +214,16 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
             Assign subscription plans to therapists in your organization
           </p>
         </div>
+        {partners.length > 0 && (
+          <button
+            onClick={openPlanModalForAll}
+            disabled={loadingPlans || saving}
+            className="btn btn-primary flex items-center space-x-2"
+          >
+            <CreditCard className="h-4 w-4" />
+            <span>Apply to All Therapists</span>
+          </button>
+        )}
       </div>
 
       {/* Messages */}
@@ -175,6 +241,22 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
           <button onClick={() => setError('')} className="ml-auto">
             <XCircle className="h-5 w-5" />
           </button>
+        </div>
+      )}
+
+      {/* Bulk Action Info */}
+      {partners.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start space-x-2">
+            <Building2 className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-blue-900">Bulk Assignment Available</p>
+              <p className="text-sm text-blue-700 mt-1">
+                You can apply the same subscription plan to all {partners.length} therapist(s) at once, 
+                or assign different plans to each therapist individually.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -273,27 +355,23 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
       </div>
 
       {/* Plan Selection Modal */}
-      {showPlanModal && selectedPartner && (
+      {showPlanModal && (
         <PlanSelectionModal
-          currentPlanId={subscriptions.find(s => s.partner_id === selectedPartner.id)?.subscription_plan_id}
+          currentPlanId={selectedPartner ? subscriptions.find(s => s.partner_id === selectedPartner.id)?.subscription_plan_id : null}
           plans={organizationPlans}
           userType="organization"
           onClose={() => {
             setShowPlanModal(false);
             setSelectedPartner(null);
+            setBulkMode(false);
           }}
-          onSelectPlan={handleOrgPlanSelection}
+          onSelectPlan={handlePlanSelection}
+          isBulkMode={bulkMode}
+          organizationName={organizationName}
         />
       )}
     </div>
   );
 };
 
-export default SubscriptionManagement;
-
-
-
-
-
-
-
+export default NonControlledSubscriptionManagement;

@@ -11,17 +11,23 @@ const getPartnerById = async (req, res) => {
       return res.status(404).json({ error: 'Partner not found' });
     }
 
-    // If partner has organization_id, get organization subscription details
+    // If partner has organization_id, get organization details
     if (partner.organization_id) {
       const Organization = require('../models/Organization');
-      const organization = await Organization.getSubscriptionDetails(partner.organization_id);
+      const organization = await Organization.findById(partner.organization_id);
       partner.organization = organization;
 
+      const PartnerSubscription = require('../models/PartnerSubscription');
+      
       // If organization is TheraPTrack controlled, get or create partner's individual subscription assignment
       if (organization.theraptrack_controlled) {
-        const PartnerSubscription = require('../models/PartnerSubscription');
         // Get or create Free Plan subscription if partner doesn't have one
         partner.subscription = await PartnerSubscription.getOrCreateFreePlan(id);
+      } else {
+        // For non-TheraPTrack controlled organizations, fetch the partner's assigned subscription
+        const partnerSubscriptions = await PartnerSubscription.findByPartnerId(id);
+        // Return the most recent subscription if available
+        partner.subscription = partnerSubscriptions.length > 0 ? partnerSubscriptions[0] : null;
       }
     }
 

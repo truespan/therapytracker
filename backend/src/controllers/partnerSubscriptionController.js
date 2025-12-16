@@ -17,12 +17,8 @@ const getOrganizationPartnerSubscriptions = async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    // Check if organization is TheraPTrack controlled
-    if (!organization.theraptrack_controlled) {
-      return res.status(403).json({ 
-        error: 'This feature is only available for TheraPTrack controlled organizations' 
-      });
-    }
+    // Allow both TheraPTrack controlled and non-controlled organizations
+    // The functionality is now available for all organizations
 
     // Check authorization
     if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
@@ -58,12 +54,8 @@ const assignSubscriptions = async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    // Check if organization is TheraPTrack controlled
-    if (!organization.theraptrack_controlled) {
-      return res.status(403).json({ 
-        error: 'This feature is only available for TheraPTrack controlled organizations' 
-      });
-    }
+    // Allow both TheraPTrack controlled and non-controlled organizations
+    // The functionality is now available for all organizations
 
     // Check authorization
     if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
@@ -141,12 +133,8 @@ const updateSubscription = async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    // Check if organization is TheraPTrack controlled
-    if (!organization.theraptrack_controlled) {
-      return res.status(403).json({ 
-        error: 'This feature is only available for TheraPTrack controlled organizations' 
-      });
-    }
+    // Allow both TheraPTrack controlled and non-controlled organizations
+    // The functionality is now available for all organizations
 
     // Check authorization
     if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
@@ -214,12 +202,8 @@ const removeSubscriptions = async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    // Check if organization is TheraPTrack controlled
-    if (!organization.theraptrack_controlled) {
-      return res.status(403).json({ 
-        error: 'This feature is only available for TheraPTrack controlled organizations' 
-      });
-    }
+    // Allow both TheraPTrack controlled and non-controlled organizations
+    // The functionality is now available for all organizations
 
     // Check authorization
     if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
@@ -277,11 +261,98 @@ const removeSubscriptions = async (req, res) => {
   }
 };
 
+/**
+ * Assign subscription plan to all partners in an organization
+ */
+const assignToAllPartners = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { subscription_plan_id, billing_period } = req.body;
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to assign subscriptions for this organization' });
+    }
+
+    // Validate required fields
+    if (!subscription_plan_id) {
+      return res.status(400).json({ error: 'subscription_plan_id is required' });
+    }
+
+    if (!billing_period || !['monthly', 'quarterly', 'yearly'].includes(billing_period)) {
+      return res.status(400).json({
+        error: 'billing_period is required and must be one of: monthly, quarterly, yearly'
+      });
+    }
+
+    // Validate subscription plan exists
+    const plan = await SubscriptionPlan.findById(subscription_plan_id);
+    if (!plan) {
+      return res.status(404).json({ error: 'Subscription plan not found' });
+    }
+
+    // Get all partners for the organization
+    const partners = await Organization.getPartners(id);
+    if (partners.length === 0) {
+      return res.status(400).json({
+        error: 'No therapists found in this organization'
+      });
+    }
+
+    // Validate all partners can use this plan (for organization plans, check therapist count)
+    if (plan.plan_type === 'organization') {
+      const therapistCount = partners.length;
+      const isValidPlan = await SubscriptionPlan.validatePlanForOrganization(subscription_plan_id, therapistCount);
+      if (!isValidPlan) {
+        return res.status(400).json({
+          error: `This plan is not valid for organizations with ${therapistCount} therapists`
+        });
+      }
+    }
+
+    // Create assignments for all partners
+    const assignments = partners.map(partner => ({
+      partner_id: partner.id,
+      subscription_plan_id: parseInt(subscription_plan_id),
+      billing_period
+    }));
+
+    // Assign subscriptions in transaction
+    const results = await db.transaction(async (client) => {
+      // First, remove existing subscriptions for all partners
+      const partnerIds = partners.map(p => p.id);
+      await PartnerSubscription.bulkRemove(partnerIds, client);
+      
+      // Then assign new subscriptions
+      return await PartnerSubscription.bulkAssign(assignments, client);
+    });
+
+    res.json({
+      success: true,
+      message: `Subscription plan assigned to ${results.length} therapist(s) successfully`,
+      assignments: results
+    });
+  } catch (error) {
+    console.error('Assign to all partners error:', error);
+    res.status(500).json({
+      error: 'Failed to assign subscriptions to all partners',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getOrganizationPartnerSubscriptions,
   assignSubscriptions,
   updateSubscription,
-  removeSubscriptions
+  removeSubscriptions,
+  assignToAllPartners
 };
 
 
