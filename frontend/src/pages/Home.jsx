@@ -291,7 +291,7 @@ const Home = () => {
             </div>
             <h2 className="text-4xl font-bold mb-4 text-gray-900">Get in touch to begin your free trial</h2>
             <p className="text-lg text-gray-600">
-              Have questions? We're here to help. Get in touch with us today.
+              We will get back to you within 24 hrs.
             </p>
           </div>
           
