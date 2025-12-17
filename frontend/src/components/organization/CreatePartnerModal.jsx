@@ -21,6 +21,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     fee_min: '',
     fee_max: '',
     fee_currency: 'INR',
+    language_preferences: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -136,6 +137,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
       fee_min: '',
       fee_max: '',
       fee_currency: 'INR',
+      language_preferences: '',
     });
     setErrors({});
     setShowPassword(false);
@@ -452,10 +454,32 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                   </select>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                This information will appear on the therapist's profile as part of the search feature used by individual clients.
+              <p className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
+                <strong>Note:</strong> This data will be displayed to your clients as part of your profile in client's dashboard.
               </p>
             </div>
+          </div>
+
+          {/* Language Preferences */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Language Preferences (Optional)
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                name="language_preferences"
+                value={formData.language_preferences}
+                onChange={handleChange}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="e.g., English, Hindi, Tamil"
+                disabled={isLoading}
+              />
+            </div>
+            <p className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
+              <strong>Note:</strong> This data will be displayed to your clients as part of your profile in client's dashboard.
+            </p>
           </div>
 
           {/* Password */}

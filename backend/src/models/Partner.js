@@ -50,20 +50,20 @@ class Partner {
   }
 
   static async create(partnerData, client = null) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences } = partnerData;
 
     // Generate unique Partner ID
     const partnerId = await this.generatePartnerId(organization_id);
 
     const query = `
-      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING *
     `;
     const values = [
-      partnerId, name, sex, age || null, email, contact, qualification, license_id || null, address, photo_url, 
+      partnerId, name, sex, age || null, email, contact, qualification, license_id || null, address, photo_url,
       work_experience || null, other_practice_details || null, organization_id, verification_token, verification_token_expires,
-      fee_min || null, fee_max || null, fee_currency || 'INR'
+      fee_min || null, fee_max || null, fee_currency || 'INR', language_preferences || null
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
