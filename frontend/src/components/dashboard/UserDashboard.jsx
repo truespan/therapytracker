@@ -7,6 +7,7 @@ import UserQuestionnaireView from '../questionnaires/UserQuestionnaireView';
 import QuestionnaireChart from '../questionnaires/QuestionnaireChart';
 import UserReportsTab from '../reports/UserReportsTab';
 import ClientAvailabilityTab from '../availability/ClientAvailabilityTab';
+import TherapistProfileTab from '../profile/TherapistProfileTab';
 import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock } from 'lucide-react';
 import { canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
 
@@ -17,7 +18,7 @@ const UserDashboard = () => {
   const [videoSessions, setVideoSessions] = useState([]);
   const [selectedVideoSession, setSelectedVideoSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('availability');
   const [questionnaireAssignments, setQuestionnaireAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [viewingQuestionnaireChart, setViewingQuestionnaireChart] = useState(null);
@@ -222,12 +223,34 @@ const UserDashboard = () => {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('therapist')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+              activeTab === 'therapist'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            <UserIcon className="h-5 w-5" />
+            <span className="text-xs">Therapist</span>
+          </button>
         </nav>
       </div>
 
       {/* Desktop Tabs */}
       <div className="hidden lg:block border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('availability')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'availability'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <CalendarClock className="inline h-5 w-5 mr-2" />
+            Book a Session
+          </button>
           <button
             onClick={() => setActiveTab('overview')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -238,17 +261,6 @@ const UserDashboard = () => {
           >
             <Activity className="inline h-5 w-5 mr-2" />
             Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('availability')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'availability'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <CalendarClock className="inline h-5 w-5 mr-2" />
-            Availability
           </button>
           {videoSessionsEnabled && (
             <button
@@ -300,6 +312,17 @@ const UserDashboard = () => {
                 {reportsCount}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab('therapist')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'therapist'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <UserIcon className="inline h-5 w-5 mr-2" />
+            Therapist Profile
           </button>
         </nav>
       </div>
@@ -805,6 +828,10 @@ const UserDashboard = () => {
       {/* Reports Tab */}
       {activeTab === 'reports' && (
         <UserReportsTab userId={user.id} onReportViewed={loadReportsCount} />
+      )}
+
+      {activeTab === 'therapist' && (
+        <TherapistProfileTab userId={user.id} />
       )}
     </div>
   );

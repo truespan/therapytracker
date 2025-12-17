@@ -1,6 +1,21 @@
 import React from 'react';
 import { Edit, Trash2, Calendar, User, AlertCircle } from 'lucide-react';
 
+// Helper function to convert 24-hour time to 12-hour format with AM/PM
+const formatTime12Hour = (time24) => {
+  if (!time24) return '';
+
+  // Handle both HH:MM and HH:MM:SS formats
+  const [hours, minutes] = time24.split(':').map(Number);
+
+  if (isNaN(hours) || isNaN(minutes)) return time24;
+
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+
+  return `${hours12}:${String(minutes).padStart(2, '0')} ${period}`;
+};
+
 const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'partner' }) => {
   // Generate array of next 7 days starting from today
   const getNext7Days = () => {
@@ -246,7 +261,7 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
       <div className="flex justify-between items-start mb-1">
         <div className="flex-1">
           <p className={`font-semibold ${style.text} text-xs`}>
-            {slot.start_time} - {slot.end_time}
+            {formatTime12Hour(slot.start_time)} - {formatTime12Hour(slot.end_time)}
           </p>
         </div>
 
