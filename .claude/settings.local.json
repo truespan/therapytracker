@@ -10,7 +10,10 @@
       "Bash(kill:*)",
       "Bash(ls:*)",
       "Bash(npm run:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(awk:*)",
+      "Bash(npx eslint:*)",
+      "Bash(node -c:*)"
     ],
     "deny": [],
     "ask": []

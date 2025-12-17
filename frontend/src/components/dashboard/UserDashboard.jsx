@@ -6,7 +6,8 @@ import VideoSessionJoin from '../video/VideoSessionJoin';
 import UserQuestionnaireView from '../questionnaires/UserQuestionnaireView';
 import QuestionnaireChart from '../questionnaires/QuestionnaireChart';
 import UserReportsTab from '../reports/UserReportsTab';
-import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck } from 'lucide-react';
+import ClientAvailabilityTab from '../availability/ClientAvailabilityTab';
+import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock } from 'lucide-react';
 import { canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
 
 const UserDashboard = () => {
@@ -23,6 +24,7 @@ const UserDashboard = () => {
   const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(false);
   const [latestSharedChart, setLatestSharedChart] = useState(null);
   const [reportsCount, setReportsCount] = useState(0);
+  const [partners, setPartners] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -31,6 +33,7 @@ const UserDashboard = () => {
     checkVideoSessionsAccess();
     loadLatestChart();
     loadReportsCount();
+    loadPartners();
   }, [user.id]);
 
   const checkVideoSessionsAccess = async () => {
@@ -105,6 +108,15 @@ const UserDashboard = () => {
     }
   };
 
+  const loadPartners = async () => {
+    try {
+      const response = await userAPI.getPartners(user.id);
+      setPartners(response.data.partners || []);
+    } catch (err) {
+      console.error('Failed to load partners:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -147,6 +159,17 @@ const UserDashboard = () => {
           >
             <Activity className="h-5 w-5" />
             <span className="text-xs">Overview</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('availability')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+              activeTab === 'availability'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            <CalendarClock className="h-5 w-5" />
+            <span className="text-xs">Availability</span>
           </button>
           {videoSessionsEnabled && (
             <button
@@ -215,6 +238,17 @@ const UserDashboard = () => {
           >
             <Activity className="inline h-5 w-5 mr-2" />
             Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('availability')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'availability'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <CalendarClock className="inline h-5 w-5 mr-2" />
+            Availability
           </button>
           {videoSessionsEnabled && (
             <button
@@ -536,6 +570,11 @@ const UserDashboard = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Availability Tab */}
+      {activeTab === 'availability' && (
+        <ClientAvailabilityTab userId={user.id} partners={partners} />
       )}
 
       {activeTab === 'video' && videoSessionsEnabled && (

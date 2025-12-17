@@ -23,6 +23,7 @@ const generatedReportController = require('../controllers/generatedReportControl
 const subscriptionPlanRoutes = require('./subscriptionPlanRoutes');
 const subscriptionPlanController = require('../controllers/subscriptionPlanController');
 const partnerSubscriptionController = require('../controllers/partnerSubscriptionController');
+const availabilitySlotController = require('../controllers/availabilitySlotController');
 
 // Upload middleware
 const upload = require('../middleware/upload');
@@ -135,6 +136,15 @@ router.get('/partners/:partnerId/upcoming-appointments', authenticateToken, appo
 router.get('/users/:userId/appointments', authenticateToken, appointmentController.getUserAppointments);
 router.put('/appointments/:id', authenticateToken, appointmentController.updateAppointment);
 router.delete('/appointments/:id', authenticateToken, appointmentController.deleteAppointment);
+
+// ==================== AVAILABILITY SLOTS ROUTES ====================
+router.post('/availability-slots', authenticateToken, checkRole('partner'), availabilitySlotController.createSlot);
+router.get('/partners/:partnerId/availability-slots', authenticateToken, availabilitySlotController.getPartnerSlots);
+router.get('/partners/:partnerId/availability-slots/client-view', authenticateToken, checkRole('user'), availabilitySlotController.getClientSlots);
+router.put('/availability-slots/:id', authenticateToken, checkRole('partner'), availabilitySlotController.updateSlot);
+router.delete('/availability-slots/:id', authenticateToken, checkRole('partner'), availabilitySlotController.deleteSlot);
+router.post('/partners/:partnerId/availability-slots/publish', authenticateToken, checkRole('partner'), availabilitySlotController.publishSlots);
+router.post('/availability-slots/:id/book', authenticateToken, checkRole('user'), availabilitySlotController.bookSlot);
 
 // ==================== THERAPY SESSION ROUTES ====================
 router.post('/therapy-sessions', authenticateToken, checkRole('partner'), therapySessionController.createTherapySession);

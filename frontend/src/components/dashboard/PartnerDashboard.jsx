@@ -18,7 +18,8 @@ import MentalStatusExaminationForm from '../mentalstatus/MentalStatusExamination
 import SessionNotesTab from '../sessions/SessionNotesTab';
 import PartnerReportsTab from '../reports/PartnerReportsTab';
 import ClientReportsTab from '../reports/ClientReportsTab';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon } from 'lucide-react';
+import AvailabilityTab from '../availability/AvailabilityTab';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon, CalendarClock } from 'lucide-react';
 import CreatePatientModal from '../partner/CreatePatientModal';
 
 // Use environment variable for API URL, fallback to localhost for development
@@ -364,6 +365,17 @@ const PartnerDashboard = () => {
             <span className="text-xs">Clients</span>
           </button>
           <button
+            onClick={() => setActiveTab('availability')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+              activeTab === 'availability'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            <CalendarClock className="h-5 w-5" />
+            <span className="text-xs">Availability</span>
+          </button>
+          <button
             onClick={() => setActiveTab('charts')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'charts'
@@ -450,6 +462,17 @@ const PartnerDashboard = () => {
           >
             <Users className="inline h-5 w-5 mr-2" />
             Clients
+          </button>
+          <button
+            onClick={() => setActiveTab('availability')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'availability'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <CalendarClock className="inline h-5 w-5 mr-2" />
+            Availability
           </button>
           <button
             onClick={() => setActiveTab('charts')}
@@ -780,6 +803,11 @@ const PartnerDashboard = () => {
         </div>
           </div>
         </div>
+      )}
+
+      {/* Availability Tab */}
+      {activeTab === 'availability' && (
+        <AvailabilityTab partnerId={user.id} />
       )}
 
       {/* Create Patient Modal */}

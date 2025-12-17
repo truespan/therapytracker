@@ -231,6 +231,25 @@ export const appointmentAPI = {
   }
 };
 
+// Availability Slot APIs
+export const availabilityAPI = {
+  // Partner methods
+  createSlot: (slotData) => api.post('/availability-slots', slotData),
+  getPartnerSlots: (partnerId, startDate, endDate) => {
+    const params = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+    return api.get(`/partners/${partnerId}/availability-slots`, { params });
+  },
+  updateSlot: (slotId, slotData) => api.put(`/availability-slots/${slotId}`, slotData),
+  deleteSlot: (slotId) => api.delete(`/availability-slots/${slotId}`),
+  publishSlots: (partnerId) => api.post(`/partners/${partnerId}/availability-slots/publish`),
+
+  // Client methods
+  getClientSlots: (partnerId) => api.get(`/partners/${partnerId}/availability-slots/client-view`),
+  bookSlot: (slotId) => api.post(`/availability-slots/${slotId}/book`),
+};
+
 // Chart APIs
 export const chartAPI = {
   shareChart: (data) => api.post('/charts/share', data),

@@ -4,6 +4,7 @@ const path = require('path');
 require('dotenv').config();
 
 const routes = require('./routes');
+const { scheduleSlotArchival } = require('./jobs/archiveOldSlots');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -60,6 +61,9 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  // Initialize cron jobs
+  scheduleSlotArchival();
 });
 
 module.exports = app;
