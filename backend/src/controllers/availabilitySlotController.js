@@ -10,6 +10,12 @@ const createSlot = async (req, res) => {
   try {
     const { partner_id, slot_date, start_time, end_time, status, timezone } = req.body;
 
+    // DEBUG: Log what we received
+    console.log('\n=== CREATE SLOT REQUEST ===');
+    console.log('Timezone received:', timezone || 'NOT PROVIDED');
+    console.log('Full request:', { partner_id, slot_date, start_time, end_time, status, timezone });
+    console.log('==========================\n');
+
     // Validation
     if (!partner_id || !slot_date || !start_time || !end_time || !status) {
       return res.status(400).json({

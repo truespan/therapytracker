@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Timezone Test</title>
+</head>
+<body>
+    <h1>Timezone Test Page</h1>
+    <div id="result"></div>
+    <button onclick="testTimezone()">Test Timezone Detection</button>
+    <button onclick="testSlotCreation()">Test Slot Creation (Check Backend Logs)</button>
+
+    <script>
+        function testTimezone() {
+            try {
+                const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                document.getElementById('result').innerHTML = `
+                    <h2>✅ Timezone Detection Works!</h2>
+                    <p>Your timezone: <strong>${timezone}</strong></p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h2>❌ Error</h2>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function testSlotCreation() {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const testData = {
+                partner_id: 1,
+                slot_date: '2025-12-20',
+                start_time: '23:30',
+                end_time: '23:45',
+                status: 'available_online',
+                timezone: timezone
+            };
+
+            try {
+                const response = await fetch('/api/availability-slots', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add your auth token here if needed
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <h2>API Response:</h2>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <p><strong>Check backend logs for timezone parameter!</strong></p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h2>❌ Error</h2>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

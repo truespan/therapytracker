@@ -100,4 +100,23 @@ router.get('/test-slot', async (req, res) => {
   }
 });
 
+/**
+ * DEBUG ENDPOINT: Log incoming slot creation requests
+ * This middleware logs what timezone parameter is being sent
+ */
+router.post('/log-slot-request', (req, res) => {
+  console.log('\n=== SLOT CREATION DEBUG ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('Timezone parameter:', req.body.timezone);
+  console.log('Has timezone:', !!req.body.timezone);
+  console.log('========================\n');
+
+  res.json({
+    status: 'logged',
+    received_timezone: req.body.timezone || 'NOT PROVIDED',
+    has_timezone: !!req.body.timezone,
+    full_body: req.body
+  });
+});
+
 module.exports = router;
