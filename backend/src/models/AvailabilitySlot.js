@@ -14,6 +14,14 @@ class AvailabilitySlot {
     const start_datetime = dateUtils.combineDateAndTime(slot_date, start_time, userTimezone);
     const end_datetime = dateUtils.combineDateAndTime(slot_date, end_time, userTimezone);
 
+    // DEBUG: Log the conversion
+    console.log('=== SLOT CREATION - TIMEZONE CONVERSION ===');
+    console.log('Input:', { slot_date, start_time, timezone: userTimezone });
+    console.log('start_datetime (Date obj):', start_datetime);
+    console.log('start_datetime (ISO):', start_datetime.toISOString());
+    console.log('For Postgres:', dateUtils.formatForPostgres(start_datetime));
+    console.log('=========================================\n');
+
     // Derive fields from status
     const location_type = status.includes('online') ? 'online' : 'offline';
     const is_available = status.startsWith('available');
@@ -37,6 +45,13 @@ class AvailabilitySlot {
     ];
 
     const result = await db.query(query, values);
+
+    // DEBUG: Log what was actually stored in database
+    console.log('=== DATABASE RETURNED ===');
+    console.log('start_datetime from DB:', result.rows[0].start_datetime);
+    console.log('start_datetime ISO:', result.rows[0].start_datetime?.toISOString());
+    console.log('========================\n');
+
     return result.rows[0];
   }
 
