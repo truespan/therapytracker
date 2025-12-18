@@ -19,6 +19,8 @@
     "bcrypt": "^5.1.1",
     "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "docx": "^9.5.1",
     "docxtemplater": "^3.67.6",
     "dotenv": "^16.3.1",

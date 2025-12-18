@@ -2,18 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { videoSessionAPI } from '../../services/api';
 import { X, Calendar, Clock, User, Lock, Unlock, Copy, Check, Video } from 'lucide-react';
 import { generateMeetingUrl } from '../../utils/jitsiHelper';
-import moment from 'moment-timezone';
+import {
+  getUserTimezone,
+  getDateTimeForInput,
+  convertLocalToUTC,
+  parseISODate
+} from '../../utils/dateUtils';
+import { addMinutes, differenceInMinutes } from 'date-fns';
 
 const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, onSave }) => {
-  // Helper function to format date for datetime-local input without timezone conversion
-  const formatDateTimeLocal = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
 
   const [formData, setFormData] = useState({
     user_id: '',
@@ -32,37 +29,28 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
   useEffect(() => {
     if (session) {
       // Editing existing session - Convert UTC back to user's local timezone
-      const userTimezone = moment.tz.guess();
-
-      // Parse the UTC datetime and convert to user's timezone
-      const localSessionDate = moment.utc(session.session_date).tz(userTimezone);
-      const localEndDate = moment.utc(session.end_date).tz(userTimezone);
-
       setFormData({
         user_id: session.user_id,
         title: session.title,
-        session_date: localSessionDate.format('YYYY-MM-DDTHH:mm'),
-        end_date: localEndDate.format('YYYY-MM-DDTHH:mm'),
+        session_date: getDateTimeForInput(session.session_date),
+        end_date: getDateTimeForInput(session.end_date),
         duration_minutes: session.duration_minutes,
         password_enabled: session.password_enabled,
         notes: session.notes || ''
       });
     } else if (selectedSlot) {
-      // Creating new session from calendar slot - Use local time
+      // Creating new session from calendar slot
       const start = new Date(selectedSlot.start);
       const end = new Date(selectedSlot.end);
 
-      // Validate dates before formatting
-      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-        const duration = Math.round((end - start) / (1000 * 60));
+      const duration = differenceInMinutes(end, start);
 
-        setFormData(prev => ({
-          ...prev,
-          session_date: formatDateTimeLocal(start),
-          end_date: formatDateTimeLocal(end),
-          duration_minutes: duration > 0 ? duration : 60
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        session_date: getDateTimeForInput(start),
+        end_date: getDateTimeForInput(end),
+        duration_minutes: duration > 0 ? duration : 60
+      }));
     }
   }, [session, selectedSlot]);
 
@@ -76,14 +64,14 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
       
       // Check if startDate is valid and duration is a valid number
       if (startDate && !isNaN(startDate.getTime()) && duration && !isNaN(duration)) {
-        const endDate = new Date(startDate.getTime() + duration * 60000);
-        
+        const endDate = addMinutes(startDate, duration);
+
         // Check if endDate is valid before formatting
         if (!isNaN(endDate.getTime())) {
           setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
-            end_date: formatDateTimeLocal(endDate)
+            end_date: getDateTimeForInput(endDate)
           }));
           return;
         }
@@ -110,21 +98,18 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
       }
 
       // Get user's timezone
-      const userTimezone = moment.tz.guess();
+      const userTimezone = getUserTimezone();
 
       // Convert local datetime to UTC for storage
-      const localSessionDate = moment.tz(formData.session_date, userTimezone);
-      const localEndDate = moment.tz(formData.end_date, userTimezone);
-
-      const utcSessionDate = localSessionDate.clone().utc();
-      const utcEndDate = localEndDate.clone().utc();
+      const localSessionDate = convertLocalToUTC(new Date(formData.session_date));
+      const localEndDate = convertLocalToUTC(new Date(formData.end_date));
 
       const sessionData = {
         partner_id: partnerId,
         user_id: parseInt(formData.user_id),
         title: formData.title,
-        session_date: utcSessionDate.format('YYYY-MM-DD HH:mm:ss'),
-        end_date: utcEndDate.format('YYYY-MM-DD HH:mm:ss'),
+        session_date: localSessionDate.toISOString(),
+        end_date: localEndDate.toISOString(),
         duration_minutes: parseInt(formData.duration_minutes),
         password_enabled: formData.password_enabled,
         notes: formData.notes,

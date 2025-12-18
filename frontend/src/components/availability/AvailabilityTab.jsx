@@ -156,13 +156,26 @@ const AvailabilityTab = ({ partnerId }) => {
    * Handle delete slot
    */
   const handleDelete = async (slot) => {
-    if (!window.confirm('Are you sure you want to delete this availability slot?')) {
+    // Different confirmation messages for booked vs unbooked slots
+    const isBooked = slot.status === 'booked';
+    const confirmMessage = isBooked
+      ? `⚠️ WARNING: This slot is BOOKED by ${slot.user_name || 'a client'}.\n\n` +
+        `Deleting this slot will also DELETE the associated appointment from both your calendar and the client's dashboard.\n\n` +
+        `Date: ${slot.slot_date}\nTime: ${slot.start_time} - ${slot.end_time}\n\n` +
+        `Are you absolutely sure you want to delete this booked slot and appointment?`
+      : `Are you sure you want to delete this availability slot?\n\n` +
+        `Date: ${slot.slot_date}\nTime: ${slot.start_time} - ${slot.end_time}`;
+
+    if (!window.confirm(confirmMessage)) {
       return;
     }
 
     try {
-      await availabilityAPI.deleteSlot(slot.id);
-      alert('Slot deleted successfully');
+      const response = await availabilityAPI.deleteSlot(slot.id);
+      const successMessage = response.data.appointment_deleted
+        ? 'Booked slot and associated appointment deleted successfully'
+        : 'Slot deleted successfully';
+      alert(successMessage);
       loadSlots();
     } catch (error) {
       console.error('Failed to delete slot:', error);

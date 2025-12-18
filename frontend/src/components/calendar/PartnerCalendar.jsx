@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import enUS from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { appointmentAPI, videoSessionAPI } from '../../services/api';
 import AppointmentModal from './AppointmentModal';
 import VideoSessionModal from '../video/VideoSessionModal';
 import { AlertCircle, Calendar as CalendarIcon, Video, Plus } from 'lucide-react';
 
-const localizer = momentLocalizer(moment);
+const locales = {
+  'en-US': enUS,
+};
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  locales,
+});
 
 const PartnerCalendar = ({ partnerId, users }) => {
   const [appointments, setAppointments] = useState([]);
@@ -38,36 +49,58 @@ const PartnerCalendar = ({ partnerId, users }) => {
   const loadAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      const [appointmentsResponse, videoSessionsResponse] = await Promise.all([
-        appointmentAPI.getByPartner(partnerId),
-        videoSessionAPI.getByPartner(partnerId)
-      ]);
-      
-      // Transform appointments for react-big-calendar
-      const appointmentEvents = appointmentsResponse.data.appointments.map(apt => ({
+
+      // Load appointments and video sessions separately to identify which one fails
+      let appointmentsResponse, videoSessionsResponse;
+
+      try {
+        appointmentsResponse = await appointmentAPI.getByPartner(partnerId);
+        console.log('✅ Appointments loaded:', appointmentsResponse?.data);
+      } catch (aptError) {
+        console.error('❌ Failed to load appointments:', aptError);
+        console.error('Appointment error details:', aptError.response?.data || aptError.message);
+        appointmentsResponse = { data: { appointments: [] } };
+      }
+
+      try {
+        videoSessionsResponse = await videoSessionAPI.getByPartner(partnerId);
+        console.log('✅ Video sessions loaded:', videoSessionsResponse?.data);
+      } catch (vidError) {
+        console.error('❌ Failed to load video sessions:', vidError);
+        console.error('Video session error details:', vidError.response?.data || vidError.message);
+        videoSessionsResponse = { data: { sessions: [] } };
+      }
+
+      // Transform appointments for react-big-calendar (with safety checks)
+      const appointments = appointmentsResponse?.data?.appointments || [];
+      const appointmentEvents = appointments.map(apt => ({
         id: `apt-${apt.id}`,
-        title: `${apt.user_name} - ${apt.title}`,
+        title: `${apt.user_name || 'Client'} - ${apt.title}`,
         start: new Date(apt.appointment_date),
         end: new Date(apt.end_date),
         resource: { ...apt, type: 'appointment' }
       }));
-      
-      // Transform video sessions for react-big-calendar
-      const videoEvents = videoSessionsResponse.data.sessions.map(session => ({
+
+      // Transform video sessions for react-big-calendar (with safety checks)
+      const sessions = videoSessionsResponse?.data?.sessions || [];
+      const videoEvents = sessions.map(session => ({
         id: `video-${session.id}`,
-        title: `🎥 ${session.user_name} - ${session.title}`,
+        title: `🎥 ${session.user_name || 'Client'} - ${session.title}`,
         start: new Date(session.session_date),
         end: new Date(session.end_date),
         resource: { ...session, type: 'video' }
       }));
-      
+
+      console.log('📅 Calendar events created:', { appointmentEvents: appointmentEvents.length, videoEvents: videoEvents.length });
+
       setAppointments(appointmentEvents);
       setVideoSessions(videoEvents);
       setAllEvents([...appointmentEvents, ...videoEvents]);
       setError('');
     } catch (err) {
-      console.error('Failed to load calendar data:', err);
-      setError('Failed to load calendar data');
+      console.error('❌ Calendar error:', err);
+      console.error('Error stack:', err.stack);
+      setError('Failed to load calendar data: ' + (err.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }

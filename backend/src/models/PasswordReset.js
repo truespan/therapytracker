@@ -1,14 +1,15 @@
 const db = require('../config/database');
 const crypto = require('crypto');
+const dateUtils = require('../utils/dateUtils');
 
 class PasswordReset {
   static async createToken(email) {
     // Generate secure random token
     const token = crypto.randomBytes(32).toString('hex');
-    
-    // Set expiry to 1 hour from now
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-    
+
+    // Set expiry to 1 hour from now using dateUtils
+    const expiresAt = dateUtils.addHours(dateUtils.getCurrentUTC(), 1);
+
     const query = `
       INSERT INTO password_reset_tokens (email, token, expires_at)
       VALUES ($1, $2, $3)

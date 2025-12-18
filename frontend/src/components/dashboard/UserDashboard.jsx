@@ -10,6 +10,8 @@ import ClientAvailabilityTab from '../availability/ClientAvailabilityTab';
 import TherapistProfileTab from '../profile/TherapistProfileTab';
 import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock } from 'lucide-react';
 import { canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
+import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -26,6 +28,12 @@ const UserDashboard = () => {
   const [latestSharedChart, setLatestSharedChart] = useState(null);
   const [reportsCount, setReportsCount] = useState(0);
   const [partners, setPartners] = useState([]);
+
+  // Format date and time in UTC to match availability display
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return formatInTimeZone(date, 'UTC', 'EEE, MMM d, yyyy h:mm a');
+  };
 
   useEffect(() => {
     loadData();
@@ -368,14 +376,7 @@ const UserDashboard = () => {
                           <p className="font-medium text-gray-900">{apt.title}</p>
                         </div>
                         <p className="text-sm text-gray-600">
-                          {new Date(apt.appointment_date).toLocaleString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {formatDateTime(apt.appointment_date)}
                         </p>
                         <p className="text-sm text-gray-500">with {apt.partner_name}</p>
                       </div>
@@ -429,14 +430,7 @@ const UserDashboard = () => {
                           <p className="font-medium text-gray-700">{apt.title}</p>
                         </div>
                         <p className="text-sm text-gray-500">
-                          {new Date(apt.appointment_date).toLocaleString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {formatDateTime(apt.appointment_date)}
                         </p>
                         <p className="text-sm text-gray-400">with {apt.partner_name}</p>
                       </div>
@@ -476,14 +470,7 @@ const UserDashboard = () => {
                           )}
                           <div className="text-xs text-gray-500 ml-7 space-y-1">
                             <p>Assigned by: {assignment.partner_name}</p>
-                            <p>Date: {new Date(assignment.assigned_at).toLocaleString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              hour12: true
-                            })}</p>
+                            <p>Date: {format(new Date(assignment.assigned_at), 'MMM d, yyyy h:mm a')}</p>
                           </div>
                         </div>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-2">
@@ -561,14 +548,7 @@ const UserDashboard = () => {
                       </p>
                     )}
                     <p className="text-xs text-gray-500">
-                      Shared on {new Date(latestSharedChart.sent_at).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                      })}
+                      Shared on {format(new Date(latestSharedChart.sent_at), 'MMM d, yyyy h:mm a')}
                     </p>
                   </div>
                 </div>
@@ -633,14 +613,7 @@ const UserDashboard = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <Calendar className="h-4 w-4" />
-                            <span>{new Date(session.session_date).toLocaleString('en-US', {
-                              weekday: 'long',
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}</span>
+                            <span>{formatDateTime(session.session_date)}</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Clock className="h-4 w-4" />
@@ -750,14 +723,7 @@ const UserDashboard = () => {
                               </div>
                               <div className="text-sm text-gray-500 mb-3">
                                 <p>Assigned by: {assignment.partner_name}</p>
-                                <p>Date: {new Date(assignment.assigned_at).toLocaleString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                  hour12: true
-                                })}</p>
+                                <p>Date: {format(new Date(assignment.assigned_at), 'MMM d, yyyy h:mm a')}</p>
                               </div>
                               <div className="flex justify-center">
                                 <button
@@ -795,14 +761,7 @@ const UserDashboard = () => {
                               </div>
                               <div className="text-sm text-gray-500 mb-3">
                                 <p>Assigned by: {assignment.partner_name}</p>
-                                <p>Completed: {new Date(assignment.completed_at || assignment.assigned_at).toLocaleString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                  hour12: true
-                                })}</p>
+                                <p>Completed: {format(new Date(assignment.completed_at || assignment.assigned_at), 'MMM d, yyyy h:mm a')}</p>
                                 <p>Responses: {assignment.response_count || 0}</p>
                               </div>
                               <div className="flex justify-center">

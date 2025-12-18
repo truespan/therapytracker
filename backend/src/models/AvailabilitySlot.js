@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const dateUtils = require('../utils/dateUtils');
 
 class AvailabilitySlot {
   /**
@@ -7,9 +8,9 @@ class AvailabilitySlot {
   static async create(slotData) {
     const { partner_id, slot_date, start_time, end_time, status } = slotData;
 
-    // Combine date + time into timestamps for conflict checking
-    const start_datetime = `${slot_date} ${start_time}`;
-    const end_datetime = `${slot_date} ${end_time}`;
+    // Combine date + time into timestamps using dateUtils (ISO 8601 UTC)
+    const start_datetime = dateUtils.combineDateAndTime(slot_date, start_time);
+    const end_datetime = dateUtils.combineDateAndTime(slot_date, end_time);
 
     // Derive fields from status
     const location_type = status.includes('online') ? 'online' : 'offline';
@@ -26,8 +27,8 @@ class AvailabilitySlot {
       slot_date,
       start_time,
       end_time,
-      start_datetime,
-      end_datetime,
+      dateUtils.formatForPostgres(start_datetime),
+      dateUtils.formatForPostgres(end_datetime),
       status,
       location_type,
       is_available
@@ -46,8 +47,11 @@ class AvailabilitySlot {
         s.*,
         TO_CHAR(s.slot_date, 'YYYY-MM-DD') as slot_date,
         TO_CHAR(s.start_time, 'HH24:MI') as start_time,
-        TO_CHAR(s.end_time, 'HH24:MI') as end_time
+        TO_CHAR(s.end_time, 'HH24:MI') as end_time,
+        u.name as booked_by_user_name,
+        u.email as booked_by_user_email
       FROM availability_slots s
+      LEFT JOIN users u ON s.booked_by_user_id = u.id
       WHERE s.id = $1 AND s.archived_at IS NULL
     `;
     const result = await db.query(query, [id]);
@@ -118,11 +122,13 @@ class AvailabilitySlot {
   static async update(id, slotData) {
     const { slot_date, start_time, end_time, status } = slotData;
 
-    // If date/time changed, recalculate datetimes
+    // If date/time changed, recalculate datetimes using dateUtils
     let start_datetime, end_datetime, location_type, is_available;
     if (slot_date && start_time && end_time) {
-      start_datetime = `${slot_date} ${start_time}`;
-      end_datetime = `${slot_date} ${end_time}`;
+      const startDateObj = dateUtils.combineDateAndTime(slot_date, start_time);
+      const endDateObj = dateUtils.combineDateAndTime(slot_date, end_time);
+      start_datetime = dateUtils.formatForPostgres(startDateObj);
+      end_datetime = dateUtils.formatForPostgres(endDateObj);
     }
 
     // Derive fields from status if status is being updated

@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const db = require('../config/database');
 const { sendPartnerVerificationEmail } = require('../utils/emailService');
+const dateUtils = require('../utils/dateUtils');
 
 const getAllOrganizations = async (req, res) => {
   try {
@@ -186,7 +187,7 @@ const createPartner = async (req, res) => {
 
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const tokenExpiry = dateUtils.addHours(dateUtils.getCurrentUTC(), 1); // 1 hour
 
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
@@ -333,7 +334,7 @@ const updatePartner = async (req, res) => {
     // Handle email change - reset verification
     if (updates.email && updates.email !== partner.email) {
       const verificationToken = crypto.randomBytes(32).toString('hex');
-      const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      const tokenExpiry = dateUtils.addHours(dateUtils.getCurrentUTC(), 1); // 1 hour
 
       await db.transaction(async (client) => {
         // Update partner email and reset verification
@@ -588,7 +589,7 @@ const resendVerificationEmail = async (req, res) => {
 
     // Generate new verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const tokenExpiry = dateUtils.addHours(dateUtils.getCurrentUTC(), 1); // 1 hour
 
     // Update verification token
     await Partner.setVerificationToken(partnerId, verificationToken, tokenExpiry);

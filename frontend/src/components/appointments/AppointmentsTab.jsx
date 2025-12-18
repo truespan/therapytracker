@@ -5,6 +5,9 @@ import StartSessionFromVideoModal from '../video/StartSessionFromVideoModal';
 import TimeConfirmationModal from '../common/TimeConfirmationModal';
 import { isFutureDate, isWithinTimeWindow, getCurrentDateTime } from '../../utils/sessionTimeValidation';
 import { Calendar, Clock, User, AlertCircle, CheckCircle, PlayCircle, Video, Trash2, X, ArrowRight } from 'lucide-react';
+import { format, addDays, startOfDay, isWithinInterval } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
+import { getUserTimezone, formatTime as formatTimeUtil, formatDateTime as formatDateTimeUtil } from '../../utils/dateUtils';
 
 const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToSession }) => {
   const [appointments, setAppointments] = useState([]);
@@ -23,13 +26,10 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
   // Generate array of next 7 days starting from today
   const getNext7Days = () => {
     const days = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfDay(new Date());
 
     for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      days.push(date);
+      days.push(addDays(today, i));
     }
     return days;
   };
@@ -52,15 +52,12 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
       setAppointments(appointmentsResponse.data.appointments || []);
 
       // Filter video sessions to only show upcoming ones (next 7 days, including all of today)
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Start of today
-      const sevenDaysLater = new Date(today);
-      sevenDaysLater.setDate(today.getDate() + 7);
+      const today = startOfDay(new Date());
+      const sevenDaysLater = addDays(today, 7);
 
       const upcomingVideoSessions = (videoSessionsResponse.data.sessions || []).filter(session => {
-        const sessionDate = new Date(session.session_date);
-        sessionDate.setHours(0, 0, 0, 0); // Compare date only, not time
-        return sessionDate >= today && sessionDate < sevenDaysLater && session.status !== 'cancelled';
+        const sessionDate = startOfDay(new Date(session.session_date));
+        return isWithinInterval(sessionDate, { start: today, end: sevenDaysLater }) && session.status !== 'cancelled';
       });
 
       setVideoSessions(upcomingVideoSessions);
@@ -214,11 +211,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
     const grouped = {};
 
     days.forEach(day => {
-      // Use local date without timezone conversion
-      const year = day.getFullYear();
-      const month = String(day.getMonth() + 1).padStart(2, '0');
-      const dayNum = String(day.getDate()).padStart(2, '0');
-      const dateKey = `${year}-${month}-${dayNum}`;
+      const dateKey = format(day, 'yyyy-MM-dd');
       grouped[dateKey] = {
         date: day,
         items: []
@@ -228,11 +221,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
     // Add appointments
     appointments.forEach(apt => {
       const aptDate = new Date(apt.appointment_date);
-      // Use local date without timezone conversion
-      const year = aptDate.getFullYear();
-      const month = String(aptDate.getMonth() + 1).padStart(2, '0');
-      const dayNum = String(aptDate.getDate()).padStart(2, '0');
-      const dateKey = `${year}-${month}-${dayNum}`;
+      const dateKey = format(aptDate, 'yyyy-MM-dd');
       if (grouped[dateKey]) {
         grouped[dateKey].items.push({ ...apt, itemType: 'appointment' });
       }
@@ -241,11 +230,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
     // Add video sessions
     videoSessions.forEach(session => {
       const sessionDate = new Date(session.session_date);
-      // Use local date without timezone conversion
-      const year = sessionDate.getFullYear();
-      const month = String(sessionDate.getMonth() + 1).padStart(2, '0');
-      const dayNum = String(sessionDate.getDate()).padStart(2, '0');
-      const dateKey = `${year}-${month}-${dayNum}`;
+      const dateKey = format(sessionDate, 'yyyy-MM-dd');
       if (grouped[dateKey]) {
         grouped[dateKey].items.push({ ...session, itemType: 'video' });
       }
@@ -271,12 +256,13 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
   };
 
   const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+    // Format time in user's local timezone to match availability slot times
+    return formatTimeUtil(dateString);
+  };
+
+  const formatDateTime = (dateString) => {
+    // Format full date and time in user's local timezone
+    return formatDateTimeUtil(dateString);
   };
 
   if (loading && appointments.length === 0) {
@@ -318,7 +304,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
               const dayData = groupedAppointments[dateKey];
               // Use local date for "today" comparison
               const today = new Date();
-              const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+              const todayKey = format(today, 'yyyy-MM-dd');
               const isToday = dateKey === todayKey;
 
               return (
@@ -722,14 +708,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-700">
-                    {new Date(itemToDelete.appointment_date || itemToDelete.session_date).toLocaleString('en-US', {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    {formatDateTime(itemToDelete.appointment_date || itemToDelete.session_date)}
                   </span>
                 </div>
               </div>

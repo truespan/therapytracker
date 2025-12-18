@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { therapySessionAPI, appointmentAPI } from '../../services/api';
 import { X, FileText, DollarSign, User, Calendar, Clock, AlertTriangle } from 'lucide-react';
-import moment from 'moment-timezone';
+import { isAfter, differenceInMinutes, format, addMinutes } from 'date-fns';
+import { getUserTimezone, combineDateAndTime, convertLocalToUTC } from '../../utils/dateUtils';
 import ConflictConfirmationModal from './ConflictConfirmationModal';
 import { useAuth } from '../../context/AuthContext';
 
@@ -41,15 +42,15 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       return false;
     }
 
-    const userTimezone = moment.tz.guess();
-    const selectedDateTime = moment.tz(
-      `${formData.session_date} ${formData.session_time}`,
-      'YYYY-MM-DD HH:mm',
+    const userTimezone = getUserTimezone();
+    const selectedDateTime = combineDateAndTime(
+      formData.session_date,
+      formData.session_time,
       userTimezone
     );
-    const now = moment.tz(userTimezone);
+    const now = new Date();
 
-    return selectedDateTime.isAfter(now);
+    return isAfter(selectedDateTime, now);
   };
 
   // Check if the future date/time is more than 30 minutes away
@@ -58,28 +59,28 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       return false;
     }
 
-    const userTimezone = moment.tz.guess();
-    const selectedDateTime = moment.tz(
-      `${formData.session_date} ${formData.session_time}`,
-      'YYYY-MM-DD HH:mm',
+    const userTimezone = getUserTimezone();
+    const selectedDateTime = combineDateAndTime(
+      formData.session_date,
+      formData.session_time,
       userTimezone
     );
-    const now = moment.tz(userTimezone);
-    const diffInMinutes = selectedDateTime.diff(now, 'minutes');
+    const now = new Date();
+    const diffInMinutes = differenceInMinutes(selectedDateTime, now);
 
     // Return true if it's in the future AND more than 30 minutes away
-    return selectedDateTime.isAfter(now) && diffInMinutes > 30;
+    return isAfter(selectedDateTime, now) && diffInMinutes > 30;
   };
 
   // Get max date (today) for date input
   const getMaxDate = () => {
-    return moment().format('YYYY-MM-DD');
+    return format(new Date(), 'yyyy-MM-dd');
   };
 
   // Get max time for time input (if date is today)
   const getMaxTime = () => {
-    if (formData.session_date === moment().format('YYYY-MM-DD')) {
-      return moment().format('HH:mm');
+    if (formData.session_date === format(new Date(), 'yyyy-MM-dd')) {
+      return format(new Date(), 'HH:mm');
     }
     return null; // No restriction if date is in the past
   };
@@ -124,20 +125,20 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
 
     try {
       // Timezone handling
-      const userTimezone = moment.tz.guess();
+      const userTimezone = getUserTimezone();
 
       // Combine date and time in user's timezone
-      const localDateTime = moment.tz(
-        `${formData.session_date} ${formData.session_time}`,
-        'YYYY-MM-DD HH:mm',
+      const localDateTime = combineDateAndTime(
+        formData.session_date,
+        formData.session_time,
         userTimezone
       );
-      const localEndDateTime = localDateTime.clone().add(parseInt(formData.session_duration), 'minutes');
+      const localEndDateTime = addMinutes(localDateTime, parseInt(formData.session_duration));
 
       // Convert to UTC for storage
-      const utcDateTime = localDateTime.clone().utc();
-      const utcEndDateTime = localEndDateTime.clone().utc();
-      const sessionDateTime = utcDateTime.format('YYYY-MM-DD HH:mm:ss');
+      const utcDateTime = convertLocalToUTC(localDateTime, userTimezone);
+      const utcEndDateTime = convertLocalToUTC(localEndDateTime, userTimezone);
+      const sessionDateTime = utcDateTime.toISOString();
 
       // Store session creation data for later use
       const creationData = {
@@ -153,16 +154,16 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       // Check for appointment conflicts using the new API
       const conflictCheck = await appointmentAPI.checkConflicts(
         partnerId,
-        utcDateTime.format('YYYY-MM-DD HH:mm:ss'),
-        utcEndDateTime.format('YYYY-MM-DD HH:mm:ss')
+        utcDateTime.toISOString(),
+        utcEndDateTime.toISOString()
       );
 
       if (conflictCheck.data.hasConflict && conflictCheck.data.conflicts.length > 0) {
         // Show conflict dialog
         setConflictData({
           conflicts: conflictCheck.data.conflicts,
-          proposedTime: utcDateTime.format(),
-          proposedEndTime: utcEndDateTime.format()
+          proposedTime: utcDateTime.toISOString(),
+          proposedEndTime: utcEndDateTime.toISOString()
         });
         setShowConflictDialog(true);
         setLoading(false);
@@ -200,8 +201,8 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
             partner_id: partnerId,
             user_id: formData.user_id,
             title: formData.session_title,
-            appointment_date: utcDateTime.format('YYYY-MM-DD HH:mm:ss'),
-            end_date: utcEndDateTime.format('YYYY-MM-DD HH:mm:ss'),
+            appointment_date: utcDateTime.toISOString(),
+            end_date: utcEndDateTime.toISOString(),
             duration_minutes: parseInt(formData.session_duration),
             notes: formData.session_notes || '',
             timezone: userTimezone

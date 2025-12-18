@@ -105,12 +105,12 @@ const getPartnerSlots = async (req, res) => {
     let endDate = end_date;
 
     if (!startDate || !endDate) {
-      const today = new Date();
-      startDate = today.toISOString().split('T')[0];
+      const dateUtils = require('../utils/dateUtils');
+      const today = dateUtils.getCurrentUTC();
+      startDate = dateUtils.formatDate(today);
 
-      const sevenDaysLater = new Date(today);
-      sevenDaysLater.setDate(sevenDaysLater.getDate() + 6);
-      endDate = sevenDaysLater.toISOString().split('T')[0];
+      const sevenDaysLater = dateUtils.addDays(today, 6);
+      endDate = dateUtils.formatDate(sevenDaysLater);
     }
 
     const slots = await AvailabilitySlot.findByPartner(partnerId, startDate, endDate);
@@ -139,13 +139,13 @@ const getClientSlots = async (req, res) => {
     // TODO: Verify client has relationship with partner
     // For now, allow any authenticated user to view
 
-    // Get next 7 days
-    const today = new Date();
-    const startDate = today.toISOString().split('T')[0];
+    // Get next 7 days using dateUtils
+    const dateUtils = require('../utils/dateUtils');
+    const today = dateUtils.getCurrentUTC();
+    const startDate = dateUtils.formatDate(today);
 
-    const sevenDaysLater = new Date(today);
-    sevenDaysLater.setDate(sevenDaysLater.getDate() + 6);
-    const endDate = sevenDaysLater.toISOString().split('T')[0];
+    const sevenDaysLater = dateUtils.addDays(today, 6);
+    const endDate = dateUtils.formatDate(sevenDaysLater);
 
     const slots = await AvailabilitySlot.findPublishedByPartner(partnerId, startDate, endDate);
 
@@ -259,6 +259,7 @@ const updateSlot = async (req, res) => {
 
 /**
  * Delete (archive) a slot
+ * If slot is booked, also delete the associated appointment
  */
 const deleteSlot = async (req, res) => {
   try {
@@ -269,18 +270,25 @@ const deleteSlot = async (req, res) => {
       return res.status(404).json({ error: 'Slot not found' });
     }
 
-    // Prevent deleting booked slots
-    if (slot.status === 'booked') {
-      return res.status(400).json({
-        error: 'Cannot delete a booked slot'
-      });
+    // If slot is booked, delete the associated appointment first
+    if (slot.status === 'booked' && slot.appointment_id) {
+      try {
+        await Appointment.delete(slot.appointment_id);
+        console.log(`Deleted associated appointment ${slot.appointment_id} for booked slot ${id}`);
+      } catch (appointmentError) {
+        console.error('Failed to delete associated appointment:', appointmentError);
+        // Continue with slot deletion even if appointment deletion fails
+      }
     }
 
     const archivedSlot = await AvailabilitySlot.archive(id);
 
     res.json({
-      message: 'Slot deleted successfully',
-      slot: archivedSlot
+      message: slot.status === 'booked'
+        ? 'Booked slot and associated appointment deleted successfully'
+        : 'Slot deleted successfully',
+      slot: archivedSlot,
+      appointment_deleted: slot.status === 'booked'
     });
   } catch (error) {
     console.error('Delete slot error:', error);
@@ -324,10 +332,20 @@ const bookSlot = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
+    // Ensure timezone is set to UTC for this transaction
+    await client.query('SET timezone = "UTC"');
     await client.query('BEGIN');
 
-    // Lock the slot row
-    const lockQuery = 'SELECT * FROM availability_slots WHERE id = $1 FOR UPDATE';
+    // Lock the slot row with explicit formatting for date/time fields
+    const lockQuery = `
+      SELECT *,
+        TO_CHAR(slot_date, 'YYYY-MM-DD') as slot_date_formatted,
+        TO_CHAR(start_time, 'HH24:MI') as start_time_formatted,
+        TO_CHAR(end_time, 'HH24:MI') as end_time_formatted
+      FROM availability_slots
+      WHERE id = $1
+      FOR UPDATE
+    `;
     const lockResult = await client.query(lockQuery, [id]);
     const slot = lockResult.rows[0];
 
@@ -365,15 +383,33 @@ const bookSlot = async (req, res) => {
     // If NO conflict, create appointment and sync to Google Calendar
     if (conflicts.length === 0) {
       try {
-        // Create appointment
+        // Create appointment using formatted date/time strings
+        // Use the explicitly formatted fields to avoid any timezone issues
+        const slotDate = slot.slot_date_formatted;
+        const startTime = slot.start_time_formatted;
+        const endTime = slot.end_time_formatted;
+
+        // Calculate duration from time strings
+        const [startHour, startMin] = startTime.split(':').map(Number);
+        const [endHour, endMin] = endTime.split(':').map(Number);
+        const durationMinutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+
+        // Construct ISO datetime strings with explicit UTC timezone marker ('Z' suffix)
+        // Availability slots are stored in UTC, so we must preserve that when creating appointments
+        const startISO = `${slotDate}T${startTime}:00Z`;
+        const endISO = `${slotDate}T${endTime}:00Z`;
+
+        console.log('Booking slot - Date:', slotDate, 'Start:', startTime, 'End:', endTime);
+        console.log('ISO Strings - Start:', startISO, 'End:', endISO);
+
         const appointmentTitle = `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`;
         const appointment = await Appointment.create({
           partner_id: slot.partner_id,
           user_id: userId,
           title: appointmentTitle,
-          appointment_date: slot.start_datetime,
-          end_date: slot.end_datetime,
-          duration_minutes: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / 60000),
+          appointment_date: startISO,
+          end_date: endISO,
+          duration_minutes: durationMinutes,
           notes: `Booked via availability slot #${id}`,
           timezone: 'UTC'
         });

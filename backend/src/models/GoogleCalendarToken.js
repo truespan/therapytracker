@@ -162,12 +162,14 @@ class GoogleCalendarToken {
   static isTokenExpired(expiresAt) {
     if (!expiresAt) return true;
 
-    const expiryDate = new Date(expiresAt);
-    const now = new Date();
+    const dateUtils = require('../utils/dateUtils');
 
-    // Add 5 minute buffer to refresh before actual expiry
-    const bufferMs = 5 * 60 * 1000;
-    return expiryDate.getTime() - bufferMs < now.getTime();
+    const expiryDate = new Date(expiresAt);
+    const now = dateUtils.getCurrentUTC();
+
+    // Add 5 minute buffer to refresh before actual expiry using dateUtils
+    const bufferTime = dateUtils.addMinutes(expiryDate, -5);
+    return now >= bufferTime;
   }
 
   /**

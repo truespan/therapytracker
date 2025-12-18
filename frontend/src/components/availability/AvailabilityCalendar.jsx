@@ -1,5 +1,6 @@
 import React from 'react';
 import { Edit, Trash2, Calendar, User, AlertCircle } from 'lucide-react';
+import { format, addDays, startOfDay } from 'date-fns';
 
 // Helper function to convert 24-hour time to 12-hour format with AM/PM
 const formatTime12Hour = (time24) => {
@@ -20,13 +21,10 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
   // Generate array of next 7 days starting from today
   const getNext7Days = () => {
     const days = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfDay(new Date());
 
     for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      days.push(date);
+      days.push(addDays(today, i));
     }
     return days;
   };
@@ -38,11 +36,7 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
 
     // Create entries for the next 7 days
     days.forEach(day => {
-      // Use local date without timezone conversion
-      const year = day.getFullYear();
-      const month = String(day.getMonth() + 1).padStart(2, '0');
-      const dayNum = String(day.getDate()).padStart(2, '0');
-      const dateKey = `${year}-${month}-${dayNum}`;
+      const dateKey = format(day, 'yyyy-MM-dd');
       grouped[dateKey] = {
         date: day,
         slots: []
@@ -58,10 +52,7 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
         dateKey = slot.slot_date.split('T')[0];
       } else if (slot.slot_date instanceof Date) {
         // If it's a Date object, format it
-        const year = slot.slot_date.getFullYear();
-        const month = String(slot.slot_date.getMonth() + 1).padStart(2, '0');
-        const dayNum = String(slot.slot_date.getDate()).padStart(2, '0');
-        dateKey = `${year}-${month}-${dayNum}`;
+        dateKey = format(slot.slot_date, 'yyyy-MM-dd');
       }
 
       // If the slot's date isn't in our 7-day window, create an entry for it
@@ -253,6 +244,7 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
 
   const style = getStatusStyle(slot.status);
   const canEdit = viewMode === 'partner' && slot.status !== 'booked';
+  const canDelete = viewMode === 'partner'; // Partners can delete any slot, including booked ones
   const canBook = viewMode === 'client' && slot.is_available && slot.status !== 'booked';
 
   return (
@@ -266,22 +258,26 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
         </div>
 
         {/* Action Buttons for Partner View */}
-        {canEdit && (
+        {viewMode === 'partner' && (
           <div className="flex gap-1 ml-1">
-            <button
-              onClick={() => onEdit(slot)}
-              className="p-0.5 text-blue-600 hover:bg-blue-100 rounded transition-colors"
-              title="Edit slot"
-            >
-              <Edit className="h-3 w-3" />
-            </button>
-            <button
-              onClick={() => onDelete(slot)}
-              className="p-0.5 text-red-600 hover:bg-red-100 rounded transition-colors"
-              title="Delete slot"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => onEdit(slot)}
+                className="p-0.5 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                title="Edit slot"
+              >
+                <Edit className="h-3 w-3" />
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => onDelete(slot)}
+                className={`p-0.5 ${slot.status === 'booked' ? 'text-orange-600 hover:bg-orange-100' : 'text-red-600 hover:bg-red-100'} rounded transition-colors`}
+                title={slot.status === 'booked' ? 'Delete booked slot and appointment' : 'Delete slot'}
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            )}
           </div>
         )}
       </div>

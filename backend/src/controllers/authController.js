@@ -583,7 +583,8 @@ const therapistSignup = async (req, res) => {
     // Generate verification token
     const crypto = require('crypto');
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const tokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const dateUtils = require('../utils/dateUtils');
+    const tokenExpiry = dateUtils.addHours(dateUtils.getCurrentUTC(), 1);
 
     // Create partner and auth credentials in transaction
     const result = await db.transaction(async (client) => {
