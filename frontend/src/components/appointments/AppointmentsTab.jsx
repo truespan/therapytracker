@@ -6,8 +6,7 @@ import TimeConfirmationModal from '../common/TimeConfirmationModal';
 import { isFutureDate, isWithinTimeWindow, getCurrentDateTime } from '../../utils/sessionTimeValidation';
 import { Calendar, Clock, User, AlertCircle, CheckCircle, PlayCircle, Video, Trash2, X, ArrowRight } from 'lucide-react';
 import { format, addDays, startOfDay, isWithinInterval } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
-import { getUserTimezone } from '../../utils/dateUtils';
+import { formatTime as formatTimeUtil, formatDateTime as formatDateTimeUtil } from '../../utils/dateUtils';
 
 const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToSession }) => {
   const [appointments, setAppointments] = useState([]);
@@ -256,16 +255,13 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
   };
 
   const formatTime = (dateString) => {
-    // Format time in UTC to ensure appointment times display the same as availability slot times
-    // Using formatInTimeZone from date-fns-tz instead of manual UTC methods
-    const date = new Date(dateString);
-    return formatInTimeZone(date, 'UTC', 'h:mm a');
+    // Use the utility function that properly handles user timezone
+    return formatTimeUtil(dateString);
   };
 
   const formatDateTime = (dateString) => {
-    // Format full date and time in UTC timezone
-    const date = new Date(dateString);
-    return formatInTimeZone(date, 'UTC', 'EEE, MMM d, yyyy h:mm a');
+    // Use the utility function that properly handles user timezone
+    return formatDateTimeUtil(dateString);
   };
 
   if (loading && appointments.length === 0) {
