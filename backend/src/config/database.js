@@ -6,11 +6,17 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Test connection and set timezone
-pool.on('connect', (client) => {
+// Test connection and set timezone to UTC for ALL connections
+pool.on('connect', async (client) => {
   console.log('Connected to PostgreSQL database');
-  // Set timezone to UTC to prevent timezone conversion issues
-  client.query('SET timezone = "UTC"');
+  // CRITICAL: Set timezone to UTC to prevent timezone conversion issues
+  // This ensures all TIMESTAMPTZ values are handled in UTC
+  try {
+    await client.query("SET timezone = 'UTC'");
+    console.log('Database session timezone set to UTC');
+  } catch (err) {
+    console.error('Failed to set timezone to UTC:', err);
+  }
 });
 
 pool.on('error', (err) => {
@@ -26,12 +32,16 @@ module.exports = {
   // Transaction support
   async getClient() {
     const client = await pool.connect();
+    // Ensure timezone is set for this client
+    await client.query("SET timezone = 'UTC'");
     return client;
   },
-  
+
   async transaction(callback) {
     const client = await pool.connect();
     try {
+      // Ensure timezone is set before beginning transaction
+      await client.query("SET timezone = 'UTC'");
       await client.query('BEGIN');
       const result = await callback(client);
       await client.query('COMMIT');
