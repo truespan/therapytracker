@@ -25,6 +25,9 @@ const subscriptionPlanController = require('../controllers/subscriptionPlanContr
 const partnerSubscriptionController = require('../controllers/partnerSubscriptionController');
 const availabilitySlotController = require('../controllers/availabilitySlotController');
 
+// Debug routes (for timezone diagnostics)
+const debugRoutes = require('./debug');
+
 // Upload middleware
 const upload = require('../middleware/upload');
 const uploadTemplate = require('../middleware/uploadTemplate');
@@ -350,6 +353,12 @@ router.post('/admin/populate-partner-ids', async (req, res) => {
     });
   }
 });
+
+// ==================== DEBUG ROUTES ====================
+// Use these endpoints to diagnose timezone issues in production
+// Access: GET /api/debug/timezone
+// Access: GET /api/debug/test-slot?partner_id=X
+router.use('/debug', debugRoutes);
 
 module.exports = router;
 
