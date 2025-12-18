@@ -20,8 +20,8 @@ const {
 
 const {
   formatInTimeZone,
-  zonedTimeToUtc,
-  utcToZonedTime
+  toZonedTime,
+  fromZonedTime
 } = require('date-fns-tz');
 
 /**
@@ -142,7 +142,7 @@ function convertToTimezone(utcDate, timezone) {
   }
 
   const dateObj = typeof utcDate === 'string' ? parseISO(utcDate) : utcDate;
-  return utcToZonedTime(dateObj, timezone);
+  return toZonedTime(dateObj, timezone);
 }
 
 /**
@@ -252,7 +252,7 @@ function combineDateAndTime(dateString, timeString, timezone = 'UTC') {
     throw new Error(`Invalid timezone: ${timezone}`);
   }
 
-  return zonedTimeToUtc(datetimeString, timezone);
+  return fromZonedTime(datetimeString, timezone);
 }
 
 /**

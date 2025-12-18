@@ -46,10 +46,15 @@ class AvailabilitySlot {
   static async findById(id) {
     const query = `
       SELECT
-        s.*,
+        s.id, s.partner_id, s.status, s.location_type, s.is_available,
+        s.is_published, s.last_published_at, s.booked_by_user_id, s.booked_at,
+        s.appointment_id, s.has_google_conflict, s.google_conflict_details,
+        s.created_at, s.updated_at, s.archived_at,
         TO_CHAR(s.slot_date, 'YYYY-MM-DD') as slot_date,
         TO_CHAR(s.start_time, 'HH24:MI') as start_time,
         TO_CHAR(s.end_time, 'HH24:MI') as end_time,
+        s.start_datetime::timestamptz as start_datetime,
+        s.end_datetime::timestamptz as end_datetime,
         u.name as booked_by_user_name,
         u.email as booked_by_user_email
       FROM availability_slots s
@@ -66,10 +71,15 @@ class AvailabilitySlot {
   static async findByPartner(partnerId, startDate = null, endDate = null) {
     let query = `
       SELECT
-        s.*,
+        s.id, s.partner_id, s.status, s.location_type, s.is_available,
+        s.is_published, s.last_published_at, s.booked_by_user_id, s.booked_at,
+        s.appointment_id, s.has_google_conflict, s.google_conflict_details,
+        s.created_at, s.updated_at, s.archived_at,
         TO_CHAR(s.slot_date, 'YYYY-MM-DD') as slot_date,
         TO_CHAR(s.start_time, 'HH24:MI') as start_time,
         TO_CHAR(s.end_time, 'HH24:MI') as end_time,
+        s.start_datetime::timestamptz as start_datetime,
+        s.end_datetime::timestamptz as end_datetime,
         u.name as booked_by_user_name,
         u.email as booked_by_user_email
       FROM availability_slots s
@@ -95,10 +105,15 @@ class AvailabilitySlot {
   static async findPublishedByPartner(partnerId, startDate = null, endDate = null) {
     let query = `
       SELECT
-        s.*,
+        s.id, s.partner_id, s.status, s.location_type, s.is_available,
+        s.is_published, s.last_published_at, s.booked_by_user_id, s.booked_at,
+        s.appointment_id, s.has_google_conflict, s.google_conflict_details,
+        s.created_at, s.updated_at, s.archived_at,
         TO_CHAR(s.slot_date, 'YYYY-MM-DD') as slot_date,
         TO_CHAR(s.start_time, 'HH24:MI') as start_time,
         TO_CHAR(s.end_time, 'HH24:MI') as end_time,
+        s.start_datetime::timestamptz as start_datetime,
+        s.end_datetime::timestamptz as end_datetime,
         u.name as booked_by_user_name
       FROM availability_slots s
       LEFT JOIN users u ON s.booked_by_user_id = u.id
