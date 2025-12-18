@@ -4,7 +4,7 @@ import AvailabilitySlotForm from './AvailabilitySlotForm';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import ConflictWarningModal from './ConflictWarningModal';
 import { availabilityAPI } from '../../services/api';
-import { formatTime } from '../../utils/dateUtils';
+import { formatTime, getUserTimezone } from '../../utils/dateUtils';
 
 const AvailabilityTab = ({ partnerId }) => {
   const [slots, setSlots] = useState([]);
@@ -69,7 +69,8 @@ const AvailabilityTab = ({ partnerId }) => {
         slot_date: formData.date,
         start_time: formData.start_time,
         end_time: formData.end_time,
-        status: formData.status
+        status: formData.status,
+        timezone: getUserTimezone() // Send user's timezone for proper UTC conversion
       };
 
       const response = await availabilityAPI.createSlot(slotData);

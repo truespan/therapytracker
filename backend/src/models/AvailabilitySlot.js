@@ -6,11 +6,13 @@ class AvailabilitySlot {
    * Create a new availability slot
    */
   static async create(slotData) {
-    const { partner_id, slot_date, start_time, end_time, status } = slotData;
+    const { partner_id, slot_date, start_time, end_time, status, timezone } = slotData;
 
     // Combine date + time into timestamps using dateUtils (ISO 8601 UTC)
-    const start_datetime = dateUtils.combineDateAndTime(slot_date, start_time);
-    const end_datetime = dateUtils.combineDateAndTime(slot_date, end_time);
+    // Use provided timezone (user's local timezone) or default to UTC
+    const userTimezone = timezone || 'UTC';
+    const start_datetime = dateUtils.combineDateAndTime(slot_date, start_time, userTimezone);
+    const end_datetime = dateUtils.combineDateAndTime(slot_date, end_time, userTimezone);
 
     // Derive fields from status
     const location_type = status.includes('online') ? 'online' : 'offline';
@@ -120,13 +122,14 @@ class AvailabilitySlot {
    * Update a slot
    */
   static async update(id, slotData) {
-    const { slot_date, start_time, end_time, status } = slotData;
+    const { slot_date, start_time, end_time, status, timezone } = slotData;
 
     // If date/time changed, recalculate datetimes using dateUtils
     let start_datetime, end_datetime, location_type, is_available;
     if (slot_date && start_time && end_time) {
-      const startDateObj = dateUtils.combineDateAndTime(slot_date, start_time);
-      const endDateObj = dateUtils.combineDateAndTime(slot_date, end_time);
+      const userTimezone = timezone || 'UTC';
+      const startDateObj = dateUtils.combineDateAndTime(slot_date, start_time, userTimezone);
+      const endDateObj = dateUtils.combineDateAndTime(slot_date, end_time, userTimezone);
       start_datetime = dateUtils.formatForPostgres(startDateObj);
       end_datetime = dateUtils.formatForPostgres(endDateObj);
     }

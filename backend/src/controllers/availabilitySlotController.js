@@ -8,7 +8,7 @@ const db = require('../config/database');
  */
 const createSlot = async (req, res) => {
   try {
-    const { partner_id, slot_date, start_time, end_time, status } = req.body;
+    const { partner_id, slot_date, start_time, end_time, status, timezone } = req.body;
 
     // Validation
     if (!partner_id || !slot_date || !start_time || !end_time || !status) {
@@ -58,7 +58,8 @@ const createSlot = async (req, res) => {
       slot_date,
       start_time,
       end_time,
-      status
+      status,
+      timezone // Pass timezone for proper UTC conversion
     });
 
     // Update conflict tracking if there was a conflict
