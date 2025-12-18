@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, Clock, Video, MapPin, User, X } from 'lucide-react';
+import { formatTime } from '../../utils/dateUtils';
 
 const BookingConfirmationModal = ({ slot, partnerName, onConfirm, onCancel, loading }) => {
   if (!slot) return null;
@@ -59,7 +60,7 @@ const BookingConfirmationModal = ({ slot, partnerName, onConfirm, onCancel, load
               <div>
                 <p className="text-xs text-gray-600">Time</p>
                 <p className="font-semibold text-gray-900">
-                  {slot.start_time} - {slot.end_time}
+                  {formatTime(slot.start_datetime)} - {formatTime(slot.end_datetime)}
                 </p>
               </div>
             </div>

@@ -4,6 +4,7 @@ import AvailabilitySlotForm from './AvailabilitySlotForm';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import ConflictWarningModal from './ConflictWarningModal';
 import { availabilityAPI } from '../../services/api';
+import { formatTime } from '../../utils/dateUtils';
 
 const AvailabilityTab = ({ partnerId }) => {
   const [slots, setSlots] = useState([]);
@@ -158,13 +159,14 @@ const AvailabilityTab = ({ partnerId }) => {
   const handleDelete = async (slot) => {
     // Different confirmation messages for booked vs unbooked slots
     const isBooked = slot.status === 'booked';
+    const timeRange = `${formatTime(slot.start_datetime)} - ${formatTime(slot.end_datetime)}`;
     const confirmMessage = isBooked
       ? `⚠️ WARNING: This slot is BOOKED by ${slot.user_name || 'a client'}.\n\n` +
         `Deleting this slot will also DELETE the associated appointment from both your calendar and the client's dashboard.\n\n` +
-        `Date: ${slot.slot_date}\nTime: ${slot.start_time} - ${slot.end_time}\n\n` +
+        `Date: ${slot.slot_date}\nTime: ${timeRange}\n\n` +
         `Are you absolutely sure you want to delete this booked slot and appointment?`
       : `Are you sure you want to delete this availability slot?\n\n` +
-        `Date: ${slot.slot_date}\nTime: ${slot.start_time} - ${slot.end_time}`;
+        `Date: ${slot.slot_date}\nTime: ${timeRange}`;
 
     if (!window.confirm(confirmMessage)) {
       return;
