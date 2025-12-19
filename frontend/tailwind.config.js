@@ -117,6 +117,12 @@ module.exports = {
           800: '#991b1b',  // Darker
           900: '#7f1d1d',  // Darkest
         },
+
+        // BANNER COLORS: Custom colors for home page banners
+        banner: {
+          bg: '#FFF4CC',  // Light yellow background
+          text: '#5C3A00', // Dark brown text
+        },
       }
     },
   },

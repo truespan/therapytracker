@@ -121,7 +121,7 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Free Trial Banner */}
-      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 px-4 sticky top-0 z-50 shadow-lg">
+      <div className="py-3 px-4 sticky top-0 z-50 shadow-lg" style={{ backgroundColor: '#FFF4CC', color: '#5C3A00' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
@@ -131,7 +131,10 @@ const Home = () => {
           </div>
           <button
             onClick={scrollToContact}
-            className="bg-white text-primary-600 px-4 py-2 rounded-lg font-semibold hover:bg-primary-50 transition text-sm sm:text-base flex items-center gap-2"
+            className="px-4 py-2 rounded-lg font-semibold transition text-sm sm:text-base flex items-center gap-2"
+            style={{ backgroundColor: '#007a6d', color: 'white' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#006157'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007a6d'}
           >
             Start Free Trial
             <ArrowRight className="h-4 w-4" />
