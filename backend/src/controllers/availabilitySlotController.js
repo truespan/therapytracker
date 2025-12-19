@@ -390,32 +390,27 @@ const bookSlot = async (req, res) => {
     // If NO conflict, create appointment and sync to Google Calendar
     if (conflicts.length === 0) {
       try {
-        // Create appointment using formatted date/time strings
-        // Use the explicitly formatted fields to avoid any timezone issues
-        const slotDate = slot.slot_date_formatted;
-        const startTime = slot.start_time_formatted;
-        const endTime = slot.end_time_formatted;
+        // Use the start_datetime and end_datetime fields directly - they're already UTC timestamptz
+        // No need to manually construct ISO strings which can introduce timezone bugs
+        const startDatetime = new Date(slot.start_datetime);
+        const endDatetime = new Date(slot.end_datetime);
 
-        // Calculate duration from time strings
-        const [startHour, startMin] = startTime.split(':').map(Number);
-        const [endHour, endMin] = endTime.split(':').map(Number);
-        const durationMinutes = (endHour * 60 + endMin) - (startHour * 60 + startMin);
+        // Calculate duration in minutes
+        const dateUtils = require('../utils/dateUtils');
+        const durationMinutes = dateUtils.differenceInMinutes(endDatetime, startDatetime);
 
-        // Construct ISO datetime strings with explicit UTC timezone marker ('Z' suffix)
-        // Availability slots are stored in UTC, so we must preserve that when creating appointments
-        const startISO = `${slotDate}T${startTime}:00Z`;
-        const endISO = `${slotDate}T${endTime}:00Z`;
-
-        console.log('Booking slot - Date:', slotDate, 'Start:', startTime, 'End:', endTime);
-        console.log('ISO Strings - Start:', startISO, 'End:', endISO);
+        console.log('Booking slot - ID:', id);
+        console.log('Start datetime (UTC):', startDatetime.toISOString());
+        console.log('End datetime (UTC):', endDatetime.toISOString());
+        console.log('Duration (minutes):', durationMinutes);
 
         const appointmentTitle = `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`;
         const appointment = await Appointment.create({
           partner_id: slot.partner_id,
           user_id: userId,
           title: appointmentTitle,
-          appointment_date: startISO,
-          end_date: endISO,
+          appointment_date: startDatetime.toISOString(),
+          end_date: endDatetime.toISOString(),
           duration_minutes: durationMinutes,
           notes: `Booked via availability slot #${id}`,
           timezone: 'UTC'

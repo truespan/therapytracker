@@ -17,7 +17,11 @@
       "Bash(cat:*)",
       "Bash(npm install:*)",
       "Bash(npm uninstall:*)",
-      "Bash(node check-db-timezone.js:*)"
+      "Bash(node check-db-timezone.js:*)",
+      "Bash(node test-appointment-timezone.js:*)",
+      "Bash(node diagnose-tz-offset.js:*)",
+      "Bash(node test-insert-methods.js:*)",
+      "Bash(node test-availability-booking.js:*)"
     ],
     "deny": [],
     "ask": []

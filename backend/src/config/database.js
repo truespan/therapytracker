@@ -3,20 +3,26 @@ require('dotenv').config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // CRITICAL: Force UTC timezone for all connections
+  // This must be set BEFORE any queries run
+  connectionTimeoutMillis: 5000,
+  application_name: 'therapy_tracker'
 });
 
-// Test connection and set timezone to UTC for ALL connections
-pool.on('connect', async (client) => {
+// CRITICAL: Set timezone SYNCHRONOUSLY on every new connection BEFORE it's used
+pool.on('connect', (client) => {
   console.log('Connected to PostgreSQL database');
-  // CRITICAL: Set timezone to UTC to prevent timezone conversion issues
-  // This ensures all TIMESTAMPTZ values are handled in UTC
-  try {
-    await client.query("SET timezone = 'UTC'");
-    console.log('Database session timezone set to UTC');
-  } catch (err) {
-    console.error('Failed to set timezone to UTC:', err);
-  }
+  // Use synchronous query to set timezone IMMEDIATELY
+  client.query("SET timezone TO 'UTC'", (err) => {
+    if (err) {
+      console.error('❌ Failed to set timezone to UTC:', err);
+      // This is critical - if we can't set UTC, we should fail
+      throw new Error('Failed to set database timezone to UTC');
+    } else {
+      console.log('✅ Database session timezone set to UTC');
+    }
+  });
 });
 
 pool.on('error', (err) => {
@@ -32,16 +38,16 @@ module.exports = {
   // Transaction support
   async getClient() {
     const client = await pool.connect();
-    // Ensure timezone is set for this client
-    await client.query("SET timezone = 'UTC'");
+    // Timezone should already be set by pool.on('connect'), but double-check
+    await client.query("SET timezone TO 'UTC'");
     return client;
   },
 
   async transaction(callback) {
     const client = await pool.connect();
     try {
-      // Ensure timezone is set before beginning transaction
-      await client.query("SET timezone = 'UTC'");
+      // Timezone should already be set by pool.on('connect'), but double-check
+      await client.query("SET timezone TO 'UTC'");
       await client.query('BEGIN');
       const result = await callback(client);
       await client.query('COMMIT');

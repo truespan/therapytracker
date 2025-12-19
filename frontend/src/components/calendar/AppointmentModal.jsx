@@ -9,7 +9,7 @@ import {
   convertLocalToUTC,
   getCurrentUTC
 } from '../../utils/dateUtils';
-import { differenceInMinutes } from 'date-fns';
+import { differenceInMinutes, addMinutes } from 'date-fns';
 
 const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -91,7 +91,6 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
       );
 
       // Calculate end datetime
-      const { addMinutes } = require('date-fns');
       const endDateTime = addMinutes(localDateTime, parseInt(formData.duration_minutes));
 
       const appointmentData = {
