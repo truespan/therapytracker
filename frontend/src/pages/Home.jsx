@@ -126,7 +126,7 @@ const Home = () => {
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             <span className="font-semibold text-sm sm:text-base">
-              Free Trial Until December 31, 2025
+              🧪 Beta Access — TherapTrack is currently in beta. Complimentary access for therapists until 31 Dec 2025. Phase 1 launch on 01 Jan 2026.
             </span>
           </div>
           <button

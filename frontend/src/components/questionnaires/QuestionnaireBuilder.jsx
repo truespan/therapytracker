@@ -39,6 +39,12 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
 
     // Don't autosave if questionnaire name is empty (required field)
     if (!questionnaire.name.trim()) {
+      // Show indicator that auto-save is waiting for name
+      if (questionnaire.questions.length > 0 || questionnaire.description) {
+        setAutosaveStatus('waiting');
+      } else {
+        setAutosaveStatus('');
+      }
       return;
     }
 
@@ -403,14 +409,17 @@ const QuestionnaireBuilder = ({ questionnaireId, onSave, onCancel }) => {
         </h2>
         {autosaveStatus && (
           <div className={`text-sm px-3 py-1 rounded ${
-            autosaveStatus === 'saving' 
-              ? 'bg-blue-100 text-blue-700' 
+            autosaveStatus === 'saving'
+              ? 'bg-blue-100 text-blue-700'
               : autosaveStatus === 'saved'
               ? 'bg-green-100 text-green-700'
+              : autosaveStatus === 'waiting'
+              ? 'bg-yellow-100 text-yellow-700'
               : 'bg-red-100 text-red-700'
           }`}>
             {autosaveStatus === 'saving' && '💾 Saving...'}
             {autosaveStatus === 'saved' && '✓ Saved'}
+            {autosaveStatus === 'waiting' && '⏳ Enter name to auto-save'}
             {autosaveStatus === 'error' && '✗ Save failed'}
           </div>
         )}
