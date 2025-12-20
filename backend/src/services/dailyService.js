@@ -39,8 +39,7 @@ const createDailyRoom = async ({ name, expirationTime, maxParticipants = 2 }) =>
         max_participants: maxParticipants,
         start_video_off: false,
         start_audio_off: false,
-        owner_only_broadcast: false,
-        enable_recording: 'local' // Allow local recording by participants
+        owner_only_broadcast: false
       }
     });
 

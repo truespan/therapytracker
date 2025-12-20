@@ -19,8 +19,7 @@ const DAILY_CONFIG = {
       max_participants: 2,              // 1-to-1 therapy sessions
       start_video_off: false,           // Start with video on
       start_audio_off: false,           // Start with audio on
-      owner_only_broadcast: false,      // Both participants can broadcast
-      enable_recording: 'local'         // Allow local recording by participants
+      owner_only_broadcast: false       // Both participants can broadcast
     }
   },
 
