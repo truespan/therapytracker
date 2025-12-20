@@ -34,8 +34,8 @@ const createDailyRoom = async ({ name, expirationTime, maxParticipants = 2 }) =>
         enable_screenshare: true,
         enable_chat: true,
         enable_knocking: false,
-        enable_network_ui: true,
-        enable_noise_cancellation_ui: true,
+        enable_network_ui: false, // Network quality UI (disabled for free plan)
+        enable_noise_cancellation_ui: false, // Noise cancellation (disabled for free plan - requires paid tier)
         max_participants: maxParticipants,
         start_video_off: false,
         start_audio_off: false,

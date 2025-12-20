@@ -13,11 +13,8 @@ export const ThemeProvider = ({ children }) => {
     if (savedTheme) {
       setTheme(savedTheme);
     } else {
-      // Check system preference
-      const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-      setTheme(systemPreference);
+      // Default to light mode, ignoring system preference
+      setTheme('light');
     }
   }, []);
 

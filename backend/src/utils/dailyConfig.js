@@ -14,8 +14,8 @@ const DAILY_CONFIG = {
       enable_screenshare: true,         // Enable screen sharing
       enable_chat: true,                // Enable in-call chat
       enable_knocking: false,           // No knocking feature needed
-      enable_network_ui: true,          // Show network quality indicator
-      enable_noise_cancellation_ui: true, // Show noise cancellation option
+      enable_network_ui: false,         // Network quality UI (disabled for free plan)
+      enable_noise_cancellation_ui: false, // Noise cancellation (disabled for free plan - requires paid tier)
       max_participants: 2,              // 1-to-1 therapy sessions
       start_video_off: false,           // Start with video on
       start_audio_off: false,           // Start with audio on
