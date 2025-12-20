@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import InactivityLogout from './components/InactivityLogout';
 import Navbar from './components/layout/Navbar';
 import AdminLayout from './components/layout/AdminLayout';
@@ -131,7 +132,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppRoutes />
+        <ThemeProvider>
+          <AppRoutes />
+        </ThemeProvider>
       </AuthProvider>
     </Router>
   );

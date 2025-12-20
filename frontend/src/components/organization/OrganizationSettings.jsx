@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Save, CreditCard, Users, Calculator } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Save, CreditCard, Users, Calculator, Sun } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import { googleCalendarAPI, organizationAPI, subscriptionPlanAPI } from '../../services/api';
 import ChangePasswordSection from '../common/ChangePasswordSection';
 import NonControlledSubscriptionManagement from './NonControlledSubscriptionManagement';
+import DarkModeToggle from '../common/DarkModeToggle';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -100,13 +101,13 @@ const OrganizationSettings = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="card">
-        <div className="border-b border-gray-200 pb-4 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <Building2 className="h-6 w-6 mr-2 text-indigo-600" />
+      <div className="card dark:bg-dark-bg-tertiary">
+        <div className="border-b border-gray-200 dark:border-dark-border pb-4 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
+            <Building2 className="h-6 w-6 mr-2 text-indigo-600 dark:text-dark-primary-500" />
             Organization Settings
           </h2>
-          <p className="text-gray-600 mt-1">Manage your organization logo and view your information</p>
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage your organization logo and view your information</p>
         </div>
 
         <div className="space-y-6">
@@ -129,15 +130,15 @@ const OrganizationSettings = () => {
 
           {/* Organization Name - Read Only */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
               Organization Name
             </label>
             <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 value={user?.name || ''}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed dark:text-dark-text-primary opacity-75"
                 disabled
                 readOnly
               />
@@ -146,15 +147,15 @@ const OrganizationSettings = () => {
 
           {/* Email - Read Only */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="email"
                 value={user?.email || ''}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed dark:text-dark-text-primary opacity-75"
                 disabled
                 readOnly
               />
@@ -163,41 +164,41 @@ const OrganizationSettings = () => {
 
           {/* Contact Number - Editable */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
               Contact Number
             </label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
                 placeholder="+911234567890"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="input pr-10"
               />
             </div>
-            <p className="text-gray-500 text-xs mt-1">Include country code (e.g., +91 for India)</p>
+            <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">Include country code (e.g., +91 for India)</p>
           </div>
 
           {/* Address - Editable */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
               Address
             </label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <textarea
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 rows="3"
                 placeholder="Enter organization address"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent outline-none text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary resize-y"
               />
             </div>
           </div>
 
           {/* Save Button */}
-          <div className="flex items-center justify-end pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-end pt-4 border-t border-gray-200 dark:border-dark-border">
             <button
               onClick={handleSave}
               disabled={loading || !hasChanges()}
@@ -212,7 +213,7 @@ const OrganizationSettings = () => {
 
           {/* Success Message */}
           {successMessage && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2 text-green-700">
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center space-x-2 text-green-700 dark:text-green-400">
               <CheckCircle className="h-5 w-5 flex-shrink-0" />
               <span>{successMessage}</span>
             </div>
@@ -220,10 +221,10 @@ const OrganizationSettings = () => {
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-2 text-red-700 dark:text-red-400">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span>{errorMessage}</span>
-              <button onClick={() => setErrorMessage('')} className="ml-auto">
+              <button onClick={() => setErrorMessage('')} className="ml-auto text-red-700 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
                 <XCircle className="h-5 w-5" />
               </button>
             </div>
@@ -231,17 +232,42 @@ const OrganizationSettings = () => {
 
           <ChangePasswordSection />
 
+          {/* Appearance Section */}
+          <div className="border-t border-gray-200 dark:border-dark-border pt-6">
+            <div className="flex items-center mb-4">
+              <Sun className="h-5 w-5 mr-2 text-primary-600 dark:text-dark-primary-500" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
+                Appearance
+              </h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
+              Customize how the application looks
+            </p>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border">
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-dark-text-primary">
+                  Dark Mode
+                </p>
+                <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
+                  Toggle between light and dark themes
+                </p>
+              </div>
+              <DarkModeToggle variant="switch" />
+            </div>
+          </div>
+
           {/* GST Number - Read Only */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="border-t border-gray-200 dark:border-dark-border pt-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
               GST Number
             </label>
             <div className="relative">
-              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 value={user?.gst_no || 'Not provided'}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed dark:text-dark-text-primary"
                 disabled
                 readOnly
               />
@@ -250,45 +276,45 @@ const OrganizationSettings = () => {
 
           {/* Subscription Section - Only show for non-TheraPTrack controlled organizations */}
           {!subscriptionDetails?.theraptrack_controlled && (
-          <div className="border-t border-gray-200 pt-6">
+          <div className="border-t border-gray-200 dark:border-dark-border pt-6">
             <div className="flex items-center mb-4">
-              <CreditCard className="h-6 w-6 mr-2 text-indigo-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Subscription Management</h3>
+              <CreditCard className="h-6 w-6 mr-2 text-indigo-600 dark:text-dark-primary-500" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Subscription Management</h3>
             </div>
 
             {/* Current Subscription Plan */}
             {subscriptionDetails?.plan_name && (
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+              <div className="bg-indigo-50 dark:bg-dark-primary-600/20 border border-indigo-200 dark:border-dark-primary-600 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Current Organization Plan: </span>
-                    <span className="text-lg font-bold text-indigo-600">
+                    <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Current Organization Plan: </span>
+                    <span className="text-lg font-bold text-indigo-600 dark:text-dark-primary-500">
                       {subscriptionDetails.plan_name}
                     </span>
                     {subscriptionDetails.min_sessions !== null && subscriptionDetails.max_sessions !== null && (
-                      <span className="text-sm text-gray-600 ml-2">
+                      <span className="text-sm text-gray-600 dark:text-dark-text-tertiary ml-2">
                         ({subscriptionDetails.min_sessions} - {subscriptionDetails.max_sessions} sessions/month)
                       </span>
                     )}
                   </div>
                   {subscriptionDetails.has_video && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
                       Video Enabled
                     </span>
                   )}
                 </div>
                 {subscriptionDetails.subscription_billing_period && (
-                  <div className="mt-2 text-sm text-gray-600">
+                  <div className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
                     Billing Period: <span className="font-medium capitalize">{subscriptionDetails.subscription_billing_period}</span>
                   </div>
                 )}
                 {subscriptionDetails.subscription_start_date && (
-                  <div className="mt-1 text-sm text-gray-600">
+                  <div className="mt-1 text-sm text-gray-600 dark:text-dark-text-secondary">
                     Start Date: {new Date(subscriptionDetails.subscription_start_date).toLocaleDateString()}
                   </div>
                 )}
                 {subscriptionDetails.subscription_end_date && (
-                  <div className="mt-1 text-sm text-gray-600">
+                  <div className="mt-1 text-sm text-gray-600 dark:text-dark-text-secondary">
                     End Date: {new Date(subscriptionDetails.subscription_end_date).toLocaleDateString()}
                   </div>
                 )}

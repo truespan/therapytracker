@@ -1,5 +1,7 @@
 const VideoSession = require('../models/VideoSession');
 const googleCalendarService = require('../services/googleCalendarService');
+const dailyService = require('../services/dailyService');
+const { calculateRoomExpiration } = require('../utils/dailyConfig');
 
 const createVideoSession = async (req, res) => {
   try {
@@ -29,6 +31,26 @@ const createVideoSession = async (req, res) => {
       });
     }
 
+    // Generate meeting room ID first
+    const meeting_room_id = VideoSession.generateMeetingRoomId(partner_id, user_id);
+
+    // Create Daily.co room
+    let daily_room_url = null;
+    try {
+      const expirationTime = calculateRoomExpiration(session_date, duration_minutes || 60);
+      const dailyRoom = await dailyService.createDailyRoom({
+        name: meeting_room_id,
+        expirationTime,
+        maxParticipants: 2
+      });
+      daily_room_url = dailyRoom.url;
+      console.log(`Daily.co room created for session: ${daily_room_url}`);
+    } catch (error) {
+      console.error('Failed to create Daily.co room:', error.message);
+      // Continue without Daily.co URL if creation fails
+      // The session will still be created with meeting_room_id
+    }
+
     const newSession = await VideoSession.create({
       partner_id,
       user_id,
@@ -38,7 +60,8 @@ const createVideoSession = async (req, res) => {
       duration_minutes,
       password_enabled,
       notes,
-      timezone
+      timezone,
+      daily_room_url
     });
 
     // Sync to Google Calendar (non-blocking)
@@ -65,10 +88,31 @@ const createVideoSession = async (req, res) => {
 const getVideoSessionById = async (req, res) => {
   try {
     const { id } = req.params;
-    const session = await VideoSession.findById(id);
+    let session = await VideoSession.findById(id);
 
     if (!session) {
       return res.status(404).json({ error: 'Video session not found' });
+    }
+
+    // Lazy migration: Create Daily.co room for existing sessions without daily_room_url
+    if (!session.daily_room_url && session.status === 'scheduled' && session.meeting_room_id) {
+      try {
+        const expirationTime = calculateRoomExpiration(session.session_date, session.duration_minutes);
+        const dailyRoom = await dailyService.createDailyRoom({
+          name: session.meeting_room_id,
+          expirationTime,
+          maxParticipants: 2
+        });
+
+        // Update session with Daily.co URL
+        await VideoSession.update(id, { daily_room_url: dailyRoom.url });
+        session.daily_room_url = dailyRoom.url;
+
+        console.log(`Lazy migration: Created Daily.co room for session ${id}`);
+      } catch (error) {
+        console.error('Failed to create Daily.co room during lazy migration:', error.message);
+        // Continue without Daily.co URL
+      }
     }
 
     // Don't send password hash to client
@@ -77,9 +121,9 @@ const getVideoSessionById = async (req, res) => {
     res.json({ session: sessionData });
   } catch (error) {
     console.error('Get video session error:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch video session', 
-      details: error.message 
+    res.status(500).json({
+      error: 'Failed to fetch video session',
+      details: error.message
     });
   }
 };
@@ -201,7 +245,18 @@ const deleteVideoSession = async (req, res) => {
       return res.status(404).json({ error: 'Video session not found' });
     }
 
-    // Delete from Google Calendar first (non-blocking)
+    // Delete Daily.co room (non-blocking)
+    if (session.meeting_room_id) {
+      try {
+        await dailyService.deleteDailyRoom(session.meeting_room_id);
+        console.log(`Daily.co room deleted: ${session.meeting_room_id}`);
+      } catch (error) {
+        console.error('Daily.co room deletion failed:', error.message);
+        // Continue with session deletion even if Daily.co cleanup fails
+      }
+    }
+
+    // Delete from Google Calendar (non-blocking)
     try {
       await googleCalendarService.deleteVideoSessionFromGoogle(id);
     } catch (error) {
@@ -214,9 +269,9 @@ const deleteVideoSession = async (req, res) => {
     res.json({ message: 'Video session deleted successfully' });
   } catch (error) {
     console.error('Delete video session error:', error);
-    res.status(500).json({ 
-      error: 'Failed to delete video session', 
-      details: error.message 
+    res.status(500).json({
+      error: 'Failed to delete video session',
+      details: error.message
     });
   }
 };

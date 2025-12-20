@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Building2, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  TrendingUp, 
+import {
+  Building2,
+  Plus,
+  Edit2,
+  Trash2,
+  TrendingUp,
   Search,
   CheckCircle,
   XCircle,
@@ -13,6 +13,7 @@ import {
   UserCheck,
   Activity,
   ClipboardList,
+  Settings,
 } from 'lucide-react';
 import { adminAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -22,6 +23,8 @@ import OrganizationMetricsModal from '../admin/OrganizationMetricsModal';
 import QuestionnaireList from '../questionnaires/QuestionnaireList';
 import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
+import AdminSettings from '../admin/AdminSettings';
+import DarkModeToggle from '../common/DarkModeToggle';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -217,13 +220,13 @@ const AdminDashboard = () => {
     }[color] || 'border-primary-600';
 
     return (
-      <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${borderClass} flex-shrink-0 w-full lg:w-auto`}>
+      <div className={`bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md p-6 border-l-4 ${borderClass} flex-shrink-0 w-full lg:w-auto`}>
         <div className="flex items-center justify-between h-full min-h-[120px]">
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600">{label}</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+            <p className="text-sm font-medium text-gray-600 dark:text-dark-text-secondary">{label}</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mt-2">{value}</p>
             <div className="h-6">
-              {subValue && <p className="text-sm text-gray-500 mt-1">{subValue}</p>}
+              {subValue && <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-1">{subValue}</p>}
             </div>
           </div>
           <div className={`${iconBgClass} p-4 rounded-full`}>
@@ -270,8 +273,8 @@ const AdminDashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage organizations and view system statistics</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Admin Dashboard</h1>
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage organizations and view system statistics</p>
         </div>
         {activeTab === 'organizations' && (
           <button
@@ -285,15 +288,20 @@ const AdminDashboard = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-md">
-        <div className="border-b border-gray-200">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md dark:shadow-lg dark:shadow-black/20">
+        {/* Mobile Dark Mode Toggle */}
+        <div className="lg:hidden border-b border-gray-200 dark:border-dark-border py-3 px-4">
+          <DarkModeToggle variant="button" showLabel />
+        </div>
+
+        <div className="border-b border-gray-200 dark:border-dark-border">
           <nav className="flex -mb-px overflow-x-auto">
             <button
               onClick={() => setActiveTab('organizations')}
               className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'organizations'
-                  ? 'border-primary-600 text-primary-700'
-                  : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300'
+                  ? 'border-primary-600 text-primary-700 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
               }`}
             >
               <Building2 className="h-5 w-5" />
@@ -303,12 +311,23 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('questionnaires')}
               className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
                 activeTab === 'questionnaires'
-                  ? 'border-primary-600 text-primary-700'
-                  : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300'
+                  ? 'border-primary-600 text-primary-700 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
               }`}
             >
               <ClipboardList className="h-5 w-5" />
               Questionnaires
+            </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'settings'
+                  ? 'border-primary-600 text-primary-700 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
+              }`}
+            >
+              <Settings className="h-5 w-5" />
+              Settings
             </button>
           </nav>
         </div>
@@ -394,11 +413,11 @@ const AdminDashboard = () => {
       )}
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow-md p-4">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md p-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
             <input
               type="text"
               placeholder="Search organizations by name or email..."
@@ -445,64 +464,64 @@ const AdminDashboard = () => {
       </div>
 
       {/* Organizations Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+            <thead className="bg-gray-50 dark:bg-dark-bg-secondary">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   Organization
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   Plan
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   Partners
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   Clients
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   Sessions
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   TheraPTrack Controlled
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-dark-bg-tertiary divide-y divide-gray-200 dark:divide-dark-border">
               {filteredOrganizations.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="px-6 py-12 text-center">
-                    <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">
+                    <Building2 className="h-12 w-12 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-3" />
+                    <p className="text-gray-600 dark:text-dark-text-secondary">
                       {searchTerm ? 'No organizations found matching your search' : 'No organizations yet'}
                     </p>
                   </td>
                 </tr>
               ) : (
                 filteredOrganizations.map((org) => (
-                  <tr key={org.id} className="hover:bg-gray-50">
+                  <tr key={org.id} className="hover:bg-gray-50 dark:hover:bg-dark-bg-secondary">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <Building2 className="h-5 w-5 text-gray-400 mr-3" />
+                        <Building2 className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary mr-3" />
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{org.name}</div>
-                          <div className="text-sm text-gray-500">{org.email}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">{org.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-dark-text-secondary">{org.email}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{org.contact}</div>
+                      <div className="text-sm text-gray-900 dark:text-dark-text-primary">{org.contact}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {org.subscription_plan ? (
@@ -510,17 +529,17 @@ const AdminDashboard = () => {
                           {getPlanDisplayName(org.subscription_plan)}
                         </span>
                       ) : (
-                        <span className="text-sm text-gray-400">No plan</span>
+                        <span className="text-sm text-gray-400 dark:text-dark-text-tertiary">No plan</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-semibold text-gray-900">{org.total_partners || 0}</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">{org.total_partners || 0}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-semibold text-gray-900">{org.total_clients || 0}</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">{org.total_clients || 0}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className="text-sm font-semibold text-gray-900">{org.total_sessions || 0}</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">{org.total_sessions || 0}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {org.is_active ? (
@@ -628,6 +647,10 @@ const AdminDashboard = () => {
             />
           )}
         </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <AdminSettings />
       )}
 
       {/* Modals */}

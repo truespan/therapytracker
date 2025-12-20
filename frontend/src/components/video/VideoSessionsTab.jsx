@@ -3,7 +3,7 @@ import { videoSessionAPI } from '../../services/api';
 import VideoSessionModal from './VideoSessionModal';
 import StartSessionFromVideoModal from './StartSessionFromVideoModal';
 import { Video, Calendar, Clock, User, Lock, Unlock, Copy, Check, Edit, Trash2, AlertCircle, FileText, CheckCircle } from 'lucide-react';
-import { generateMeetingUrl, formatTimeUntilSession, canJoinSession } from '../../utils/jitsiHelper';
+import { getDailyRoomUrl, formatTimeUntilSession, canJoinSession } from '../../utils/videoHelper';
 
 const VideoSessionsTab = ({ partnerId, users }) => {
   const [sessions, setSessions] = useState([]);
@@ -64,7 +64,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
   };
 
   const handleCopyLink = (session) => {
-    const meetingUrl = generateMeetingUrl(session.meeting_room_id);
+    const meetingUrl = session.daily_room_url || getDailyRoomUrl(session);
     const shareText = `Video Session: ${session.title}\n` +
       `Date: ${new Date(session.session_date).toLocaleString()}\n` +
       `Duration: ${session.duration_minutes} minutes\n` +
@@ -193,9 +193,9 @@ const VideoSessionsTab = ({ partnerId, users }) => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Sessions</h3>
               <div className="space-y-4">
                 {upcoming.map(session => {
-                  const meetingUrl = generateMeetingUrl(session.meeting_room_id);
+                  const meetingUrl = session.daily_room_url || getDailyRoomUrl(session);
                   const canJoin = canJoinSession(session.session_date);
-                  
+
                   return (
                     <div key={session.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
                       {/* Desktop Layout */}
@@ -409,8 +409,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Past Sessions</h3>
               <div className="space-y-4">
                 {past.map(session => {
-                  const meetingUrl = generateMeetingUrl(session.meeting_room_id);
-                  
+                  const meetingUrl = session.daily_room_url || getDailyRoomUrl(session);
+
                   return (
                     <div key={session.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 hover:shadow-md transition">
                       {/* Desktop Layout */}

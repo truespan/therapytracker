@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { videoSessionAPI } from '../../services/api';
 import { X, Calendar, Clock, User, Lock, Unlock, Copy, Check, Video } from 'lucide-react';
-import { generateMeetingUrl } from '../../utils/jitsiHelper';
+import { getDailyRoomUrl } from '../../utils/videoHelper';
 import {
   getUserTimezone,
   getDateTimeForInput,
@@ -134,13 +134,13 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
 
   const handleCopyLink = () => {
     if (createdSession) {
-      const meetingUrl = generateMeetingUrl(createdSession.meeting_room_id);
+      const meetingUrl = createdSession.daily_room_url || getDailyRoomUrl(createdSession);
       const shareText = `Video Session: ${createdSession.title}\n` +
         `Date: ${new Date(createdSession.session_date).toLocaleString()}\n` +
         `Duration: ${createdSession.duration_minutes} minutes\n` +
         `Meeting Link: ${meetingUrl}` +
         (createdSession.password_enabled ? `\nPassword: ${createdSession.plain_password}` : '');
-      
+
       navigator.clipboard.writeText(shareText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -153,8 +153,8 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
   };
 
   if (createdSession) {
-    const meetingUrl = generateMeetingUrl(createdSession.meeting_room_id);
-    
+    const meetingUrl = createdSession.daily_room_url || getDailyRoomUrl(createdSession);
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">

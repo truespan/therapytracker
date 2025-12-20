@@ -21,6 +21,7 @@ import ClientReportsTab from '../reports/ClientReportsTab';
 import AvailabilityTab from '../availability/AvailabilityTab';
 import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon, CalendarClock } from 'lucide-react';
 import CreatePatientModal from '../partner/CreatePatientModal';
+import DarkModeToggle from '../common/DarkModeToggle';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -249,14 +250,14 @@ const PartnerDashboard = () => {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
-            <p className="text-gray-600 mt-1">Manage your clients and track their progress</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
+            <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage your clients and track their progress</p>
           </div>
         </div>
         {user.partner_id && (
           <div className="card bg-primary-50 border-2 border-primary-200 ml-6">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Your Partner ID</p>
+              <p className="text-sm text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
               <div className="flex items-center space-x-3">
                 <p className="text-2xl font-bold text-primary-700 tracking-wider">
                   {user.partner_id}
@@ -303,8 +304,8 @@ const PartnerDashboard = () => {
             )}
           </div>
           <div className="flex-1">
-            <h1 className="text-xl font-bold text-gray-900">Welcome, {user.name}</h1>
-            <p className="text-sm text-gray-600">Manage your clients</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Manage your clients</p>
           </div>
         </div>
       </div>
@@ -314,7 +315,7 @@ const PartnerDashboard = () => {
         <div className="hidden sm:block lg:hidden mb-6">
           <div className="card bg-primary-50 border-2 border-primary-200">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Your Partner ID</p>
+              <p className="text-sm text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
               <div className="flex items-center justify-between">
                 <p className="text-2xl font-bold text-primary-700 tracking-wider">
                   {user.partner_id}
@@ -340,14 +341,17 @@ const PartnerDashboard = () => {
       )}
 
       {/* Scrollable Tabs - Mobile & Tablet */}
-      <div className="lg:hidden border-b border-gray-200 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="lg:hidden border-b border-gray-200 dark:border-dark-border mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="border-b border-gray-200 dark:border-dark-border py-3 px-4 -mx-4 sm:mx-0 sm:px-0">
+          <DarkModeToggle variant="button" showLabel />
+        </div>
         <nav className="flex space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
           <button
             onClick={() => setActiveTab('appointments')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'appointments'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <CalendarDays className="h-5 w-5" />
@@ -357,8 +361,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('clients')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'clients'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <Users className="h-5 w-5" />
@@ -368,8 +372,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('availability')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'availability'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <CalendarClock className="h-5 w-5" />
@@ -379,8 +383,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('charts')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'charts'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <BarChart3 className="h-5 w-5" />
@@ -391,8 +395,8 @@ const PartnerDashboard = () => {
               onClick={() => setActiveTab('video')}
               className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
                 activeTab === 'video'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
               }`}
             >
               <Video className="h-5 w-5" />
@@ -406,8 +410,8 @@ const PartnerDashboard = () => {
             }}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'questionnaires'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <ClipboardList className="h-5 w-5" />
@@ -417,8 +421,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('calendar')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'calendar'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <Calendar className="h-5 w-5" />
@@ -428,8 +432,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('settings')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'settings'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <Settings className="h-5 w-5" />
@@ -456,8 +460,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('clients')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'clients'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
             }`}
           >
             <Users className="inline h-5 w-5 mr-2" />
@@ -467,8 +471,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('availability')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'availability'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
             }`}
           >
             <CalendarClock className="inline h-5 w-5 mr-2" />
@@ -478,8 +482,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('charts')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'charts'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
             }`}
           >
             <BarChart3 className="inline h-5 w-5 mr-2" />
@@ -490,8 +494,8 @@ const PartnerDashboard = () => {
               onClick={() => setActiveTab('video')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'video'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
               }`}
             >
               <Video className="inline h-5 w-5 mr-2" />
@@ -505,8 +509,8 @@ const PartnerDashboard = () => {
             }}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'questionnaires'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
             }`}
           >
             <ClipboardList className="inline h-5 w-5 mr-2" />
@@ -516,8 +520,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('calendar')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'calendar'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
             }`}
           >
             <Calendar className="inline h-5 w-5 mr-2" />
@@ -527,8 +531,8 @@ const PartnerDashboard = () => {
             onClick={() => setActiveTab('settings')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'settings'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
             }`}
           >
             <Settings className="inline h-5 w-5 mr-2" />
@@ -580,8 +584,8 @@ const PartnerDashboard = () => {
         {/* Mobile Dropdown - Show only on mobile/tablet */}
         <div className="lg:hidden mb-4">
           {users.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Users className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+            <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
+              <Users className="h-10 w-10 mx-auto mb-3 text-gray-400 dark:text-dark-text-tertiary" />
               <p className="text-sm">No clients assigned yet</p>
             </div>
           ) : (
@@ -608,15 +612,15 @@ const PartnerDashboard = () => {
         <div className="hidden lg:block lg:col-span-1">
           <div className="card lg:sticky lg:top-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base sm:text-lg font-semibold flex items-center">
+              <h2 className="text-base sm:text-lg font-semibold flex items-center text-gray-900 dark:text-dark-text-primary">
                 <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Your Clients ({users.length})
               </h2>
             </div>
 
             {users.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-gray-400" />
+              <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
+                <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-gray-400 dark:text-dark-text-tertiary" />
                 <p className="text-sm sm:text-base">No clients assigned yet</p>
               </div>
             ) : (
@@ -632,10 +636,10 @@ const PartnerDashboard = () => {
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <User className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                      <User className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-base text-gray-900 truncate">{client.name}</p>
-                        <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
+                        <p className="font-medium text-base text-gray-900 dark:text-dark-text-primary truncate">{client.name}</p>
+                        <p className="text-sm text-gray-600 dark:text-dark-text-secondary">{client.sex}, {client.age} years</p>
                       </div>
                     </div>
                   </button>
@@ -653,8 +657,8 @@ const PartnerDashboard = () => {
               <div className="card">
                 <div className="flex justify-between items-start mb-4">
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{selectedUser.name}</h2>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-xs sm:text-sm text-gray-600 space-y-1 sm:space-y-0">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-dark-text-primary truncate">{selectedUser.name}</h2>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-xs sm:text-sm text-gray-600 dark:text-dark-text-secondary space-y-1 sm:space-y-0">
                       <span>{selectedUser.sex}, {selectedUser.age} years</span>
                       {selectedUser.email && <span className="truncate">{selectedUser.email}</span>}
                       {selectedUser.contact && <span>{selectedUser.contact}</span>}
@@ -670,8 +674,8 @@ const PartnerDashboard = () => {
                     onClick={() => setClientDetailTab('sessionDetails')}
                     className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
                       clientDetailTab === 'sessionDetails'
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
                     }`}
                   >
                     <ClipboardList className="h-4 w-4" />
@@ -681,8 +685,8 @@ const PartnerDashboard = () => {
                     onClick={() => setClientDetailTab('caseHistory')}
                     className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
                       clientDetailTab === 'caseHistory'
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
                     }`}
                   >
                     <FileText className="h-4 w-4" />
@@ -692,8 +696,8 @@ const PartnerDashboard = () => {
                     onClick={() => setClientDetailTab('mentalStatus')}
                     className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
                       clientDetailTab === 'mentalStatus'
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
                     }`}
                   >
                     <Brain className="h-4 w-4" />
@@ -706,8 +710,8 @@ const PartnerDashboard = () => {
                     }}
                     className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
                       clientDetailTab === 'sessionNotes'
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
                     }`}
                   >
                     <StickyNote className="h-4 w-4" />
@@ -720,8 +724,8 @@ const PartnerDashboard = () => {
                     }}
                     className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
                       clientDetailTab === 'reports'
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
                     }`}
                   >
                     <FileText className="h-4 w-4" />
@@ -796,8 +800,8 @@ const PartnerDashboard = () => {
             </div>
           ) : (
             <div className="card text-center py-16">
-              <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg">Select a client to view their progress</p>
+              <Users className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-dark-text-secondary text-lg">Select a client to view their progress</p>
             </div>
           )}
         </div>
@@ -824,8 +828,8 @@ const PartnerDashboard = () => {
           {/* Mobile Dropdown - Show only on mobile/tablet */}
           <div className="lg:hidden mb-4">
             {users.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Users className="h-10 w-10 mx-auto mb-3 text-gray-400" />
+              <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
+                <Users className="h-10 w-10 mx-auto mb-3 text-gray-400 dark:text-dark-text-tertiary" />
                 <p className="text-sm">No clients assigned yet</p>
               </div>
             ) : (
@@ -852,15 +856,15 @@ const PartnerDashboard = () => {
           <div className="hidden lg:block lg:col-span-1">
             <div className="card lg:sticky lg:top-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base sm:text-lg font-semibold flex items-center">
+                <h2 className="text-base sm:text-lg font-semibold flex items-center text-gray-900 dark:text-dark-text-primary">
                   <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Your Clients ({users.length})
                 </h2>
               </div>
 
               {users.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-gray-400" />
+                <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
+                  <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-gray-400 dark:text-dark-text-tertiary" />
                   <p className="text-sm sm:text-base">No clients assigned yet</p>
                 </div>
               ) : (
@@ -876,10 +880,10 @@ const PartnerDashboard = () => {
                       }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <User className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                        <User className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary flex-shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-base text-gray-900 truncate">{client.name}</p>
-                          <p className="text-sm text-gray-600">{client.sex}, {client.age} years</p>
+                          <p className="font-medium text-base text-gray-900 dark:text-dark-text-primary truncate">{client.name}</p>
+                          <p className="text-sm text-gray-600 dark:text-dark-text-secondary">{client.sex}, {client.age} years</p>
                         </div>
                       </div>
                     </button>
@@ -910,8 +914,8 @@ const PartnerDashboard = () => {
               />
             ) : (
               <div className="card text-center py-16">
-                <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">Select a client to create and send questionnaire comparison charts</p>
+                <BarChart3 className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-dark-text-secondary text-lg">Select a client to create and send questionnaire comparison charts</p>
               </div>
             )}
           </div>
@@ -956,8 +960,8 @@ const PartnerDashboard = () => {
               {/* Reports Section */}
               <div className="border-t-4 border-gray-200 pt-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Reports</h2>
-                  <p className="text-gray-600">Manage default report template settings</p>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">Reports</h2>
+                  <p className="text-gray-600 dark:text-dark-text-secondary">Manage default report template settings</p>
                 </div>
                 <PartnerReportsTab />
               </div>

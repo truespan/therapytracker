@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class', // Enable class-based dark mode
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
@@ -122,6 +123,26 @@ module.exports = {
         banner: {
           bg: '#FFF4CC',  // Light yellow background
           text: '#5C3A00', // Dark brown text
+        },
+
+        // DARK MODE COLORS: Optimized for dark theme
+        dark: {
+          bg: {
+            primary: '#0F172A',    // Main background (slate-900)
+            secondary: '#1E293B',  // Elevated surfaces (slate-800)
+            tertiary: '#334155',   // Cards/panels (slate-700)
+          },
+          text: {
+            primary: '#F1F5F9',    // Main text (slate-100)
+            secondary: '#CBD5E1',  // Secondary text (slate-300)
+            tertiary: '#94A3B8',   // Muted text (slate-400)
+          },
+          border: '#475569',       // Borders (slate-600)
+          primary: {
+            500: '#14B8A6',        // Brighter teal for dark mode
+            600: '#0D9488',
+            700: '#0F766E',
+          },
         },
       }
     },

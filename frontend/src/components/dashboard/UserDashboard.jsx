@@ -8,10 +8,12 @@ import QuestionnaireChart from '../questionnaires/QuestionnaireChart';
 import UserReportsTab from '../reports/UserReportsTab';
 import ClientAvailabilityTab from '../availability/ClientAvailabilityTab';
 import TherapistProfileTab from '../profile/TherapistProfileTab';
-import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock } from 'lucide-react';
+import UserSettings from '../user/UserSettings';
+import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock, Settings } from 'lucide-react';
 import { canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
 import { format } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import DarkModeToggle from '../common/DarkModeToggle';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -151,19 +153,22 @@ const UserDashboard = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Welcome Section - Hidden on mobile, visible on desktop */}
       <div className="hidden lg:block mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
-        <p className="text-gray-600 mt-1">Track your therapy progress</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
+        <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Track your therapy progress</p>
       </div>
 
       {/* Scrollable Tabs - Mobile & Tablet */}
-      <div className="lg:hidden border-b border-gray-200 mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="lg:hidden border-b border-gray-200 dark:border-dark-border mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="border-b border-gray-200 dark:border-dark-border py-3 px-4 -mx-4 sm:mx-0 sm:px-0">
+          <DarkModeToggle variant="button" showLabel />
+        </div>
         <nav className="flex space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
           <button
             onClick={() => setActiveTab('overview')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'overview'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <Activity className="h-5 w-5" />
@@ -173,8 +178,8 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('availability')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'availability'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <CalendarClock className="h-5 w-5" />
@@ -185,8 +190,8 @@ const UserDashboard = () => {
               onClick={() => setActiveTab('video')}
               className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
                 activeTab === 'video'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
               }`}
             >
               <Video className="h-5 w-5" />
@@ -197,8 +202,8 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('charts')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'charts'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <BarChart3 className="h-5 w-5" />
@@ -208,8 +213,8 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('questionnaires')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'questionnaires'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <FileText className="h-5 w-5" />
@@ -219,14 +224,14 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('reports')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 relative ${
               activeTab === 'reports'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <FileCheck className="h-5 w-5" />
             <span className="text-xs">Reports</span>
             {reportsCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-red-500 dark:bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {reportsCount}
               </span>
             )}
@@ -235,25 +240,36 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('therapist')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'therapist'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
             <UserIcon className="h-5 w-5" />
             <span className="text-xs">Therapist</span>
           </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+              activeTab === 'settings'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
+            }`}
+          >
+            <Settings className="h-5 w-5" />
+            <span className="text-xs">Settings</span>
+          </button>
         </nav>
       </div>
 
       {/* Desktop Tabs */}
-      <div className="hidden lg:block border-b border-gray-200 mb-6">
+      <div className="hidden lg:block border-b border-gray-200 dark:border-dark-border mb-6">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('availability')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'availability'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
             }`}
           >
             <CalendarClock className="inline h-5 w-5 mr-2" />
@@ -263,8 +279,8 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('overview')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'overview'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
             }`}
           >
             <Activity className="inline h-5 w-5 mr-2" />
@@ -275,8 +291,8 @@ const UserDashboard = () => {
               onClick={() => setActiveTab('video')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'video'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
               }`}
             >
               <Video className="inline h-5 w-5 mr-2" />
@@ -287,8 +303,8 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('charts')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'charts'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
             }`}
           >
             <BarChart3 className="inline h-5 w-5 mr-2" />
@@ -298,8 +314,8 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('questionnaires')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'questionnaires'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
             }`}
           >
             <FileText className="inline h-5 w-5 mr-2" />
@@ -309,14 +325,14 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('reports')}
             className={`py-4 px-1 border-b-2 font-medium text-sm relative ${
               activeTab === 'reports'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
             }`}
           >
             <FileCheck className="inline h-5 w-5 mr-2" />
             Reports
             {reportsCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-red-500 dark:bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {reportsCount}
               </span>
             )}
@@ -325,12 +341,23 @@ const UserDashboard = () => {
             onClick={() => setActiveTab('therapist')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'therapist'
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
             }`}
           >
             <UserIcon className="inline h-5 w-5 mr-2" />
             Therapist Profile
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'settings'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
+            }`}
+          >
+            <Settings className="inline h-5 w-5 mr-2" />
+            Settings
           </button>
         </nav>
       </div>
@@ -363,7 +390,7 @@ const UserDashboard = () => {
 
             return allUpcoming.length > 0 ? (
               <div className="card mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4 flex items-center">
                   <Calendar className="h-5 w-5 mr-2 text-primary-600" />
                   Upcoming Appointments
                 </h3>
@@ -373,18 +400,18 @@ const UserDashboard = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           {apt.isVideoSession && <Video className="h-4 w-4 text-primary-700" />}
-                          <p className="font-medium text-gray-900">{apt.title}</p>
+                          <p className="font-medium text-gray-900 dark:text-dark-text-primary">{apt.title}</p>
                         </div>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
                           {formatDateTime(apt.appointment_date)}
                         </p>
-                        <p className="text-sm text-gray-500">with {apt.partner_name}</p>
+                        <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">with {apt.partner_name}</p>
                       </div>
                     </div>
                   ))}
                 </div>
                 {allUpcoming.length > 5 && (
-                  <div className="mt-4 text-center text-sm text-gray-500">
+                  <div className="mt-4 text-center text-sm text-gray-500 dark:text-dark-text-tertiary">
                     + {allUpcoming.length - 5} more upcoming appointments
                   </div>
                 )}
@@ -417,8 +444,8 @@ const UserDashboard = () => {
 
             return allPast.length > 0 ? (
               <div className="card mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Calendar className="h-5 w-5 mr-2 text-gray-600" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4 flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-gray-600 dark:text-dark-text-secondary" />
                   Past Appointments
                 </h3>
                 <div className="space-y-3">
@@ -426,19 +453,19 @@ const UserDashboard = () => {
                     <div key={apt.isVideoSession ? `video-${apt.id}` : `apt-${apt.id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <div className="flex items-center gap-2">
-                          {apt.isVideoSession && <Video className="h-4 w-4 text-gray-600" />}
-                          <p className="font-medium text-gray-700">{apt.title}</p>
+                          {apt.isVideoSession && <Video className="h-4 w-4 text-gray-600 dark:text-dark-text-secondary" />}
+                          <p className="font-medium text-gray-700 dark:text-dark-text-secondary">{apt.title}</p>
                         </div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">
                           {formatDateTime(apt.appointment_date)}
                         </p>
-                        <p className="text-sm text-gray-400">with {apt.partner_name}</p>
+                        <p className="text-sm text-gray-400 dark:text-dark-text-tertiary">with {apt.partner_name}</p>
                       </div>
                     </div>
                   ))}
                 </div>
                 {allPast.length > 3 && (
-                  <div className="mt-4 text-center text-sm text-gray-500">
+                  <div className="mt-4 text-center text-sm text-gray-500 dark:text-dark-text-tertiary">
                     + {allPast.length - 3} more past appointments
                   </div>
                 )}
@@ -449,7 +476,7 @@ const UserDashboard = () => {
           {/* Pending Questionnaires Widget */}
           {questionnaireAssignments.filter(a => a.status === 'pending').length > 0 && (
             <div className="card mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4 flex items-center">
                 <FileText className="h-5 w-5 mr-2 text-primary-600" />
                 Pending Questionnaires
               </h3>
@@ -463,12 +490,12 @@ const UserDashboard = () => {
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
                             <FileText className="h-5 w-5 text-yellow-600" />
-                            <h4 className="font-semibold text-gray-900">{assignment.name}</h4>
+                            <h4 className="font-semibold text-gray-900 dark:text-dark-text-primary">{assignment.name}</h4>
                           </div>
                           {assignment.description && (
-                            <p className="text-sm text-gray-600 mb-2 ml-7">{assignment.description}</p>
+                            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-2 ml-7">{assignment.description}</p>
                           )}
-                          <div className="text-xs text-gray-500 ml-7 space-y-1">
+                          <div className="text-xs text-gray-500 dark:text-dark-text-tertiary ml-7 space-y-1">
                             <p>Assigned by: {assignment.partner_name}</p>
                             <p>Date: {format(new Date(assignment.assigned_at), 'MMM d, yyyy h:mm a')}</p>
                           </div>
@@ -506,11 +533,11 @@ const UserDashboard = () => {
             <div className="card mb-6 border-l-4 border-l-green-500 bg-green-50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2 flex items-center">
                     <FileCheck className="h-5 w-5 mr-2 text-green-600" />
                     New Reports Shared with You
                   </h3>
-                  <p className="text-sm text-gray-700 mb-3">
+                  <p className="text-sm text-gray-700 dark:text-dark-text-secondary mb-3">
                     You have {reportsCount} new report{reportsCount > 1 ? 's' : ''} shared by your therapist
                   </p>
                   <button
@@ -534,20 +561,20 @@ const UserDashboard = () => {
             <div className="card mb-6 border-l-4 border-l-primary-600 bg-primary-50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2 flex items-center">
                     <BarChart3 className="h-5 w-5 mr-2 text-primary-700" />
                     New Chart Shared with You
                   </h3>
-                  <div className="space-y-1 text-sm text-gray-700">
+                  <div className="space-y-1 text-sm text-gray-700 dark:text-dark-text-secondary">
                     <p>
                       <span className="font-medium">{latestSharedChart.partner_name}</span> has shared a new comparison chart with you
                     </p>
                     {latestSharedChart.questionnaire_name && (
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 dark:text-dark-text-secondary">
                         Questionnaire: {latestSharedChart.questionnaire_name}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">
                       Shared on {format(new Date(latestSharedChart.sent_at), 'MMM d, yyyy h:mm a')}
                     </p>
                   </div>
@@ -565,9 +592,9 @@ const UserDashboard = () => {
           {/* Empty State */}
           {appointments.length === 0 && questionnaireAssignments.filter(a => a.status === 'pending').length === 0 && !latestSharedChart && (
             <div className="card text-center py-12">
-              <Activity className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome to Your Dashboard</h3>
-              <p className="text-gray-600">
+              <Activity className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">Welcome to Your Dashboard</h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary">
                 Your upcoming appointments, questionnaires, and shared charts will appear here.
               </p>
             </div>
@@ -582,12 +609,12 @@ const UserDashboard = () => {
 
       {activeTab === 'video' && videoSessionsEnabled && (
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Video Sessions</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-6">Video Sessions</h2>
           {videoSessions.length === 0 ? (
             <div className="card text-center py-12">
-              <Video className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Video Sessions Scheduled</h3>
-              <p className="text-gray-600">
+              <Video className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">No Video Sessions Scheduled</h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary">
                 Your therapist will schedule video sessions with you. They will appear here.
               </p>
             </div>
@@ -650,7 +677,7 @@ const UserDashboard = () => {
 
       {activeTab === 'charts' && (
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Charts from Your Therapist</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-6">Charts from Your Therapist</h2>
           <SharedChartViewer charts={sharedCharts} />
         </div>
       )}
@@ -689,13 +716,13 @@ const UserDashboard = () => {
             </div>
           ) : (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">My Questionnaires</h2>
-              
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-6">My Questionnaires</h2>
+
               {questionnaireAssignments.length === 0 ? (
                 <div className="card text-center py-12">
-                  <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questionnaires Yet</h3>
-                  <p className="text-gray-600">
+                  <FileText className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">No Questionnaires Yet</h3>
+                  <p className="text-gray-600 dark:text-dark-text-secondary">
                     Your therapist will assign questionnaires for you to complete. They will appear here.
                   </p>
                 </div>
@@ -704,7 +731,7 @@ const UserDashboard = () => {
                   {/* Pending Questionnaires */}
                   {questionnaireAssignments.filter(a => a.status === 'pending').length > 0 && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Pending</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-dark-text-primary mb-3">Pending</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {questionnaireAssignments
                           .filter(a => a.status === 'pending')
@@ -712,16 +739,16 @@ const UserDashboard = () => {
                             <div key={assignment.id} className="card border-l-4 border-l-yellow-500">
                               <div className="flex justify-between items-start mb-3">
                                 <div>
-                                  <h4 className="font-semibold text-gray-900">{assignment.name}</h4>
+                                  <h4 className="font-semibold text-gray-900 dark:text-dark-text-primary">{assignment.name}</h4>
                                   {assignment.description && (
-                                    <p className="text-sm text-gray-600 mt-1">{assignment.description}</p>
+                                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">{assignment.description}</p>
                                   )}
                                 </div>
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                   Pending
                                 </span>
                               </div>
-                              <div className="text-sm text-gray-500 mb-3">
+                              <div className="text-sm text-gray-500 dark:text-dark-text-tertiary mb-3">
                                 <p>Assigned by: {assignment.partner_name}</p>
                                 <p>Date: {format(new Date(assignment.assigned_at), 'MMM d, yyyy h:mm a')}</p>
                               </div>
@@ -742,7 +769,7 @@ const UserDashboard = () => {
                   {/* Completed Questionnaires */}
                   {questionnaireAssignments.filter(a => a.status === 'completed').length > 0 && (
                     <div className="mt-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-3">Completed</h3>
+                      <h3 className="text-lg font-semibold text-gray-800 dark:text-dark-text-primary mb-3">Completed</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {questionnaireAssignments
                           .filter(a => a.status === 'completed')
@@ -750,16 +777,16 @@ const UserDashboard = () => {
                             <div key={assignment.id} className="card border-l-4 border-l-green-500">
                               <div className="flex justify-between items-start mb-3">
                                 <div>
-                                  <h4 className="font-semibold text-gray-900">{assignment.name}</h4>
+                                  <h4 className="font-semibold text-gray-900 dark:text-dark-text-primary">{assignment.name}</h4>
                                   {assignment.description && (
-                                    <p className="text-sm text-gray-600 mt-1">{assignment.description}</p>
+                                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">{assignment.description}</p>
                                   )}
                                 </div>
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                   Completed
                                 </span>
                               </div>
-                              <div className="text-sm text-gray-500 mb-3">
+                              <div className="text-sm text-gray-500 dark:text-dark-text-tertiary mb-3">
                                 <p>Assigned by: {assignment.partner_name}</p>
                                 <p>Completed: {format(new Date(assignment.completed_at || assignment.assigned_at), 'MMM d, yyyy h:mm a')}</p>
                                 <p>Responses: {assignment.response_count || 0}</p>
@@ -791,6 +818,10 @@ const UserDashboard = () => {
 
       {activeTab === 'therapist' && (
         <TherapistProfileTab userId={user.id} />
+      )}
+
+      {activeTab === 'settings' && (
+        <UserSettings />
       )}
     </div>
   );

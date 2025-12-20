@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText, CreditCard } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText, CreditCard, Sun } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
+import DarkModeToggle from '../common/DarkModeToggle';
 import { googleCalendarAPI, partnerAPI, subscriptionPlanAPI, organizationAPI } from '../../services/api';
 import ChangePasswordSection from '../common/ChangePasswordSection';
 import PlanSelectionModal from '../common/PlanSelectionModal';
@@ -265,11 +266,11 @@ const PartnerSettings = () => {
     <div className="max-w-4xl mx-auto">
       <div className="card">
         <div className="border-b border-gray-200 pb-4 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
             <User className="h-6 w-6 mr-2 text-primary-600" />
             Profile Settings
           </h2>
-          <p className="text-gray-600 mt-1">Manage your profile information</p>
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage your profile information</p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -294,18 +295,18 @@ const PartnerSettings = () => {
             {/* Partner ID Display */}
             {user && user.partner_id && (
               <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                <span className="text-sm font-medium text-gray-700">Partner ID: </span>
+                <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Partner ID: </span>
                 <span className="text-lg font-bold text-primary-600">{user.partner_id}</span>
               </div>
             )}
 
             {/* Name - Read Only */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Full Name
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="text"
                   value={user?.name || ''}
@@ -319,7 +320,7 @@ const PartnerSettings = () => {
             {/* Sex and Age */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   Sex
                 </label>
                 <input
@@ -332,11 +333,11 @@ const PartnerSettings = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   Age (Optional)
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                   <input
                     type="number"
                     name="age"
@@ -353,11 +354,11 @@ const PartnerSettings = () => {
 
             {/* Email - Read Only */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="email"
                   value={user?.email || ''}
@@ -370,7 +371,7 @@ const PartnerSettings = () => {
 
             {/* Contact Number - Editable */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Contact Number
               </label>
               <div className="flex space-x-2">
@@ -380,7 +381,7 @@ const PartnerSettings = () => {
                   name="countryCode"
                 />
                 <div className="relative flex-1">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                   <input
                     type="tel"
                     name="contact"
@@ -395,11 +396,11 @@ const PartnerSettings = () => {
 
             {/* Qualification - Editable */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Qualification
               </label>
               <div className="relative">
-                <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="text"
                   name="qualification"
@@ -413,11 +414,11 @@ const PartnerSettings = () => {
 
             {/* Practitioner License ID - Editable */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Practitioner License ID (Optional)
               </label>
               <div className="relative">
-                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="text"
                   name="license_id"
@@ -431,11 +432,11 @@ const PartnerSettings = () => {
 
             {/* Address - Editable */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Address (Optional)
               </label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <textarea
                   name="address"
                   value={formData.address}
@@ -449,11 +450,11 @@ const PartnerSettings = () => {
 
             {/* Work Experience - Editable */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Work Experience (Optional)
               </label>
               <div className="relative">
-                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <textarea
                   name="work_experience"
                   value={formData.work_experience}
@@ -467,11 +468,11 @@ const PartnerSettings = () => {
 
             {/* Other Practice Details - Editable */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Other Practice Details (Optional)
               </label>
               <div className="relative">
-                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <textarea
                   name="other_practice_details"
                   value={formData.other_practice_details}
@@ -485,15 +486,15 @@ const PartnerSettings = () => {
 
             {/* Fee Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Fee Range (Optional)
               </label>
               <div className="space-y-2">
                 <div className="flex items-start gap-3">
                   <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Min</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Min</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium">₹</span>
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-dark-text-tertiary font-medium">₹</span>
                       <input
                         type="number"
                         name="fee_min"
@@ -507,9 +508,9 @@ const PartnerSettings = () => {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Max</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Max</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium">₹</span>
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-dark-text-tertiary font-medium">₹</span>
                       <input
                         type="number"
                         name="fee_max"
@@ -523,7 +524,7 @@ const PartnerSettings = () => {
                     </div>
                   </div>
                   <div className="w-32">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Currency</label>
                     <select
                       name="fee_currency"
                       value={formData.fee_currency}
@@ -541,7 +542,7 @@ const PartnerSettings = () => {
                     </select>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
                   This information will appear on the therapist's profile as part of the search feature used by individual clients.
                 </p>
               </div>
@@ -579,13 +580,38 @@ const PartnerSettings = () => {
               </div>
             )}
 
+            {/* Appearance Settings */}
+            <div className="border-t border-gray-200 dark:border-dark-border pt-6 mt-6">
+              <div className="flex items-center mb-4">
+                <Sun className="h-6 w-6 mr-2 text-primary-600 dark:text-dark-primary-500" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
+                  Appearance
+                </h3>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
+                Customize how the application looks
+              </p>
+
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border">
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-dark-text-primary">
+                    Dark Mode
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
+                    Toggle between light and dark themes
+                  </p>
+                </div>
+                <DarkModeToggle variant="switch" />
+              </div>
+            </div>
+
             {/* Google Calendar Integration */}
             <div className="border-t border-gray-200 pt-6">
               <div className="flex items-center mb-4">
                 <CalendarIcon className="h-6 w-6 mr-2 text-primary-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Google Calendar Integration</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Google Calendar Integration</h3>
               </div>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
                 Connect your Google Calendar to automatically sync appointments. When you create or update appointments, they will appear in your Google Calendar.
               </p>
 
@@ -610,7 +636,7 @@ const PartnerSettings = () => {
                       </button>
                     </div>
                     {googleCalendarStatus.connectedAt && (
-                      <p className="text-xs text-gray-600 mt-2">
+                      <p className="text-xs text-gray-600 dark:text-dark-text-secondary mt-2">
                         Connected on {new Date(googleCalendarStatus.connectedAt).toLocaleDateString()}
                       </p>
                     )}
@@ -618,9 +644,9 @@ const PartnerSettings = () => {
 
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Sync Enabled</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {googleCalendarStatus.syncEnabled 
+                      <p className="text-sm font-medium text-gray-700 dark:text-dark-text-primary">Sync Enabled</p>
+                      <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
+                        {googleCalendarStatus.syncEnabled
                           ? 'Appointments will automatically sync to your Google Calendar'
                           : 'Sync is currently disabled'}
                       </p>
@@ -637,7 +663,7 @@ const PartnerSettings = () => {
                   </div>
 
                   {googleCalendarStatus.lastSyncedAt && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">
                       Last synced: {new Date(googleCalendarStatus.lastSyncedAt).toLocaleString()}
                     </p>
                   )}
@@ -650,7 +676,7 @@ const PartnerSettings = () => {
                         <AlertCircle className="h-5 w-5 text-primary-700" />
                         <span className="text-sm font-medium text-primary-800">Not Connected</span>
                       </div>
-                      <p className="text-xs text-gray-600 mb-4">
+                      <p className="text-xs text-gray-600 dark:text-dark-text-secondary mb-4">
                         Connect your Google Calendar to automatically sync appointments when you create or update them.
                       </p>
                       <button
@@ -684,8 +710,8 @@ const PartnerSettings = () => {
         {organizationSubscription && (
           <div className="border-t border-gray-200 pt-6 mt-6">
             <div className="flex items-center mb-4">
-              <CreditCard className="h-6 w-6 mr-2 text-primary-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Subscription Details</h3>
+              <CreditCard className="h-6 w-6 mr-2 text-primary-600 dark:text-dark-primary-500" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Subscription Details</h3>
             </div>
 
             {/* For TheraPTrack Controlled Organizations: Always show partner's individual subscription (Free Plan if not explicitly assigned) */}
@@ -693,12 +719,12 @@ const PartnerSettings = () => {
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Your Assigned Plan: </span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Assigned Plan: </span>
                     <span className="text-lg font-bold text-indigo-600">
                       {partnerSubscription.plan_name}
                     </span>
                     {partnerSubscription.min_sessions !== null && partnerSubscription.max_sessions !== null && (
-                      <span className="text-sm text-gray-600 ml-2">
+                      <span className="text-sm text-gray-600 dark:text-dark-text-secondary ml-2">
                         ({partnerSubscription.min_sessions === 0 && partnerSubscription.max_sessions === 0
                           ? 'No session limit'
                           : `${partnerSubscription.min_sessions} - ${partnerSubscription.max_sessions} sessions/month`})
@@ -712,17 +738,17 @@ const PartnerSettings = () => {
                   )}
                 </div>
                 {partnerSubscription.billing_period && (
-                  <div className="mt-2 text-sm text-gray-600">
+                  <div className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
                     Billing Period: <span className="font-medium capitalize">{partnerSubscription.billing_period}</span>
                   </div>
                 )}
                 {partnerSubscription.assigned_at && (
-                  <div className="mt-1 text-sm text-gray-600">
+                  <div className="mt-1 text-sm text-gray-600 dark:text-dark-text-secondary">
                     Assigned: {new Date(partnerSubscription.assigned_at).toLocaleDateString()}
                   </div>
                 )}
                 {partnerSubscription.video_hours && (
-                  <div className="mt-1 text-sm text-gray-600">
+                  <div className="mt-1 text-sm text-gray-600 dark:text-dark-text-secondary">
                     Video Hours: <span className="font-medium">{partnerSubscription.video_hours} hrs/month</span>
                     {partnerSubscription.extra_video_rate && (
                       <span className="ml-2">(₹{partnerSubscription.extra_video_rate}/extra min)</span>
@@ -754,12 +780,12 @@ const PartnerSettings = () => {
               <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Your Assigned Plan: </span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Assigned Plan: </span>
                     <span className="text-lg font-bold text-primary-600">
                       {partnerSubscription.plan_name}
                     </span>
                     {partnerSubscription.min_sessions !== null && partnerSubscription.max_sessions !== null && (
-                      <span className="text-sm text-gray-600 ml-2">
+                      <span className="text-sm text-gray-600 dark:text-dark-text-secondary ml-2">
                         ({partnerSubscription.min_sessions} - {partnerSubscription.max_sessions} sessions/month)
                       </span>
                     )}
@@ -771,12 +797,12 @@ const PartnerSettings = () => {
                   )}
                 </div>
                 {partnerSubscription.billing_period && (
-                  <div className="mt-2 text-sm text-gray-600">
+                  <div className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
                     Billing Period: <span className="font-medium capitalize">{partnerSubscription.billing_period}</span>
                   </div>
                 )}
                 {partnerSubscription.assigned_at && (
-                  <div className="mt-1 text-sm text-gray-600">
+                  <div className="mt-1 text-sm text-gray-600 dark:text-dark-text-secondary">
                     Assigned: {new Date(partnerSubscription.assigned_at).toLocaleDateString()}
                   </div>
                 )}
@@ -786,7 +812,7 @@ const PartnerSettings = () => {
             {/* No subscription message for non-TheraPTrack controlled orgs */}
             {!organizationSubscription.theraptrack_controlled && !partnerSubscription?.plan_name && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-gray-600">No subscription plan assigned to you.</p>
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">No subscription plan assigned to you.</p>
               </div>
             )}
           </div>

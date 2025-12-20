@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { videoSessionAPI } from '../../services/api';
-import { loadJitsiScript, initJitsiMeet, canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
+import { initDailyCall, cleanupDailyCall, getDailyRoomUrl, canJoinSession, formatTimeUntilSession } from '../../utils/videoHelper';
 import { Video, Lock, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 
 const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
@@ -11,16 +11,16 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
   const [passwordVerified, setPasswordVerified] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [joined, setJoined] = useState(false);
-  const jitsiContainerRef = useRef(null);
-  const jitsiApiRef = useRef(null);
+  const videoContainerRef = useRef(null);
+  const dailyCallRef = useRef(null);
 
   useEffect(() => {
     loadSessionData();
-    
+
     return () => {
-      // Cleanup Jitsi when component unmounts
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose();
+      // Cleanup Daily.co call when component unmounts
+      if (dailyCallRef.current) {
+        cleanupDailyCall(dailyCallRef.current);
       }
     };
   }, [sessionId]);
@@ -67,37 +67,39 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
 
     try {
       setLoading(true);
-      
-      // Load Jitsi script
-      await loadJitsiScript();
-      
-      // Initialize Jitsi Meet
-      const domain = 'meet.jit.si'; // or your custom domain
-      const api = initJitsiMeet(
-        domain,
-        session.meeting_room_id,
-        jitsiContainerRef.current,
+
+      // Get Daily.co room URL
+      const roomUrl = session.daily_room_url || getDailyRoomUrl(session);
+
+      if (!session.daily_room_url) {
+        setError('Daily.co room URL not available. Please contact support.');
+        setLoading(false);
+        return;
+      }
+
+      // Initialize Daily.co call
+      const callFrame = initDailyCall(
+        roomUrl,
+        videoContainerRef.current,
         {
-          userInfo: {
-            displayName: userName
-          },
-          configOverwrite: {
-            startWithAudioMuted: false,
-            startWithVideoMuted: false,
-            enableWelcomePage: false,
-            prejoinPageEnabled: true
-          }
+          displayName: userName
         }
       );
 
-      jitsiApiRef.current = api;
+      dailyCallRef.current = callFrame;
       setJoined(true);
 
       // Listen for when user leaves
-      api.addEventListener('readyToClose', () => {
+      callFrame.on('left-meeting', () => {
         if (onLeave) {
           onLeave();
         }
+      });
+
+      // Listen for errors
+      callFrame.on('error', (error) => {
+        console.error('Daily.co error:', error);
+        setError('Video call error occurred');
       });
 
       setLoading(false);
@@ -144,11 +146,11 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
   const canJoin = canJoinSession(session.session_date);
   const timeUntil = formatTimeUntilSession(session.session_date);
 
-  // If already joined, show Jitsi container
+  // If already joined, show Daily.co container
   if (joined) {
     return (
       <div className="h-screen w-full bg-black">
-        <div ref={jitsiContainerRef} className="h-full w-full" />
+        <div ref={videoContainerRef} className="h-full w-full" />
       </div>
     );
   }

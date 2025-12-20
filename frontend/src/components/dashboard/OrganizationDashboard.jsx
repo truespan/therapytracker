@@ -17,6 +17,7 @@ import QuestionnaireList from '../questionnaires/QuestionnaireList';
 import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
 import SubscriptionManagement from '../organization/SubscriptionManagement';
+import DarkModeToggle from '../common/DarkModeToggle';
 
 // Use environment variable for API URL, fallback to localhost for development
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -463,10 +464,10 @@ const OrganizationDashboard = () => {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-dark-text-primary truncate">
                 {user.name}
               </h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Organization Overview and Management</p>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-dark-text-secondary mt-1">Organization Overview and Management</p>
             </div>
           </div>
           {/* Action Buttons - Hidden on mobile, visible on desktop */}
@@ -505,14 +506,19 @@ const OrganizationDashboard = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex space-x-8">
+      <div className="border-b border-gray-200 dark:border-dark-border mb-6">
+        {/* Mobile Dark Mode Toggle */}
+        <div className="lg:hidden border-b border-gray-200 dark:border-dark-border py-3 px-4">
+          <DarkModeToggle variant="button" showLabel />
+        </div>
+
+        <nav className="flex space-x-8 overflow-x-auto">
           <button
             onClick={() => setActiveView('partners')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
               activeView === 'partners'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
             }`}
           >
             <Users className="inline h-5 w-5 mr-2" />
@@ -521,10 +527,10 @@ const OrganizationDashboard = () => {
           {user.theraptrack_controlled && (
             <button
               onClick={() => setActiveView('subscriptions')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
                 activeView === 'subscriptions'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
               }`}
             >
               <CreditCard className="inline h-5 w-5 mr-2" />
@@ -533,10 +539,10 @@ const OrganizationDashboard = () => {
           )}
           <button
             onClick={() => setActiveView('questionnaires')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
               activeView === 'questionnaires'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
             }`}
           >
             <ClipboardList className="inline h-5 w-5 mr-2" />
@@ -544,10 +550,10 @@ const OrganizationDashboard = () => {
           </button>
           <button
             onClick={() => setActiveView('settings')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
               activeView === 'settings'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
             }`}
           >
             <Settings className="inline h-5 w-5 mr-2" />
@@ -584,15 +590,15 @@ const OrganizationDashboard = () => {
           <div className="flex gap-4 pb-2">
             <div className="card p-5 flex-shrink-0 w-[200px]">
               <div className="flex flex-col items-center text-center">
-                <p className="text-sm text-gray-600 mb-2">Total Therapists</p>
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-2">Total Therapists</p>
                 <UserCheck className="h-12 w-12 text-primary-600 mb-2" />
-                <p className="text-3xl font-bold text-gray-900">{stats.totalPartners}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">{stats.totalPartners}</p>
               </div>
             </div>
 
             <div className="card p-5 flex-shrink-0 w-[200px]">
               <div className="flex flex-col items-center text-center">
-                <p className="text-sm text-gray-600 mb-2">Active</p>
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-2">Active</p>
                 <CheckCircle className="h-12 w-12 text-green-600 mb-2" />
                 <p className="text-3xl font-bold text-green-600">{stats.activePartners}</p>
               </div>
@@ -600,7 +606,7 @@ const OrganizationDashboard = () => {
 
             <div className="card p-5 flex-shrink-0 w-[200px]">
               <div className="flex flex-col items-center text-center">
-                <p className="text-sm text-gray-600 mb-2">Inactive</p>
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-2">Inactive</p>
                 <XCircle className="h-12 w-12 text-red-600 mb-2" />
                 <p className="text-3xl font-bold text-red-600">{stats.inactivePartners}</p>
               </div>
@@ -608,9 +614,9 @@ const OrganizationDashboard = () => {
 
             <div className="card p-5 flex-shrink-0 w-[200px]">
               <div className="flex flex-col items-center text-center">
-                <p className="text-sm text-gray-600 mb-2">Total Clients</p>
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-2">Total Clients</p>
                 <Users className="h-12 w-12 text-primary-600 mb-2" />
-                <p className="text-3xl font-bold text-gray-900">{stats.totalUsers}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">{stats.totalUsers}</p>
               </div>
             </div>
           </div>
@@ -621,8 +627,8 @@ const OrganizationDashboard = () => {
           <div className="card p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Therapists</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalPartners}</p>
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Total Therapists</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mt-1">{stats.totalPartners}</p>
               </div>
               <UserCheck className="h-12 w-12 text-primary-600" />
             </div>
@@ -631,7 +637,7 @@ const OrganizationDashboard = () => {
           <div className="card p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Active</p>
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Active</p>
                 <p className="text-3xl font-bold text-green-600 mt-1">{stats.activePartners}</p>
               </div>
               <CheckCircle className="h-12 w-12 text-green-600" />
@@ -641,7 +647,7 @@ const OrganizationDashboard = () => {
           <div className="card p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Inactive</p>
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Inactive</p>
                 <p className="text-3xl font-bold text-red-600 mt-1">{stats.inactivePartners}</p>
               </div>
               <XCircle className="h-12 w-12 text-red-600" />
@@ -651,8 +657,8 @@ const OrganizationDashboard = () => {
           <div className="card p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Clients</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalUsers}</p>
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Total Clients</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary mt-1">{stats.totalUsers}</p>
               </div>
               <Users className="h-12 w-12 text-primary-600" />
             </div>
@@ -665,14 +671,14 @@ const OrganizationDashboard = () => {
         {/* Therapist Selector */}
         <div className="card">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold flex items-center mb-3">
+            <h2 className="text-lg font-semibold flex items-center mb-3 text-gray-900 dark:text-dark-text-primary">
               <UserCheck className="h-5 w-5 mr-2" />
               Select Therapist
             </h2>
 
             {filteredPartners.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <UserCheck className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+              <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
+                <UserCheck className="h-12 w-12 mx-auto mb-3 text-gray-400 dark:text-dark-text-tertiary" />
                 <p className="text-sm">No therapists found</p>
               </div>
             ) : (
@@ -707,14 +713,14 @@ const OrganizationDashboard = () => {
                 <div>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900">{selectedPartner.name}</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">{selectedPartner.name}</h3>
                       {selectedPartner.partner_id && (
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">
                           ID: <span className="font-mono font-semibold text-primary-600">{selectedPartner.partner_id}</span>
                         </p>
                       )}
-                      <p className="text-sm text-gray-600 mt-1">{selectedPartner.email}</p>
-                      <p className="text-sm text-gray-500 mt-1 flex items-center space-x-1">
+                      <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">{selectedPartner.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-1 flex items-center space-x-1">
                         <Users className="h-4 w-4" />
                         <span>{partnerClientCounts[selectedPartner.id] || 0} client{partnerClientCounts[selectedPartner.id] !== 1 ? 's' : ''}</span>
                       </p>
@@ -798,22 +804,22 @@ const OrganizationDashboard = () => {
         {selectedPartner && (
           <div className="card">
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
                 <Users className="h-6 w-6 mr-2" />
                 {selectedPartner.name}'s Clients ({partnerClients.length})
               </h2>
             </div>
 
             {partnerClients.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
+                <Users className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-tertiary" />
                 <p>No clients assigned to this therapist yet</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {/* Client List with Delete Buttons */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-3">
                     Client List ({partnerClients.length})
                   </h3>
                   <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -835,10 +841,10 @@ const OrganizationDashboard = () => {
                               <UserIcon className="h-5 w-5 text-primary-600" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm sm:text-base font-medium text-gray-900 truncate">
+                              <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-dark-text-primary truncate">
                                 {client.name}
                               </p>
-                              <p className="text-xs sm:text-sm text-gray-500">
+                              <p className="text-xs sm:text-sm text-gray-500 dark:text-dark-text-tertiary">
                                 {client.sex}, {client.age} years
                               </p>
                             </div>
@@ -859,7 +865,7 @@ const OrganizationDashboard = () => {
                 {/* Session Details */}
                 {selectedClient && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary flex items-center">
                       <CalendarIcon className="h-5 w-5 mr-2 text-primary-600" />
                       Sessions for {selectedClient.name}
                     </h3>
@@ -867,11 +873,11 @@ const OrganizationDashboard = () => {
                     {sessionsLoading ? (
                       <div className="text-center py-8">
                         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                        <p className="text-gray-600 mt-2">Loading sessions...</p>
+                        <p className="text-gray-600 dark:text-dark-text-secondary mt-2">Loading sessions...</p>
                       </div>
                     ) : clientSessions.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <CalendarIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                      <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
+                        <CalendarIcon className="h-12 w-12 mx-auto mb-3 text-gray-400 dark:text-dark-text-tertiary" />
                         <p>No sessions found for this client</p>
                       </div>
                     ) : (
@@ -883,11 +889,11 @@ const OrganizationDashboard = () => {
                           >
                             {/* Client Info */}
                             <div className="mb-3 pb-3 border-b border-gray-200">
-                              <h4 className="font-semibold text-gray-900 flex items-center mb-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-dark-text-primary flex items-center mb-2">
                                 <UserIcon className="h-4 w-4 mr-2 text-primary-600" />
                                 {selectedClient.name}
                               </h4>
-                              <div className="text-sm text-gray-600 space-y-1">
+                              <div className="text-sm text-gray-600 dark:text-dark-text-secondary space-y-1">
                                 <p>{selectedClient.sex}, {selectedClient.age} years</p>
                                 {selectedClient.email && (
                                   <p className="text-xs truncate">{selectedClient.email}</p>
@@ -900,8 +906,8 @@ const OrganizationDashboard = () => {
                               {/* Assigned Date */}
                               {selectedClient.assigned_at && (
                                 <div className="flex items-start">
-                                  <span className="font-medium text-gray-700 min-w-[100px]">Assigned:</span>
-                                  <span className="text-gray-600">
+                                  <span className="font-medium text-gray-700 dark:text-dark-text-secondary min-w-[100px]">Assigned:</span>
+                                  <span className="text-gray-600 dark:text-dark-text-secondary">
                                     {new Date(selectedClient.assigned_at).toLocaleDateString('en-US', {
                                       year: 'numeric',
                                       month: 'short',
@@ -913,8 +919,8 @@ const OrganizationDashboard = () => {
 
                               {/* Session Date */}
                               <div className="flex items-start">
-                                <span className="font-medium text-gray-700 min-w-[100px]">Session Date:</span>
-                                <span className="text-gray-600">
+                                <span className="font-medium text-gray-700 dark:text-dark-text-secondary min-w-[100px]">Session Date:</span>
+                                <span className="text-gray-600 dark:text-dark-text-secondary">
                                   {new Date(session.session_date).toLocaleDateString('en-US', {
                                     year: 'numeric',
                                     month: 'short',
@@ -926,11 +932,11 @@ const OrganizationDashboard = () => {
                               {/* Time & Duration */}
                               {session.session_time && (
                                 <div className="flex items-start">
-                                  <span className="font-medium text-gray-700 min-w-[100px] flex items-center">
+                                  <span className="font-medium text-gray-700 dark:text-dark-text-secondary min-w-[100px] flex items-center">
                                     <Clock className="h-3 w-3 mr-1" />
                                     Time:
                                   </span>
-                                  <span className="text-gray-600">
+                                  <span className="text-gray-600 dark:text-dark-text-secondary">
                                     {session.session_time}
                                     {session.duration && ` (${session.duration} min)`}
                                   </span>
@@ -939,11 +945,11 @@ const OrganizationDashboard = () => {
 
                               {/* Session Type */}
                               <div className="flex items-start">
-                                <span className="font-medium text-gray-700 min-w-[100px] flex items-center">
+                                <span className="font-medium text-gray-700 dark:text-dark-text-secondary min-w-[100px] flex items-center">
                                   <VideoIcon className="h-3 w-3 mr-1" />
                                   Type:
                                 </span>
-                                <span className="text-gray-600 capitalize">
+                                <span className="text-gray-600 dark:text-dark-text-secondary capitalize">
                                   {session.session_type === 'video' ? 'Video Call' : 'In-Person'}
                                 </span>
                               </div>
@@ -951,8 +957,8 @@ const OrganizationDashboard = () => {
                               {/* Topic */}
                               {session.topic && (
                                 <div className="flex items-start">
-                                  <span className="font-medium text-gray-700 min-w-[100px]">Topic:</span>
-                                  <span className="text-gray-600">{session.topic}</span>
+                                  <span className="font-medium text-gray-700 dark:text-dark-text-secondary min-w-[100px]">Topic:</span>
+                                  <span className="text-gray-600 dark:text-dark-text-secondary">{session.topic}</span>
                                 </div>
                               )}
                             </div>

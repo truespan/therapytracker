@@ -22,23 +22,37 @@ code {
   }
 
   .btn-primary {
-    @apply bg-primary-700 text-white hover:bg-primary-800 active:bg-primary-900 focus:ring-2 focus:ring-primary-400 focus:ring-offset-2;
+    @apply bg-primary-700 text-white hover:bg-primary-800 active:bg-primary-900
+      focus:ring-2 focus:ring-primary-400 focus:ring-offset-2
+      dark:bg-dark-primary-600 dark:hover:bg-dark-primary-700
+      dark:focus:ring-dark-primary-500;
   }
 
   .btn-secondary {
-    @apply bg-secondary-500 text-umbra-900 hover:bg-secondary-600 active:bg-secondary-700 focus:ring-2 focus:ring-secondary-400 focus:ring-offset-2;
+    @apply bg-secondary-500 text-umbra-900 hover:bg-secondary-600
+      active:bg-secondary-700 focus:ring-2 focus:ring-secondary-400
+      focus:ring-offset-2
+      dark:bg-secondary-700 dark:text-dark-text-primary
+      dark:hover:bg-secondary-800;
   }
 
   .input {
-    @apply w-full px-4 py-2 border border-umbra-300 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-umbra-900;
+    @apply w-full px-4 py-2 border border-umbra-300 rounded-lg bg-white
+      focus:ring-2 focus:ring-primary-500 focus:border-transparent
+      outline-none text-umbra-900
+      dark:bg-dark-bg-secondary dark:border-dark-border
+      dark:text-dark-text-primary dark:focus:ring-dark-primary-500
+      dark:placeholder-dark-text-tertiary;
   }
 
   .label {
-    @apply block text-sm font-medium text-umbra-800 mb-1;
+    @apply block text-sm font-medium text-umbra-800 mb-1
+      dark:text-dark-text-primary;
   }
 
   .card {
-    @apply bg-porcelain-500 rounded-lg shadow-md p-4 sm:p-6;
+    @apply bg-porcelain-500 rounded-lg shadow-md p-4 sm:p-6
+      dark:bg-dark-bg-tertiary dark:shadow-lg dark:shadow-black/20;
   }
 }
 
@@ -90,6 +104,67 @@ code {
 
 .rbc-toolbar button.rbc-active:hover {
   background-color: #00897b; /* primary-600 */
+}
+
+/* Dark mode calendar styles */
+.dark .rbc-calendar {
+  background-color: #1E293B; /* dark-bg-secondary */
+  color: #F1F5F9; /* dark-text-primary */
+}
+
+.dark .rbc-header {
+  color: #F1F5F9; /* dark-text-primary */
+  background-color: #334155; /* dark-bg-tertiary */
+  border-color: #475569; /* dark-border */
+}
+
+.dark .rbc-today {
+  background-color: #0F766E; /* dark-primary-700 */
+}
+
+.dark .rbc-event {
+  background-color: #0D9488; /* dark-primary-600 */
+  color: #F1F5F9; /* dark-text-primary */
+}
+
+.dark .rbc-event:focus {
+  outline-color: #14B8A6; /* dark-primary-500 */
+}
+
+.dark .rbc-toolbar button {
+  color: #F1F5F9; /* dark-text-primary */
+  border-color: #475569; /* dark-border */
+  background-color: #334155; /* dark-bg-tertiary */
+}
+
+.dark .rbc-toolbar button:hover {
+  background-color: #1E293B; /* dark-bg-secondary */
+  border-color: #0D9488; /* dark-primary-600 */
+}
+
+.dark .rbc-toolbar button.rbc-active {
+  background-color: #0D9488; /* dark-primary-600 */
+  color: #F1F5F9; /* dark-text-primary */
+}
+
+.dark .rbc-toolbar button.rbc-active:hover {
+  background-color: #0F766E; /* dark-primary-700 */
+}
+
+.dark .rbc-off-range-bg {
+  background-color: #0F172A; /* dark-bg-primary */
+}
+
+.dark .rbc-month-view,
+.dark .rbc-time-view,
+.dark .rbc-agenda-view {
+  background-color: #1E293B; /* dark-bg-secondary */
+  border-color: #475569; /* dark-border */
+}
+
+.dark .rbc-day-bg,
+.dark .rbc-month-row {
+  border-color: #475569; /* dark-border */
 }
 
 /* Thin scrollbar for questionnaire option containers */

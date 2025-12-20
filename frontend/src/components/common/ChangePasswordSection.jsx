@@ -60,44 +60,44 @@ const ChangePasswordSection = ({
   };
 
   return (
-    <div className="border-t border-gray-200 pt-6">
+    <div className="border-t border-gray-200 dark:border-dark-border pt-6">
       <div className="flex items-center mb-2">
-        <Lock className="h-5 w-5 text-primary-600 mr-2" />
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <Lock className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 mr-2" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">{title}</h3>
       </div>
-      <p className="text-sm text-gray-600 mb-4">{description}</p>
+      <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">{description}</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">Current Password</label>
           <input
             type="password"
             name="currentPassword"
             value={form.currentPassword}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border dark:bg-dark-bg-secondary dark:text-dark-text-primary rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="Enter current password"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">New Password</label>
           <input
             type="password"
             name="newPassword"
             value={form.newPassword}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border dark:bg-dark-bg-secondary dark:text-dark-text-primary rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="At least 8 characters"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">Confirm New Password</label>
           <input
             type="password"
             name="confirmPassword"
             value={form.confirmPassword}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border dark:bg-dark-bg-secondary dark:text-dark-text-primary rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="Re-enter new password"
           />
         </div>
