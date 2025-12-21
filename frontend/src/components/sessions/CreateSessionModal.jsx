@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { therapySessionAPI, appointmentAPI } from '../../services/api';
-import { X, FileText, DollarSign, User, Calendar, Clock, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { therapySessionAPI, appointmentAPI, videoSessionAPI } from '../../services/api';
+import { X, FileText, DollarSign, User, Calendar, Clock, AlertTriangle, Video, Settings } from 'lucide-react';
 import { isAfter, differenceInMinutes, format, addMinutes } from 'date-fns';
 import { getUserTimezone, combineDateAndTime, convertLocalToUTC } from '../../utils/dateUtils';
 import ConflictConfirmationModal from './ConflictConfirmationModal';
@@ -23,6 +23,23 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [conflictData, setConflictData] = useState(null);
   const [sessionCreationData, setSessionCreationData] = useState(null);
+  const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
+  const [checkingGoogleCalendar, setCheckingGoogleCalendar] = useState(true);
+
+  useEffect(() => {
+    checkGoogleCalendarConnection();
+  }, []);
+
+  const checkGoogleCalendarConnection = async () => {
+    try {
+      const response = await videoSessionAPI.checkGoogleCalendarStatus();
+      setGoogleCalendarConnected(response.data.connected);
+    } catch (err) {
+      console.error('Error checking Google Calendar status:', err);
+    } finally {
+      setCheckingGoogleCalendar(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -267,6 +284,47 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
               <X className="h-6 w-6" />
             </button>
           </div>
+
+          {/* Google Calendar Connection Warning */}
+          {checkingGoogleCalendar && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">
+              Checking Google Calendar connection...
+            </div>
+          )}
+          
+          {!checkingGoogleCalendar && !googleCalendarConnected && (
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <Video className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-yellow-800 mb-1">
+                    Google Calendar Required for Video Sessions
+                  </h3>
+                  <p className="text-sm text-yellow-700 mb-3">
+                    Please connect your Google Calendar to create video sessions with automatic Google Meet links.
+                    Without this connection, you can only create regular therapy sessions.
+                  </p>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => window.open('/settings/calendar', '_blank')}
+                      className="px-3 py-1.5 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition-colors flex items-center space-x-1"
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span>Connect Google Calendar</span>
+                    </button>
+                    <button
+                      onClick={() => setGoogleCalendarConnected(true)}
+                      className="px-3 py-1.5 text-yellow-700 text-sm underline hover:text-yellow-800"
+                    >
+                      I'll connect later
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">

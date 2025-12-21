@@ -9,6 +9,7 @@ const { encrypt, decrypt } = require('./encryptionService');
 const GoogleCalendarToken = require('../models/GoogleCalendarToken');
 const Appointment = require('../models/Appointment');
 const VideoSession = require('../models/VideoSession');
+const Partner = require('../models/Partner');
 const pool = require('../config/database');
 
 /**
@@ -187,9 +188,10 @@ async function getAuthenticatedClient(userType, userId) {
  * Format event data for Google Calendar API
  * @param {string} eventType - 'appointment' or 'video'
  * @param {Object} eventData - Event data from database
+ * @param {string} organizerEmail - Email of the event organizer (for video sessions)
  * @returns {Object} Formatted event for Google Calendar API
  */
-function formatEventData(eventType, eventData) {
+function formatEventData(eventType, eventData, organizerEmail = null) {
   const isVideo = eventType === 'video';
 
   // Base event structure
@@ -249,6 +251,27 @@ function formatEventData(eventType, eventData) {
         }
       }
     };
+  }
+
+  // Set the partner as the organizer for video sessions
+  if (isVideo && organizerEmail) {
+    event.creator = {
+      email: organizerEmail,
+      self: true
+    };
+    event.organizer = {
+      email: organizerEmail,
+      self: true
+    };
+    
+    // Add the partner as an attendee with organizer status
+    event.attendees = [
+      {
+        email: organizerEmail,
+        organizer: true,
+        responseStatus: 'accepted'
+      }
+    ];
   }
 
   return event;
@@ -349,11 +372,17 @@ async function syncVideoSessionToGoogle(sessionId) {
       return { success: false, reason: 'not_connected' };
     }
 
+    // Get partner data to set as organizer
+    const partner = await Partner.findById(session.partner_id);
+    if (!partner || !partner.email) {
+      throw new Error('Partner email not found');
+    }
+
     // Get authenticated client
     const calendar = await getAuthenticatedClient(userType, userId);
 
-    // Format event data
-    const eventData = formatEventData('video', session);
+    // Format event data with partner as organizer
+    const eventData = formatEventData('video', session, partner.email);
 
     // Check if event already exists
     if (session.google_event_id) {

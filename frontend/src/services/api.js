@@ -303,7 +303,8 @@ export const videoSessionAPI = {
   getByUser: (userId) => api.get(`/users/${userId}/video-sessions`),
   update: (id, data) => api.put(`/video-sessions/${id}`, data),
   delete: (id) => api.delete(`/video-sessions/${id}`),
-  verifyPassword: (id, password) => api.post(`/video-sessions/${id}/verify-password`, { password })
+  verifyPassword: (id, password) => api.post(`/video-sessions/${id}/verify-password`, { password }),
+  checkGoogleCalendarStatus: () => api.get('/google-calendar/status')
 };
 
 // Questionnaire APIs

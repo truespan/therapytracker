@@ -29,6 +29,20 @@ const createVideoSession = async (req, res) => {
       });
     }
 
+    // Check if partner has Google Calendar connected (required for Meet links)
+    const GoogleCalendarToken = require('../models/GoogleCalendarToken');
+    const tokenRecord = await GoogleCalendarToken.findByUser('partner', partner_id);
+    
+    if (!tokenRecord || !tokenRecord.sync_enabled) {
+      return res.status(400).json({
+        error: 'google_calendar_not_connected',
+        message: 'Google Calendar connection required to create video sessions with Meet links',
+        details: 'Please connect your Google Calendar in Settings > Calendar Integration to enable video sessions with automatic Google Meet links.',
+        action: 'connect_google_calendar',
+        help_url: '/settings/calendar'
+      });
+    }
+
     // Generate meeting room ID first
     const meeting_room_id = VideoSession.generateMeetingRoomId(partner_id, user_id);
 
