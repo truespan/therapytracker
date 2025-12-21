@@ -1,0 +1,169 @@
+# Render Blueprint for TheraP Track Application
+# This file defines all services needed to deploy the application
+# Deploy using: Dashboard -> New -> Blueprint -> Connect Repository
+
+# Exported from Render on 2025-12-21T12:22:51Z
+version: "1"
+projects:
+- name: TheraP Track  - Production
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: therapytracker-frontend
+      runtime: static
+      branch: master
+      repo: https://github.com/truespan/therapytracker
+      envVars:
+      - key: REACT_APP_API_URL
+        sync: false
+      buildCommand: npm install && npm run build
+      staticPublishPath: build
+      routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+      autoDeployTrigger: off
+      rootDir: frontend
+    - type: web
+      name: therapytracker-backend
+      runtime: node
+      branch: master
+      repo: https://github.com/truespan/therapytracker
+      plan: starter
+      envVars:
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: NODE_ENV
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: PORT
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: secret-file
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: therapy-tracker-db
+          property: connectionString
+      region: singapore
+      buildCommand: npm install
+      startCommand: npm start
+      autoDeployTrigger: off
+      rootDir: backend
+    databases:
+    - name: therapy-tracker-db
+      databaseName: therapy_tracker_db
+      user: root
+      plan: free
+      region: singapore
+      ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+      postgresMajorVersion: "18"
+  - name: Staging
+    services:
+    - type: web
+      name: therapytracker-frontend-staging
+      runtime: static
+      branch: develop
+      repo: https://github.com/truespan/therapytracker
+      envVars:
+      - key: REACT_APP_API_URL
+        sync: false
+      buildCommand: npm install && npm run build
+      staticPublishPath: build
+      routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+      autoDeployTrigger: commit
+      rootDir: frontend
+    - type: web
+      name: therapytracker-backend-staging
+      branch: develop
+      runtime: node
+      repo: https://github.com/truespan/therapytracker
+      plan: free
+      envVars:
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: NODE_ENV
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: PORT
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: secret-file
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: therapy-tracker-db-staging
+          property: connectionString
+      region: singapore
+      buildCommand: npm install
+      startCommand: npm start
+      autoDeployTrigger: commit
+      rootDir: backend
+    databases:
+    - name: therapy-tracker-db-staging
+      databaseName: therapy_tracker_db_staging
+      user: root
+      plan: free
+      region: singapore
+      ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+      postgresMajorVersion: "18"
