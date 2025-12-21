@@ -19,9 +19,6 @@ projects:
         sync: false
       buildCommand: npm install && npm run build
       staticPublishPath: build
-      domains:
-      - theraptrack.com
-      - www.theraptrack.com
       routes:
       - type: rewrite
         source: /*
