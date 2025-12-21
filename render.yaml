@@ -6,6 +6,7 @@ services:
   # PostgreSQL Database
   - type: pserv
     name: therapy-tracker-db
+    branch: staging
     plan: starter # Options: free (90 days), starter, standard, pro
     region: oregon # Choose closest to your users: oregon, frankfurt, singapore
     databaseName: therapy_tracker
@@ -15,6 +16,7 @@ services:
   # Backend API Service
   - type: web
     name: therapy-tracker-api
+    branch: staging
     runtime: node
     plan: starter # Options: free, starter, standard, pro
     region: oregon # Must match database region
@@ -64,6 +66,7 @@ services:
   # Frontend Static Site
   - type: web
     name: therapytracker-frontend
+    branch: staging
     runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: build
