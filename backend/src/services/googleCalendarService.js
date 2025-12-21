@@ -248,6 +248,9 @@ function formatEventData(eventType, eventData, organizerEmail = null) {
         requestId: `${eventData.meeting_room_id || 'meet'}-${Date.now()}`,
         conferenceSolutionKey: {
           type: 'hangoutsMeet'
+        },
+        status: {
+          statusCode: 'success'
         }
       }
     };
@@ -255,6 +258,7 @@ function formatEventData(eventType, eventData, organizerEmail = null) {
 
   // Set the partner as the organizer for video sessions
   if (isVideo && organizerEmail) {
+    // Set the partner as the creator and organizer
     event.creator = {
       email: organizerEmail,
       self: true
@@ -264,12 +268,14 @@ function formatEventData(eventType, eventData, organizerEmail = null) {
       self: true
     };
     
-    // Add the partner as an attendee with organizer status
+    // Add the partner as the primary attendee with organizer status
+    // This ensures they're recognized as the host in Google Meet
     event.attendees = [
       {
         email: organizerEmail,
         organizer: true,
-        responseStatus: 'accepted'
+        responseStatus: 'accepted',
+        self: true  // Important: marks this as the authenticated user
       }
     ];
   }
