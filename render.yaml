@@ -1,194 +1,171 @@
-# Render Blueprint for TheraP Track Application
-# This file defines all services needed to deploy the application
-# Deploy using: Dashboard -> New -> Blueprint -> Connect Repository
-
-databases:
-  # PostgreSQL Database
-  # =========================
-  # PRODUCTION DATABASE
-  # =========================
-  - type: pserv
-    name: therapy-tracker-db
-    plan: starter # Options: free (90 days), starter, standard, pro
-    region: oregon # Choose closest to your users: oregon, frankfurt, singapore
-    databaseName: therapy_tracker
-    databaseUser: therapy_tracker_user
-    ipAllowList: [] # Empty = allow all
-
-  # =========================
-  # STAGING DATABASE
-  # =========================
-  - type: pserv
-    name: therapy-tracker-db-staging
-    plan: free # Options: free (90 days), starter, standard, pro
-    region: oregon # Choose closest to your users: oregon, frankfurt, singapore
-    databaseName: therapy_tracker_staging
-    databaseUser: therapy_tracker_user
-    ipAllowList: [] # Empty = allow all
-
-services:
-  # Backend API Service
-  # =========================
-  # PRODUCTION BACKEND
-  # =========================
-  - type: web
-    name: therapy-tracker-api
-    branch: master
-    runtime: node
-    plan: starter # Options: free, starter, standard, pro
-    region: oregon # Must match database region
-    buildCommand: npm install
-    startCommand: npm start
-    rootDir: backend
-    healthCheckPath: /
-    envVars:
-      # Server Configuration
+# Exported from Render on 2025-12-21T12:22:51Z
+version: "1"
+projects:
+- name: TheraP Track  - Production
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: therapytracker-frontend
+      runtime: static
+      branch: master
+      repo: https://github.com/truespan/therapytracker
+      envVars:
+      - key: REACT_APP_API_URL
+        sync: https://therapytracker-backend.onrender.com/api
+      buildCommand: npm install && npm run build
+      staticPublishPath: build
+      domains:
+      - theraptrack.com
+      - www.theraptrack.com
+      routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+      autoDeployTrigger: "off"
+      rootDir: frontend
+    - type: web
+      name: therapytracker-backend
+      runtime: node
+      branch: master
+      repo: https://github.com/truespan/therapytracker
+      plan: starter
+      envVars:
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: BACKEND_URL
+        sync: false
       - key: NODE_ENV
-        value: production
-
+        sync: production
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
       - key: PORT
-        value: 5000
-
-      # Database Connection - Automatically linked to PostgreSQL service
+        sync: false
+      - key: FRONTEND_URL
+        sync: https://therapy-tracker.onrender.com
+      - key: secret-file
+        sync: false
+      - key: JWT_SECRET
+        sync: false
       - key: DATABASE_URL
         fromDatabase:
           name: therapy-tracker-db
           property: connectionString
-
-      # JWT Secret - CHANGE THIS!
-      # Generate using: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-      - key: JWT_SECRET
-        generateValue: true # Render will generate a random value
-
-      # Email Configuration - Update these values
-      - key: EMAIL_HOST
-        value: smtp.gmail.com
-
-      - key: EMAIL_PORT
-        value: 587
-
-      - key: EMAIL_USER
-        sync: false # Set manually in Render dashboard
-
-      - key: EMAIL_PASSWORD
-        sync: false # Set manually in Render dashboard (use App Password for Gmail)
-
-      - key: EMAIL_FROM
-        value: TheraP Track <noreply@theraptrack.com>
-
-      # Frontend URL - Update after frontend deployment
-      - key: FRONTEND_URL
-        value: https://therapy-tracker.onrender.com
-
-  # Frontend Static Site
-  # =========================
-  # PRODUCTION FRONTEND
-  # =========================
-  - type: web
-    name: therapytracker-frontend
-    branch: master
-    runtime: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: build
-    rootDir: frontend
-    pullRequestPreviewsEnabled: true # Enable PR previews
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: X-XSS-Protection
-        value: 1; mode=block
-    routes:
+      region: singapore
+      buildCommand: npm install
+      startCommand: npm start
+      autoDeployTrigger: "off"
+      rootDir: backend
+    databases:
+    - name: therapy-tracker-db
+      databaseName: therapy_tracker_db
+      user: root
+      plan: free
+      region: singapore
+      ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+      postgresMajorVersion: "18"
+  - name: Staging
+    services:
+    - type: web
+      name: therapytracker-frontend-staging
+      runtime: static
+      branch: develop
+      repo: https://github.com/truespan/therapytracker
+      envVars:
+      - key: REACT_APP_API_URL
+        sync: https://therapytracker-backend-staging.onrender.com/api
+      buildCommand: npm install && npm run build
+      staticPublishPath: build
+      domains:
+      - theraptrack-staging.com
+      - www.theraptrack-staging.com
+      routes:
       - type: rewrite
         source: /*
         destination: /index.html
-    envVars:
-      # API URL - Points to backend service
-      - key: REACT_APP_API_URL
-        value: https://therapytracker-backend.onrender.com/api
-        
-  # =========================
-  # STAGING BACKEND
-  # =========================
-  - type: web
-    name: therapy-tracker-api-staging
-    branch: develop
-    runtime: node
-    plan: free # Options: free, starter, standard, pro
-    region: oregon # Must match database region
-    buildCommand: npm install
-    startCommand: npm start
-    rootDir: backend
-    healthCheckPath: /
-    envVars:
-      # Server Configuration
+      autoDeployTrigger: "on"
+      rootDir: frontend
+    - type: web
+      name: therapytracker-backend-staging
+      branch: develop
+      runtime: node
+      repo: https://github.com/truespan/therapytracker
+      plan: free
+      envVars:
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: BACKEND_URL
+        sync: false
       - key: NODE_ENV
-        value: staging
-
+        sync: staging
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
       - key: PORT
-        value: 5000
-
-      # Database Connection - Automatically linked to PostgreSQL service
+        sync: false
+      - key: FRONTEND_URL
+        sync: https://therapy-tracker-staging.onrender.com
+      - key: secret-file
+        sync: false
+      - key: JWT_SECRET
+        sync: false
       - key: DATABASE_URL
         fromDatabase:
           name: therapy-tracker-db-staging
           property: connectionString
-
-      # JWT Secret - CHANGE THIS!
-      # Generate using: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-      - key: JWT_SECRET
-        generateValue: true # Render will generate a random value
-
-      # Email Configuration - Update these values
-      - key: EMAIL_HOST
-        value: smtp.gmail.com
-
-      - key: EMAIL_PORT
-        value: 587
-
-      - key: EMAIL_USER
-        sync: false # Set manually in Render dashboard
-
-      - key: EMAIL_PASSWORD
-        sync: false # Set manually in Render dashboard (use App Password for Gmail)
-
-      - key: EMAIL_FROM
-        value: TheraP Track <noreply@theraptrack.com>
-
-      # Frontend URL - Update after frontend deployment
-      - key: FRONTEND_URL
-        value: https://therapy-tracker-staging.onrender.com
-  # =========================
-  # STAGING FRONTEND
-  # =========================
-  - type: web
-    name: therapytracker-frontend-staging
-    branch: develop
-    runtime: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: build
-    rootDir: frontend
-    pullRequestPreviewsEnabled: true # Enable PR previews
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: X-XSS-Protection
-        value: 1; mode=block
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      # API URL - Points to backend service
-      - key: REACT_APP_API_URL
-        value: https://therapytracker-backend-staging.onrender.com/api
-  
+      region: singapore
+      buildCommand: npm install
+      startCommand: npm start
+      autoDeployTrigger: "on"
+      rootDir: backend
+    databases:
+    - name: therapy-tracker-db-staging
+      databaseName: therapy_tracker_db_staging
+      user: root
+      plan: free
+      region: singapore
+      ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+      postgresMajorVersion: "18"
