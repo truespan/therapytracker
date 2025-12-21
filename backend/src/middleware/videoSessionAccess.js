@@ -1,19 +1,66 @@
 const Organization = require('../models/Organization');
+const Partner = require('../models/Partner');
 
 /**
- * Middleware to check if video sessions are enabled for the partner's organization
+ * Check if video sessions are enabled for a partner
+ * This checks both organization-level and partner-level settings
+ * For theraptrack-controlled organizations, both must be enabled
+ * For non-theraptrack organizations, only organization-level matters
+ * @param {number} partnerId - Partner ID
+ * @returns {Promise<Object>} Object with isEnabled flag and details
+ */
+const checkVideoSessionsEnabled = async (partnerId) => {
+  try {
+    // Get organization video session status
+    const orgEnabled = await Organization.areVideoSessionsEnabledForPartner(partnerId);
+    
+    if (!orgEnabled) {
+      return {
+        isEnabled: false,
+        reason: 'organization_disabled',
+        message: 'Video sessions are not enabled for your organization'
+      };
+    }
+
+    // Get partner video session status
+    const partnerEnabled = await Partner.areVideoSessionsEnabled(partnerId);
+    
+    if (!partnerEnabled) {
+      return {
+        isEnabled: false,
+        reason: 'therapist_disabled',
+        message: 'Video sessions are not enabled for your account. Please contact your organization administrator.'
+      };
+    }
+
+    return {
+      isEnabled: true,
+      reason: 'enabled',
+      message: 'Video sessions are enabled'
+    };
+  } catch (error) {
+    console.error('Error checking video session access:', error);
+    throw error;
+  }
+};
+
+/**
+ * Middleware to check if video sessions are enabled for the partner's organization and therapist
  * Should be used after authenticateToken and checkRole('partner')
  */
 const checkVideoSessionAccess = async (req, res, next) => {
   try {
     const partnerId = req.user.id;
-    const isEnabled = await Organization.areVideoSessionsEnabledForPartner(partnerId);
+    const accessCheck = await checkVideoSessionsEnabled(partnerId);
 
-    if (!isEnabled) {
+    if (!accessCheck.isEnabled) {
       return res.status(403).json({
-        error: 'Video sessions are not enabled for your organization',
+        error: accessCheck.message,
         featureDisabled: true,
-        message: 'This feature has been disabled by your organization administrator. Please contact support for more information.'
+        reason: accessCheck.reason,
+        message: accessCheck.reason === 'organization_disabled'
+          ? 'This feature has been disabled by your organization administrator. Please contact support for more information.'
+          : 'Your organization administrator has disabled video sessions for your account. Please contact them for more information.'
       });
     }
 
@@ -39,12 +86,13 @@ const checkVideoSessionAccessByPartnerId = async (req, res, next) => {
       return res.status(400).json({ error: 'Partner ID is required' });
     }
 
-    const isEnabled = await Organization.areVideoSessionsEnabledForPartner(partnerId);
+    const accessCheck = await checkVideoSessionsEnabled(partnerId);
 
-    if (!isEnabled) {
+    if (!accessCheck.isEnabled) {
       return res.status(403).json({
-        error: 'Video sessions are not enabled for this organization',
-        featureDisabled: true
+        error: accessCheck.message,
+        featureDisabled: true,
+        reason: accessCheck.reason
       });
     }
 
@@ -60,5 +108,6 @@ const checkVideoSessionAccessByPartnerId = async (req, res, next) => {
 
 module.exports = {
   checkVideoSessionAccess,
-  checkVideoSessionAccessByPartnerId
+  checkVideoSessionAccessByPartnerId,
+  checkVideoSessionsEnabled
 };

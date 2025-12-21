@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { videoSessionAPI } from '../../services/api';
-import { initDailyCall, cleanupDailyCall, getDailyRoomUrl, canJoinSession, formatTimeUntilSession } from '../../utils/videoHelper';
-import { Video, Lock, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { getMeetLink, canJoinSession, formatTimeUntilSession, openMeetLink } from '../../utils/videoHelper';
+import { Video, Lock, Clock, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
 
 const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
   const [session, setSession] = useState(null);
@@ -11,18 +11,9 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
   const [passwordVerified, setPasswordVerified] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [joined, setJoined] = useState(false);
-  const videoContainerRef = useRef(null);
-  const dailyCallRef = useRef(null);
 
   useEffect(() => {
     loadSessionData();
-
-    return () => {
-      // Cleanup Daily.co call when component unmounts
-      if (dailyCallRef.current) {
-        cleanupDailyCall(dailyCallRef.current);
-      }
-    };
   }, [sessionId]);
 
   const loadSessionData = async () => {
@@ -62,52 +53,26 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
     }
   };
 
-  const handleJoinSession = async () => {
+  const handleJoinSession = () => {
     if (!session || !passwordVerified) return;
 
-    try {
-      setLoading(true);
-
-      // Get Daily.co room URL
-      const roomUrl = session.daily_room_url || getDailyRoomUrl(session);
-
-      if (!session.daily_room_url) {
-        setError('Daily.co room URL not available. Please contact support.');
-        setLoading(false);
-        return;
-      }
-
-      // Initialize Daily.co call
-      const callFrame = initDailyCall(
-        roomUrl,
-        videoContainerRef.current,
-        {
-          displayName: userName
-        }
-      );
-
-      dailyCallRef.current = callFrame;
-      setJoined(true);
-
-      // Listen for when user leaves
-      callFrame.on('left-meeting', () => {
-        if (onLeave) {
-          onLeave();
-        }
-      });
-
-      // Listen for errors
-      callFrame.on('error', (error) => {
-        console.error('Daily.co error:', error);
-        setError('Video call error occurred');
-      });
-
-      setLoading(false);
-    } catch (err) {
-      console.error('Failed to join session:', err);
-      setError('Failed to join video session');
-      setLoading(false);
+    const meetLink = getMeetLink(session);
+    
+    if (!meetLink) {
+      setError('Google Meet link not available. Please contact support.');
+      return;
     }
+
+    // Open Google Meet in new tab
+    openMeetLink(meetLink);
+    setJoined(true);
+
+    // Call onLeave after a short delay to allow the new tab to open
+    setTimeout(() => {
+      if (onLeave) {
+        onLeave();
+      }
+    }, 1000);
   };
 
   if (loading) {
@@ -145,15 +110,7 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
   // Check if user can join (15 minutes before session)
   const canJoin = canJoinSession(session.session_date);
   const timeUntil = formatTimeUntilSession(session.session_date);
-
-  // If already joined, show Daily.co container
-  if (joined) {
-    return (
-      <div className="h-screen w-full bg-black">
-        <div ref={videoContainerRef} className="h-full w-full" />
-      </div>
-    );
-  }
+  const meetLink = getMeetLink(session);
 
   // If password required and not verified, show password form
   if (session.password_enabled && !passwordVerified) {
@@ -268,6 +225,18 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
           )}
         </div>
 
+        {meetLink && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center space-x-3">
+              <ExternalLink className="h-6 w-6 text-blue-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900">Google Meet Link</p>
+                <p className="text-sm text-blue-600 truncate">{meetLink}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {!canJoin ? (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
             <div className="flex items-center space-x-3">
@@ -290,7 +259,7 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
               <div>
                 <p className="font-semibold text-gray-900">Ready to join</p>
                 <p className="text-sm text-gray-600">
-                  Click the button below to join the video session.
+                  Click the button below to open Google Meet in a new tab.
                 </p>
               </div>
             </div>
@@ -300,11 +269,11 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
         <div className="space-y-3">
           <button
             onClick={handleJoinSession}
-            disabled={!canJoin || loading}
+            disabled={!canJoin || loading || !meetLink}
             className="w-full btn btn-primary flex items-center justify-center space-x-2 text-lg py-3"
           >
-            <Video className="h-6 w-6" />
-            <span>{loading ? 'Joining...' : 'Join Video Session'}</span>
+            <ExternalLink className="h-6 w-6" />
+            <span>{loading ? 'Preparing...' : 'Open Google Meet'}</span>
           </button>
 
           {onLeave && (
@@ -316,7 +285,7 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
 
         <div className="mt-6 pt-6 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
-            Make sure your camera and microphone are working before joining.
+            Google Meet will open in a new tab. Make sure your camera and microphone are working.
             You may be prompted to allow access to your devices.
           </p>
         </div>
@@ -326,4 +295,3 @@ const VideoSessionJoin = ({ sessionId, userName, onLeave }) => {
 };
 
 export default VideoSessionJoin;
-

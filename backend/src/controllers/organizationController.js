@@ -1052,6 +1052,190 @@ const verifyTherapistSignupToken = async (req, res) => {
   }
 };
 
+/**
+ * Get all therapists for an organization with their video session settings
+ */
+const getTherapistsVideoSettings = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to view this organization\'s therapists' });
+    }
+
+    // Check if organization is TheraPTrack controlled
+    if (!organization.theraptrack_controlled) {
+      return res.status(403).json({
+        error: 'Therapist video session management is only available for TheraPTrack controlled organizations'
+      });
+    }
+
+    // Get therapists with video session settings
+    const therapists = await Partner.getAllWithVideoSettings(id);
+
+    res.json({
+      success: true,
+      therapists,
+      organization_video_sessions_enabled: organization.video_sessions_enabled
+    });
+  } catch (error) {
+    console.error('Get therapists video settings error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch therapists video settings',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Update video session setting for a specific therapist
+ */
+const updateTherapistVideoSettings = async (req, res) => {
+  try {
+    const { id, therapistId } = req.params;
+    const { video_sessions_enabled } = req.body;
+
+    // Validate input
+    if (typeof video_sessions_enabled !== 'boolean') {
+      return res.status(400).json({
+        error: 'video_sessions_enabled must be a boolean value'
+      });
+    }
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to update this organization\'s therapists' });
+    }
+
+    // Check if organization is TheraPTrack controlled
+    if (!organization.theraptrack_controlled) {
+      return res.status(403).json({
+        error: 'Therapist video session management is only available for TheraPTrack controlled organizations'
+      });
+    }
+
+    // Check if organization has video sessions enabled
+    if (!organization.video_sessions_enabled) {
+      return res.status(400).json({
+        error: 'Cannot enable video sessions for therapists when organization video sessions are disabled'
+      });
+    }
+
+    // Find therapist
+    const therapist = await Partner.findById(therapistId);
+    if (!therapist) {
+      return res.status(404).json({ error: 'Therapist not found' });
+    }
+
+    // Verify therapist belongs to organization
+    if (therapist.organization_id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Therapist does not belong to this organization' });
+    }
+
+    // Update video session setting
+    const updatedTherapist = await Partner.updateVideoSessionSetting(therapistId, video_sessions_enabled);
+
+    res.json({
+      success: true,
+      message: `Video sessions ${video_sessions_enabled ? 'enabled' : 'disabled'} for therapist successfully`,
+      therapist: updatedTherapist
+    });
+  } catch (error) {
+    console.error('Update therapist video settings error:', error);
+    res.status(500).json({
+      error: 'Failed to update therapist video settings',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Bulk update video session settings for multiple therapists
+ */
+const bulkUpdateTherapistVideoSettings = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { therapistIds, video_sessions_enabled } = req.body;
+
+    // Validate input
+    if (!Array.isArray(therapistIds) || therapistIds.length === 0) {
+      return res.status(400).json({
+        error: 'therapistIds must be a non-empty array'
+      });
+    }
+
+    if (typeof video_sessions_enabled !== 'boolean') {
+      return res.status(400).json({
+        error: 'video_sessions_enabled must be a boolean value'
+      });
+    }
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to update this organization\'s therapists' });
+    }
+
+    // Check if organization is TheraPTrack controlled
+    if (!organization.theraptrack_controlled) {
+      return res.status(403).json({
+        error: 'Therapist video session management is only available for TheraPTrack controlled organizations'
+      });
+    }
+
+    // Check if organization has video sessions enabled
+    if (video_sessions_enabled && !organization.video_sessions_enabled) {
+      return res.status(400).json({
+        error: 'Cannot enable video sessions for therapists when organization video sessions are disabled'
+      });
+    }
+
+    // Update video session settings for all specified therapists
+    const results = await db.transaction(async (client) => {
+      const updatePromises = therapistIds.map(therapistId =>
+        client.query(
+          'UPDATE partners SET video_sessions_enabled = $1 WHERE id = $2 AND organization_id = $3 RETURNING id, name, email, video_sessions_enabled',
+          [video_sessions_enabled, therapistId, id]
+        )
+      );
+
+      const results = await Promise.all(updatePromises);
+      return results.map(result => result.rows[0]).filter(Boolean); // Filter out nulls (therapists not found)
+    });
+
+    res.json({
+      success: true,
+      message: `Video sessions ${video_sessions_enabled ? 'enabled' : 'disabled'} for ${results.length} therapist(s) successfully`,
+      updated_count: results.length,
+      therapists: results
+    });
+  } catch (error) {
+    console.error('Bulk update therapist video settings error:', error);
+    res.status(500).json({
+      error: 'Failed to bulk update therapist video settings',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   getOrganizationById,
@@ -1071,6 +1255,9 @@ module.exports = {
   updateSubscription,
   calculateSubscriptionPrice,
   getTherapistSignupToken,
-  verifyTherapistSignupToken
+  verifyTherapistSignupToken,
+  getTherapistsVideoSettings,
+  updateTherapistVideoSettings,
+  bulkUpdateTherapistVideoSettings
 };
 

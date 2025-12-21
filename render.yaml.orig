@@ -1,7 +1,10 @@
+<<<<<<< HEAD
+=======
 # Render Blueprint for TheraP Track Application
 # This file defines all services needed to deploy the application
 # Deploy using: Dashboard -> New -> Blueprint -> Connect Repository
 
+>>>>>>> develop
 # Exported from Render on 2025-12-21T12:22:51Z
 version: "1"
 projects:
