@@ -105,7 +105,7 @@ projects:
       - type: rewrite
         source: /*
         destination: /index.html
-      autoDeployTrigger: "on"
+      autoDeployTrigger: "On"
       rootDir: frontend
     - type: web
       name: therapytracker-backend-staging
@@ -157,7 +157,7 @@ projects:
       region: singapore
       buildCommand: npm install
       startCommand: npm start
-      autoDeployTrigger: "on"
+      autoDeployTrigger: "On"
       rootDir: backend
     databases:
     - name: therapy-tracker-db-staging
