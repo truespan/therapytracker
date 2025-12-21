@@ -22,6 +22,7 @@ services:
     buildCommand: npm install
     startCommand: npm start
     rootDir: backend
+    autoDeploy: true
     healthCheckPath: /
     envVars:
       # Server Configuration
