@@ -131,7 +131,7 @@ projects:
       - key: BACKEND_URL
         sync: false
       - key: NODE_ENV
-        sync: staging
+        sync: false
       - key: BREVO_API_KEY
         sync: false
       - key: EMAIL_USER
