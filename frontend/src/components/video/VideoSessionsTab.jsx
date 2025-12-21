@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { videoSessionAPI } from '../../services/api';
 import VideoSessionModal from './VideoSessionModal';
 import StartSessionFromVideoModal from './StartSessionFromVideoModal';
-import { Video, Calendar, Clock, User, Lock, Unlock, Copy, Check, Edit, Trash2, AlertCircle, FileText, CheckCircle } from 'lucide-react';
-import { getDailyRoomUrl, formatTimeUntilSession, canJoinSession } from '../../utils/videoHelper';
+import { Video, Calendar, Clock, User, Lock, Unlock, Copy, Check, Edit, Trash2, AlertCircle, FileText, CheckCircle, ExternalLink } from 'lucide-react';
+import { getMeetLink, formatTimeUntilSession, canJoinSession, generateShareText } from '../../utils/videoHelper';
 
 const VideoSessionsTab = ({ partnerId, users }) => {
   const [sessions, setSessions] = useState([]);
@@ -30,7 +30,11 @@ const VideoSessionsTab = ({ partnerId, users }) => {
 
       // Check if feature is disabled
       if (err.response?.data?.featureDisabled) {
-        setError(err.response.data.message || 'Video sessions are not available for your organization');
+        if (err.response.data.reason === 'therapist_disabled') {
+          setError('Video sessions are not enabled for your account. Please contact your organization administrator.');
+        } else {
+          setError(err.response.data.message || 'Video sessions are not available for your organization');
+        }
       } else {
         setError('Failed to load video sessions');
       }
@@ -64,12 +68,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
   };
 
   const handleCopyLink = (session) => {
-    const meetingUrl = session.daily_room_url || getDailyRoomUrl(session);
-    const shareText = `Video Session: ${session.title}\n` +
-      `Date: ${new Date(session.session_date).toLocaleString()}\n` +
-      `Duration: ${session.duration_minutes} minutes\n` +
-      `Meeting Link: ${meetingUrl}` +
-      (session.password_enabled ? `\nPassword Required: Yes (contact therapist for password)` : '');
+    const shareText = generateShareText(session);
     
     navigator.clipboard.writeText(shareText);
     setCopied(session.id);
@@ -193,7 +192,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Sessions</h3>
               <div className="space-y-4">
                 {upcoming.map(session => {
-                  const meetingUrl = session.daily_room_url || getDailyRoomUrl(session);
+                  const meetLink = getMeetLink(session);
                   const canJoin = canJoinSession(session.session_date);
 
                   return (
@@ -207,6 +206,9 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             {getStatusBadge(session)}
                             {session.password_enabled && (
                               <Lock className="h-4 w-4 text-yellow-600" title="Password protected" />
+                            )}
+                            {meetLink && (
+                              <ExternalLink className="h-4 w-4 text-blue-600" title="Google Meet link available" />
                             )}
                           </div>
 
@@ -230,6 +232,12 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                               <Clock className="h-4 w-4" />
                               <span>{session.duration_minutes} minutes</span>
                             </div>
+                            {meetLink && (
+                              <div className="flex items-center space-x-2">
+                                <ExternalLink className="h-4 w-4 text-blue-600" />
+                                <span className="text-blue-600 font-medium truncate">{meetLink}</span>
+                              </div>
+                            )}
                             {!canJoin && (
                               <div className="text-primary-600 font-medium">
                                 Starts in: {formatTimeUntilSession(session.session_date)}
@@ -243,14 +251,19 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                         </div>
 
                         <div className="flex items-center space-x-2 ml-4">
-                          <a
-                            href={meetingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-primary text-sm"
-                          >
-                            Join Now
-                          </a>
+                          {meetLink ? (
+                            <a
+                              href={meetLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-primary text-sm flex items-center space-x-1"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span>Open Meet</span>
+                            </a>
+                          ) : (
+                            <span className="text-xs text-gray-500">No Meet link</span>
+                          )}
                           {session.has_therapy_session ? (
                             <button
                               disabled
@@ -307,6 +320,9 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           {session.password_enabled && (
                             <Lock className="h-3 w-3 text-yellow-600 flex-shrink-0" title="Password protected" />
                           )}
+                          {meetLink && (
+                            <ExternalLink className="h-3 w-3 text-blue-600 flex-shrink-0" title="Google Meet link available" />
+                          )}
                         </div>
 
                         <div className="space-y-1 text-xs text-gray-600 mb-3">
@@ -329,6 +345,12 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             <Clock className="h-3 w-3 flex-shrink-0" />
                             <span>{session.duration_minutes} minutes</span>
                           </div>
+                          {meetLink && (
+                            <div className="flex items-center space-x-2">
+                              <ExternalLink className="h-3 w-3 text-blue-600 flex-shrink-0" />
+                              <span className="text-blue-600 font-medium text-xs truncate">{meetLink}</span>
+                            </div>
+                          )}
                           {!canJoin && (
                             <div className="text-primary-600 font-medium text-xs">
                               Starts in: {formatTimeUntilSession(session.session_date)}
@@ -338,14 +360,19 @@ const VideoSessionsTab = ({ partnerId, users }) => {
 
                         {/* Mobile Buttons - Vertical Stack with smaller size */}
                         <div className="flex flex-col space-y-2 mb-3">
-                          <a
-                            href={meetingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full py-1.5 px-3 bg-primary-600 text-white text-xs font-medium rounded-md hover:bg-primary-700 transition text-center"
-                          >
-                            Join Now
-                          </a>
+                          {meetLink ? (
+                            <a
+                              href={meetLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full py-1.5 px-3 bg-primary-600 text-white text-xs font-medium rounded-md hover:bg-primary-700 transition text-center flex items-center justify-center space-x-1"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              <span>Open Meet</span>
+                            </a>
+                          ) : (
+                            <span className="text-xs text-gray-500 text-center">No Meet link</span>
+                          )}
                           {session.has_therapy_session ? (
                             <button
                               disabled
@@ -409,7 +436,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Past Sessions</h3>
               <div className="space-y-4">
                 {past.map(session => {
-                  const meetingUrl = session.daily_room_url || getDailyRoomUrl(session);
+                  const meetLink = getMeetLink(session);
 
                   return (
                     <div key={session.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 hover:shadow-md transition">
@@ -422,6 +449,9 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             {getStatusBadge(session)}
                             {session.password_enabled && (
                               <Lock className="h-4 w-4 text-yellow-600" title="Password protected" />
+                            )}
+                            {meetLink && (
+                              <ExternalLink className="h-4 w-4 text-blue-600" title="Google Meet link available" />
                             )}
                           </div>
 
@@ -445,18 +475,29 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                               <Clock className="h-4 w-4" />
                               <span>{session.duration_minutes} minutes</span>
                             </div>
+                            {meetLink && (
+                              <div className="flex items-center space-x-2">
+                                <ExternalLink className="h-4 w-4 text-blue-600" />
+                                <span className="text-blue-600 font-medium truncate">{meetLink}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-2 ml-4">
-                          <a
-                            href={meetingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-primary text-sm"
-                          >
-                            Join Now
-                          </a>
+                          {meetLink ? (
+                            <a
+                              href={meetLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-primary text-sm flex items-center space-x-1"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span>Open Meet</span>
+                            </a>
+                          ) : (
+                            <span className="text-xs text-gray-500">No Meet link</span>
+                          )}
                           {session.has_therapy_session ? (
                             <button
                               disabled
@@ -506,6 +547,9 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           {session.password_enabled && (
                             <Lock className="h-3 w-3 text-yellow-600 flex-shrink-0" title="Password protected" />
                           )}
+                          {meetLink && (
+                            <ExternalLink className="h-3 w-3 text-blue-600 flex-shrink-0" title="Google Meet link available" />
+                          )}
                         </div>
 
                         <div className="space-y-1 text-xs text-gray-600 mb-3">
@@ -528,18 +572,29 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             <Clock className="h-3 w-3 flex-shrink-0" />
                             <span>{session.duration_minutes} minutes</span>
                           </div>
+                          {meetLink && (
+                            <div className="flex items-center space-x-2">
+                              <ExternalLink className="h-3 w-3 text-blue-600 flex-shrink-0" />
+                              <span className="text-blue-600 font-medium text-xs truncate">{meetLink}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Mobile Buttons - Vertical Stack with smaller size */}
                         <div className="flex flex-col space-y-2 mb-3">
-                          <a
-                            href={meetingUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full py-1.5 px-3 bg-primary-600 text-white text-xs font-medium rounded-md hover:bg-primary-700 transition text-center"
-                          >
-                            Join Now
-                          </a>
+                          {meetLink ? (
+                            <a
+                              href={meetLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full py-1.5 px-3 bg-primary-600 text-white text-xs font-medium rounded-md hover:bg-primary-700 transition text-center flex items-center justify-center space-x-1"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              <span>Open Meet</span>
+                            </a>
+                          ) : (
+                            <span className="text-xs text-gray-500 text-center">No Meet link</span>
+                          )}
                           {session.has_therapy_session ? (
                             <button
                               disabled

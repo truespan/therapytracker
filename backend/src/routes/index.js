@@ -120,6 +120,11 @@ router.post('/organizations/:id/subscription/calculate-price', authenticateToken
 // Organization therapist signup management
 router.get('/organizations/:id/therapist-signup-token', authenticateToken, checkRole('organization'), organizationController.getTherapistSignupToken);
 
+// Organization therapist video session management (for theraptrack-controlled organizations)
+router.get('/organizations/:id/therapists/video-settings', authenticateToken, checkRole('organization'), organizationController.getTherapistsVideoSettings);
+router.put('/organizations/:id/therapists/:therapistId/video-settings', authenticateToken, checkRole('organization'), organizationController.updateTherapistVideoSettings);
+router.put('/organizations/:id/therapists/video-settings/bulk', authenticateToken, checkRole('organization'), organizationController.bulkUpdateTherapistVideoSettings);
+
 // Subscription plans for individual therapists (public endpoint for signup)
 router.get('/subscription-plans/individual', subscriptionPlanController.getIndividualTherapistPlans);
 

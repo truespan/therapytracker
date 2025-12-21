@@ -1,52 +1,34 @@
-// Video helper utilities for Daily.co integration
-import DailyIframe from '@daily-co/daily-js';
+// Video helper utilities for Google Meet integration
 
 /**
- * Initialize Daily.co call
- * @param {string} roomUrl - Daily.co room URL
- * @param {HTMLElement} containerElement - DOM element to mount Daily call
- * @param {object} options - Additional configuration options
- * @returns {object} Daily call frame instance
- */
-export const initDailyCall = (roomUrl, containerElement, options = {}) => {
-  const callFrame = DailyIframe.createFrame(containerElement, {
-    iframeStyle: {
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '8px'
-    },
-    showLeaveButton: true,
-    showFullscreenButton: true,
-    showLocalVideo: true,
-    showParticipantsBar: true,
-    userName: options.displayName || 'Guest',
-    ...options
-  });
-
-  // Join the call
-  callFrame.join({ url: roomUrl });
-
-  return callFrame;
-};
-
-/**
- * Get Daily.co room URL from session
+ * Get Google Meet link from session
  * @param {object} session - Video session object
- * @returns {string} Daily.co room URL
+ * @returns {string} Google Meet URL or null
  */
-export const getDailyRoomUrl = (session) => {
-  return session.daily_room_url || session.meeting_room_id;
+export const getMeetLink = (session) => {
+  return session.meet_link || null;
 };
 
 /**
- * Generate meeting URL (legacy fallback for Jitsi sessions)
- * @param {string} meetingRoomId - Unique meeting room identifier
- * @param {string} domain - Jitsi domain (default: 'meet.jit.si')
- * @returns {string} Full Jitsi meeting URL
+ * Check if session has a valid Google Meet link
+ * @param {object} session - Video session object
+ * @returns {boolean} Whether session has a Meet link
  */
-export const generateMeetingUrl = (meetingRoomId, domain = 'meet.jit.si') => {
-  return `https://${domain}/${meetingRoomId}`;
+export const hasMeetLink = (session) => {
+  return Boolean(session.meet_link && session.meet_link.startsWith('https://meet.google.com/'));
+};
+
+/**
+ * Open Google Meet link in new tab
+ * @param {string} meetLink - Google Meet URL
+ * @returns {void}
+ */
+export const openMeetLink = (meetLink) => {
+  if (meetLink && meetLink.startsWith('https://meet.google.com/')) {
+    window.open(meetLink, '_blank', 'noopener,noreferrer');
+  } else {
+    console.error('Invalid Google Meet link:', meetLink);
+  }
 };
 
 /**
@@ -114,15 +96,46 @@ export const formatTimeUntilSession = (sessionDate) => {
 };
 
 /**
- * Cleanup Daily call frame
- * @param {object} callFrame - Daily call frame instance
+ * Copy text to clipboard
+ * @param {string} text - Text to copy
+ * @returns {Promise<boolean>} Whether copy was successful
  */
-export const cleanupDailyCall = (callFrame) => {
-  if (callFrame) {
-    try {
-      callFrame.destroy();
-    } catch (error) {
-      console.error('Error cleaning up Daily call:', error);
-    }
+export const copyToClipboard = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    console.error('Failed to copy to clipboard:', error);
+    return false;
   }
+};
+
+/**
+ * Generate shareable session information
+ * @param {object} session - Video session object
+ * @returns {string} Formatted share text
+ */
+export const generateShareText = (session) => {
+  const meetLink = getMeetLink(session);
+  const date = new Date(session.session_date).toLocaleDateString();
+  const time = new Date(session.session_date).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  let shareText = `Video Session: ${session.title}\n`;
+  shareText += `Date: ${date}\n`;
+  shareText += `Time: ${time}\n`;
+  
+  if (meetLink) {
+    shareText += `\nJoin: ${meetLink}\n`;
+  } else {
+    shareText += `\nMeeting Room ID: ${session.meeting_room_id}\n`;
+  }
+  
+  if (session.password_enabled) {
+    shareText += '\nPassword protected (check app for password)\n';
+  }
+
+  return shareText;
 };

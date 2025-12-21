@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { videoSessionAPI } from '../../services/api';
 import { X, Calendar, Clock, User, Lock, Unlock, Copy, Check, Video } from 'lucide-react';
-import { getDailyRoomUrl } from '../../utils/videoHelper';
+import { getMeetLink } from '../../utils/videoHelper';
 import {
   getUserTimezone,
   getDateTimeForInput,
@@ -134,7 +134,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
 
   const handleCopyLink = () => {
     if (createdSession) {
-      const meetingUrl = createdSession.daily_room_url || getDailyRoomUrl(createdSession);
+      const meetingUrl = createdSession.meet_link || getMeetLink(createdSession);
       const shareText = `Video Session: ${createdSession.title}\n` +
         `Date: ${new Date(createdSession.session_date).toLocaleString()}\n` +
         `Duration: ${createdSession.duration_minutes} minutes\n` +
@@ -153,7 +153,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
   };
 
   if (createdSession) {
-    const meetingUrl = createdSession.daily_room_url || getDailyRoomUrl(createdSession);
+    const meetingUrl = createdSession.meet_link || getMeetLink(createdSession);
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

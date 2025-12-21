@@ -50,20 +50,21 @@ class Partner {
   }
 
   static async create(partnerData, client = null) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled } = partnerData;
 
     // Generate unique Partner ID
     const partnerId = await this.generatePartnerId(organization_id);
 
     const query = `
-      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
       RETURNING *
     `;
     const values = [
       partnerId, name, sex, age || null, email, contact, qualification, license_id || null, address, photo_url,
       work_experience || null, other_practice_details || null, organization_id, verification_token, verification_token_expires,
-      fee_min || null, fee_max || null, fee_currency || 'INR', language_preferences || null
+      fee_min || null, fee_max || null, fee_currency || 'INR', language_preferences || null,
+      video_sessions_enabled !== undefined ? video_sessions_enabled : true
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
@@ -95,7 +96,7 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency, video_sessions_enabled } = partnerData;
     const query = `
       UPDATE partners
       SET name = COALESCE($1, name),
@@ -114,17 +115,19 @@ class Partner {
           default_report_background = COALESCE($14, default_report_background),
           fee_min = CASE WHEN $15::DECIMAL IS NULL THEN fee_min ELSE $15::DECIMAL END,
           fee_max = CASE WHEN $16::DECIMAL IS NULL THEN fee_max ELSE $16::DECIMAL END,
-          fee_currency = COALESCE($17, fee_currency)
-      WHERE id = $18
+          fee_currency = COALESCE($17, fee_currency),
+          video_sessions_enabled = COALESCE($18, video_sessions_enabled)
+      WHERE id = $19
       RETURNING *
     `;
     const values = [
-      name, sex, age !== undefined ? age : null, email, contact, qualification, 
-      license_id !== undefined ? license_id : null, address, photo_url, 
-      work_experience !== undefined ? work_experience : null, 
-      other_practice_details !== undefined ? other_practice_details : null, 
+      name, sex, age !== undefined ? age : null, email, contact, qualification,
+      license_id !== undefined ? license_id : null, address, photo_url,
+      work_experience !== undefined ? work_experience : null,
+      other_practice_details !== undefined ? other_practice_details : null,
       email_verified, default_report_template_id, default_report_background,
-      fee_min !== undefined ? fee_min : null, fee_max !== undefined ? fee_max : null, fee_currency, id
+      fee_min !== undefined ? fee_min : null, fee_max !== undefined ? fee_max : null, fee_currency,
+      video_sessions_enabled, id
     ];
     const result = await db.query(query, values);
     return result.rows[0];
@@ -339,6 +342,69 @@ class Partner {
       WHERE id = $1
     `;
     const result = await db.query(query, [partnerId]);
+    return result.rows[0];
+  }
+
+  /**
+   * Check if video sessions are enabled for a partner
+   * @param {number} partnerId - Partner ID
+   * @returns {Promise<boolean>} Whether video sessions are enabled for this partner
+   */
+  static async areVideoSessionsEnabled(partnerId) {
+    const query = `
+      SELECT video_sessions_enabled
+      FROM partners
+      WHERE id = $1
+    `;
+    const result = await db.query(query, [partnerId]);
+    return result.rows[0]?.video_sessions_enabled ?? true; // Default to true if not set
+  }
+
+  /**
+   * Get all partners (therapists) for an organization with their video session settings
+   * @param {number} organizationId - Organization ID
+   * @returns {Promise<Array>} Array of partners with video session settings
+   */
+  static async getAllWithVideoSettings(organizationId) {
+    const query = `
+      SELECT
+        p.id,
+        p.name,
+        p.email,
+        p.partner_id,
+        p.contact,
+        p.qualification,
+        p.is_active,
+        p.created_at,
+        p.video_sessions_enabled,
+        COUNT(DISTINCT upa.user_id)::int as total_clients,
+        COUNT(DISTINCT vs.id)::int as total_sessions,
+        COUNT(DISTINCT vs.id) FILTER (WHERE vs.status = 'completed')::int as completed_sessions
+      FROM partners p
+      LEFT JOIN user_partner_assignments upa ON p.id = upa.partner_id
+      LEFT JOIN video_sessions vs ON p.id = vs.partner_id
+      WHERE p.organization_id = $1
+      GROUP BY p.id, p.name, p.email, p.partner_id, p.contact, p.qualification, p.is_active, p.created_at, p.video_sessions_enabled
+      ORDER BY p.name
+    `;
+    const result = await db.query(query, [organizationId]);
+    return result.rows;
+  }
+
+  /**
+   * Update video session setting for a specific partner
+   * @param {number} partnerId - Partner ID
+   * @param {boolean} enabled - Whether to enable video sessions
+   * @returns {Promise<Object>} Updated partner record
+   */
+  static async updateVideoSessionSetting(partnerId, enabled) {
+    const query = `
+      UPDATE partners
+      SET video_sessions_enabled = $2
+      WHERE id = $1
+      RETURNING id, name, email, video_sessions_enabled
+    `;
+    const result = await db.query(query, [partnerId, enabled]);
     return result.rows[0];
   }
 }

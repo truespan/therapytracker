@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Save, CreditCard, Users, Calculator, Sun } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Save, CreditCard, Users, Calculator, Sun, Video } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import { googleCalendarAPI, organizationAPI, subscriptionPlanAPI } from '../../services/api';
 import ChangePasswordSection from '../common/ChangePasswordSection';
 import NonControlledSubscriptionManagement from './NonControlledSubscriptionManagement';
 import DarkModeToggle from '../common/DarkModeToggle';
+import TherapistVideoSettings from './TherapistVideoSettings';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -329,11 +330,31 @@ const OrganizationSettings = () => {
               />
             </div>
           </div>
-          )}
-        </div>
+        )}
+
+        {/* Therapist Video Session Management - Only for TheraPTrack controlled organizations */}
+        {subscriptionDetails?.theraptrack_controlled && (
+          <div className="border-t border-gray-200 dark:border-dark-border pt-6">
+            <div className="flex items-center mb-4">
+              <Video className="h-6 w-6 mr-2 text-indigo-600 dark:text-dark-primary-500" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
+                Therapist Video Session Management
+              </h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
+              Control video session access for individual therapists in your organization
+            </p>
+            
+            <TherapistVideoSettings
+              organizationId={user.id}
+              organizationName={user.name}
+            />
+          </div>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default OrganizationSettings;

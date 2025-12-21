@@ -130,6 +130,13 @@ export const organizationAPI = {
 
   // Therapist signup URL management
   getTherapistSignupToken: (organizationId) => api.get(`/organizations/${organizationId}/therapist-signup-token`),
+
+  // Therapist video session management (for theraptrack-controlled organizations)
+  getTherapistsVideoSettings: (organizationId) => api.get(`/organizations/${organizationId}/therapists/video-settings`),
+  updateTherapistVideoSettings: (organizationId, therapistId, video_sessions_enabled) =>
+    api.put(`/organizations/${organizationId}/therapists/${therapistId}/video-settings`, { video_sessions_enabled }),
+  bulkUpdateTherapistVideoSettings: (organizationId, therapistIds, video_sessions_enabled) =>
+    api.put(`/organizations/${organizationId}/therapists/video-settings/bulk`, { therapistIds, video_sessions_enabled }),
 };
 
 // Admin APIs

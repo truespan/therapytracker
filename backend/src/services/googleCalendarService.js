@@ -222,14 +222,34 @@ function formatEventData(eventType, eventData) {
   description += 'Managed by TheraP Track\n';
 
   if (isVideo && eventData.meeting_room_id) {
-    const meetingLink = `https://meet.jit.si/${eventData.meeting_room_id}`;
-    description += `\nJoin video session: ${meetingLink}\n`;
-    if (eventData.password_enabled) {
-      description += 'Password protected (check app for password)\n';
+    if (eventData.meet_link) {
+      // Use Google Meet link if available
+      description += `\nJoin video session: ${eventData.meet_link}\n`;
+      if (eventData.password_enabled) {
+        description += 'Password protected (check app for password)\n';
+      }
+    } else {
+      // Fallback to meeting room ID for legacy sessions
+      description += `\nMeeting Room ID: ${eventData.meeting_room_id}\n`;
+      if (eventData.password_enabled) {
+        description += 'Password protected (check app for password)\n';
+      }
     }
   }
 
   event.description = description;
+
+  // Add conference data for video sessions to create Google Meet links
+  if (isVideo && !eventData.google_event_id) {
+    event.conferenceData = {
+      createRequest: {
+        requestId: `${eventData.meeting_room_id || 'meet'}-${Date.now()}`,
+        conferenceSolutionKey: {
+          type: 'hangoutsMeet'
+        }
+      }
+    };
+  }
 
   return event;
 }
@@ -352,19 +372,30 @@ async function syncVideoSessionToGoogle(sessionId) {
         eventId: session.google_event_id
       };
     } else {
-      // Create new event
+      // Create new event with conference data to generate Meet link
       const response = await calendar.events.insert({
         calendarId: 'primary',
-        resource: eventData
+        resource: eventData,
+        conferenceDataVersion: 1 // Important: This tells Google to process conference data
       });
 
       const googleEventId = response.data.id;
+      const meetLink = response.data.hangoutLink; // Google Meet link
+
+      // Update session with Google event ID and Meet link
+      if (meetLink) {
+        await VideoSession.update(sessionId, {
+          meet_link: meetLink
+        });
+      }
+
       await updateVideoSessionSyncStatus(sessionId, 'synced', googleEventId, null);
 
       return {
         success: true,
         action: 'created',
-        eventId: googleEventId
+        eventId: googleEventId,
+        meetLink: meetLink
       };
     }
   } catch (error) {

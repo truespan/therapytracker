@@ -35,7 +35,7 @@ class VideoSession {
       password_enabled,
       notes,
       timezone,
-      daily_room_url
+      meet_link
     } = sessionData;
 
     // Generate meeting room ID
@@ -52,7 +52,7 @@ class VideoSession {
     const query = `
       INSERT INTO video_sessions (
         partner_id, user_id, title, session_date, end_date,
-        duration_minutes, meeting_room_id, password, password_enabled, notes, timezone, daily_room_url
+        duration_minutes, meeting_room_id, password, password_enabled, notes, timezone, meet_link
       )
       VALUES ($1, $2, $3, $4::timestamptz, $5::timestamptz, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
@@ -69,7 +69,7 @@ class VideoSession {
       password_enabled !== false, // Default to true
       notes,
       timezone || 'UTC',
-      daily_room_url || null
+      meet_link || null
     ];
 
     const result = await db.query(query, values);
@@ -135,7 +135,7 @@ class VideoSession {
       notes,
       password_enabled,
       timezone,
-      daily_room_url
+      meet_link
     } = sessionData;
 
     const query = `
@@ -148,12 +148,12 @@ class VideoSession {
           notes = COALESCE($6, notes),
           password_enabled = COALESCE($7, password_enabled),
           timezone = COALESCE($8, timezone),
-          daily_room_url = COALESCE($9, daily_room_url),
+          meet_link = COALESCE($9, meet_link),
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $10
       RETURNING *
     `;
-    const values = [title, session_date, end_date, duration_minutes, status, notes, password_enabled, timezone, daily_room_url, id];
+    const values = [title, session_date, end_date, duration_minutes, status, notes, password_enabled, timezone, meet_link, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }
