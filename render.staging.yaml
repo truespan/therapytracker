@@ -5,18 +5,19 @@
 services:
   # PostgreSQL Database
   - type: pserv
-    name: therapy-tracker-db
-    plan: starter # Options: free (90 days), starter, standard, pro
+    name: therapy-tracker-db-staging
+    plan: free # Options: free (90 days), starter, standard, pro
     region: oregon # Choose closest to your users: oregon, frankfurt, singapore
-    databaseName: therapy_tracker
+    databaseName: therapy_tracker_staging
     databaseUser: therapy_tracker_user
     ipAllowList: [] # Empty = allow all
 
   # Backend API Service
   - type: web
-    name: therapy-tracker-api
+    name: therapy-tracker-api-staging
+    branch: develop
     runtime: node
-    plan: starter # Options: free, starter, standard, pro
+    plan: free # Options: free, starter, standard, pro
     region: oregon # Must match database region
     buildCommand: npm install
     startCommand: npm start
@@ -25,7 +26,7 @@ services:
     envVars:
       # Server Configuration
       - key: NODE_ENV
-        value: production
+        value: staging
 
       - key: PORT
         value: 5000
@@ -33,7 +34,7 @@ services:
       # Database Connection - Automatically linked to PostgreSQL service
       - key: DATABASE_URL
         fromDatabase:
-          name: therapy-tracker-db
+          name: therapy-tracker-db-staging
           property: connectionString
 
       # JWT Secret - CHANGE THIS!
@@ -59,16 +60,18 @@ services:
 
       # Frontend URL - Update after frontend deployment
       - key: FRONTEND_URL
-        value: https://therapy-tracker.onrender.com
+        value: https://therapy-tracker-staging.onrender.com
 
   # Frontend Static Site
   - type: web
-    name: therapytracker-frontend
+    name: therapytracker-frontend-staging
+    branch: develop
     runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: build
     rootDir: frontend
-    pullRequestPreviewsEnabled: true # Enable PR previews
+    autoDeploy: true
+    pullRequestPreviewsEnabled: false # Enable PR previews
     headers:
       - path: /*
         name: X-Frame-Options
@@ -86,4 +89,4 @@ services:
     envVars:
       # API URL - Points to backend service
       - key: REACT_APP_API_URL
-        value: https://therapytracker-backend.onrender.com/api
+        value: https://therapytracker-backend-staging.onrender.com/api
