@@ -12,7 +12,7 @@ projects:
       repo: https://github.com/truespan/therapytracker
       envVars:
       - key: REACT_APP_API_URL
-        sync: https://therapytracker-backend.onrender.com/api
+        sync: false
       buildCommand: npm install && npm run build
       staticPublishPath: build
       domains:
@@ -48,7 +48,7 @@ projects:
       - key: BACKEND_URL
         sync: false
       - key: NODE_ENV
-        sync: production
+        sync: false
       - key: BREVO_API_KEY
         sync: false
       - key: EMAIL_USER
@@ -62,7 +62,7 @@ projects:
       - key: PORT
         sync: false
       - key: FRONTEND_URL
-        sync: https://therapy-tracker.onrender.com
+        sync: false
       - key: secret-file
         sync: false
       - key: JWT_SECRET
@@ -95,7 +95,7 @@ projects:
       repo: https://github.com/truespan/therapytracker
       envVars:
       - key: REACT_APP_API_URL
-        sync: https://therapytracker-backend-staging.onrender.com/api
+        sync: false
       buildCommand: npm install && npm run build
       staticPublishPath: build
       domains:
@@ -145,7 +145,7 @@ projects:
       - key: PORT
         sync: false
       - key: FRONTEND_URL
-        sync: https://therapy-tracker-staging.onrender.com
+        sync: false
       - key: secret-file
         sync: false
       - key: JWT_SECRET
