@@ -1,6 +1,9 @@
 const AvailabilitySlot = require('../models/AvailabilitySlot');
 const Appointment = require('../models/Appointment');
 const googleCalendarService = require('../services/googleCalendarService');
+const whatsappService = require('../services/whatsappService');
+const User = require('../models/User');
+const Partner = require('../models/Partner');
 const db = require('../config/database');
 
 /**
@@ -454,6 +457,81 @@ const bookSlot = async (req, res) => {
     const bookedSlot = updateResult.rows[0];
 
     await client.query('COMMIT');
+
+    // Send WhatsApp notifications (non-blocking)
+    if (appointmentId && !googleConflict) {
+      try {
+        // Get user and partner details for notification
+        const user = await User.findById(userId);
+        const partner = await Partner.findById(slot.partner_id);
+        
+        // Send notification to client
+        if (user && user.contact) {
+          const clientAppointmentData = {
+            userName: user.name,
+            therapistName: partner ? partner.name : 'Your therapist',
+            appointmentDate: slot.start_datetime,
+            appointmentTime: new Date(slot.start_datetime).toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+              timeZone: 'Asia/Kolkata'
+            }),
+            timezone: 'UTC',
+            appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
+            duration: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / (1000 * 60))
+          };
+
+          const clientResult = await whatsappService.sendAppointmentConfirmation(
+            user.contact,
+            clientAppointmentData,
+            appointmentId,
+            userId
+          );
+
+          if (clientResult.success) {
+            console.log(`[WhatsApp] Client notification sent successfully for booked slot ${id}`);
+          } else {
+            console.error(`[WhatsApp] Failed to send client notification for booked slot ${id}:`, clientResult.error);
+          }
+        }
+
+        // Send notification to therapist
+        if (partner && partner.contact) {
+          const therapistAppointmentData = {
+            therapistName: partner.name,
+            clientName: user ? user.name : 'Client',
+            appointmentDate: slot.start_datetime,
+            appointmentTime: new Date(slot.start_datetime).toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+              timeZone: 'Asia/Kolkata'
+            }),
+            timezone: 'UTC',
+            appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
+            duration: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / (1000 * 60)),
+            clientPhone: user ? user.contact : 'Not provided',
+            clientEmail: user ? user.email : 'Not provided'
+          };
+
+          const therapistResult = await whatsappService.sendTherapistAppointmentNotification(
+            partner.contact,
+            therapistAppointmentData,
+            appointmentId,
+            slot.partner_id
+          );
+
+          if (therapistResult.success) {
+            console.log(`[WhatsApp] Therapist notification sent successfully for booked slot ${id}`);
+          } else {
+            console.error(`[WhatsApp] Failed to send therapist notification for booked slot ${id}:`, therapistResult.error);
+          }
+        }
+      } catch (notificationError) {
+        console.error(`[WhatsApp] Error sending notifications for booked slot ${id}:`, notificationError.message);
+      }
+    }
 
     res.json({
       message: 'Slot booked successfully',

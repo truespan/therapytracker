@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const { checkRole } = require('../middleware/roleCheck');
 const { checkVideoSessionAccess, checkVideoSessionAccessByPartnerId } = require('../middleware/videoSessionAccess');
+const { checkWhatsAppAccessMiddleware } = require('../middleware/whatsappAccess');
 
 // Controllers
 const authController = require('../controllers/authController');
@@ -24,6 +25,7 @@ const subscriptionPlanRoutes = require('./subscriptionPlanRoutes');
 const subscriptionPlanController = require('../controllers/subscriptionPlanController');
 const partnerSubscriptionController = require('../controllers/partnerSubscriptionController');
 const availabilitySlotController = require('../controllers/availabilitySlotController');
+const whatsappController = require('../controllers/whatsappController');
 
 // Debug routes (for timezone diagnostics)
 const debugRoutes = require('./debug');
@@ -153,6 +155,20 @@ router.put('/availability-slots/:id', authenticateToken, checkRole('partner'), a
 router.delete('/availability-slots/:id', authenticateToken, checkRole('partner'), availabilitySlotController.deleteSlot);
 router.post('/partners/:partnerId/availability-slots/publish', authenticateToken, checkRole('partner'), availabilitySlotController.publishSlots);
 router.post('/availability-slots/:id/book', authenticateToken, checkRole('user'), availabilitySlotController.bookSlot);
+
+// ==================== WHATSAPP NOTIFICATION ROUTES ====================
+// Admin and Organization routes
+router.get('/whatsapp/status', authenticateToken, checkRole('admin', 'organization'), whatsappController.getWhatsAppStatus);
+router.post('/whatsapp/test', authenticateToken, checkRole('admin', 'organization'), whatsappController.testWhatsAppIntegration);
+router.get('/whatsapp/logs', authenticateToken, checkRole('admin', 'organization'), whatsappController.getWhatsAppLogs);
+router.get('/whatsapp/logs/:id', authenticateToken, checkRole('admin', 'organization'), whatsappController.getWhatsAppNotificationById);
+router.post('/whatsapp/logs/:id/resend', authenticateToken, checkRole('admin', 'organization'), whatsappController.resendWhatsAppNotification);
+router.get('/whatsapp/statistics', authenticateToken, checkRole('admin', 'organization'), whatsappController.getWhatsAppStatistics);
+
+// Partner routes (for theraptrack-controlled organizations)
+router.get('/partners/whatsapp/status', authenticateToken, checkRole('partner'), checkWhatsAppAccessMiddleware, whatsappController.getPartnerWhatsAppStatus);
+router.post('/partners/whatsapp/send', authenticateToken, checkRole('partner'), checkWhatsAppAccessMiddleware, whatsappController.sendPartnerMessage);
+router.get('/partners/whatsapp/logs', authenticateToken, checkRole('partner'), checkWhatsAppAccessMiddleware, whatsappController.getPartnerWhatsAppLogs);
 
 // ==================== THERAPY SESSION ROUTES ====================
 router.post('/therapy-sessions', authenticateToken, checkRole('partner'), therapySessionController.createTherapySession);

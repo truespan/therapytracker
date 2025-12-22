@@ -11,6 +11,7 @@ A comprehensive web application for tracking therapy progress through visual min
 - Rate yourself on 10 default fields plus custom fields
 - Add feedback and ratings for each therapy session
 - Track improvements over time in mental, physical, and relational aspects
+- Receive WhatsApp notifications for appointment confirmations
 
 ### For Partners (Therapists)
 - View all assigned clients and their progress
@@ -18,12 +19,14 @@ A comprehensive web application for tracking therapy progress through visual min
 - Access client mind-body maps and session history
 - Add custom assessment fields for specific client needs
 - Monitor client improvements across sessions
+- Automatic WhatsApp notifications sent to clients when appointments are created
 
 ### For Organizations
 - Overview dashboard with statistics
 - View all therapists and their clients
 - Access comprehensive data across the organization
 - Monitor overall therapy effectiveness
+- Manage WhatsApp notification settings and view delivery statistics
 
 ## Tech Stack
 
@@ -361,6 +364,58 @@ NODE_ENV=production
 REACT_APP_API_URL=https://your-api-domain.com/api
 ```
 
+## WhatsApp Notifications
+
+The system includes automated WhatsApp notifications for appointment confirmations. When appointments are created or slots are booked, clients receive WhatsApp messages with appointment details.
+
+### Setup Instructions
+
+1. **Install Dependencies**:
+```bash
+cd backend
+npm install twilio
+```
+
+2. **Configure Environment Variables**:
+Add to your `.env.production` file:
+```env
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
+WHATSAPP_ENABLED=true
+```
+
+3. **Run Database Migration**:
+```bash
+psql -U postgres -d therapy_tracker -f backend/database/migrations/001_add_whatsapp_notifications.sql
+```
+
+4. **Test the Integration**:
+```bash
+# Get service status
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:5000/api/whatsapp/status
+
+# Send test message
+curl -X POST http://localhost:5000/api/whatsapp/test \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"phoneNumber": "+919876543210"}'
+```
+
+### Features
+
+- **Automatic Notifications**: Sent when appointments are created or slots are booked
+- **Phone Validation**: Supports Indian (+91) and international formats
+- **Error Handling**: Non-blocking - appointment creation succeeds even if WhatsApp fails
+- **Logging**: All notifications logged to database for monitoring
+- **Admin Controls**: API endpoints for testing, monitoring, and managing notifications
+
+### Documentation
+
+- **[Detailed Setup Guide](backend/WHATSAPP_SETUP_GUIDE.md)**: Complete step-by-step setup instructions
+- **[Quick Reference](backend/WHATSAPP_QUICK_REFERENCE.md)**: Quick start guide and API reference
+- **[Implementation Plan](plans/whatsapp-notification-implementation.md)**: Technical architecture and design decisions
+
 ## Security Considerations
 
 - All passwords are hashed using bcrypt
@@ -368,10 +423,12 @@ REACT_APP_API_URL=https://your-api-domain.com/api
 - Role-based access control on all endpoints
 - SQL injection prevention through parameterized queries
 - CORS enabled for specified origins
+- WhatsApp credentials stored in environment variables (never committed)
+- Phone numbers validated before sending messages
 
 ## Future Enhancements
 
-- Email/SMS appointment reminders
+- Email/SMS appointment reminders (in addition to WhatsApp)
 - Calendar integration for appointments
 - Export reports as PDF
 - Mobile app versions

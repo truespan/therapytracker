@@ -1,5 +1,8 @@
 const Appointment = require('../models/Appointment');
 const googleCalendarService = require('../services/googleCalendarService');
+const whatsappService = require('../services/whatsappService');
+const User = require('../models/User');
+const Partner = require('../models/Partner');
 
 const createAppointment = async (req, res) => {
   try {
@@ -34,6 +37,14 @@ const createAppointment = async (req, res) => {
       // Don't fail the appointment creation if sync fails
     }
 
+    // Send WhatsApp notifications (non-blocking)
+    try {
+      await sendWhatsAppNotifications(newAppointment.id, user_id, partner_id, title, appointment_date, end_date, duration_minutes, timezone);
+    } catch (error) {
+      console.error('WhatsApp notification failed:', error.message);
+      // Don't fail the appointment creation if WhatsApp fails
+    }
+
     res.status(201).json({
       message: 'Appointment created successfully',
       appointment: newAppointment
@@ -41,6 +52,105 @@ const createAppointment = async (req, res) => {
   } catch (error) {
     console.error('Create appointment error:', error);
     res.status(500).json({ error: 'Failed to create appointment', details: error.message });
+  }
+};
+
+/**
+ * Send WhatsApp notifications for appointment (both client and therapist)
+ * @param {number} appointmentId - Appointment ID
+ * @param {number} userId - User ID
+ * @param {number} partnerId - Partner ID
+ * @param {string} title - Appointment title
+ * @param {string} appointmentDate - Appointment date
+ * @param {string} endDate - End date
+ * @param {number} durationMinutes - Duration in minutes
+ * @param {string} timezone - Timezone
+ */
+const sendWhatsAppNotifications = async (appointmentId, userId, partnerId, title, appointmentDate, endDate, durationMinutes, timezone) => {
+  try {
+    // Get user details for phone number
+    const user = await User.findById(userId);
+    const partner = await Partner.findById(partnerId);
+    
+    if (!user) {
+      console.log(`[WhatsApp] User not found for userId ${userId}`);
+      return;
+    }
+    
+    if (!partner) {
+      console.log(`[WhatsApp] Partner not found for partnerId ${partnerId}`);
+      return;
+    }
+
+    // Send notification to client
+    if (user.contact) {
+      const clientAppointmentData = {
+        userName: user.name,
+        therapistName: partner.name,
+        appointmentDate: appointmentDate,
+        appointmentTime: new Date(appointmentDate).toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'Asia/Kolkata'
+        }),
+        timezone: timezone || 'IST',
+        appointmentType: title,
+        duration: durationMinutes || 60
+      };
+
+      const clientResult = await whatsappService.sendAppointmentConfirmation(
+        user.contact,
+        clientAppointmentData,
+        appointmentId,
+        userId
+      );
+
+      if (clientResult.success) {
+        console.log(`[WhatsApp] Client notification sent successfully for appointment ${appointmentId}`);
+      } else {
+        console.error(`[WhatsApp] Failed to send client notification for appointment ${appointmentId}:`, clientResult.error);
+      }
+    } else {
+      console.log(`[WhatsApp] No phone number found for user ${userId}`);
+    }
+
+    // Send notification to therapist
+    if (partner.contact) {
+      const therapistAppointmentData = {
+        therapistName: partner.name,
+        clientName: user.name,
+        appointmentDate: appointmentDate,
+        appointmentTime: new Date(appointmentDate).toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'Asia/Kolkata'
+        }),
+        timezone: timezone || 'IST',
+        appointmentType: title,
+        duration: durationMinutes || 60,
+        clientPhone: user.contact || 'Not provided',
+        clientEmail: user.email || 'Not provided'
+      };
+
+      const therapistResult = await whatsappService.sendTherapistAppointmentNotification(
+        partner.contact,
+        therapistAppointmentData,
+        appointmentId,
+        partnerId
+      );
+
+      if (therapistResult.success) {
+        console.log(`[WhatsApp] Therapist notification sent successfully for appointment ${appointmentId}`);
+      } else {
+        console.error(`[WhatsApp] Failed to send therapist notification for appointment ${appointmentId}:`, therapistResult.error);
+      }
+    } else {
+      console.log(`[WhatsApp] No phone number found for partner ${partnerId}`);
+    }
+  } catch (error) {
+    console.error(`[WhatsApp] Error sending notifications for appointment ${appointmentId}:`, error.message);
   }
 };
 
@@ -172,10 +282,7 @@ const getUpcomingAppointments = async (req, res) => {
     res.json({ appointments });
   } catch (error) {
     console.error('Get upcoming appointments error:', error);
-    res.status(500).json({
-      error: 'Failed to fetch upcoming appointments',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Failed to fetch upcoming appointments', details: error.message });
   }
 };
 
@@ -219,4 +326,3 @@ module.exports = {
   getUpcomingAppointments,
   checkAppointmentConflicts
 };
-
