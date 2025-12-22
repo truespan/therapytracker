@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   TrendingUp, Users, BarChart3, Database, Smartphone, FileText, 
   Calendar, Video, StickyNote, Send, MessageCircle, Mail, Phone,
-  CheckCircle, ArrowRight, Sparkles
+  CheckCircle, ArrowRight, Sparkles, Shield
 } from 'lucide-react';
 import { Radar, RadarChart as RechartsRadar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { contactAPI } from '../services/api';
@@ -143,8 +143,25 @@ const Home = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white">
+      <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          {/* HIPAA Security Badge - positioned at top right under Start Free Trial button */}
+          <div className="absolute top-6 right-6">
+            <div className="group relative inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20 hover:bg-white/20 transition-all duration-300 cursor-help">
+              {/* Simple, bright yellow shield - should be clearly visible */}
+              <Shield className="h-5 w-5 text-yellow-300" />
+              <span className="text-sm font-medium text-white">HIPAA-Aligned Security & Privacy</span>
+              
+              {/* Tooltip - positioned below the badge to avoid banner overlap */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-80 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 pointer-events-none">
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -mb-1">
+                  <div className="w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-gray-900"></div>
+                </div>
+                Designed using HIPAA-aligned security and privacy practices to help protect sensitive health information. Access is restricted to authorized users only.
+              </div>
+            </div>
+          </div>
+          
           <div className="text-center">
             <div className="h-20 w-20 mx-auto mb-6 bg-white rounded-full flex items-center justify-center p-2">
               <img
@@ -157,6 +174,7 @@ const Home = () => {
             <p className="text-xl mb-8 text-primary-100 max-w-3xl mx-auto">
               Streamline your practice with comprehensive client management, data analytics, and professional reporting tools designed for modern therapy practices and effective client communication.
             </p>
+            
             <div className="flex justify-center space-x-4 flex-wrap gap-4">
               <Link to="/signup" className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-primary-50 transition">
                 Get Started
