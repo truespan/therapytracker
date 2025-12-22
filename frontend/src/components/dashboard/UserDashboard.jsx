@@ -12,7 +12,6 @@ import UserSettings from '../user/UserSettings';
 import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock, Settings } from 'lucide-react';
 import { canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
 import { format } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
 import DarkModeToggle from '../common/DarkModeToggle';
 
 const UserDashboard = () => {
@@ -31,10 +30,17 @@ const UserDashboard = () => {
   const [reportsCount, setReportsCount] = useState(0);
   const [partners, setPartners] = useState([]);
 
-  // Format date and time in UTC to match availability display
+  // Format date and time in user's local timezone to match therapist dashboard
   const formatDateTime = (dateString) => {
     const date = new Date(dateString);
-    return formatInTimeZone(date, 'UTC', 'EEE, MMM d, yyyy h:mm a');
+    return date.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   useEffect(() => {
@@ -828,4 +834,3 @@ const UserDashboard = () => {
 };
 
 export default UserDashboard;
-
