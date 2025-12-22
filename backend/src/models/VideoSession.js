@@ -83,7 +83,18 @@ class VideoSession {
   }
 
   static async findById(id) {
-    const query = 'SELECT * FROM video_sessions WHERE id = $1';
+    const query = `
+      SELECT 
+        vs.*,
+        u.name as user_name,
+        u.email as user_email,
+        p.name as partner_name,
+        p.email as partner_email
+      FROM video_sessions vs
+      JOIN users u ON vs.user_id = u.id
+      JOIN partners p ON vs.partner_id = p.id
+      WHERE vs.id = $1
+    `;
     const result = await db.query(query, [id]);
     return result.rows[0];
   }
@@ -216,4 +227,3 @@ class VideoSession {
 }
 
 module.exports = VideoSession;
-

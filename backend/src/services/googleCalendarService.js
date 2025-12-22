@@ -188,10 +188,11 @@ async function getAuthenticatedClient(userType, userId) {
  * Format event data for Google Calendar API
  * @param {string} eventType - 'appointment' or 'video'
  * @param {Object} eventData - Event data from database
- * @param {string} organizerEmail - Email of the event organizer (for video sessions)
+ * @param {string} organizerEmail - Email of the event organizer (therapist)
+ * @param {string} clientEmail - Email of the client (for video sessions)
  * @returns {Object} Formatted event for Google Calendar API
  */
-function formatEventData(eventType, eventData, organizerEmail = null) {
+function formatEventData(eventType, eventData, organizerEmail = null, clientEmail = null) {
   const isVideo = eventType === 'video';
 
   // Base event structure
@@ -213,29 +214,25 @@ function formatEventData(eventType, eventData, organizerEmail = null) {
         { method: 'popup', minutes: 30 },
         { method: 'email', minutes: 60 }
       ]
-    }
+    },
+    // Critical settings for meeting access
+    guestsCanSeeOtherGuests: true,
+    guestsCanInviteOthers: false, // Prevent forwarding to maintain privacy
+    transparency: 'opaque', // Show as busy
+    visibility: 'private' // Keep session private
   };
 
-  // Add description
+  // Build description
   let description = '';
   if (eventData.notes) {
     description += `${eventData.notes}\n\n`;
   }
   description += 'Managed by TheraP Track\n';
 
-  if (isVideo && eventData.meeting_room_id) {
-    if (eventData.meet_link) {
-      // Use Google Meet link if available
-      description += `\nJoin video session: ${eventData.meet_link}\n`;
-      if (eventData.password_enabled) {
-        description += 'Password protected (check app for password)\n';
-      }
-    } else {
-      // Fallback to meeting room ID for legacy sessions
-      description += `\nMeeting Room ID: ${eventData.meeting_room_id}\n`;
-      if (eventData.password_enabled) {
-        description += 'Password protected (check app for password)\n';
-      }
+  if (isVideo && eventData.meet_link) {
+    description += `\nJoin video session: ${eventData.meet_link}\n`;
+    if (eventData.password_enabled) {
+      description += 'Password protected (check app for password)\n';
     }
   }
 
@@ -251,33 +248,55 @@ function formatEventData(eventType, eventData, organizerEmail = null) {
         },
         status: {
           statusCode: 'success'
-        }
+        },
+        // Add entry points for better meeting configuration
+        entryPoints: [
+          {
+            entryPointType: 'video',
+            uri: eventData.meet_link || '',
+            label: 'Google Meet'
+          }
+        ]
       }
     };
   }
 
-  // Set the partner as the organizer for video sessions
+  // Set attendees for video sessions - THIS IS THE CRITICAL FIX
   if (isVideo && organizerEmail) {
-    // Set the partner as the creator and organizer
+    const attendees = [];
+    
+    // Add therapist as organizer
+    attendees.push({
+      email: organizerEmail,
+      organizer: true,
+      responseStatus: 'accepted',
+      self: true,
+      displayName: eventData.partner_name || 'Therapist'
+    });
+
+    // Add client as attendee - FIXES "ASKING TO JOIN" ISSUE
+    if (clientEmail) {
+      attendees.push({
+        email: clientEmail,
+        organizer: false,
+        responseStatus: 'needsAction',
+        displayName: eventData.user_name || 'Client'
+      });
+    }
+
+    event.attendees = attendees;
+    
+    // Set organizer
     event.creator = {
       email: organizerEmail,
-      self: true
+      self: true,
+      displayName: eventData.partner_name || 'Therapist'
     };
     event.organizer = {
       email: organizerEmail,
-      self: true
+      self: true,
+      displayName: eventData.partner_name || 'Therapist'
     };
-    
-    // Add the partner as the primary attendee with organizer status
-    // This ensures they're recognized as the host in Google Meet
-    event.attendees = [
-      {
-        email: organizerEmail,
-        organizer: true,
-        responseStatus: 'accepted',
-        self: true  // Important: marks this as the authenticated user
-      }
-    ];
   }
 
   return event;
@@ -378,17 +397,24 @@ async function syncVideoSessionToGoogle(sessionId) {
       return { success: false, reason: 'not_connected' };
     }
 
-    // Get partner data to set as organizer
+    // Get partner data
     const partner = await Partner.findById(session.partner_id);
     if (!partner || !partner.email) {
       throw new Error('Partner email not found');
     }
 
-    // Get authenticated client
+    // Get client data to add as attendee - THIS IS CRITICAL
+    const User = require('../models/User');
+    const client = await User.findById(session.user_id);
+
     const calendar = await getAuthenticatedClient(userType, userId);
 
-    // Format event data with partner as organizer
-    const eventData = formatEventData('video', session, partner.email);
+    // Format event with BOTH organizer and client
+    const eventData = formatEventData('video', {
+      ...session,
+      partner_name: partner.name,
+      user_name: client?.name || 'Client'
+    }, partner.email, client?.email || null);
 
     // Check if event already exists
     if (session.google_event_id) {
@@ -396,7 +422,9 @@ async function syncVideoSessionToGoogle(sessionId) {
       await calendar.events.update({
         calendarId: 'primary',
         eventId: session.google_event_id,
-        resource: eventData
+        resource: eventData,
+        conferenceDataVersion: 1,
+        sendUpdates: 'all' // NOTIFY ATTENDEES
       });
 
       await updateVideoSessionSyncStatus(sessionId, 'synced', session.google_event_id, null);
@@ -411,7 +439,9 @@ async function syncVideoSessionToGoogle(sessionId) {
       const response = await calendar.events.insert({
         calendarId: 'primary',
         resource: eventData,
-        conferenceDataVersion: 1 // Important: This tells Google to process conference data
+        conferenceDataVersion: 1, // Important: This tells Google to process conference data
+        sendUpdates: 'all', // SEND INVITATIONS
+        sendNotifications: true
       });
 
       const googleEventId = response.data.id;
