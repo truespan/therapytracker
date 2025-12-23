@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../services/api';
 import { Activity, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Signup = () => {
@@ -500,4 +501,3 @@ const Signup = () => {
 };
 
 export default Signup;
-
