@@ -93,10 +93,10 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
   // Handle case where no partners are available
   if (!partners || partners.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-8 text-center">
-        <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Therapist Assigned</h3>
-        <p className="text-gray-500">
+      <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-md p-8 text-center">
+        <AlertCircle className="h-12 w-12 text-gray-300 dark:text-dark-text-tertiary mx-auto mb-3" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">No Therapist Assigned</h3>
+        <p className="text-gray-500 dark:text-dark-text-secondary">
           You don't have a therapist assigned yet. Please contact support for assistance.
         </p>
       </div>
@@ -106,16 +106,16 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Book an Appointment</h2>
-        <p className="text-gray-600">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">Book an Appointment</h2>
+        <p className="text-gray-600 dark:text-dark-text-secondary">
           View your therapist's available time slots and book an appointment.
         </p>
       </div>
 
       {/* Partner Selector (if multiple partners) */}
       {partners.length > 1 && (
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-md p-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-2">
             Select Therapist
           </label>
           <select
@@ -124,7 +124,7 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
               const partner = partners.find(p => p.id === parseInt(e.target.value));
               setSelectedPartner(partner);
             }}
-            className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full md:w-1/2 px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
           >
             <option value="">Choose a therapist</option>
             {partners.map(partner => (
@@ -138,15 +138,15 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
 
       {/* Selected Partner Info */}
       {selectedPartner && (
-        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 flex items-center justify-between">
+        <div className="bg-primary-50 dark:bg-dark-bg-secondary border border-primary-200 dark:border-dark-border rounded-lg p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm text-primary-700">Booking with</p>
-            <p className="font-semibold text-primary-900">{selectedPartner.name}</p>
+            <p className="text-sm text-primary-700 dark:text-dark-text-secondary">Booking with</p>
+            <p className="font-semibold text-primary-900 dark:text-dark-text-primary">{selectedPartner.name}</p>
           </div>
           <button
             onClick={() => loadAvailableSlots(selectedPartner.id)}
             disabled={loading}
-            className="p-2 text-primary-700 hover:bg-primary-100 rounded-md transition-colors disabled:opacity-50"
+            className="p-2 text-primary-700 dark:text-dark-primary-400 hover:bg-primary-100 dark:hover:bg-dark-bg-tertiary rounded-md transition-colors disabled:opacity-50"
             title="Refresh slots"
           >
             <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
@@ -156,14 +156,14 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
 
       {/* Calendar View */}
       {!selectedPartner ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">Please select a therapist to view available time slots.</p>
+        <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-md p-8 text-center">
+          <Calendar className="h-12 w-12 text-gray-300 dark:text-dark-text-tertiary mx-auto mb-3" />
+          <p className="text-gray-500 dark:text-dark-text-secondary">Please select a therapist to view available time slots.</p>
         </div>
       ) : loading ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <RefreshCw className="h-8 w-8 text-gray-400 mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500">Loading available slots...</p>
+        <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-md p-8 text-center">
+          <RefreshCw className="h-8 w-8 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-3 animate-spin" />
+          <p className="text-gray-500 dark:text-dark-text-secondary">Loading available slots...</p>
         </div>
       ) : (
         <AvailabilityCalendar

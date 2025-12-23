@@ -16,16 +16,16 @@ const BookingConfirmationModal = ({ slot, partnerName, onConfirm, onCancel, load
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-md w-full">
         {/* Header */}
-        <div className="bg-primary-50 border-b border-primary-200 px-6 py-4">
+        <div className="bg-primary-50 dark:bg-dark-bg-secondary border-b border-primary-200 dark:border-dark-border px-6 py-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-primary-900">
+            <h3 className="text-lg font-semibold text-primary-900 dark:text-dark-text-primary">
               Confirm Appointment Booking
             </h3>
             <button
               onClick={onCancel}
-              className="text-primary-600 hover:text-primary-800 transition-colors"
+              className="text-primary-600 dark:text-dark-primary-400 hover:text-primary-800 dark:hover:text-dark-primary-300 transition-colors"
               disabled={loading}
             >
               <X className="h-5 w-5" />
@@ -35,31 +35,31 @@ const BookingConfirmationModal = ({ slot, partnerName, onConfirm, onCancel, load
 
         {/* Content */}
         <div className="px-6 py-5">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+          <div className="bg-blue-50 dark:bg-dark-bg-secondary border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
             {/* Therapist */}
             <div className="flex items-center">
-              <User className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
+              <User className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-600">Therapist</p>
-                <p className="font-semibold text-gray-900">{partnerName}</p>
+                <p className="text-xs text-gray-600 dark:text-dark-text-secondary">Therapist</p>
+                <p className="font-semibold text-gray-900 dark:text-dark-text-primary">{partnerName}</p>
               </div>
             </div>
 
             {/* Date */}
             <div className="flex items-center">
-              <Calendar className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
+              <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-600">Date</p>
-                <p className="font-semibold text-gray-900">{formattedDate}</p>
+                <p className="text-xs text-gray-600 dark:text-dark-text-secondary">Date</p>
+                <p className="font-semibold text-gray-900 dark:text-dark-text-primary">{formattedDate}</p>
               </div>
             </div>
 
             {/* Time */}
             <div className="flex items-center">
-              <Clock className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
+              <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-600">Time</p>
-                <p className="font-semibold text-gray-900">
+                <p className="text-xs text-gray-600 dark:text-dark-text-secondary">Time</p>
+                <p className="font-semibold text-gray-900 dark:text-dark-text-primary">
                   {formatTime(slot.start_datetime)} - {formatTime(slot.end_datetime)}
                 </p>
               </div>
@@ -68,38 +68,38 @@ const BookingConfirmationModal = ({ slot, partnerName, onConfirm, onCancel, load
             {/* Session Type */}
             <div className="flex items-center">
               {isOnline ? (
-                <Video className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
+                <Video className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
               ) : (
-                <MapPin className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
+                <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
               )}
               <div>
-                <p className="text-xs text-gray-600">Session Type</p>
-                <p className="font-semibold text-gray-900">
+                <p className="text-xs text-gray-600 dark:text-dark-text-secondary">Session Type</p>
+                <p className="font-semibold text-gray-900 dark:text-dark-text-primary">
                   {isOnline ? 'Online Session' : 'In-Person Session'}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-            <p className="text-sm text-yellow-800">
+          <div className="mt-4 p-3 bg-yellow-50 dark:bg-dark-bg-secondary border border-yellow-200 dark:border-yellow-800 rounded-md">
+            <p className="text-sm text-yellow-800 dark:text-yellow-300">
               <strong>Important:</strong> Please arrive on time for your appointment.
               {isOnline && ' You will receive session details after booking.'}
             </p>
           </div>
 
-          <p className="text-sm text-gray-600 mt-4">
+          <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-4">
             Are you sure you want to book this appointment?
           </p>
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+        <div className="bg-gray-50 dark:bg-dark-bg-secondary px-6 py-4 border-t border-gray-200 dark:border-dark-border">
           <div className="flex gap-3 justify-end">
             <button
               onClick={onCancel}
               disabled={loading}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 border border-gray-300 dark:border-dark-border rounded-md text-gray-700 dark:text-dark-text-primary bg-white dark:bg-dark-bg-primary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

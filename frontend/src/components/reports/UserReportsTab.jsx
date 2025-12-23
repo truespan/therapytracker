@@ -133,7 +133,7 @@ const UserReportsTab = ({ userId, onReportViewed }) => {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading reports...</p>
+          <p className="mt-4 text-gray-600 dark:text-dark-text-secondary">Loading reports...</p>
         </div>
       </div>
     );
@@ -142,7 +142,7 @@ const UserReportsTab = ({ userId, onReportViewed }) => {
   if (error) {
     return (
       <div className="card text-center py-12">
-        <div className="text-red-600 mb-4">
+        <div className="text-red-600 dark:text-red-400 mb-4">
           <FileText className="h-16 w-16 mx-auto mb-4" />
           <p className="text-lg">{error}</p>
         </div>
@@ -159,17 +159,17 @@ const UserReportsTab = ({ userId, onReportViewed }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Your Reports</h2>
-        <p className="text-gray-600">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text-primary mb-2">Your Reports</h2>
+        <p className="text-gray-600 dark:text-dark-text-secondary">
           View and download reports shared with you by your therapist
         </p>
       </div>
 
       {reports.length === 0 ? (
         <div className="card text-center py-12">
-          <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Reports Yet</h3>
-          <p className="text-gray-600">
+          <FileText className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary mb-2">No Reports Yet</h3>
+          <p className="text-gray-600 dark:text-dark-text-secondary">
             Your therapist hasn't shared any reports with you yet.
           </p>
         </div>
@@ -179,17 +179,17 @@ const UserReportsTab = ({ userId, onReportViewed }) => {
             <div key={report.id} className="card hover:shadow-lg transition-shadow">
               <div className="flex flex-col h-full">
                 {/* Report Icon */}
-                <div className="flex items-center justify-center h-24 bg-primary-50 rounded-lg mb-4">
+                <div className="flex items-center justify-center h-24 bg-primary-50 dark:bg-dark-bg-secondary rounded-lg mb-4">
                   <FileText className="h-12 w-12 text-primary-600" />
                 </div>
 
                 {/* Report Info */}
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">
                     {report.report_name}
                   </h3>
 
-                  <div className="space-y-2 text-sm text-gray-600">
+                  <div className="space-y-2 text-sm text-gray-600 dark:text-dark-text-secondary">
                     <div className="flex items-center space-x-2">
                       <UserIcon className="h-4 w-4" />
                       <span>{report.partner_name}</span>
@@ -199,7 +199,7 @@ const UserReportsTab = ({ userId, onReportViewed }) => {
                       <span>{formatDate(report.shared_at || report.created_at)}</span>
                     </div>
                     {report.template_name && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-dark-text-tertiary">
                         Template: {report.template_name}
                       </div>
                     )}
@@ -217,7 +217,7 @@ const UserReportsTab = ({ userId, onReportViewed }) => {
                   </button>
                   <button
                     onClick={() => handleDownloadReport(report)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60"
+                    className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg text-gray-700 dark:text-dark-text-primary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors disabled:opacity-60"
                     title="Download PDF"
                     disabled={downloadingReportId === report.id}
                   >
@@ -233,9 +233,9 @@ const UserReportsTab = ({ userId, onReportViewed }) => {
       {/* Preview Modal */}
       {showPreview && selectedReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full h-[95vh] overflow-hidden flex flex-col">
-            <div className="bg-white border-b border-gray-200 p-6 flex items-center justify-between flex-shrink-0">
-              <h2 className="text-xl font-bold text-gray-900">Report Preview - {selectedReport.report_name}</h2>
+          <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-5xl w-full h-[95vh] overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-dark-bg-primary border-b border-gray-200 dark:border-dark-border p-6 flex items-center justify-between flex-shrink-0">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Report Preview - {selectedReport.report_name}</h2>
               <button
                 onClick={() => {
                   setShowPreview(false);
@@ -245,7 +245,7 @@ const UserReportsTab = ({ userId, onReportViewed }) => {
                     setPreviewPdfUrl(null);
                   }
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -256,26 +256,26 @@ const UserReportsTab = ({ userId, onReportViewed }) => {
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading PDF preview...</p>
+                    <p className="mt-4 text-gray-600 dark:text-dark-text-secondary">Loading PDF preview...</p>
                   </div>
                 </div>
               ) : previewPdfUrl ? (
                 <iframe
                   src={previewPdfUrl}
-                  className="w-full h-full border-2 border-gray-200 rounded-lg"
+                  className="w-full h-full border-2 border-gray-200 dark:border-dark-border rounded-lg"
                   title="Report Preview"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Failed to load PDF preview</p>
+                    <AlertCircle className="h-12 w-12 text-red-600 dark:text-red-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-dark-text-secondary">Failed to load PDF preview</p>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="border-t border-gray-200 p-6 flex items-center justify-end space-x-3 flex-shrink-0">
+            <div className="border-t border-gray-200 dark:border-dark-border p-6 flex items-center justify-end space-x-3 flex-shrink-0">
               <button
                 onClick={() => handleDownloadReport(selectedReport)}
                 className="px-4 py-2 btn btn-primary flex items-center space-x-2 disabled:opacity-60"

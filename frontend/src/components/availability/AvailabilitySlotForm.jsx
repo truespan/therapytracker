@@ -71,7 +71,7 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
             <select
               value={formData.date}
               onChange={(e) => onChange({ ...formData, date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
               required
             >
               <option value="">Select Date</option>
@@ -93,10 +93,10 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
                 type="time"
                 value={formData.start_time}
                 onChange={(e) => onChange({ ...formData, start_time: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                 required
               />
-              <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-dark-text-tertiary pointer-events-none" />
             </div>
           </div>
 
@@ -110,10 +110,10 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
                 type="time"
                 value={formData.end_time}
                 onChange={(e) => onChange({ ...formData, end_time: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                 required
               />
-              <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-dark-text-tertiary pointer-events-none" />
             </div>
           </div>
 
@@ -125,7 +125,7 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
             <select
               value={formData.status}
               onChange={(e) => onChange({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
               required
             >
               {statusOptions.map(option => (

@@ -76,9 +76,9 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
 
   if (slots.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-8 text-center">
-        <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-500">
+      <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-md p-8 text-center">
+        <Calendar className="h-12 w-12 text-gray-300 dark:text-dark-text-tertiary mx-auto mb-3" />
+        <p className="text-gray-500 dark:text-dark-text-secondary">
           {viewMode === 'partner'
             ? 'No availability slots created yet. Use the form above to create your first slot.'
             : 'No availability slots published yet. Please check back later.'}
@@ -115,7 +115,7 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
               <div
                 key={dateKey}
                 className={`border rounded-lg overflow-hidden flex-shrink-0 w-[70%] sm:w-auto ${
-                  isToday ? 'border-primary-500 border-2' : 'border-gray-200'
+                  isToday ? 'border-primary-500 border-2' : 'border-gray-200 dark:border-dark-border'
                 }`}
               >
                 {/* Day Header */}
@@ -277,8 +277,8 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
 
       {/* Booked Info */}
       {slot.status === 'booked' && viewMode === 'partner' && (
-        <div className="mt-1 pt-1 border-t border-yellow-200">
-          <div className="flex items-center text-xs text-yellow-900">
+        <div className="mt-1 pt-1 border-t border-yellow-200 dark:border-yellow-800">
+          <div className="flex items-center text-xs text-yellow-900 dark:text-yellow-300">
             <User className="h-3 w-3 mr-1 flex-shrink-0" />
             <span className="font-medium truncate">
               {slot.booked_by_user_name || 'Client'}
@@ -289,8 +289,8 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
 
       {/* Conflict Warning for Partner */}
       {viewMode === 'partner' && slot.has_google_conflict && (
-        <div className="mt-1 pt-1 border-t border-orange-200">
-          <div className="flex items-center text-xs text-orange-700">
+        <div className="mt-1 pt-1 border-t border-orange-200 dark:border-orange-800">
+          <div className="flex items-center text-xs text-orange-700 dark:text-orange-300">
             <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
             <span className="truncate">Calendar Conflict</span>
           </div>

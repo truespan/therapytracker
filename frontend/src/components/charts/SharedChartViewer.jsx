@@ -305,8 +305,8 @@ const SharedChartViewer = ({ charts }) => {
 
   if (!charts || charts.length === 0) {
     return (
-      <div className="card text-center py-12 text-gray-500">
-        <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+      <div className="card text-center py-12 text-gray-500 dark:text-dark-text-secondary">
+        <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400 dark:text-dark-text-tertiary" />
         <p>No charts shared with you yet</p>
         <p className="text-sm mt-2">Your therapist will share progress charts with you</p>
       </div>
@@ -331,22 +331,22 @@ const SharedChartViewer = ({ charts }) => {
         return (
           <div key={chart.id} className="card">
             {/* Chart Info Header */}
-            <div className="bg-primary-50 border-l-4 border-l-primary-600 p-4 rounded-lg mb-4">
+            <div className="bg-primary-50 dark:bg-dark-bg-secondary border-l-4 border-l-primary-600 p-4 rounded-lg mb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <User className="h-5 w-5 text-primary-600" />
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-gray-900 dark:text-dark-text-primary">
                       Chart from {chart.partner_name}
                     </p>
-                    <p className="text-sm text-gray-600 flex items-center mt-1">
+                    <p className="text-sm text-gray-600 dark:text-dark-text-secondary flex items-center mt-1">
                       <Calendar className="h-4 w-4 mr-1" />
                       Sent on {chartDate}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-dark-primary-900 dark:text-dark-primary-400">
                     {isQuestionnaireChart
                       ? `${chart.questionnaire_name || 'Questionnaire'} Comparison`
                       : chart.chart_type === 'radar_default'
@@ -355,7 +355,7 @@ const SharedChartViewer = ({ charts }) => {
                     }
                   </span>
                   {isQuestionnaireChart && chart.chart_display_type && (
-                    <p className="text-xs text-gray-500 mt-1 capitalize">
+                    <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1 capitalize">
                       {chart.chart_display_type} Chart
                     </p>
                   )}
@@ -364,26 +364,26 @@ const SharedChartViewer = ({ charts }) => {
             </div>
 
             {/* Chart Display */}
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 dark:bg-dark-bg-secondary rounded-lg p-4">
               {isQuestionnaireChart ? (
                 isLoading ? (
                   <div className="flex justify-center items-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                    <span className="ml-3 text-gray-600">Loading chart...</span>
+                    <span className="ml-3 text-gray-600 dark:text-dark-text-secondary">Loading chart...</span>
                   </div>
                 ) : chartData?.error ? (
-                  <div className="text-center py-8 text-red-500">
+                  <div className="text-center py-8 text-red-500 dark:text-red-400">
                     <p>Failed to load chart data</p>
                   </div>
                 ) : chartData ? (
                   renderQuestionnaireChart(chart, chartData)
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
                     <p>Loading chart data...</p>
                   </div>
                 )
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
                   <p>Legacy chart type - display not available</p>
                 </div>
               )}
@@ -391,7 +391,7 @@ const SharedChartViewer = ({ charts }) => {
 
             {/* Submission Info */}
             {isQuestionnaireChart && chart.selected_assignments && (
-              <div className="mt-4 text-sm text-gray-600">
+              <div className="mt-4 text-sm text-gray-600 dark:text-dark-text-secondary">
                 <p>Comparing {chart.selected_assignments.length} submissions</p>
               </div>
             )}

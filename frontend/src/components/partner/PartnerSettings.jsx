@@ -310,7 +310,7 @@ const PartnerSettings = () => {
                 <input
                   type="text"
                   value={user?.name || ''}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed"
                   disabled
                   readOnly
                 />
@@ -326,7 +326,7 @@ const PartnerSettings = () => {
                 <input
                   type="text"
                   value={user?.sex || ''}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed"
                   disabled
                   readOnly
                 />
@@ -362,7 +362,7 @@ const PartnerSettings = () => {
                 <input
                   type="email"
                   value={user?.email || ''}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed"
                   disabled
                   readOnly
                 />
@@ -387,7 +387,7 @@ const PartnerSettings = () => {
                     name="contact"
                     value={formData.contact}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                     placeholder="1234567890"
                   />
                 </div>
@@ -406,7 +406,7 @@ const PartnerSettings = () => {
                   name="qualification"
                   value={formData.qualification}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                   placeholder="e.g., M.D. Psychiatry, Clinical Psychologist"
                 />
               </div>
@@ -424,7 +424,7 @@ const PartnerSettings = () => {
                   name="license_id"
                   value={formData.license_id}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                   placeholder="e.g., PSY-12345, MED-67890"
                 />
               </div>
@@ -442,7 +442,7 @@ const PartnerSettings = () => {
                   value={formData.address}
                   onChange={handleChange}
                   rows="3"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                   placeholder="Enter full address"
                 />
               </div>
@@ -460,7 +460,7 @@ const PartnerSettings = () => {
                   value={formData.work_experience}
                   onChange={handleChange}
                   rows="3"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                   placeholder="Enter work experience details"
                 />
               </div>
@@ -478,7 +478,7 @@ const PartnerSettings = () => {
                   value={formData.other_practice_details}
                   onChange={handleChange}
                   rows="3"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                   placeholder="Enter other significant work related details"
                 />
               </div>
@@ -500,7 +500,7 @@ const PartnerSettings = () => {
                         name="fee_min"
                         value={formData.fee_min}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                         placeholder="0.00"
                         min="0"
                         step="0.01"
@@ -516,7 +516,7 @@ const PartnerSettings = () => {
                         name="fee_max"
                         value={formData.fee_max}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                         placeholder="0.00"
                         min="0"
                         step="0.01"
@@ -529,7 +529,7 @@ const PartnerSettings = () => {
                       name="fee_currency"
                       value={formData.fee_currency}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                     >
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
