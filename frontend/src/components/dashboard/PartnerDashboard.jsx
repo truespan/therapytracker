@@ -19,8 +19,9 @@ import SessionNotesTab from '../sessions/SessionNotesTab';
 import PartnerReportsTab from '../reports/PartnerReportsTab';
 import ClientReportsTab from '../reports/ClientReportsTab';
 import AvailabilityTab from '../availability/AvailabilityTab';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon, CalendarClock } from 'lucide-react';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon, CalendarClock, Edit } from 'lucide-react';
 import CreatePatientModal from '../partner/CreatePatientModal';
+import EditClientModal from '../partner/EditClientModal';
 import DarkModeToggle from '../common/DarkModeToggle';
 
 // Use environment variable for API URL, fallback to localhost for development
@@ -64,6 +65,7 @@ const PartnerDashboard = () => {
   const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(false);
   const [copiedPartnerId, setCopiedPartnerId] = useState(false);
   const [showCreatePatientModal, setShowCreatePatientModal] = useState(false);
+  const [showEditClientModal, setShowEditClientModal] = useState(false);
   const [copiedSignupUrl, setCopiedSignupUrl] = useState(false);
 
   // Questionnaire state
@@ -202,6 +204,13 @@ const PartnerDashboard = () => {
 
   const handleCreatePatientSuccess = () => {
     // Reload the users list after creating a new patient
+    loadPartnerUsers();
+  };
+
+  const handleEditClientSuccess = (updatedClient) => {
+    // Update the selected user in state
+    setSelectedUser(updatedClient);
+    // Reload the users list to reflect the changes
     loadPartnerUsers();
   };
 
@@ -664,6 +673,13 @@ const PartnerDashboard = () => {
                       {selectedUser.contact && <span>{selectedUser.contact}</span>}
                     </div>
                   </div>
+                  <button
+                    onClick={() => setShowEditClientModal(true)}
+                    className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                    title="Edit Client Details"
+                  >
+                    <Edit className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
 
@@ -820,6 +836,14 @@ const PartnerDashboard = () => {
         onClose={() => setShowCreatePatientModal(false)}
         partnerId={user?.partner_id}
         onSuccess={handleCreatePatientSuccess}
+      />
+
+      {/* Edit Client Modal */}
+      <EditClientModal
+        isOpen={showEditClientModal}
+        onClose={() => setShowEditClientModal(false)}
+        client={selectedUser}
+        onSuccess={handleEditClientSuccess}
       />
 
       {/* Charts & Insights Tab */}

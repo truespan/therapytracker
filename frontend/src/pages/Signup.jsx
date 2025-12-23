@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { Activity, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const partnerIdFromUrl = searchParams.get('partner_id') || '';
 
   const [formData, setFormData] = useState({
@@ -29,12 +31,26 @@ const Signup = () => {
       }));
     }
   }, [partnerIdFromUrl]);
+
+  // Handle Google user data from login redirect
+  useEffect(() => {
+    if (location.state?.googleUser) {
+      const { name, email } = location.state.googleUser;
+      setFormData(prev => ({
+        ...prev,
+        name: name || '',
+        email: email || '',
+      }));
+      setApiError(location.state.message || '');
+    }
+  }, [location]);
+
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { signup } = useAuth();
+  const { signup, googleLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -106,28 +122,110 @@ const Signup = () => {
 
     setLoading(true);
 
-    // Prepare data for user signup - trim email and contact
-    const submitData = {
-      userType: 'user',
-      email: formData.email.trim() || null, // Email is optional
-      contact: `${formData.countryCode}${formData.contact.trim()}`, // Combine country code with phone number
-      password: formData.password,
-      name: formData.name.trim(),
-      address: formData.address ? formData.address.trim() : null,
-      sex: formData.sex,
-      age: parseInt(formData.age),
-      partner_id: formData.partner_id.trim().toUpperCase(),
-    };
-
-    const result = await signup(submitData);
-
-    if (result.success) {
-      navigate(`/${result.user.userType}/dashboard`);
+    // Check if this is a Google signup (has Google token)
+    if (location.state?.googleToken) {
+      // Complete Google signup
+      const result = await completeGoogleSignup();
+      
+      if (result.success) {
+        navigate(`/${result.user.userType}/dashboard`);
+      } else {
+        setApiError(result.error);
+      }
     } else {
-      setApiError(result.error);
+      // Regular signup
+      const submitData = {
+        userType: 'user',
+        email: formData.email.trim() || null,
+        contact: `${formData.countryCode}${formData.contact.trim()}`,
+        password: formData.password,
+        name: formData.name.trim(),
+        address: formData.address ? formData.address.trim() : null,
+        sex: formData.sex,
+        age: parseInt(formData.age),
+        partner_id: formData.partner_id.trim().toUpperCase(),
+      };
+
+      const result = await signup(submitData);
+
+      if (result.success) {
+        navigate(`/${result.user.userType}/dashboard`);
+      } else {
+        setApiError(result.error);
+      }
     }
 
     setLoading(false);
+  };
+
+  const completeGoogleSignup = async () => {
+    try {
+      const googleToken = location.state.googleToken;
+      
+      const submitData = {
+        token: googleToken,
+        partner_id: formData.partner_id.trim().toUpperCase(),
+        contact: `${formData.countryCode}${formData.contact.trim()}`,
+        age: parseInt(formData.age),
+        sex: formData.sex,
+        address: formData.address ? formData.address.trim() : null
+      };
+
+      const response = await authAPI.googleCompleteSignup(submitData);
+      
+      if (response.data.token) {
+        // Store auth data
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('lastActivityTimestamp', Date.now().toString());
+        
+        return { success: true, user: response.data.user };
+      }
+      
+      return { success: false, error: 'Signup failed' };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Google signup failed'
+      };
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setApiError('');
+    setLoading(true);
+
+    try {
+      const result = await googleLogin(credentialResponse.credential);
+
+      if (result.success) {
+        // Redirect to dashboard if user exists
+        navigate(`/${result.user.userType}/dashboard`);
+      } else {
+        // Handle different error cases
+        if (result.details?.error === 'Additional information required') {
+          // Pre-fill form with Google user data
+          const { name, email } = result.details.googleUser;
+          setFormData(prev => ({
+            ...prev,
+            name: name || '',
+            email: email || '',
+          }));
+          setApiError('Please complete the additional required information below');
+        } else {
+          setApiError(result.error || 'Google signup failed');
+        }
+      }
+    } catch (err) {
+      setApiError('An unexpected error occurred during Google signup');
+      console.error('Google signup error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setApiError('Google signup failed. Please try again or use the manual signup form.');
   };
 
   return (
@@ -161,6 +259,29 @@ const Signup = () => {
               <span className="text-sm">{apiError}</span>
             </div>
           )}
+
+          <div className="mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or sign up with</span>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                size="large"
+                text="signup_with"
+                shape="rectangular"
+                width={320}
+              />
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -279,7 +400,7 @@ const Signup = () => {
                 />
                 {errors.partner_id && <p className="text-red-600 text-sm mt-1">{errors.partner_id}</p>}
                 <p className="text-gray-500 text-xs mt-1">
-                  {partnerIdFromUrl 
+                  {partnerIdFromUrl
                     ? 'Partner ID has been pre-filled from the signup link'
                     : 'Enter the 7-character Partner ID provided by your therapist (2 letters + 5 digits)'}
                 </p>

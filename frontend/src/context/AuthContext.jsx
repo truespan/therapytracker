@@ -127,9 +127,29 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true, user: userData };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed' 
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Login failed'
+      };
+    }
+  };
+
+  const googleLogin = async (token) => {
+    try {
+      const response = await authAPI.googleAuth(token);
+      const { token: jwtToken, user: userData } = response.data;
+      
+      localStorage.setItem('token', jwtToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('lastActivityTimestamp', Date.now().toString());
+      setUser(userData);
+      
+      return { success: true, user: userData };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Google login failed',
+        details: error.response?.data
       };
     }
   };
@@ -178,7 +198,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, updateUser, refreshUser, loading }}>
+    <AuthContext.Provider value={{ user, login, signup, googleLogin, logout, updateUser, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

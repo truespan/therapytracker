@@ -2,16 +2,28 @@ const db = require('../config/database');
 
 class Auth {
   static async createCredentials(authData, client = null) {
-    const { user_type, reference_id, email, password_hash } = authData;
+    const { user_type, reference_id, email, password_hash, google_id, is_google_user } = authData;
     const query = `
-      INSERT INTO auth_credentials (user_type, reference_id, email, password_hash)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, user_type, reference_id, email
+      INSERT INTO auth_credentials (user_type, reference_id, email, password_hash, google_id, is_google_user)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, user_type, reference_id, email, google_id, is_google_user
     `;
-    const values = [user_type, reference_id, email, password_hash];
+    const values = [user_type, reference_id, email, password_hash, google_id, is_google_user || false];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
     return result.rows[0];
+  }
+
+  static async createGoogleCredentials(authData, client = null) {
+    const { user_type, reference_id, email, google_id } = authData;
+    return this.createCredentials({
+      user_type,
+      reference_id,
+      email,
+      password_hash: null, // Google users don't have passwords
+      google_id,
+      is_google_user: true
+    }, client);
   }
 
   static async findByEmail(email) {
@@ -78,6 +90,24 @@ class Auth {
   static async findByTypeAndId(userType, referenceId) {
     const query = 'SELECT * FROM auth_credentials WHERE user_type = $1 AND reference_id = $2';
     const result = await db.query(query, [userType, referenceId]);
+    return result.rows[0];
+  }
+
+  static async findByGoogleId(googleId) {
+    const query = 'SELECT * FROM auth_credentials WHERE google_id = $1';
+    const result = await db.query(query, [googleId]);
+    return result.rows[0];
+  }
+
+  static async linkGoogleAccount(email, googleId, client = null) {
+    const query = `
+      UPDATE auth_credentials
+      SET google_id = $1, is_google_user = true
+      WHERE LOWER(email) = LOWER($2)
+      RETURNING id, user_type, reference_id, email, google_id, is_google_user
+    `;
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [googleId, email]);
     return result.rows[0];
   }
 

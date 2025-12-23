@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { Activity, Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
@@ -12,7 +13,7 @@ const Login = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -65,6 +66,46 @@ const Login = () => {
     }
 
     setLoading(false);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await googleLogin(credentialResponse.credential);
+
+      if (result.success) {
+        // Route based on user type
+        if (result.user.userType === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate(`/${result.user.userType}/dashboard`);
+        }
+      } else {
+        // Handle different error cases
+        if (result.details?.error === 'Additional information required') {
+          // Redirect to signup with Google user data
+          navigate('/signup', {
+            state: {
+              googleUser: result.details.googleUser,
+              message: 'Please complete the signup form to create your account'
+            }
+          });
+        } else {
+          setError(result.error || 'Google login failed');
+        }
+      }
+    } catch (err) {
+      setError('An unexpected error occurred during Google login');
+      console.error('Google login error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google login failed. Please try again.');
   };
 
   return (
@@ -164,6 +205,29 @@ const Login = () => {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="outline"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+                width={320}
+              />
+            </div>
+          </div>
 
           <div className="mt-6 text-center space-y-3">
             <p className="text-gray-600">

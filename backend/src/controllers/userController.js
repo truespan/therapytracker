@@ -52,7 +52,21 @@ const updateUser = async (req, res) => {
     }
 
     // Check authorization
-    if (req.user.userType === 'user' && req.user.id !== parseInt(id)) {
+    const isSelf = req.user.userType === 'user' && req.user.id === parseInt(id);
+    const isAdmin = req.user.userType === 'admin';
+    let isPartner = false;
+    
+    // Check if the current user is a partner and the target user is their client
+    if (req.user.userType === 'partner') {
+      const db = require('../config/database');
+      const assignmentCheck = await db.query(
+        'SELECT 1 FROM user_partner_assignments WHERE user_id = $1 AND partner_id = $2',
+        [id, req.user.id]
+      );
+      isPartner = assignmentCheck.rows.length > 0;
+    }
+
+    if (!isSelf && !isAdmin && !isPartner) {
       return res.status(403).json({ error: 'Unauthorized to update this user' });
     }
 
@@ -60,8 +74,8 @@ const updateUser = async (req, res) => {
     if (updates.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(updates.email)) {
-        return res.status(400).json({ 
-          error: 'Please provide a valid email address' 
+        return res.status(400).json({
+          error: 'Please provide a valid email address'
         });
       }
     }
@@ -70,16 +84,16 @@ const updateUser = async (req, res) => {
     if (updates.contact) {
       const phoneRegex = /^\+\d{1,4}\d{7,15}$/;
       if (!phoneRegex.test(updates.contact)) {
-        return res.status(400).json({ 
-          error: 'Please provide a valid contact number with country code (e.g., +919876543210)' 
+        return res.status(400).json({
+          error: 'Please provide a valid contact number with country code (e.g., +919876543210)'
         });
       }
     }
 
     const updatedUser = await User.update(id, updates);
-    res.json({ 
+    res.json({
       message: 'User updated successfully',
-      user: updatedUser 
+      user: updatedUser
     });
   } catch (error) {
     console.error('Update user error:', error);
