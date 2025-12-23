@@ -88,7 +88,7 @@ function AppRoutes() {
       <Route
         path="/*"
         element={
-          <div className="min-h-screen bg-hudson-500">
+          <div className="min-h-screen bg-hudson-500 dark:bg-dark-bg-primary">
             <Navbar />
             <Routes>
               <Route

@@ -123,10 +123,10 @@ const PartnerReportsTab = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">
           Report Background Selection
         </h3>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 dark:text-dark-text-secondary text-sm">
           Choose a background image for your client reports. Click on an image to select it.
         </p>
       </div>

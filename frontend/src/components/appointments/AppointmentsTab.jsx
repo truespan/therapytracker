@@ -282,9 +282,9 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
-            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Upcoming Appointments</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Upcoming Appointments</h2>
           </div>
-          <div className="text-xs sm:text-sm text-gray-600">
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-dark-text-secondary">
             Next 7 Days
           </div>
         </div>
@@ -310,22 +310,22 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                 <div
                   key={dateKey}
                   className={`border rounded-lg overflow-hidden flex-shrink-0 w-[70%] sm:w-auto ${
-                    isToday ? 'border-primary-500 border-2' : 'border-gray-200'
+                    isToday ? 'border-primary-500 border-2' : 'border-gray-200 dark:border-dark-border'
                   }`}
                 >
                   {/* Day Header */}
                   <div className={`p-3 sm:p-2 text-center text-base sm:text-sm font-semibold ${
                     isToday
                       ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 text-gray-700'
+                      : 'bg-gray-100 text-gray-700 dark:bg-dark-bg-secondary dark:text-dark-text-primary'
                   }`}>
                     {formatDayHeader(dayData.date)}
                   </div>
 
                   {/* Appointments and Video Sessions for this day */}
-                  <div className="p-3 sm:p-2 space-y-2 min-h-[200px] sm:min-h-[200px] bg-white">
+                  <div className="p-3 sm:p-2 space-y-2 min-h-[200px] sm:min-h-[200px] bg-white dark:bg-dark-bg-primary">
                   {dayData.items.length === 0 ? (
-                    <div className="text-center text-gray-400 text-sm sm:text-xs py-8 sm:py-4">
+                    <div className="text-center text-gray-400 dark:text-dark-text-tertiary text-sm sm:text-xs py-8 sm:py-4">
                       Nothing scheduled
                     </div>
                   ) : (
@@ -335,8 +335,8 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                         key={`apt-${item.id}`}
                         className={`p-3 sm:p-2 rounded border text-sm sm:text-xs ${
                           item.has_session
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-primary-50 border-primary-200 hover:bg-primary-100 cursor-pointer'
+                            ? 'bg-green-50 border-green-200 dark:bg-dark-green-900 dark:border-dark-green-700'
+                            : 'bg-primary-50 border-primary-200 hover:bg-primary-100 dark:bg-dark-primary-900 dark:border-dark-primary-700 dark:hover:bg-dark-primary-800 cursor-pointer'
                         }`}
                         onClick={() => !item.has_session && handleStartSession(item)}
                       >
@@ -344,8 +344,8 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                         <div className="hidden sm:block">
                           {/* Time and Delete Icon on same row */}
                           <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center space-x-1 text-gray-600">
-                              <Clock className="h-3 w-3 flex-shrink-0" />
+                            <div className="flex items-center space-x-1 text-gray-600 dark:text-dark-text-secondary">
+                              <Clock className="h-3 w-3 flex-shrink-0 dark:text-dark-text-secondary" />
                               <span className="font-medium text-xs">{formatTime(item.appointment_date)}</span>
                             </div>
                             <button
@@ -353,27 +353,27 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                 e.stopPropagation();
                                 setItemToDelete(item);
                               }}
-                              className="p-0.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                              className="p-0.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-dark-red-900 rounded transition-colors"
                               title="Cancel Appointment"
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <Trash2 className="h-3 w-3 dark:text-red-400" />
                             </button>
                           </div>
 
                           <div className="flex items-center space-x-1 mb-1">
-                            <User className="h-3 w-3 text-gray-500 flex-shrink-0" />
-                            <span className="font-semibold text-gray-900 truncate">
+                            <User className="h-3 w-3 text-gray-500 dark:text-dark-text-secondary flex-shrink-0" />
+                            <span className="font-semibold text-gray-900 dark:text-dark-text-primary truncate">
                               {item.user_name}
                             </span>
                           </div>
 
-                          <div className="text-gray-700 mb-1 line-clamp-2">
+                          <div className="text-gray-700 dark:text-dark-text-primary mb-1 line-clamp-2">
                             {item.title}
                           </div>
 
                           {item.has_session ? (
-                            <div className="flex items-center space-x-1 text-green-700 mt-2">
-                              <CheckCircle className="h-3 w-3" />
+                            <div className="flex items-center space-x-1 text-green-700 dark:text-dark-green-400 mt-2">
+                              <CheckCircle className="h-3 w-3 dark:text-dark-green-400" />
                               <span className="font-medium">Session Created</span>
                               {item.session_id && onNavigateToSession && (
                                 <button
@@ -381,7 +381,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                     e.stopPropagation();
                                     onNavigateToSession(item.user_id, item.session_id);
                                   }}
-                                  className="ml-1 p-0.5 text-green-700 hover:text-green-900 hover:bg-green-100 rounded transition-colors"
+                                  className="ml-1 p-0.5 text-green-700 dark:text-dark-green-400 hover:text-green-900 dark:hover:text-dark-green-300 hover:bg-green-100 dark:hover:bg-dark-green-900 rounded transition-colors"
                                   title="View Session Details"
                                 >
                                   <ArrowRight className="h-3 w-3" />
@@ -397,8 +397,8 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                               disabled={isFutureDate(item.appointment_date)}
                               className={`w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 rounded-full transition-colors ${
                                 isFutureDate(item.appointment_date)
-                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                  : 'bg-primary-600 text-white hover:bg-primary-700'
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-dark-bg-secondary dark:text-dark-text-tertiary'
+                                  : 'bg-primary-600 text-white hover:bg-primary-700 dark:bg-dark-primary-600 dark:hover:bg-dark-primary-500'
                               }`}
                               title={isFutureDate(item.appointment_date) ? "Cannot start future sessions" : ""}
                             >
@@ -412,33 +412,33 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                         <div className="sm:hidden">
                           {/* Time, Title, and Delete Icon on same line */}
                           <div className="flex items-center space-x-2 mb-2">
-                            <Clock className="h-4 w-4 flex-shrink-0 text-gray-600" />
-                            <span className="font-medium text-gray-600 text-sm">{formatTime(item.appointment_date)}</span>
-                            <span className="text-gray-700 truncate flex-1 text-sm">{item.title}</span>
+                            <Clock className="h-4 w-4 flex-shrink-0 text-gray-600 dark:text-dark-text-secondary" />
+                            <span className="font-medium text-gray-600 dark:text-dark-text-secondary text-sm">{formatTime(item.appointment_date)}</span>
+                            <span className="text-gray-700 dark:text-dark-text-primary truncate flex-1 text-sm">{item.title}</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setItemToDelete(item);
                               }}
-                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-dark-red-900 rounded transition-colors flex-shrink-0"
                               title="Cancel Appointment"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3.5 w-3.5 dark:text-red-400" />
                             </button>
                           </div>
 
                           {/* User name */}
                           <div className="flex items-center space-x-2 mb-2">
-                            <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                            <span className="font-semibold text-gray-900 truncate">
+                            <User className="h-4 w-4 text-gray-500 dark:text-dark-text-secondary flex-shrink-0" />
+                            <span className="font-semibold text-gray-900 dark:text-dark-text-primary truncate">
                               {item.user_name}
                             </span>
                           </div>
 
                           {/* Button or status - moved up with reduced margin */}
                           {item.has_session ? (
-                            <div className="flex items-center space-x-2 text-green-700">
-                              <CheckCircle className="h-4 w-4" />
+                            <div className="flex items-center space-x-2 text-green-700 dark:text-dark-green-400">
+                              <CheckCircle className="h-4 w-4 dark:text-dark-green-400" />
                               <span className="font-medium text-sm">Session Created</span>
                               {item.session_id && onNavigateToSession && (
                                 <button
@@ -446,7 +446,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                     e.stopPropagation();
                                     onNavigateToSession(item.user_id, item.session_id);
                                   }}
-                                  className="ml-1 p-1 text-green-700 hover:text-green-900 hover:bg-green-100 rounded transition-colors"
+                                  className="ml-1 p-1 text-green-700 dark:text-dark-green-400 hover:text-green-900 dark:hover:text-dark-green-300 hover:bg-green-100 dark:hover:bg-dark-green-900 rounded transition-colors"
                                   title="View Session Details"
                                 >
                                   <ArrowRight className="h-4 w-4" />
@@ -463,8 +463,8 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                 disabled={isFutureDate(item.appointment_date)}
                                 className={`inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 rounded-full transition-colors whitespace-nowrap text-sm font-medium ${
                                   isFutureDate(item.appointment_date)
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-dark-bg-secondary dark:text-dark-text-tertiary'
+                                    : 'bg-primary-600 text-white hover:bg-primary-700 dark:bg-dark-primary-600 dark:hover:bg-dark-primary-500'
                                 }`}
                                 title={isFutureDate(item.appointment_date) ? "Cannot start future sessions" : ""}
                               >
@@ -479,14 +479,14 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                       // Video Session Card
                       <div
                         key={`video-${item.id}`}
-                        className="p-3 sm:p-2 rounded border text-sm sm:text-xs bg-purple-50 border-purple-200"
+                        className="p-3 sm:p-2 rounded border text-sm sm:text-xs bg-purple-50 border-purple-200 dark:bg-dark-purple-900 dark:border-dark-purple-700"
                       >
                         {/* Desktop: Original vertical layout */}
                         <div className="hidden sm:block">
                           {/* Video Session label and Delete Icon */}
                           <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center space-x-1 text-purple-700">
-                              <Video className="h-3 w-3 flex-shrink-0" />
+                            <div className="flex items-center space-x-1 text-purple-700 dark:text-dark-purple-400">
+                              <Video className="h-3 w-3 flex-shrink-0 dark:text-dark-purple-400" />
                               <span className="font-medium text-xs">Video Session</span>
                             </div>
                             <button
@@ -494,32 +494,32 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                 e.stopPropagation();
                                 setItemToDelete(item);
                               }}
-                              className="p-0.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                              className="p-0.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-dark-red-900 rounded transition-colors"
                               title="Cancel Video Session"
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <Trash2 className="h-3 w-3 dark:text-red-400" />
                             </button>
                           </div>
 
-                          <div className="flex items-center space-x-1 mb-1 text-gray-600">
-                            <Clock className="h-3 w-3 flex-shrink-0" />
+                          <div className="flex items-center space-x-1 mb-1 text-gray-600 dark:text-dark-text-secondary">
+                            <Clock className="h-3 w-3 flex-shrink-0 dark:text-dark-text-secondary" />
                             <span className="font-medium text-xs">{formatTime(item.session_date)}</span>
                           </div>
 
                           <div className="flex items-center space-x-1 mb-1">
-                            <User className="h-3 w-3 text-gray-500 flex-shrink-0" />
-                            <span className="font-semibold text-gray-900 truncate">
+                            <User className="h-3 w-3 text-gray-500 dark:text-dark-text-secondary flex-shrink-0" />
+                            <span className="font-semibold text-gray-900 dark:text-dark-text-primary truncate">
                               {item.user_name}
                             </span>
-                            <Video className="h-3 w-3 text-purple-600 flex-shrink-0" />
+                            <Video className="h-3 w-3 text-purple-600 dark:text-dark-purple-400 flex-shrink-0" />
                           </div>
 
-                          <div className="text-gray-700 mb-1 line-clamp-2">
+                          <div className="text-gray-700 dark:text-dark-text-primary mb-1 line-clamp-2">
                             {item.title}
                           </div>
 
                           {item.has_therapy_session ? (
-                            <div className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-gray-400 text-white rounded-full cursor-not-allowed">
+                            <div className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-gray-400 text-white rounded-full cursor-not-allowed dark:bg-dark-bg-secondary dark:text-dark-text-tertiary">
                               <CheckCircle className="h-3 w-3" />
                               <span className="font-medium">Session Created</span>
                             </div>
@@ -529,8 +529,8 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                               disabled={isFutureDate(item.session_date)}
                               className={`w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 rounded-full transition-colors ${
                                 isFutureDate(item.session_date)
-                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                  : 'bg-purple-600 text-white hover:bg-purple-700'
+                                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-dark-bg-secondary dark:text-dark-text-tertiary'
+                                  : 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-dark-purple-600 dark:hover:bg-dark-purple-500'
                               }`}
                               title={isFutureDate(item.session_date) ? "Cannot start future sessions" : ""}
                             >
@@ -544,33 +544,33 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                         <div className="sm:hidden">
                           {/* Time, Title, and Delete Icon on same line */}
                           <div className="flex items-center space-x-2 mb-2">
-                            <Clock className="h-4 w-4 flex-shrink-0 text-gray-600" />
-                            <span className="font-medium text-gray-600 text-sm">{formatTime(item.session_date)}</span>
-                            <span className="text-gray-700 truncate flex-1 text-sm">{item.title}</span>
+                            <Clock className="h-4 w-4 flex-shrink-0 text-gray-600 dark:text-dark-text-secondary" />
+                            <span className="font-medium text-gray-600 dark:text-dark-text-secondary text-sm">{formatTime(item.session_date)}</span>
+                            <span className="text-gray-700 dark:text-dark-text-primary truncate flex-1 text-sm">{item.title}</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setItemToDelete(item);
                               }}
-                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-dark-red-900 rounded transition-colors flex-shrink-0"
                               title="Cancel Video Session"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3.5 w-3.5 dark:text-red-400" />
                             </button>
                           </div>
 
                           {/* User name */}
                           <div className="flex items-center space-x-2 mb-2">
-                            <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                            <span className="font-semibold text-gray-900 truncate">
+                            <User className="h-4 w-4 text-gray-500 dark:text-dark-text-secondary flex-shrink-0" />
+                            <span className="font-semibold text-gray-900 dark:text-dark-text-primary truncate">
                               {item.user_name}
                             </span>
-                            <Video className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                            <Video className="h-4 w-4 text-purple-600 dark:text-dark-purple-400 flex-shrink-0" />
                           </div>
 
                           {/* Button or status - moved up with reduced margin */}
                           {item.has_therapy_session ? (
-                            <div className="flex items-center space-x-2 text-gray-600">
+                            <div className="flex items-center space-x-2 text-gray-600 dark:text-dark-text-secondary">
                               <CheckCircle className="h-4 w-4" />
                               <span className="font-medium text-sm">Session Created</span>
                             </div>
@@ -581,8 +581,8 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                 disabled={isFutureDate(item.session_date)}
                                 className={`inline-flex items-center justify-center space-x-1.5 py-1.5 px-4 rounded-full transition-colors whitespace-nowrap text-sm font-medium ${
                                   isFutureDate(item.session_date)
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-dark-bg-secondary dark:text-dark-text-tertiary'
+                                    : 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-dark-purple-600 dark:hover:bg-dark-purple-500'
                                 }`}
                                 title={isFutureDate(item.session_date) ? "Cannot start future sessions" : ""}
                               >
@@ -603,23 +603,23 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
         </div>
 
         {/* Legend */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-dark-border">
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-primary-50 border border-primary-200 rounded"></div>
-              <span className="text-gray-600">Scheduled</span>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-primary-50 border border-primary-200 rounded dark:bg-dark-primary-900 dark:border-dark-primary-700"></div>
+              <span className="text-gray-600 dark:text-dark-text-secondary">Scheduled</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-50 border border-purple-200 rounded"></div>
-              <span className="text-gray-600">Video Session</span>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-50 border border-purple-200 rounded dark:bg-dark-purple-900 dark:border-dark-purple-700"></div>
+              <span className="text-gray-600 dark:text-dark-text-secondary">Video Session</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-50 border border-green-200 rounded"></div>
-              <span className="text-gray-600">Completed</span>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-50 border border-green-200 rounded dark:bg-dark-green-900 dark:border-dark-green-700"></div>
+              <span className="text-gray-600 dark:text-dark-text-secondary">Completed</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-primary-600 rounded"></div>
-              <span className="text-gray-600">Today</span>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-primary-600 rounded dark:bg-dark-primary-600"></div>
+              <span className="text-gray-600 dark:text-dark-text-secondary">Today</span>
             </div>
           </div>
         </div>

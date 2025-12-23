@@ -564,7 +564,7 @@ const OrganizationDashboard = () => {
 
       {/* Messages */}
       {successMessage && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2 text-green-700">
+        <div className="mb-6 p-4 bg-green-50 dark:bg-dark-bg-secondary border border-green-200 dark:border-green-800 rounded-lg flex items-center space-x-2 text-green-700 dark:text-green-300">
           <CheckCircle className="h-5 w-5 flex-shrink-0" />
           <span>{successMessage}</span>
         </div>
@@ -761,7 +761,7 @@ const OrganizationDashboard = () => {
                   {!selectedPartner.email_verified && (
                     <button
                       onClick={() => handleResendVerification(selectedPartner)}
-                      className="px-3 py-2 text-xs sm:text-sm text-primary-800 bg-primary-50 hover:bg-primary-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
+                      className="px-3 py-2 text-xs sm:text-sm text-primary-800 dark:text-dark-primary-400 bg-primary-50 dark:bg-dark-bg-secondary hover:bg-primary-100 dark:hover:bg-dark-bg-tertiary rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                     >
                       <Send className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Resend Email</span>
@@ -780,7 +780,7 @@ const OrganizationDashboard = () => {
                   ) : (
                     <button
                       onClick={() => handleActivatePartner(selectedPartner)}
-                      className="px-3 py-2 text-xs sm:text-sm text-green-700 bg-green-50 hover:bg-green-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
+                      className="px-3 py-2 text-xs sm:text-sm text-green-700 dark:text-green-300 bg-green-50 dark:bg-dark-bg-secondary hover:bg-green-100 dark:hover:bg-dark-bg-tertiary rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                     >
                       <UserPlus className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span>Activate</span>
@@ -789,7 +789,7 @@ const OrganizationDashboard = () => {
 
                   <button
                     onClick={() => openReassignModal(selectedPartner)}
-                    className="px-3 py-2 text-xs sm:text-sm text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
+                    className="px-3 py-2 text-xs sm:text-sm text-primary-700 dark:text-dark-primary-400 bg-primary-50 dark:bg-dark-bg-secondary hover:bg-primary-100 dark:hover:bg-dark-bg-tertiary rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition"
                   >
                     <ArrowRightLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>Reassign</span>
@@ -828,8 +828,8 @@ const OrganizationDashboard = () => {
                         key={client.id}
                         className={`flex items-center justify-between p-3 sm:p-4 border rounded-lg transition-all ${
                           selectedClient?.id === client.id
-                            ? 'border-primary-500 bg-primary-50'
-                            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                            ? 'border-primary-500 bg-primary-50 dark:bg-dark-bg-secondary'
+                            : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-bg-secondary hover:border-gray-300 dark:hover:border-dark-border hover:shadow-sm'
                         }`}
                       >
                         <button
@@ -1123,7 +1123,7 @@ const OrganizationDashboard = () => {
                 Share this URL with therapists who want to join your organization. They can use it to create their account and will be automatically linked to your organization.
               </p>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 overflow-hidden">
                     <p className="text-sm text-gray-500 mb-1">Signup URL:</p>

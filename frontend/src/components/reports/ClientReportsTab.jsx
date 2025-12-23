@@ -291,7 +291,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading reports...</p>
+          <p className="mt-4 text-gray-600 dark:text-dark-text-secondary">Loading reports...</p>
         </div>
       </div>
     );
@@ -302,12 +302,12 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text-primary">
             {editingReport ? 'Edit Report' : 'Create New Report'} for {userName}
           </h2>
           <button
             onClick={handleCancelForm}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary"
           >
             <X className="h-6 w-6" />
           </button>
@@ -317,8 +317,8 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
             <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-red-800 font-medium">Error</p>
-              <p className="text-red-700 text-sm mt-1">{error}</p>
+              <p className="text-red-800 dark:text-red-400 font-medium">Error</p>
+              <p className="text-red-700 dark:text-red-300 text-sm mt-1">{error}</p>
             </div>
             <button onClick={() => setError(null)} className="text-red-600 hover:text-red-800">
               <X className="h-5 w-5" />
@@ -330,7 +330,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
           <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   Report Name *
                 </label>
                 <input
@@ -345,7 +345,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   Client Name *
                 </label>
                 <input
@@ -361,7 +361,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   Age
                 </label>
                 <input
@@ -376,7 +376,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   Sex
                 </label>
                 <input
@@ -390,7 +390,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   Date *
                 </label>
                 <input
@@ -405,7 +405,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Description (Prescription Details) *
               </label>
               <textarea
@@ -423,7 +423,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
               <button
                 type="button"
                 onClick={handleCancelForm}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg text-gray-700 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors"
                 disabled={saving}
               >
                 Cancel
@@ -450,8 +450,8 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       {/* Header with Create button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Reports for {userName}</h2>
-          <p className="text-gray-600 mt-1">Manage and create reports for this client</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Reports for {userName}</h2>
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage and create reports for this client</p>
         </div>
         <button
           onClick={handleCreateNewReport}
@@ -465,9 +465,9 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       {/* Reports List */}
       {reports.length === 0 ? (
         <div className="card text-center py-12">
-          <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Reports Yet</h3>
-          <p className="text-gray-600 mb-6">
+          <FileText className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text-primary mb-2">No Reports Yet</h3>
+          <p className="text-gray-600 dark:text-dark-text-secondary mb-6">
             Create your first report for {userName}
           </p>
           <button
@@ -489,14 +489,14 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-3 mb-2">
                     <FileText className="h-5 w-5 text-primary-600 flex-shrink-0" />
-                    <h3 className="font-semibold text-gray-900 truncate">{report.report_name}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary truncate">{report.report_name}</h3>
                     {report.is_shared && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+                      <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-medium rounded">
                         Shared
                       </span>
                     )}
                   </div>
-                  <div className="text-sm text-gray-600 space-y-1">
+                  <div className="text-sm text-gray-600 dark:text-dark-text-secondary space-y-1">
                     <p>Date: {new Date(report.report_date).toLocaleDateString()}</p>
                     {report.description && (
                       <p className="line-clamp-2">{report.description}</p>
@@ -507,14 +507,14 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                 <div className="flex items-center space-x-2 ml-4">
                   <button
                     onClick={() => handleViewReport(report)}
-                    className="p-2 text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                    className="p-2 text-primary-700 dark:text-dark-primary-500 hover:bg-primary-50 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors"
                     title="View Report"
                   >
                     <Eye className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => handleEditReport(report)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 text-gray-600 dark:text-dark-text-tertiary hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors"
                     title="Edit Report"
                   >
                     <Edit className="h-5 w-5" />
@@ -523,8 +523,8 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                     onClick={() => handleShareReport(report)}
                     className={`p-2 rounded-lg transition-colors ${
                       report.is_shared
-                        ? 'text-red-600 hover:bg-red-50'
-                        : 'text-green-600 hover:bg-green-50'
+                        ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900'
+                        : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900'
                     }`}
                     title={report.is_shared ? 'Unshare Report' : 'Share Report'}
                   >
@@ -532,7 +532,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                   </button>
                   <button
                     onClick={() => handleDownloadReport(report)}
-                    className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                    className="p-2 text-primary-600 dark:text-dark-primary-500 hover:bg-primary-50 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors"
                     title="Download PDF"
                     disabled={downloadingReportId === report.id}
                   >
@@ -540,7 +540,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                   </button>
                   <button
                     onClick={() => handleDeleteReport(report)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors"
                     title="Delete Report"
                   >
                     <Trash2 className="h-5 w-5" />
@@ -555,9 +555,9 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
       {/* Preview Modal */}
       {showPreview && previewReport && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full h-[95vh] overflow-hidden flex flex-col">
-            <div className="bg-white border-b border-gray-200 p-6 flex items-center justify-between flex-shrink-0">
-              <h2 className="text-xl font-bold text-gray-900">Report Preview - {previewReport.report_name}</h2>
+          <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-5xl w-full h-[95vh] overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-dark-bg-primary border-b border-gray-200 dark:border-dark-border p-6 flex items-center justify-between flex-shrink-0">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Report Preview - {previewReport.report_name}</h2>
               <button
                 onClick={() => {
                   setShowPreview(false);
@@ -566,7 +566,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                     setPreviewPdfUrl(null);
                   }
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -577,29 +577,29 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading PDF preview...</p>
+                    <p className="mt-4 text-gray-600 dark:text-dark-text-secondary">Loading PDF preview...</p>
                   </div>
                 </div>
               ) : previewPdfUrl ? (
                 <iframe
                   src={previewPdfUrl}
-                  className="w-full h-full border-2 border-gray-200 rounded-lg"
+                  className="w-full h-full border-2 border-gray-200 dark:border-dark-border rounded-lg"
                   title="Report Preview"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Failed to load PDF preview</p>
+                    <p className="text-gray-600 dark:text-dark-text-secondary">Failed to load PDF preview</p>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="border-t border-gray-200 p-6 flex items-center justify-end space-x-3 flex-shrink-0">
+            <div className="border-t border-gray-200 dark:border-dark-border p-6 flex items-center justify-end space-x-3 flex-shrink-0">
               <button
                 onClick={() => handleDownloadReport(previewReport)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-60"
+                className="px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg text-gray-700 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors flex items-center space-x-2 disabled:opacity-60"
                 disabled={downloadingReportId === previewReport.id}
               >
                 <Download className="h-5 w-5" />
@@ -607,7 +607,7 @@ const ClientReportsTab = ({ partnerId, userId, userName, sessionId, onReportCrea
               </button>
               <button
                 onClick={() => handleDownloadReportDocx(previewReport)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2 disabled:opacity-60"
+                className="px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg text-gray-700 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors flex items-center space-x-2 disabled:opacity-60"
                 disabled={downloadingDocxReportId === previewReport.id}
               >
                 <Download className="h-5 w-5" />

@@ -1052,8 +1052,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(1)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">1. {sectionTitles[1]}</h3>
-          {expandedSections.has(1) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">1. {sectionTitles[1]}</h3>
+          {expandedSections.has(1) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(1) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1085,8 +1085,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(2)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">2. {sectionTitles[2]}</h3>
-          {expandedSections.has(2) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">2. {sectionTitles[2]}</h3>
+          {expandedSections.has(2) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(2) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1112,8 +1112,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(3)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">3. {sectionTitles[3]}</h3>
-          {expandedSections.has(3) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">3. {sectionTitles[3]}</h3>
+          {expandedSections.has(3) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(3) && (
           <div>
@@ -1128,8 +1128,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(4)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">4. {sectionTitles[4]}</h3>
-          {expandedSections.has(4) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">4. {sectionTitles[4]}</h3>
+          {expandedSections.has(4) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(4) && (
           <div>
@@ -1174,8 +1174,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(5)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">5. {sectionTitles[5]}</h3>
-          {expandedSections.has(5) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">5. {sectionTitles[5]}</h3>
+          {expandedSections.has(5) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(5) && (
           <div className="space-y-6">
@@ -1265,8 +1265,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(6)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">6. {sectionTitles[6]}</h3>
-          {expandedSections.has(6) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">6. {sectionTitles[6]}</h3>
+          {expandedSections.has(6) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(6) && (
           <div className="space-y-4">
@@ -1300,8 +1300,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(7)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">7. {sectionTitles[7]}</h3>
-          {expandedSections.has(7) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">7. {sectionTitles[7]}</h3>
+          {expandedSections.has(7) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(7) && (
           <div className="space-y-4">
@@ -1328,8 +1328,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(8)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">8. {sectionTitles[8]}</h3>
-          {expandedSections.has(8) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">8. {sectionTitles[8]}</h3>
+          {expandedSections.has(8) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(8) && (
           <div className="space-y-4">
@@ -1352,8 +1352,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(9)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">9. {sectionTitles[9]}</h3>
-          {expandedSections.has(9) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">9. {sectionTitles[9]}</h3>
+          {expandedSections.has(9) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(9) && (
           <div className="space-y-4">
@@ -1378,8 +1378,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(10)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">10. {sectionTitles[10]}</h3>
-          {expandedSections.has(10) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">10. {sectionTitles[10]}</h3>
+          {expandedSections.has(10) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(10) && (
           <div className="space-y-4">
@@ -1404,8 +1404,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(11)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">11. {sectionTitles[11]}</h3>
-          {expandedSections.has(11) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">11. {sectionTitles[11]}</h3>
+          {expandedSections.has(11) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(11) && (
           <div className="space-y-4">
@@ -1432,8 +1432,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(12)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">12. {sectionTitles[12]}</h3>
-          {expandedSections.has(12) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">12. {sectionTitles[12]}</h3>
+          {expandedSections.has(12) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(12) && (
           <div className="space-y-4">
@@ -1448,8 +1448,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(13)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">13. {sectionTitles[13]}</h3>
-          {expandedSections.has(13) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">13. {sectionTitles[13]}</h3>
+          {expandedSections.has(13) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(13) && (
           <div className="space-y-4">
@@ -1471,8 +1471,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(14)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">14. {sectionTitles[14]}</h3>
-          {expandedSections.has(14) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">14. {sectionTitles[14]}</h3>
+          {expandedSections.has(14) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(14) && (
           <div className="space-y-4">
@@ -1498,8 +1498,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(15)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">15. {sectionTitles[15]}</h3>
-          {expandedSections.has(15) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">15. {sectionTitles[15]}</h3>
+          {expandedSections.has(15) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(15) && (
           <div className="space-y-4">
@@ -1514,8 +1514,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
           onClick={() => toggleSection(16)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold">16. {sectionTitles[16]}</h3>
-          {expandedSections.has(16) ? <ChevronUp /> : <ChevronDown />}
+          <h3 className="text-lg font-semibold dark:text-white">16. {sectionTitles[16]}</h3>
+          {expandedSections.has(16) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(16) && (
           <div className="space-y-4">
@@ -1559,8 +1559,8 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
             onClick={() => toggleSection(sectionNum)}
             className="w-full flex items-center justify-between text-left mb-4"
           >
-            <h3 className="text-lg font-semibold">{sectionNum}. {sectionTitles[sectionNum]}</h3>
-            {expandedSections.has(sectionNum) ? <ChevronUp /> : <ChevronDown />}
+            <h3 className="text-lg font-semibold dark:text-white">{sectionNum}. {sectionTitles[sectionNum]}</h3>
+            {expandedSections.has(sectionNum) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
           </button>
           {expandedSections.has(sectionNum) && (
             <div className="space-y-4">

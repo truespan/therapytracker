@@ -288,11 +288,11 @@ const SessionNotesTab = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary flex items-center space-x-2">
             <StickyNote className="h-5 w-5 text-primary-600" />
             <span>Session Notes for {userName}</span>
           </h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">
             {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'} with notes
           </p>
         </div>
@@ -300,7 +300,7 @@ const SessionNotesTab = ({
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+          className="p-2 text-gray-600 dark:text-dark-text-tertiary hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
           title="Refresh notes"
         >
           <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
@@ -314,15 +314,15 @@ const SessionNotesTab = ({
         </div>
       ) : sessions.length === 0 ? (
         <div className="card text-center py-16">
-          <StickyNote className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <StickyNote className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">
             No Session Notes Yet
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 dark:text-dark-text-secondary mb-4">
             Session notes will appear here once you add them to your sessions.
           </p>
-          <p className="text-sm text-gray-500">
-            Go to Session Details tab and click &quot;Take Notes&quot; on any session to get started.
+          <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">
+            Go to Session Details tab and click "Take Notes" on any session to get started.
           </p>
         </div>
       ) : (

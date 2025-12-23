@@ -227,7 +227,7 @@ const ImageUpload = ({
       )}
 
       {/* Helper Text */}
-      <p className="text-xs text-gray-500 mt-1">
+      <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
         Supported formats: JPEG, PNG, GIF, WebP. Max size: 5MB
       </p>
     </div>

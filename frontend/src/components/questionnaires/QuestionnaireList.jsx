@@ -89,23 +89,23 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
     return (
       <div
         key={questionnaire.id}
-        className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border ${
-          isPreset ? 'border-blue-200 bg-blue-50' : 'border-gray-200'
+        className={`bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border ${
+          isPreset ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-dark-border'
         }`}
       >
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold text-gray-800">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-dark-text-primary">
               {questionnaire.name}
             </h3>
             {isPreset && (
-              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
                 Preset
               </span>
             )}
           </div>
           {questionnaire.description && (
-            <p className="text-sm text-gray-600 line-clamp-2">
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary line-clamp-2">
               {questionnaire.description}
             </p>
           )}
@@ -114,31 +114,31 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
         {/* Statistics */}
         <div className="mb-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Questions:</span>
-            <span className="font-medium text-gray-800">
+            <span className="text-gray-600 dark:text-dark-text-secondary">Questions:</span>
+            <span className="font-medium text-gray-800 dark:text-dark-text-primary">
               {questionnaire.question_count || 0}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Assigned to:</span>
-            <span className="font-medium text-gray-800">
+            <span className="text-gray-600 dark:text-dark-text-secondary">Assigned to:</span>
+            <span className="font-medium text-gray-800 dark:text-dark-text-primary">
               {questionnaire.assignment_count || 0} users
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Completed:</span>
-            <span className="font-medium text-gray-800">
+            <span className="text-gray-600 dark:text-dark-text-secondary">Completed:</span>
+            <span className="font-medium text-gray-800 dark:text-dark-text-primary">
               {questionnaire.completed_count || 0}
             </span>
           </div>
           <div className="mt-2">
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">Completion Rate:</span>
-              <span className="font-medium text-gray-800">
+              <span className="text-gray-600 dark:text-dark-text-secondary">Completion Rate:</span>
+              <span className="font-medium text-gray-800 dark:text-dark-text-primary">
                 {getCompletionRate(questionnaire)}%
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-dark-bg-tertiary rounded-full h-2">
               <div
                 className="bg-green-600 h-2 rounded-full transition-all"
                 style={{ width: `${getCompletionRate(questionnaire)}%` }}
@@ -148,7 +148,7 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
         </div>
 
         {/* Created Date */}
-        <div className="text-xs text-gray-500 mb-4">
+        <div className="text-xs text-gray-500 dark:text-dark-text-tertiary mb-4">
           Created: {new Date(questionnaire.created_at).toLocaleDateString()}
         </div>
 
@@ -201,8 +201,8 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
 
         {/* Delete Confirmation */}
         {deleteConfirm === questionnaire.id && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
-            <p className="text-sm text-red-800 mb-2">
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+            <p className="text-sm text-red-800 dark:text-red-200 mb-2">
               Are you sure you want to delete this questionnaire?
             </p>
             <div className="flex gap-2">
@@ -214,7 +214,7 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
               </button>
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="flex-1 px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+                className="flex-1 px-3 py-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded hover:bg-gray-400 dark:hover:bg-gray-500"
               >
                 Cancel
               </button>
@@ -252,7 +252,7 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
   return (
     <div className="p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Questionnaires</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-dark-text-primary">Questionnaires</h2>
         <button
           onClick={onCreateNew}
           className="px-4 py-2 sm:px-6 sm:py-2 bg-primary-600 text-white text-sm sm:text-base rounded-lg hover:bg-primary-700 transition-colors"
@@ -262,7 +262,7 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-200 rounded">
           {error}
         </div>
       )}
@@ -274,14 +274,14 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search questionnaires..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary"
         />
       </div>
 
       {/* My Questionnaires Section */}
       {filteredOwn.length > 0 && (
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">My Questionnaires</h3>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-dark-text-primary mb-4">My Questionnaires</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredOwn.map((questionnaire) => renderQuestionnaireCard(questionnaire, false))}
           </div>
@@ -291,8 +291,8 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
       {/* Preset Questionnaires Section */}
       {filteredPreset.length > 0 && (
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Preset Questionnaires</h3>
-          <p className="text-sm text-gray-600 mb-4">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-dark-text-primary mb-4">Preset Questionnaires</h3>
+          <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
             These questionnaires are shared with you. You can copy them to create your own editable version.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -303,8 +303,8 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
 
       {/* Empty State */}
       {filteredOwn.length === 0 && filteredPreset.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-          <p className="text-gray-500 text-lg mb-4">
+        <div className="text-center py-12 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border-2 border-dashed border-gray-300 dark:border-dark-border">
+          <p className="text-gray-500 dark:text-dark-text-tertiary text-lg mb-4">
             {searchTerm ? 'No questionnaires found matching your search' : 'No questionnaires yet'}
           </p>
           {!searchTerm && onCreateNew && (
@@ -322,36 +322,3 @@ const QuestionnaireList = ({ ownerType, ownerId, onEdit, onAssign, onCreateNew, 
 };
 
 export default QuestionnaireList;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

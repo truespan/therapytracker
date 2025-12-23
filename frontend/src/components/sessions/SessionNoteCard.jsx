@@ -82,10 +82,10 @@ const SessionNoteCard = forwardRef(({
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h4 className="text-lg font-semibold text-gray-900">
+          <h4 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
             Session #{sessionNumber}: {session.session_title}
           </h4>
-          <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
+          <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600 dark:text-dark-text-secondary">
             <span className="flex items-center">
               <Calendar className="h-4 w-4 mr-1" />
               {formatDate(session.session_date)}
@@ -106,7 +106,7 @@ const SessionNoteCard = forwardRef(({
           <div className="flex items-center space-x-2 ml-4">
             <button
               onClick={() => onStartEdit(session.id, session.session_notes)}
-              className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-dark-text-tertiary hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
               title="Edit Note"
               aria-label={`Edit note for session ${sessionNumber}`}
             >
@@ -114,7 +114,7 @@ const SessionNoteCard = forwardRef(({
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-dark-text-tertiary hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete Note"
               aria-label={`Delete note for session ${sessionNumber}`}
             >
@@ -136,7 +136,7 @@ const SessionNoteCard = forwardRef(({
             <button
               onClick={onCancel}
               disabled={saving}
-              className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center space-x-1 text-sm"
+              className="px-3 py-1.5 border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text-secondary rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-secondary transition-colors disabled:opacity-50 flex items-center space-x-1 text-sm"
             >
               <X className="h-4 w-4" />
               <span>Cancel</span>
@@ -146,7 +146,7 @@ const SessionNoteCard = forwardRef(({
       </div>
 
       {/* Timestamps */}
-      <div className="flex items-center space-x-4 mb-3 text-xs text-gray-500">
+      <div className="flex items-center space-x-4 mb-3 text-xs text-gray-500 dark:text-dark-text-tertiary">
         <span>Created: {formatDateTime(session.created_at)}</span>
         {session.updated_at !== session.created_at && (
           <span>Last updated: {formatDateTime(session.updated_at)}</span>
@@ -169,7 +169,7 @@ const SessionNoteCard = forwardRef(({
           />
         ) : (
           <div>
-            <p className="text-gray-700 whitespace-pre-wrap">
+            <p className="text-gray-700 dark:text-dark-text-primary whitespace-pre-wrap">
               {shouldTruncate && !showFullNote
                 ? session.session_notes.substring(0, MAX_PREVIEW_LENGTH) + '...'
                 : session.session_notes
@@ -178,7 +178,7 @@ const SessionNoteCard = forwardRef(({
             {shouldTruncate && (
               <button
                 onClick={() => setShowFullNote(!showFullNote)}
-                className="text-primary-600 hover:text-primary-700 text-sm mt-2 font-medium"
+                className="text-primary-600 dark:text-dark-primary-500 hover:text-primary-700 text-sm mt-2 font-medium"
               >
                 {showFullNote ? 'Show less' : 'Show more'}
               </button>
@@ -197,15 +197,15 @@ const SessionNoteCard = forwardRef(({
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Note</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">Delete Note</h3>
+            <p className="text-gray-600 dark:text-dark-text-secondary mb-4">
               Are you sure you want to delete this session note? This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-gray-700 dark:text-dark-text-secondary bg-gray-100 dark:bg-dark-bg-secondary rounded-lg hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary transition-colors"
               >
                 Cancel
               </button>

@@ -88,15 +88,15 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
         <div className="flex items-center space-x-2 sm:space-x-3">
-          <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
-          <h3 className="text-lg sm:text-2xl font-bold text-gray-900">
+          <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-dark-primary-500" />
+          <h3 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
             {viewMode === 'partner' ? 'Your Availability Slots' : 'Available Time Slots'}
           </h3>
         </div>
-        <div className="text-xs sm:text-sm text-gray-600">
+        <div className="text-xs sm:text-sm text-gray-600 dark:text-dark-text-secondary">
           Next 7 Days
         </div>
       </div>
@@ -122,15 +122,15 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
                 <div className={`p-3 sm:p-2 text-center text-base sm:text-sm font-semibold ${
                   isToday
                     ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700'
+                    : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-secondary'
                 }`}>
                   {formatDayHeader(dayData.date)}
                 </div>
 
                 {/* Slots for this day */}
-                <div className="p-3 sm:p-2 space-y-2 min-h-[200px] sm:min-h-[200px] bg-white">
+                <div className="p-3 sm:p-2 space-y-2 min-h-[200px] sm:min-h-[200px] bg-white dark:bg-dark-bg-secondary">
                   {dayData.slots.length === 0 ? (
-                    <div className="text-center text-gray-400 text-sm sm:text-xs py-8 sm:py-4">
+                    <div className="text-center text-gray-400 dark:text-dark-text-tertiary text-sm sm:text-xs py-8 sm:py-4">
                       No slots
                     </div>
                   ) : (
@@ -153,23 +153,23 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
       </div>
 
       {/* Legend */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
+      <div className="mt-6 pt-4 border-t border-gray-200 dark:border-dark-border">
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-50 border border-green-300 rounded"></div>
-            <span className="text-gray-600">Available Online</span>
+            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-50 dark:bg-dark-bg-tertiary border border-green-300 dark:border-green-700 rounded"></div>
+            <span className="text-gray-600 dark:text-dark-text-secondary">Available Online</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-50 border border-blue-300 rounded"></div>
-            <span className="text-gray-600">Available Offline</span>
+            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-50 dark:bg-dark-bg-tertiary border border-blue-300 dark:border-blue-700 rounded"></div>
+            <span className="text-gray-600 dark:text-dark-text-secondary">Available Offline</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-yellow-50 border border-yellow-300 rounded"></div>
-            <span className="text-gray-600">Booked</span>
+            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-yellow-50 dark:bg-dark-bg-tertiary border border-yellow-300 dark:border-yellow-700 rounded"></div>
+            <span className="text-gray-600 dark:text-dark-text-secondary">Booked</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 sm:w-4 sm:h-4 bg-primary-600 rounded"></div>
-            <span className="text-gray-600">Today</span>
+            <span className="text-gray-600 dark:text-dark-text-secondary">Today</span>
           </div>
         </div>
       </div>
@@ -185,39 +185,39 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
     switch (status) {
       case 'available_online':
         return {
-          bg: 'bg-green-50',
-          border: 'border-green-300',
-          text: 'text-green-800',
-          badge: 'bg-green-100 text-green-800'
+          bg: 'bg-green-50 dark:bg-dark-bg-tertiary',
+          border: 'border-green-300 dark:border-green-700',
+          text: 'text-green-800 dark:text-green-300',
+          badge: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
         };
       case 'available_offline':
         return {
-          bg: 'bg-blue-50',
-          border: 'border-blue-300',
-          text: 'text-blue-800',
-          badge: 'bg-blue-100 text-blue-800'
+          bg: 'bg-blue-50 dark:bg-dark-bg-tertiary',
+          border: 'border-blue-300 dark:border-blue-700',
+          text: 'text-blue-800 dark:text-blue-300',
+          badge: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
         };
       case 'not_available_online':
       case 'not_available_offline':
         return {
-          bg: 'bg-gray-50',
-          border: 'border-gray-300',
-          text: 'text-gray-700',
-          badge: 'bg-gray-100 text-gray-700'
+          bg: 'bg-gray-50 dark:bg-dark-bg-tertiary',
+          border: 'border-gray-300 dark:border-dark-border',
+          text: 'text-gray-700 dark:text-dark-text-secondary',
+          badge: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-dark-text-secondary'
         };
       case 'booked':
         return {
-          bg: 'bg-yellow-50',
-          border: 'border-yellow-300',
-          text: 'text-yellow-800',
-          badge: 'bg-yellow-100 text-yellow-800'
+          bg: 'bg-yellow-50 dark:bg-dark-bg-tertiary',
+          border: 'border-yellow-300 dark:border-yellow-700',
+          text: 'text-yellow-800 dark:text-yellow-300',
+          badge: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300'
         };
       default:
         return {
-          bg: 'bg-gray-50',
-          border: 'border-gray-300',
-          text: 'text-gray-700',
-          badge: 'bg-gray-100 text-gray-700'
+          bg: 'bg-gray-50 dark:bg-dark-bg-tertiary',
+          border: 'border-gray-300 dark:border-dark-border',
+          text: 'text-gray-700 dark:text-dark-text-secondary',
+          badge: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-dark-text-secondary'
         };
     }
   };

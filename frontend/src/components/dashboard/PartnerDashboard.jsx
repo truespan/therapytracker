@@ -264,7 +264,7 @@ const PartnerDashboard = () => {
           </div>
         </div>
         {user.partner_id && (
-          <div className="card bg-primary-50 border-2 border-primary-200 ml-6">
+          <div className="card bg-primary-50 dark:bg-dark-bg-secondary border-2 border-primary-200 dark:border-dark-primary-700 ml-6">
             <div>
               <p className="text-sm text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
               <div className="flex items-center space-x-3">
@@ -322,7 +322,7 @@ const PartnerDashboard = () => {
       {/* Partner ID Section - Tablet only (mobile shows in hamburger, desktop shows above) */}
       {user.partner_id && (
         <div className="hidden sm:block lg:hidden mb-6">
-          <div className="card bg-primary-50 border-2 border-primary-200">
+          <div className="card bg-primary-50 dark:bg-dark-bg-secondary border-2 border-primary-200 dark:border-dark-primary-700">
             <div>
               <p className="text-sm text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
               <div className="flex items-center justify-between">
@@ -640,8 +640,8 @@ const PartnerDashboard = () => {
                     onClick={() => handleUserSelect(client.id)}
                     className={`w-full text-left p-3 rounded-lg border-2 transition ${
                       selectedUser?.id === client.id
-                        ? 'border-primary-600 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary-600 bg-primary-50 dark:bg-dark-bg-secondary'
+                        : 'border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -675,7 +675,7 @@ const PartnerDashboard = () => {
                   </div>
                   <button
                     onClick={() => setShowEditClientModal(true)}
-                    className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                    className="p-2 text-primary-600 dark:text-dark-primary-500 hover:bg-primary-50 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors"
                     title="Edit Client Details"
                   >
                     <Edit className="h-5 w-5" />
@@ -899,8 +899,8 @@ const PartnerDashboard = () => {
                       onClick={() => handleUserSelect(client.id)}
                       className={`w-full text-left p-3 rounded-lg border-2 transition ${
                         selectedUser?.id === client.id
-                          ? 'border-primary-600 bg-primary-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-primary-600 bg-primary-50 dark:bg-dark-bg-secondary'
+                          : 'border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border'
                       }`}
                     >
                       <div className="flex items-center space-x-3">

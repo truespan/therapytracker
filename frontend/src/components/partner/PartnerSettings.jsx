@@ -612,7 +612,7 @@ const PartnerSettings = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Google Calendar Integration</h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
-                Connect your Google Calendar to automatically sync appointments. When you create or update appointments, they will appear in your Google Calendar.
+                Connect your Google Calendar to automatically sync appointments when you create or update them.
               </p>
 
               {loadingStatus ? (
@@ -720,7 +720,7 @@ const PartnerSettings = () => {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Assigned Plan: </span>
-                    <span className="text-lg font-bold text-indigo-600">
+                    <span className="text-lg font-bold text-indigo-600 dark:text-dark-primary-500">
                       {partnerSubscription.plan_name}
                     </span>
                     {partnerSubscription.min_sessions !== null && partnerSubscription.max_sessions !== null && (
@@ -732,19 +732,19 @@ const PartnerSettings = () => {
                     )}
                   </div>
                   {partnerSubscription.has_video && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                       Video Enabled
                     </span>
                   )}
                 </div>
                 {partnerSubscription.billing_period && (
                   <div className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
-                    Billing Period: <span className="font-medium capitalize">{partnerSubscription.billing_period}</span>
+                    Billing Period: <span className="font-medium capitalize dark:text-dark-text-primary">{partnerSubscription.billing_period}</span>
                   </div>
                 )}
                 {partnerSubscription.assigned_at && (
                   <div className="mt-1 text-sm text-gray-600 dark:text-dark-text-secondary">
-                    Assigned: {new Date(partnerSubscription.assigned_at).toLocaleDateString()}
+                    Assigned: <span className="dark:text-dark-text-primary">{new Date(partnerSubscription.assigned_at).toLocaleDateString()}</span>
                   </div>
                 )}
                 {partnerSubscription.video_hours && (
@@ -781,7 +781,7 @@ const PartnerSettings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Assigned Plan: </span>
-                    <span className="text-lg font-bold text-primary-600">
+                    <span className="text-lg font-bold text-primary-600 dark:text-dark-primary-500">
                       {partnerSubscription.plan_name}
                     </span>
                     {partnerSubscription.min_sessions !== null && partnerSubscription.max_sessions !== null && (
@@ -791,19 +791,19 @@ const PartnerSettings = () => {
                     )}
                   </div>
                   {partnerSubscription.has_video && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                       Video Enabled
                     </span>
                   )}
                 </div>
                 {partnerSubscription.billing_period && (
                   <div className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
-                    Billing Period: <span className="font-medium capitalize">{partnerSubscription.billing_period}</span>
+                    Billing Period: <span className="font-medium capitalize dark:text-dark-text-primary">{partnerSubscription.billing_period}</span>
                   </div>
                 )}
                 {partnerSubscription.assigned_at && (
                   <div className="mt-1 text-sm text-gray-600 dark:text-dark-text-secondary">
-                    Assigned: {new Date(partnerSubscription.assigned_at).toLocaleDateString()}
+                    Assigned: <span className="dark:text-dark-text-primary">{new Date(partnerSubscription.assigned_at).toLocaleDateString()}</span>
                   </div>
                 )}
               </div>

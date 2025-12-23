@@ -402,7 +402,7 @@ const UserDashboard = () => {
                 </h3>
                 <div className="space-y-3">
                   {allUpcoming.slice(0, 5).map((apt, index) => (
-                    <div key={apt.isVideoSession ? `video-${apt.id}` : `apt-${apt.id}`} className="flex items-center justify-between p-3 bg-primary-50 rounded-lg">
+                    <div key={apt.isVideoSession ? `video-${apt.id}` : `apt-${apt.id}`} className="flex items-center justify-between p-3 bg-primary-50 dark:bg-dark-bg-secondary rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           {apt.isVideoSession && <Video className="h-4 w-4 text-primary-700" />}
@@ -456,7 +456,7 @@ const UserDashboard = () => {
                 </h3>
                 <div className="space-y-3">
                   {allPast.slice(0, 3).map((apt, index) => (
-                    <div key={apt.isVideoSession ? `video-${apt.id}` : `apt-${apt.id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={apt.isVideoSession ? `video-${apt.id}` : `apt-${apt.id}`} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg">
                       <div>
                         <div className="flex items-center gap-2">
                           {apt.isVideoSession && <Video className="h-4 w-4 text-gray-600 dark:text-dark-text-secondary" />}
@@ -491,7 +491,7 @@ const UserDashboard = () => {
                   .filter(a => a.status === 'pending')
                   .slice(0, 3)
                   .map(assignment => (
-                    <div key={assignment.id} className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div key={assignment.id} className="p-4 bg-yellow-50 dark:bg-dark-bg-secondary border border-yellow-200 dark:border-yellow-800 rounded-lg">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
@@ -536,7 +536,7 @@ const UserDashboard = () => {
 
           {/* Shared Reports Widget */}
           {reportsCount > 0 && (
-            <div className="card mb-6 border-l-4 border-l-green-500 bg-green-50">
+            <div className="card mb-6 border-l-4 border-l-green-500 bg-green-50 dark:bg-dark-bg-secondary">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2 flex items-center">
@@ -564,7 +564,7 @@ const UserDashboard = () => {
 
           {/* Latest Shared Chart Notification */}
           {latestSharedChart && (
-            <div className="card mb-6 border-l-4 border-l-primary-600 bg-primary-50">
+            <div className="card mb-6 border-l-4 border-l-primary-600 bg-primary-50 dark:bg-dark-bg-secondary">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2 flex items-center">
@@ -660,7 +660,7 @@ const UserDashboard = () => {
                         </div>
 
                         {session.notes && (
-                          <p className="text-sm text-gray-600 mt-3 ml-9 italic bg-gray-50 p-3 rounded-lg">
+                          <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-3 ml-9 italic bg-gray-50 dark:bg-dark-bg-secondary p-3 rounded-lg">
                             {session.notes}
                           </p>
                         )}

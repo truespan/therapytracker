@@ -55,9 +55,9 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <h3 className="text-lg font-semibold mb-4 flex items-center">
-        <Calendar className="h-5 w-5 mr-2 text-primary-600" />
+    <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md p-6 mb-6">
+      <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-900 dark:text-dark-text-primary">
+        <Calendar className="h-5 w-5 mr-2 text-primary-600 dark:text-dark-primary-500" />
         Create Availability Slot
       </h3>
 
@@ -65,7 +65,7 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Date Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
               Date
             </label>
             <select
@@ -85,9 +85,9 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
 
           {/* Start Time */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Start Time
-            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+            Start Time
+          </label>
             <div className="relative">
               <input
                 type="time"
@@ -102,9 +102,9 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
 
           {/* End Time */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              End Time
-            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+            End Time
+          </label>
             <div className="relative">
               <input
                 type="time"
@@ -119,9 +119,9 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
 
           {/* Status Dropdown */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Availability Status
-            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+            Availability Status
+          </label>
             <select
               value={formData.status}
               onChange={(e) => onChange({ ...formData, status: e.target.value })}
@@ -152,8 +152,8 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
       </form>
 
       {/* Info Text */}
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-        <p className="text-sm text-blue-800">
+      <div className="mt-4 p-3 bg-blue-50 dark:bg-dark-bg-tertiary border border-blue-200 dark:border-blue-800 rounded-md">
+        <p className="text-sm text-blue-800 dark:text-blue-300">
           <strong>Note:</strong> Available slots will be checked for Google Calendar conflicts.
           You can still create the slot if there's a conflict. Slots won't be visible to clients until you publish them.
         </p>

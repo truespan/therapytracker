@@ -27,7 +27,7 @@ const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-hudson-500">
+    <div className="min-h-screen bg-hudson-500 dark:bg-dark-bg-primary">
       {/* Header */}
       <nav className="bg-gradient-to-r from-primary-600 to-primary-800 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,7 +57,7 @@ const AdminLayout = ({ children }) => {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="bg-white text-primary-700 hover:bg-primary-50 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors font-medium"
+                  className="bg-white dark:bg-dark-bg-secondary text-primary-700 dark:text-dark-primary-400 hover:bg-primary-50 dark:hover:bg-dark-bg-tertiary px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors font-medium"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
@@ -70,8 +70,8 @@ const AdminLayout = ({ children }) => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Navigation Tabs */}
-        <div className="bg-porcelain-500 rounded-lg shadow-sm mb-6">
-          <div className="border-b border-porcelain-300 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="bg-porcelain-500 dark:bg-dark-bg-secondary rounded-lg shadow-sm mb-6">
+          <div className="border-b border-porcelain-300 dark:border-dark-border -mx-4 px-4 sm:mx-0 sm:px-0">
             <nav className="flex -mb-px space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
               {navItems.map((item) => {
                 const Icon = item.icon;

@@ -220,8 +220,8 @@ const AvailabilityTab = ({ partnerId }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Manage Availability</h2>
-        <p className="text-gray-600">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">Manage Availability</h2>
+        <p className="text-gray-600 dark:text-dark-text-secondary">
           Create availability slots for the next 7 days. Clients can view and book published slots.
         </p>
       </div>
@@ -235,10 +235,10 @@ const AvailabilityTab = ({ partnerId }) => {
       />
 
       {/* Publish Button */}
-      <div className="flex items-center justify-between bg-white rounded-lg shadow-md p-4">
+      <div className="flex items-center justify-between bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md p-4">
         <div>
-          <h3 className="font-semibold text-gray-900">Publish to Client View</h3>
-          <p className="text-sm text-gray-600">
+          <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary">Publish to Client View</h3>
+          <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
             {unpublishedCount > 0
               ? `You have ${unpublishedCount} unpublished slot(s)`
               : 'All slots are published'}
@@ -248,7 +248,7 @@ const AvailabilityTab = ({ partnerId }) => {
           <button
             onClick={loadSlots}
             disabled={loading}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors disabled:opacity-50"
+            className="px-4 py-2 border border-gray-300 dark:border-dark-border rounded-md text-gray-700 dark:text-dark-text-secondary bg-white dark:bg-dark-bg-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -267,9 +267,9 @@ const AvailabilityTab = ({ partnerId }) => {
 
       {/* Calendar View */}
       {loading && slots.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <RefreshCw className="h-8 w-8 text-gray-400 mx-auto mb-3 animate-spin" />
-          <p className="text-gray-500">Loading availability slots...</p>
+        <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md p-8 text-center">
+          <RefreshCw className="h-8 w-8 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-3 animate-spin" />
+          <p className="text-gray-500 dark:text-dark-text-tertiary">Loading availability slots...</p>
         </div>
       ) : (
         <AvailabilityCalendar

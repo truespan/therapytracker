@@ -571,7 +571,7 @@ const AdminDashboard = () => {
                       <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => handleViewMetrics(org)}
-                          className="text-primary-700 hover:text-primary-900 p-1 rounded hover:bg-primary-50"
+                          className="text-primary-700 dark:text-dark-primary-400 hover:text-primary-900 dark:hover:text-dark-primary-300 p-1 rounded hover:bg-primary-50 dark:hover:bg-dark-bg-secondary"
                           title="View Metrics"
                         >
                           <TrendingUp className="h-5 w-5" />
@@ -581,7 +581,7 @@ const AdminDashboard = () => {
                             setSelectedOrg(org);
                             setShowEditModal(true);
                           }}
-                          className="text-primary-700 hover:text-primary-900 p-1 rounded hover:bg-primary-50"
+                          className="text-primary-700 dark:text-dark-primary-400 hover:text-primary-900 dark:hover:text-dark-primary-300 p-1 rounded hover:bg-primary-50 dark:hover:bg-dark-bg-secondary"
                           title="Edit"
                         >
                           <Edit2 className="h-5 w-5" />
@@ -597,7 +597,7 @@ const AdminDashboard = () => {
                         ) : (
                           <button
                             onClick={() => handleActivateOrganization(org)}
-                            className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded hover:bg-green-50 dark:hover:bg-dark-bg-secondary"
                             title="Activate"
                           >
                             <CheckCircle className="h-5 w-5" />

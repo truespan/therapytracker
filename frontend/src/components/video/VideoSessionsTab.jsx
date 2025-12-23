@@ -154,8 +154,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Video Sessions</h2>
-          <p className="text-gray-600 mt-1">Schedule and manage video sessions with your clients</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Video Sessions</h2>
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Schedule and manage video sessions with your clients</p>
         </div>
         <button
           onClick={handleCreateSession}
@@ -176,8 +176,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
       {sessions.length === 0 ? (
         <div className="card text-center py-12">
           <Video className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Video Sessions Yet</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">No Video Sessions Yet</h3>
+          <p className="text-gray-600 dark:text-dark-text-secondary mb-4">
             Schedule your first video session with a client
           </p>
           <button onClick={handleCreateSession} className="btn btn-primary">

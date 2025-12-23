@@ -211,16 +211,16 @@ const PartnerCalendar = ({ partnerId, users }) => {
         <div className="mb-4 space-y-3">
           <div className="flex items-center space-x-2">
             <CalendarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Calendar</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Calendar</h2>
           </div>
           <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-sky-500 rounded"></div>
-              <span className="text-gray-600">Appointments</span>
+              <span className="text-gray-600 dark:text-dark-text-secondary">Appointments</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-600 rounded"></div>
-              <span className="text-gray-600">Video Sessions</span>
+              <span className="text-gray-600 dark:text-dark-text-secondary">Video Sessions</span>
             </div>
           </div>
         </div>
