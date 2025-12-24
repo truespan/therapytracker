@@ -310,7 +310,7 @@ const PartnerSettings = () => {
                 <input
                   type="text"
                   value={user?.name || ''}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
+                  className="input bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
@@ -326,7 +326,7 @@ const PartnerSettings = () => {
                 <input
                   type="text"
                   value={user?.sex || ''}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
+                  className="input bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
@@ -362,7 +362,7 @@ const PartnerSettings = () => {
                 <input
                   type="email"
                   value={user?.email || ''}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
+                  className="input bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
