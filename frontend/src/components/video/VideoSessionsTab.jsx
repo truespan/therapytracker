@@ -117,7 +117,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
     if (now < start) {
       return <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Scheduled</span>;
     }
-    return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Past</span>;
+    return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full">Past</span>;
   };
 
   const groupSessionsByStatus = () => {
@@ -196,13 +196,13 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                   const canJoin = canJoinSession(session.session_date);
 
                   return (
-                    <div key={session.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                    <div key={session.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition">
                       {/* Desktop Layout */}
                       <div className="hidden md:flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <Video className="h-5 w-5 text-primary-600" />
-                            <h4 className="font-semibold text-gray-900">{session.title}</h4>
+                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">{session.title}</h4>
                             {getStatusBadge(session)}
                             {session.password_enabled && (
                               <Lock className="h-4 w-4 text-yellow-600" title="Password protected" />
@@ -212,7 +212,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             )}
                           </div>
 
-                          <div className="space-y-1 text-sm text-gray-600 ml-8">
+                          <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300 ml-8">
                             <div className="flex items-center space-x-2">
                               <User className="h-4 w-4" />
                               <span>{session.user_name}</span>
@@ -246,7 +246,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           </div>
 
                           {session.notes && (
-                            <p className="text-sm text-gray-600 mt-2 ml-8 italic">{session.notes}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 ml-8 italic">{session.notes}</p>
                           )}
                         </div>
 
@@ -285,7 +285,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           )}
                           <button
                             onClick={() => handleCopyLink(session)}
-                            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg"
+                            className="p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                             title="Copy session link"
                           >
                             {copied === session.id ? (
@@ -296,14 +296,14 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           </button>
                           <button
                             onClick={() => handleEditSession(session)}
-                            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg"
+                            className="p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                             title="Edit session"
                           >
                             <Edit className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleDeleteSession(session.id)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-lg"
+                            className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                             title="Delete session"
                           >
                             <Trash2 className="h-5 w-5" />
@@ -315,7 +315,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                       <div className="md:hidden">
                         <div className="flex items-center space-x-2 mb-2">
                           <Video className="h-4 w-4 text-primary-600 flex-shrink-0" />
-                          <h4 className="font-medium text-gray-900 text-sm">{session.title}</h4>
+                          <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">{session.title}</h4>
                           {getStatusBadge(session)}
                           {session.password_enabled && (
                             <Lock className="h-3 w-3 text-yellow-600 flex-shrink-0" title="Password protected" />
@@ -325,7 +325,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           )}
                         </div>
 
-                        <div className="space-y-1 text-xs text-gray-600 mb-3">
+                        <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300 mb-3">
                           <div className="flex items-center space-x-2">
                             <User className="h-3 w-3 flex-shrink-0" />
                             <span>{session.user_name}</span>
@@ -395,10 +395,10 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                         </div>
 
                         {/* Mobile Action Icons - Bottom Row */}
-                        <div className="flex items-center justify-center space-x-8 pt-2 border-t border-gray-200">
+                        <div className="flex items-center justify-center space-x-8 pt-2 border-t border-gray-200 dark:border-gray-600">
                           <button
                             onClick={() => handleCopyLink(session)}
-                            className="p-1.5 text-gray-600 hover:text-primary-600 rounded-lg flex flex-col items-center"
+                            className="p-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg flex flex-col items-center"
                             title="Copy session link"
                           >
                             {copied === session.id ? (
@@ -409,14 +409,14 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           </button>
                           <button
                             onClick={() => handleEditSession(session)}
-                            className="p-1.5 text-gray-600 hover:text-primary-600 rounded-lg flex flex-col items-center"
+                            className="p-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg flex flex-col items-center"
                             title="Edit session"
                           >
                             <Edit className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleDeleteSession(session.id)}
-                            className="p-1.5 text-gray-600 hover:text-red-600 rounded-lg flex flex-col items-center"
+                            className="p-1.5 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 rounded-lg flex flex-col items-center"
                             title="Delete session"
                           >
                             <Trash2 className="h-5 w-5" />
@@ -439,13 +439,13 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                   const meetLink = getMeetLink(session);
 
                   return (
-                    <div key={session.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 hover:shadow-md transition">
+                    <div key={session.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700 hover:shadow-md transition">
                       {/* Desktop Layout */}
                       <div className="hidden md:flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
-                            <Video className="h-5 w-5 text-gray-400" />
-                            <h4 className="font-semibold text-gray-700">{session.title}</h4>
+                            <Video className="h-5 w-5 text-gray-400 dark:text-gray-400" />
+                            <h4 className="font-semibold text-gray-700 dark:text-gray-200">{session.title}</h4>
                             {getStatusBadge(session)}
                             {session.password_enabled && (
                               <Lock className="h-4 w-4 text-yellow-600" title="Password protected" />
@@ -455,7 +455,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             )}
                           </div>
 
-                          <div className="space-y-1 text-sm text-gray-600 ml-8">
+                          <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300 ml-8">
                             <div className="flex items-center space-x-2">
                               <User className="h-4 w-4" />
                               <span>{session.user_name}</span>
@@ -519,7 +519,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           )}
                           <button
                             onClick={() => handleCopyLink(session)}
-                            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg"
+                            className="p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                             title="Copy session link"
                           >
                             {copied === session.id ? (
@@ -530,7 +530,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           </button>
                           <button
                             onClick={() => handleDeleteSession(session.id)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-lg"
+                            className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                             title="Delete session"
                           >
                             <Trash2 className="h-5 w-5" />
@@ -541,8 +541,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                       {/* Mobile Layout */}
                       <div className="md:hidden">
                         <div className="flex items-center space-x-2 mb-2">
-                          <Video className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                          <h4 className="font-medium text-gray-700 text-sm">{session.title}</h4>
+                          <Video className="h-4 w-4 text-gray-400 dark:text-gray-400 flex-shrink-0" />
+                          <h4 className="font-medium text-gray-700 dark:text-gray-200 text-sm">{session.title}</h4>
                           {getStatusBadge(session)}
                           {session.password_enabled && (
                             <Lock className="h-3 w-3 text-yellow-600 flex-shrink-0" title="Password protected" />
@@ -552,7 +552,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           )}
                         </div>
 
-                        <div className="space-y-1 text-xs text-gray-600 mb-3">
+                        <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300 mb-3">
                           <div className="flex items-center space-x-2">
                             <User className="h-3 w-3 flex-shrink-0" />
                             <span>{session.user_name}</span>
@@ -617,10 +617,10 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                         </div>
 
                         {/* Mobile Action Icons - Bottom Row */}
-                        <div className="flex items-center justify-center space-x-8 pt-2 border-t border-gray-200">
+                        <div className="flex items-center justify-center space-x-8 pt-2 border-t border-gray-200 dark:border-gray-600">
                           <button
                             onClick={() => handleCopyLink(session)}
-                            className="p-1.5 text-gray-600 hover:text-primary-600 rounded-lg flex flex-col items-center"
+                            className="p-1.5 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg flex flex-col items-center"
                             title="Copy session link"
                           >
                             {copied === session.id ? (
@@ -631,7 +631,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           </button>
                           <button
                             onClick={() => handleDeleteSession(session.id)}
-                            className="p-1.5 text-gray-600 hover:text-red-600 rounded-lg flex flex-col items-center"
+                            className="p-1.5 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 rounded-lg flex flex-col items-center"
                             title="Delete session"
                           >
                             <Trash2 className="h-5 w-5" />
