@@ -157,38 +157,38 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Check className="h-6 w-6 text-green-600" />
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <Check className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">Video Session Created!</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Video Session Created!</h2>
               </div>
-              <button onClick={handleFinish} className="text-gray-400 hover:text-gray-600">
+              <button onClick={handleFinish} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200">
                 <X className="h-6 w-6" />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Session Details</h3>
+              <div className="bg-primary-50 dark:bg-primary-900 border border-primary-200 dark:border-primary-700 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Session Details</h3>
                 <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Title:</span> {createdSession.title}</p>
-                  <p><span className="font-medium">Date:</span> {new Date(createdSession.session_date).toLocaleString()}</p>
-                  <p><span className="font-medium">Duration:</span> {createdSession.duration_minutes} minutes</p>
+                  <p className="dark:text-gray-300"><span className="font-medium dark:text-white">Title:</span> {createdSession.title}</p>
+                  <p className="dark:text-gray-300"><span className="font-medium dark:text-white">Date:</span> {new Date(createdSession.session_date).toLocaleString()}</p>
+                  <p className="dark:text-gray-300"><span className="font-medium dark:text-white">Duration:</span> {createdSession.duration_minutes} minutes</p>
                 </div>
               </div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Meeting Link</h3>
+              <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Meeting Link</h3>
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
                     value={meetingUrl}
                     readOnly
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm dark:text-white"
                   />
                   <button
                     onClick={handleCopyLink}
@@ -201,23 +201,23 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
               </div>
 
               {createdSession.password_enabled && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
                   <div className="flex items-center space-x-2 mb-2">
-                    <Lock className="h-5 w-5 text-yellow-600" />
-                    <h3 className="font-semibold text-gray-900">Session Password</h3>
+                    <Lock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Session Password</h3>
                   </div>
-                  <p className="text-2xl font-mono font-bold text-gray-900 mb-2">
+                  <p className="text-2xl font-mono font-bold text-gray-900 dark:text-white mb-2">
                     {createdSession.plain_password}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Share this password with your client. They will need it to join the session.
                   </p>
                 </div>
               )}
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-sm text-gray-700">
-                  <strong>Note:</strong> The session will automatically appear in your calendar. 
+              <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <strong>Note:</strong> The session will automatically appear in your calendar.
                   You can copy the meeting link and password to share with your client.
                 </p>
               </div>
@@ -243,31 +243,31 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
-                <Video className="h-6 w-6 text-primary-600" />
+              <div className="p-2 bg-primary-100 dark:bg-primary-900 rounded-lg">
+                <Video className="h-6 w-6 text-primary-600 dark:text-primary-400" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {session ? 'Edit Video Session' : 'Schedule Video Session'}
               </h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button onClick={onClose} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200">
               <X className="h-6 w-6" />
             </button>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 <User className="inline h-4 w-4 mr-1" />
                 Select Client *
               </label>
@@ -277,7 +277,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
                 onChange={handleChange}
                 required
                 disabled={!!session}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               >
                 <option value="">Choose a client...</option>
                 {users.map(user => (
@@ -289,7 +289,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Session Title *
               </label>
               <input
@@ -299,13 +299,13 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
                 onChange={handleChange}
                 required
                 placeholder="e.g., Weekly Therapy Session"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   <Calendar className="inline h-4 w-4 mr-1" />
                   Start Date & Time *
                 </label>
@@ -315,12 +315,12 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
                   value={formData.session_date}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   <Clock className="inline h-4 w-4 mr-1" />
                   Duration (minutes) *
                 </label>
@@ -329,7 +329,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
                   value={formData.duration_minutes}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
                   <option value="30">30 minutes</option>
                   <option value="45">45 minutes</option>
@@ -342,14 +342,14 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
               </div>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
               <label className="flex items-center space-x-3 cursor-pointer">
                 <input
                   type="checkbox"
                   name="password_enabled"
                   checked={formData.password_enabled}
                   onChange={handleChange}
-                  className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  className="w-5 h-5 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 dark:bg-gray-800"
                 />
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
@@ -358,9 +358,9 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
                     ) : (
                       <Unlock className="h-5 w-5 text-gray-400" />
                     )}
-                    <span className="font-medium text-gray-900">Password Protection</span>
+                    <span className="font-medium text-gray-900 dark:text-white">Password Protection</span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                     {formData.password_enabled
                       ? 'A password will be generated to secure this session'
                       : 'Anyone with the link can join this session'}
@@ -370,7 +370,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Notes (Optional)
               </label>
               <textarea
@@ -379,11 +379,11 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
                 onChange={handleChange}
                 rows="3"
                 placeholder="Add any additional notes about this session..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               />
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-600">
               <button
                 type="button"
                 onClick={onClose}

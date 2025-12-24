@@ -53,7 +53,7 @@ const TherapistProfileTab = ({ userId }) => {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading therapist profile...</p>
+          <p className="text-gray-600 dark:text-dark-text-secondary">Loading therapist profile...</p>
         </div>
       </div>
     );
@@ -61,17 +61,17 @@ const TherapistProfileTab = ({ userId }) => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <p className="text-red-600">{error}</p>
+      <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+        <p className="text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
 
   if (!therapist) {
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-        <User className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-600">No therapist assigned yet.</p>
+      <div className="bg-gray-50 dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border rounded-lg p-8 text-center">
+        <User className="h-16 w-16 text-gray-300 dark:text-dark-text-tertiary mx-auto mb-4" />
+        <p className="text-gray-600 dark:text-dark-text-secondary">No therapist assigned yet.</p>
       </div>
     );
   }
@@ -128,16 +128,16 @@ const TherapistProfileTab = ({ userId }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Qualification */}
         {therapist.qualification && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md p-6">
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <div className="h-10 w-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                  <Award className="h-6 w-6 text-primary-600" />
+                <div className="h-10 w-10 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
+                  <Award className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                 </div>
               </div>
               <div className="ml-4 flex-1">
-                <h3 className="text-sm font-medium text-gray-500 mb-1">Qualification</h3>
-                <p className="text-lg font-semibold text-gray-900">{therapist.qualification}</p>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-dark-text-tertiary mb-1">Qualification</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">{therapist.qualification}</p>
               </div>
             </div>
           </div>
@@ -145,16 +145,16 @@ const TherapistProfileTab = ({ userId }) => {
 
         {/* License ID */}
         {therapist.license_id && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md p-6">
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <CreditCard className="h-6 w-6 text-blue-600" />
+                <div className="h-10 w-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
               <div className="ml-4 flex-1">
-                <h3 className="text-sm font-medium text-gray-500 mb-1">Practitioner License ID</h3>
-                <p className="text-lg font-semibold text-gray-900">{therapist.license_id}</p>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-dark-text-tertiary mb-1">Practitioner License ID</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">{therapist.license_id}</p>
               </div>
             </div>
           </div>
@@ -162,16 +162,16 @@ const TherapistProfileTab = ({ userId }) => {
 
         {/* Fees Range */}
         {(therapist.fee_min || therapist.fee_max) && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md p-6">
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-green-600" />
+                <div className="h-10 w-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                  <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
               <div className="ml-4 flex-1">
-                <h3 className="text-sm font-medium text-gray-500 mb-1">Fee Range</h3>
-                <p className="text-lg font-semibold text-gray-900">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-dark-text-tertiary mb-1">Fee Range</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
                   {therapist.fee_currency || 'INR'} {therapist.fee_min || 0} - {therapist.fee_max || 0}
                 </p>
               </div>
@@ -181,16 +181,16 @@ const TherapistProfileTab = ({ userId }) => {
 
         {/* Language Preferences */}
         {therapist.language_preferences && (
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md p-6">
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Languages className="h-6 w-6 text-purple-600" />
+                <div className="h-10 w-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                  <Languages className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
               <div className="ml-4 flex-1">
-                <h3 className="text-sm font-medium text-gray-500 mb-1">Languages</h3>
-                <p className="text-lg font-semibold text-gray-900">{therapist.language_preferences}</p>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-dark-text-tertiary mb-1">Languages</h3>
+                <p className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">{therapist.language_preferences}</p>
               </div>
             </div>
           </div>
@@ -199,16 +199,16 @@ const TherapistProfileTab = ({ userId }) => {
 
       {/* Work Experience - Full Width */}
       {therapist.work_experience && (
-        <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+        <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md p-6 mt-6">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <div className="h-10 w-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Briefcase className="h-6 w-6 text-orange-600" />
+              <div className="h-10 w-10 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                <Briefcase className="h-6 w-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
             <div className="ml-4 flex-1">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Work Experience</h3>
-              <p className="text-gray-900 whitespace-pre-wrap leading-relaxed">{therapist.work_experience}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-dark-text-tertiary mb-2">Work Experience</h3>
+              <p className="text-gray-900 dark:text-dark-text-primary whitespace-pre-wrap leading-relaxed">{therapist.work_experience}</p>
             </div>
           </div>
         </div>
@@ -216,16 +216,16 @@ const TherapistProfileTab = ({ userId }) => {
 
       {/* Other Practice Details - Full Width */}
       {therapist.other_practice_details && (
-        <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+        <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md p-6 mt-6">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <div className="h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <FileText className="h-6 w-6 text-indigo-600" />
+              <div className="h-10 w-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
+                <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
               </div>
             </div>
             <div className="ml-4 flex-1">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Other Practice Details</h3>
-              <p className="text-gray-900 whitespace-pre-wrap leading-relaxed">{therapist.other_practice_details}</p>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-dark-text-tertiary mb-2">Other Practice Details</h3>
+              <p className="text-gray-900 dark:text-dark-text-primary whitespace-pre-wrap leading-relaxed">{therapist.other_practice_details}</p>
             </div>
           </div>
         </div>
@@ -233,21 +233,21 @@ const TherapistProfileTab = ({ userId }) => {
 
       {/* Contact Information */}
       {(therapist.email || therapist.contact) && (
-        <div className="bg-gray-50 rounded-lg p-6 mt-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+        <div className="bg-gray-50 dark:bg-dark-bg-secondary rounded-lg p-6 mt-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4">Contact Information</h3>
           <div className="space-y-2">
             {therapist.email && (
-              <div className="flex items-center text-gray-700">
+              <div className="flex items-center text-gray-700 dark:text-dark-text-secondary">
                 <span className="font-medium mr-2">Email:</span>
-                <a href={`mailto:${therapist.email}`} className="text-primary-600 hover:text-primary-700">
+                <a href={`mailto:${therapist.email}`} className="text-primary-600 dark:text-dark-primary-500 hover:text-primary-700 dark:hover:text-dark-primary-400">
                   {therapist.email}
                 </a>
               </div>
             )}
             {therapist.contact && (
-              <div className="flex items-center text-gray-700">
+              <div className="flex items-center text-gray-700 dark:text-dark-text-secondary">
                 <span className="font-medium mr-2">Phone:</span>
-                <a href={`tel:${therapist.contact}`} className="text-primary-600 hover:text-primary-700">
+                <a href={`tel:${therapist.contact}`} className="text-primary-600 dark:text-dark-primary-500 hover:text-primary-700 dark:hover:text-dark-primary-400">
                   {therapist.contact}
                 </a>
               </div>

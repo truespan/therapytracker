@@ -294,9 +294,9 @@ const PartnerSettings = () => {
 
             {/* Partner ID Display */}
             {user && user.partner_id && (
-              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 dark:bg-dark-bg-secondary dark:border-dark-border">
                 <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Partner ID: </span>
-                <span className="text-lg font-bold text-primary-600">{user.partner_id}</span>
+                <span className="text-lg font-bold text-primary-600 dark:text-dark-primary-500">{user.partner_id}</span>
               </div>
             )}
 
@@ -310,7 +310,7 @@ const PartnerSettings = () => {
                 <input
                   type="text"
                   value={user?.name || ''}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
@@ -326,7 +326,7 @@ const PartnerSettings = () => {
                 <input
                   type="text"
                   value={user?.sex || ''}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
@@ -343,7 +343,7 @@ const PartnerSettings = () => {
                     name="age"
                     value={formData.age}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                     placeholder="Age"
                     min="18"
                     max="100"
@@ -362,7 +362,7 @@ const PartnerSettings = () => {
                 <input
                   type="email"
                   value={user?.email || ''}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
@@ -572,9 +572,9 @@ const PartnerSettings = () => {
 
             {/* Email Verification Status */}
             {user && (
-              <div className={`p-4 rounded-lg ${user.email_verified ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}>
-                <span className="text-sm font-medium">Email Verification: </span>
-                <span className={`text-sm font-bold ${user.email_verified ? 'text-green-700' : 'text-amber-700'}`}>
+              <div className={`p-4 rounded-lg ${user.email_verified ? 'bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'}`}>
+                <span className="text-sm font-medium dark:text-dark-text-primary">Email Verification: </span>
+                <span className={`text-sm font-bold ${user.email_verified ? 'text-green-700 dark:text-green-400' : 'text-amber-700 dark:text-amber-400'}`}>
                   {user.email_verified ? 'Verified ✓' : 'Pending Verification'}
                 </span>
               </div>
@@ -611,7 +611,7 @@ const PartnerSettings = () => {
                 <CalendarIcon className="h-6 w-6 mr-2 text-primary-600" />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Google Calendar Integration</h3>
               </div>
-              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
+              <p className="text-sm text-gray-600 dark:text-dark-text-primary mb-4">
                 Connect your Google Calendar to automatically sync appointments when you create or update them.
               </p>
 
@@ -621,15 +621,15 @@ const PartnerSettings = () => {
                 </div>
               ) : googleCalendarStatus?.connected ? (
                 <div className="space-y-4">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <span className="text-sm font-medium text-green-700">Google Calendar Connected</span>
+                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        <span className="text-sm font-medium text-green-700 dark:text-green-400">Google Calendar Connected</span>
                       </div>
                       <button
                         onClick={disconnectGoogleCalendar}
-                        className="text-sm text-red-600 hover:text-red-700 flex items-center space-x-1"
+                        className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center space-x-1"
                       >
                         <Unlink className="h-4 w-4" />
                         <span>Disconnect</span>
@@ -642,7 +642,7 @@ const PartnerSettings = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border">
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-dark-text-primary">Sync Enabled</p>
                       <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
@@ -669,12 +669,12 @@ const PartnerSettings = () => {
                   )}
                 </div>
               ) : (
-                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                <div className="bg-primary-50 dark:bg-dark-bg-secondary border border-primary-200 dark:border-dark-border rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <AlertCircle className="h-5 w-5 text-primary-700" />
-                        <span className="text-sm font-medium text-primary-800">Not Connected</span>
+                        <AlertCircle className="h-5 w-5 text-primary-700 dark:text-dark-primary-500" />
+                        <span className="text-sm font-medium text-primary-800 dark:text-dark-text-primary">Not Connected</span>
                       </div>
                       <p className="text-xs text-gray-600 dark:text-dark-text-secondary mb-4">
                         Connect your Google Calendar to automatically sync appointments when you create or update them.
@@ -716,7 +716,7 @@ const PartnerSettings = () => {
 
             {/* For TheraPTrack Controlled Organizations: Always show partner's individual subscription (Free Plan if not explicitly assigned) */}
             {organizationSubscription.theraptrack_controlled && partnerSubscription && partnerSubscription.plan_name && (
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4 dark:bg-indigo-900/20 dark:border-indigo-800">
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Assigned Plan: </span>
@@ -777,7 +777,7 @@ const PartnerSettings = () => {
 
             {/* For Non-TheraPTrack Controlled Organizations: Show partner's assigned subscription */}
             {!organizationSubscription.theraptrack_controlled && partnerSubscription?.plan_name && (
-              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4">
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4 dark:bg-dark-bg-secondary dark:border-dark-border">
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Assigned Plan: </span>
@@ -811,7 +811,7 @@ const PartnerSettings = () => {
 
             {/* No subscription message for non-TheraPTrack controlled orgs */}
             {!organizationSubscription.theraptrack_controlled && !partnerSubscription?.plan_name && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-dark-bg-secondary dark:border-dark-border">
                 <p className="text-sm text-gray-600 dark:text-dark-text-secondary">No subscription plan assigned to you.</p>
               </div>
             )}

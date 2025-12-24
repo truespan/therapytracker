@@ -274,9 +274,9 @@ const LatestChartDisplay = ({ sentCharts, userName }) => {
   if (!latestChart) {
     return (
       <div className="card text-center py-12">
-        <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600 font-medium">No Charts Sent Yet</p>
-        <p className="text-sm text-gray-500 mt-2">
+        <BarChart3 className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+        <p className="text-gray-600 dark:text-gray-300 font-medium">No Charts Sent Yet</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
           Go to "Charts & Insights" tab to create and send comparison charts to {userName}
         </p>
       </div>

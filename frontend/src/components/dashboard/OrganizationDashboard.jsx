@@ -693,11 +693,11 @@ const OrganizationDashboard = () => {
                     setPartnerClients([]);
                   }
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary"
               >
-                <option value="">-- Select a therapist --</option>
+                <option value="" className="bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary">-- Select a therapist --</option>
                 {filteredPartners.map((partner) => (
-                  <option key={partner.id} value={partner.id}>
+                  <option key={partner.id} value={partner.id} className="bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary">
                     {partner.name} - ID: {partner.partner_id} ({partnerClientCounts[partner.id] || 0} client{partnerClientCounts[partner.id] !== 1 ? 's' : ''})
                   </option>
                 ))}

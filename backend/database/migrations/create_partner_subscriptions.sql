@@ -26,3 +26,4 @@ COMMENT ON TABLE partner_subscriptions IS 'Stores subscription plan assignments 
 
 
 
+

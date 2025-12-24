@@ -289,14 +289,17 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
   const renderField = (label, fieldName, type = 'text', options = null, rows = 3, showLabel = true) => {
     const value = formData[fieldName] || '';
 
+    const inputBaseClasses = "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white";
+    const radioBaseClasses = "mr-2 dark:bg-gray-700 dark:border-gray-600";
+
     return (
       <div className="mb-4">
-        {showLabel && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+        {showLabel && <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>}
         {type === 'textarea' ? (
           <textarea
             value={value}
             onChange={(e) => handleInputChange(fieldName, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={inputBaseClasses}
             rows={rows}
             aria-label={label}
           />
@@ -304,7 +307,7 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
           <select
             value={value}
             onChange={(e) => handleInputChange(fieldName, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={inputBaseClasses}
           >
             <option value="">Select...</option>
             {options.map(opt => (
@@ -314,14 +317,14 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
         ) : type === 'radio' && options ? (
           <div className="space-y-2">
             {options.map(opt => (
-              <label key={opt.value} className="flex items-center">
+              <label key={opt.value} className="flex items-center dark:text-gray-300">
                 <input
                   type="radio"
                   name={fieldName}
                   value={opt.value}
                   checked={value === opt.value}
                   onChange={(e) => handleInputChange(fieldName, e.target.value)}
-                  className="mr-2"
+                  className={radioBaseClasses}
                 />
                 <span>{opt.label}</span>
               </label>
@@ -332,7 +335,7 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
             type="text"
             value={value}
             onChange={(e) => handleInputChange(fieldName, e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={inputBaseClasses}
             aria-label={label}
           />
         )}
@@ -344,7 +347,7 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
     return (
       <div className="card text-center py-8">
         <Loader2 className="h-6 w-6 animate-spin text-primary-600 mx-auto mb-2" />
-        <p className="text-gray-600">Loading Mental Status Examination...</p>
+        <p className="text-gray-600 dark:text-gray-300">Loading Mental Status Examination...</p>
       </div>
     );
   }
@@ -468,7 +471,7 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
               'textarea',
               null
             )}
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Options: Inactive/ Hyperactive/ Restless/ Awkward/ Gestures/ Self injurious/ Retarded/ Tics/ Mannerisms/ Stereotypes/ Hallucinatory behavior/ Touching examiner/ Utilization behavior/ Aggressive/ Preoccupied/ Silly smiling/ Waxy flexibility/ Negativism/ Ambi-tendency/ Rigidity/ Automatic obedience/ Abnormal movements or postures/ Catatonic features/ Involuntary movements/ Tremor/ Dystonia/ Dyskinesia/ Chorea/ Athetosis etc.
             </p>
           </div>
@@ -529,15 +532,15 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
         {expandedSections.has(6) && (
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">1. Attention & Concentration</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">1. Attention & Concentration</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Assess by clinical behaviour and serial subtraction 100-7; 40-3; month/days of the week backward, backward counting)
               </p>
               {renderField('Attention (a. Easily aroused & sustained b. Easy to arouse but not sustained c. Difficulty to arouse & sustained d. Difficulty to arouse but not sustained)', 'cognitive_attention')}
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2">2. Orientation</h4>
+              <h4 className="font-semibold mb-2 dark:text-white">2. Orientation</h4>
               {renderField('Time', 'cognitive_orientation_time')}
               {renderField('Space', 'cognitive_orientation_space')}
               {renderField('Person', 'cognitive_orientation_person')}
@@ -546,8 +549,8 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2">3. Memory</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">3. Memory</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Assess by clinical behaviour and immediate - DF and DB, verbal immediate recall; recent - recall of items and events of last one or two days; address test with five facts, objects test with five unrelated objects and verbal story; remote - personal and impersonal events, topographic memory and memory of skills)
               </p>
               {renderField('Immediate (a. Digit Forward b. Digit Backward c. Word Recall)', 'cognitive_memory_immediate', 'textarea')}
@@ -556,8 +559,8 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2">4. Abstract ability</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">4. Abstract ability</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Assess by clinical behaviour & tests of similarities, dissimilarities, proverbs, absurdities. Record verbatim responses)
               </p>
               {renderField('Abstract ability (a. Concrete b. Functional c. Conceptual d. Over abstraction)', 'cognitive_abstract_ability', 'textarea', null, 3)}
@@ -597,16 +600,16 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
         </button>
         {expandedSections.has(8) && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               (Comment on the following aspects detailing both verbal and non-verbal behaviour, subjective mood, objectively-quality of affect, appropriateness, range, reactivity, mobility, communicability etc.)
             </p>
             <div>
-              <h4 className="font-semibold mb-2">1. Subjective</h4>
+              <h4 className="font-semibold mb-2 dark:text-white">1. Subjective</h4>
               {renderField('Diurnal variation (a. No b. Yes (Worse in morning/ evening/ night))', 'mood_affect_diurnal_variation')}
             </div>
             <div>
-              <h4 className="font-semibold mb-2">2. Objective</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">2. Objective</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Euthymic/ Anxious/ Panicky/ Fearful/ Depressed/ Weeping spell/ Irritable/ Enraged/ Cheerful/ Euphoric/ Elated/ La-belle Indifference/ Blunted/ Flat)
               </p>
               {renderField('Objective Affect', 'mood_affect_objective', 'textarea')}
@@ -633,13 +636,13 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
         </button>
         {expandedSections.has(9) && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               (Document verbatim samples of speech and when relevant, written samples under the following heads to substantiate inferences)
             </p>
             
             <div>
-              <h4 className="font-semibold mb-2">1. Stream</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">1. Stream</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Comment on the spontaneity, volubility, acceleration, pressured speech, flight of ideas, prolixity, retardation, Poverty of speech, circumstantiality, tangentiality, perseveration, thought blocking)
               </p>
               {renderField('Stream - Normal', 'thought_stream_normal')}
@@ -648,11 +651,11 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2">2. Form</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">2. Form</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Give samples and comments on loosening of associations, derailment, neologism etc)
               </p>
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 Normal/ Derailment/ Loosening of associations/ Neologisms/ Word Approximations/ Word Salad/ Incoherence/ Clang/ Illogicality/ Tangentiality/ Distractible speech/ Perseveration/ Circumstantiality/ Loss of goal/ Selfreference
               </p>
               {renderField('Form', 'thought_form')}
@@ -660,8 +663,8 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2">3. Possession</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">3. Possession</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Comment on obsessions and thought alienation experiences e.g. thought insertion, thought withdrawal and thought broadcasting)
               </p>
               {renderField('1. Obsessions & Compulsions', 'thought_possession_obsessions_compulsions')}
@@ -670,24 +673,24 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2">4. Content</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">4. Content</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Comment on all the dominant preoccupations of the subject including worry, phobia, somatic symptoms, ideas of reference, persecution, grandeur, hypochondriasis, worthlessness, helplessness, hopelessness, suicide, guilt, sin, nihilism, negation, love, control, infidelity, etc. Distinguish between ideas, overvalued ideas and delusion. Describe the delusion as primary/secondary, systematized/unsystematised, mood congruent/mood incongruent wherever relevant)
               </p>
               <div className="space-y-2">
-                <h5 className="font-medium">1. Religious preoccupation/ Philosophical preoccupation/ Sex preoccupation/ Somatic preoccupation/ Preoccupation with precipitating factors/ Excess day dreaming etc.</h5>
+                <h5 className="font-medium dark:text-white">1. Religious preoccupation/ Philosophical preoccupation/ Sex preoccupation/ Somatic preoccupation/ Preoccupation with precipitating factors/ Excess day dreaming etc.</h5>
                 {renderField('Religious/ Philosophical/ Sex/ Somatic preoccupation/ Precipitating factors/ Excess day dreaming', 'thought_content_religious_preoccupation', 'textarea', null, 3, false)}
               </div>
               <div className="space-y-2">
-                <h5 className="font-medium">2. Phobias</h5>
+                <h5 className="font-medium dark:text-white">2. Phobias</h5>
                 {renderField('Phobias', 'thought_content_phobias', 'text', null, 3, false)}
               </div>
               <div className="space-y-2">
-                <h5 className="font-medium">3. Ideas of: Hopelessness/Helplessness/Worthlessness/Guilt/Death wishes/Suicide/Homicide/Hypochondriacal</h5>
+                <h5 className="font-medium dark:text-white">3. Ideas of: Hopelessness/Helplessness/Worthlessness/Guilt/Death wishes/Suicide/Homicide/Hypochondriacal</h5>
                 {renderField('Ideas: Hopelessness/Helplessness/Worthlessness/Guilt/Death wishes/Suicide/Homicide/Hypochondriacal', 'thought_content_ideas', 'textarea', null, 3, false)}
               </div>
               <div className="space-y-2">
-                <h5 className="font-medium">4. Delusions</h5>
+                <h5 className="font-medium dark:text-white">4. Delusions</h5>
                 {renderField('a. Primary delusions', 'thought_content_delusions_primary')}
                 {renderField('b. Secondary delusions', 'thought_content_delusions_secondary')}
                 {renderField('c. Systematised/ Non systematized', 'thought_content_delusions_systematised')}
@@ -712,23 +715,23 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
         {expandedSections.has(10) && (
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">1. Sensory Distortion</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">1. Sensory Distortion</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Comment on the dulled or heightened perception and changes in quality)
               </p>
               {renderField('Sensory Distortion', 'perceptual_sensory_distortion', 'textarea')}
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2">2. Sensory Deception</h4>
-              <p className="text-sm text-gray-600 mb-2">
+              <h4 className="font-semibold mb-2 dark:text-white">2. Sensory Deception</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                 (Comment on the following phenomena using the following guidelines: continuous v/s discontinuous, three dimensionality, control, clarity, veridicality, diurnal pattern, objective v/s subjective space, modality, content, response to content, insight into phenomena, Schneiderian hallucination etc. Distinguish between –true hallucination, pseudo-hallucination, imagery, illusion, autoscopic or other (specify))
               </p>
               {renderField('Sensory Deception', 'perceptual_sensory_deception', 'textarea')}
             </div>
 
             <div>
-              <h4 className="font-semibold mb-2">3. Perception</h4>
+              <h4 className="font-semibold mb-2 dark:text-white">3. Perception</h4>
               {renderField('1. Projection (a. Internal/External b. Illusion/ Hallucination)', 'perceptual_projection')}
               {renderField('2. Modality', 'perceptual_modality')}
               {renderField('3. Content', 'perceptual_content')}
@@ -753,7 +756,7 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
         </button>
         {expandedSections.has(11) && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
               (Not detailed elsewhere using verbatim report– somatic passivity, made act, affect & impulse, others (specify))
             </p>
             {renderField('Other Psychotic Phenomena', 'other_psychotic_phenomena', 'textarea')}
@@ -772,7 +775,7 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
         </button>
         {expandedSections.has(12) && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
               (Depersonalization – derealization/ Déjà vu/ Jamais vu/ Retrospective falsification/ Confabulation body image disturbance and other phenomena not listed above)
             </p>
             {renderField('Other Psychopathological Phenomena', 'other_psychopathological_phenomena', 'textarea')}
@@ -809,8 +812,8 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
         </button>
         {expandedSections.has(14) && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600 mb-2">
-              (ASSESSMENT – 
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+              (ASSESSMENT –
               1. GRADE I (Complete denial of illness):
               2. GRADE II (Slight awareness of being sick but denying at the same time):
               3. GRADE III (Awareness of being sick but blaming it on external factors):

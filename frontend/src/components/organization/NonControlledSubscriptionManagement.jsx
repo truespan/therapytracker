@@ -206,11 +206,11 @@ const NonControlledSubscriptionManagement = ({ organizationId, organizationName 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <CreditCard className="h-6 w-6 mr-2 text-indigo-600" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
+            <CreditCard className="h-6 w-6 mr-2 text-indigo-600 dark:text-dark-primary-500" />
             Therapist Subscription Management
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
             Assign subscription plans to therapists in your organization
           </p>
         </div>
@@ -228,14 +228,14 @@ const NonControlledSubscriptionManagement = ({ organizationId, organizationName 
 
       {/* Messages */}
       {successMessage && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2 text-green-700">
+        <div className="p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-800 rounded-lg flex items-center space-x-2 text-green-700 dark:text-green-300">
           <CheckCircle className="h-5 w-5 flex-shrink-0" />
           <span>{successMessage}</span>
         </div>
       )}
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
+        <div className="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-2 text-red-700 dark:text-red-300">
           <AlertCircle className="h-5 w-5 flex-shrink-0" />
           <span>{error}</span>
           <button onClick={() => setError('')} className="ml-auto">
@@ -246,13 +246,13 @@ const NonControlledSubscriptionManagement = ({ organizationId, organizationName 
 
       {/* Bulk Action Info */}
       {partners.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="flex items-start space-x-2">
-            <Building2 className="h-5 w-5 text-blue-600 mt-0.5" />
+            <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-blue-900">Bulk Assignment Available</p>
-              <p className="text-sm text-blue-700 mt-1">
-                You can apply the same subscription plan to all {partners.length} therapist(s) at once, 
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Bulk Assignment Available</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                You can apply the same subscription plan to all {partners.length} therapist(s) at once,
                 or assign different plans to each therapist individually.
               </p>
             </div>
@@ -262,14 +262,14 @@ const NonControlledSubscriptionManagement = ({ organizationId, organizationName 
 
       {/* Partner List with Individual Select Buttons */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Users className="h-5 w-5 mr-2 text-indigo-600" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4 flex items-center">
+          <Users className="h-5 w-5 mr-2 text-indigo-600 dark:text-dark-primary-500" />
           Therapists ({partners.length})
         </h3>
 
         {partners.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <Users className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+          <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
+            <Users className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-tertiary" />
             <p>No therapists in your organization yet</p>
           </div>
         ) : (
@@ -280,16 +280,16 @@ const NonControlledSubscriptionManagement = ({ organizationId, organizationName 
               return (
                 <div
                   key={partner.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="border border-gray-200 dark:border-dark-border rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-dark-bg-secondary"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-semibold text-gray-900">
+                        <h4 className="font-semibold text-gray-900 dark:text-dark-text-primary">
                           {partner.name}
                         </h4>
                         {partner.partner_id && (
-                          <span className="text-xs text-gray-500 font-mono">
+                          <span className="text-xs text-gray-500 dark:text-dark-text-tertiary font-mono">
                             (ID: {partner.partner_id})
                           </span>
                         )}
@@ -297,33 +297,33 @@ const NonControlledSubscriptionManagement = ({ organizationId, organizationName 
                       {subscription ? (
                         <div className="space-y-1 text-sm">
                           <div className="flex items-center space-x-2">
-                            <span className="text-gray-600">Current Plan:</span>
-                            <span className="font-medium text-indigo-600">
+                            <span className="text-gray-600 dark:text-dark-text-secondary">Current Plan:</span>
+                            <span className="font-medium text-indigo-600 dark:text-dark-primary-500">
                               {subscription.plan_name}
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <span className="text-gray-600">Billing Period:</span>
-                            <span className="font-medium text-gray-900">
+                            <span className="text-gray-600 dark:text-dark-text-secondary">Billing Period:</span>
+                            <span className="font-medium text-gray-900 dark:text-dark-text-primary">
                               {getBillingPeriodLabel(subscription.billing_period)}
                             </span>
                           </div>
                           {subscription.video_hours && (
                             <div className="flex items-center space-x-2">
-                              <span className="text-gray-600">Video Hours:</span>
-                              <span className="text-gray-900">
+                              <span className="text-gray-600 dark:text-dark-text-secondary">Video Hours:</span>
+                              <span className="text-gray-900 dark:text-dark-text-primary">
                                 {subscription.video_hours} hrs/month
                               </span>
                             </div>
                           )}
                           {subscription.has_video && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 mt-1">
                               Video Enabled
                             </span>
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500">No plan assigned</p>
+                        <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">No plan assigned</p>
                       )}
                     </div>
                     <div className="flex items-center space-x-2 ml-4">

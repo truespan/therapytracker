@@ -127,15 +127,15 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
         {sessions.length > 0 && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="lg:hidden w-full flex items-center justify-between px-2 py-2 hover:bg-gray-50 transition-colors rounded-lg"
+            className="lg:hidden w-full flex items-center justify-between px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg"
           >
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-300">
               {isExpanded ? 'Hide' : 'Show'} sessions
             </span>
             {isExpanded ? (
-              <ChevronUp className="h-5 w-5 text-gray-500" />
+              <ChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-300" />
             ) : (
-              <ChevronDown className="h-5 w-5 text-gray-500" />
+              <ChevronDown className="h-5 w-5 text-gray-500 dark:text-gray-300" />
             )}
           </button>
         )}
@@ -144,15 +144,15 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
         <div className="hidden lg:flex items-center justify-between">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex-1 flex items-center justify-between hover:bg-gray-50 transition-colors rounded-lg -m-2 p-2"
+            className="flex-1 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg -m-2 p-2"
           >
             <div className="flex items-center space-x-3">
               <FileText className="h-6 w-6 text-primary-600" />
               <div className="text-left">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Sessions
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   {sessions.length === 0
                     ? 'No sessions recorded yet'
                     : `${sessions.length} session${sessions.length !== 1 ? 's' : ''} recorded`
@@ -162,14 +162,14 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
             </div>
             <div className="flex items-center space-x-2">
               {sessions.length > 0 && (
-                <span className="text-sm text-gray-500 mr-2">
+                <span className="text-sm text-gray-500 dark:text-gray-300 mr-2">
                   {isExpanded ? 'Hide' : 'Show'} sessions
                 </span>
               )}
               {isExpanded ? (
-                <ChevronUp className="h-5 w-5 text-gray-500" />
+                <ChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-300" />
               ) : (
-                <ChevronDown className="h-5 w-5 text-gray-500" />
+                <ChevronDown className="h-5 w-5 text-gray-500 dark:text-gray-300" />
               )}
             </div>
           </button>
@@ -189,15 +189,15 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
 
       {/* Collapsible Content */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-gray-200 mt-2">
+        <div className="px-4 pb-4 pt-2 border-t border-gray-200 dark:border-gray-600 mt-2">
           {loading ? (
             <div className="flex justify-center items-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <span className="ml-3 text-gray-600">Loading sessions...</span>
+              <span className="ml-3 text-gray-600 dark:text-gray-300">Loading sessions...</span>
             </div>
           ) : sessions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+            <div className="text-center py-8 text-gray-500 dark:text-gray-300">
+              <FileText className="h-12 w-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
               <p>No therapy sessions have been recorded for {userName} yet.</p>
               <p className="text-sm mt-2">Click "Create Session" to add a new session.</p>
             </div>

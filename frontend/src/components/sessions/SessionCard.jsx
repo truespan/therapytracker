@@ -64,7 +64,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white">
+    <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
       {/* Desktop: Two-column layout */}
       <div className="hidden lg:flex gap-4">
         {/* Left Side - Main Session Details */}
@@ -72,18 +72,18 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
           {/* Header with Title and Actions */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
-              <h4 className="text-lg font-semibold text-gray-900 mb-1">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
                 {session.session_number ? `Session #${session.session_number}: ` : ''}{session.session_title}
               </h4>
               <div className="flex items-center space-x-2">
                 {session.from_appointment && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-900">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-900 dark:bg-primary-900 dark:text-primary-100">
                     <Tag className="h-3 w-3 mr-1" />
                     From Appointment
                   </span>
                 )}
                 {session.from_video_session && (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100">
                     <Video className="h-3 w-3 mr-1" />
                     Session type - Video
                   </span>
@@ -93,14 +93,14 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
             <div className="flex items-center space-x-2 ml-4">
               <button
                 onClick={() => onEdit(session)}
-                className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                className="p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="Edit Session"
               >
                 <Edit className="h-4 w-4" />
               </button>
               <button
                 onClick={() => onAssignQuestionnaire(session)}
-                className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                className="p-2 text-gray-600 dark:text-gray-300 hover:text-green-600 hover:bg-green-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="Assign Questionnaire"
               >
                 <Send className="h-4 w-4" />
@@ -110,17 +110,17 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
 
           {/* Date and Time */}
           <div className="space-y-2 mb-3">
-            <div className="flex items-center text-sm text-gray-700">
-              <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+            <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+              <Calendar className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
               <span className="font-medium mr-2">Date:</span>
               <span>{formatDate(session.session_date)}</span>
             </div>
-            <div className="flex items-center text-sm text-gray-700">
-              <Clock className="h-4 w-4 mr-2 text-gray-500" />
+            <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+              <Clock className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
               <span className="font-medium mr-2">Time:</span>
               <span>{formatTime(session.session_date)}</span>
               {session.session_duration && (
-                <span className="ml-2 text-gray-500">
+                <span className="ml-2 text-gray-500 dark:text-gray-400">
                   ({session.session_duration} min)
                 </span>
               )}
@@ -128,11 +128,11 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
           </div>
 
           {/* Session Note and Report Actions */}
-          <div className="mb-3 pt-3 border-t border-gray-100 flex items-center space-x-3">
+          <div className="mb-3 pt-3 border-t border-gray-100 dark:border-gray-600 flex items-center space-x-3">
             {session.session_notes && session.session_notes.trim().length > 0 ? (
               <button
                 onClick={() => onViewNote?.(session.id)}
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center space-x-1"
+                className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium flex items-center space-x-1"
               >
                 <FileText className="h-4 w-4" />
                 <span>View Notes</span>
@@ -140,7 +140,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
             ) : (
               <button
                 onClick={() => onCreateNote?.(session.id)}
-                className="text-sm px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 font-medium flex items-center space-x-1 transition-colors"
+                className="text-sm px-3 py-1.5 bg-primary-50 dark:bg-gray-700 text-primary-700 dark:text-primary-300 rounded-lg hover:bg-primary-100 dark:hover:bg-gray-600 font-medium flex items-center space-x-1 transition-colors"
               >
                 <Plus className="h-4 w-4" />
                 <span>Take Notes</span>
@@ -162,16 +162,16 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
           {session.payment_notes && (
             <div className="mb-3">
               <div className="flex items-start text-sm">
-                <DollarSign className="h-4 w-4 mr-2 text-gray-500 mt-0.5 flex-shrink-0" />
+                <DollarSign className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <span className="font-medium text-gray-700">Payment:</span>
-                  <p className="text-gray-600 mt-1">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Payment:</span>
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">
                     {showPaymentNotes ? session.payment_notes : truncateText(session.payment_notes)}
                   </p>
                   {session.payment_notes.length > 100 && (
                     <button
                       onClick={() => setShowPaymentNotes(!showPaymentNotes)}
-                      className="text-primary-600 hover:text-primary-700 text-xs mt-1 font-medium"
+                      className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-xs mt-1 font-medium"
                     >
                       {showPaymentNotes ? 'Show less' : 'Show more'}
                     </button>
@@ -182,7 +182,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
           )}
 
           {/* Created At Footer */}
-          <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
             Created {new Date(session.created_at).toLocaleString()}
           </div>
         </div>
@@ -248,18 +248,18 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
         {/* Header with Title and Actions */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <h4 className="text-lg font-semibold text-gray-900 mb-1">
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
               {session.session_number ? `Session #${session.session_number}: ` : ''}{session.session_title}
             </h4>
             <div className="flex items-center space-x-2 flex-wrap">
               {session.from_appointment && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-900">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-900 dark:bg-primary-900 dark:text-primary-100">
                   <Tag className="h-3 w-3 mr-1" />
                   From Appointment
                 </span>
               )}
               {session.from_video_session && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100">
                   <Video className="h-3 w-3 mr-1" />
                   Session type - Video
                 </span>
@@ -269,14 +269,14 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
           <div className="flex items-center space-x-2 ml-2">
             <button
               onClick={() => onEdit(session)}
-              className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="Edit Session"
             >
               <Edit className="h-4 w-4" />
             </button>
             <button
               onClick={() => onAssignQuestionnaire(session)}
-              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-300 hover:text-green-600 hover:bg-green-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="Assign Questionnaire"
             >
               <Send className="h-4 w-4" />
@@ -286,17 +286,17 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
 
         {/* Date and Time */}
         <div className="space-y-2 mb-3">
-          <div className="flex items-center text-sm text-gray-700">
-            <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <Calendar className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
             <span className="font-medium mr-2">Date:</span>
             <span>{formatDate(session.session_date)}</span>
           </div>
-          <div className="flex items-center text-sm text-gray-700">
-            <Clock className="h-4 w-4 mr-2 text-gray-500" />
+          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+            <Clock className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
             <span className="font-medium mr-2">Time:</span>
             <span>{formatTime(session.session_date)}</span>
             {session.session_duration && (
-              <span className="ml-2 text-gray-500">
+              <span className="ml-2 text-gray-500 dark:text-gray-400">
                 ({session.session_duration} min)
               </span>
             )}
@@ -307,16 +307,16 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
         {session.payment_notes && (
           <div className="mb-3">
             <div className="flex items-start text-sm">
-              <DollarSign className="h-4 w-4 mr-2 text-gray-500 mt-0.5 flex-shrink-0" />
+              <DollarSign className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <span className="font-medium text-gray-700">Payment:</span>
-                <p className="text-gray-600 mt-1">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Payment:</span>
+                <p className="text-gray-600 dark:text-gray-300 mt-1">
                   {showPaymentNotes ? session.payment_notes : truncateText(session.payment_notes)}
                 </p>
                 {session.payment_notes.length > 100 && (
                   <button
                     onClick={() => setShowPaymentNotes(!showPaymentNotes)}
-                    className="text-primary-600 hover:text-primary-700 text-xs mt-1 font-medium"
+                    className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-xs mt-1 font-medium"
                   >
                     {showPaymentNotes ? 'Show less' : 'Show more'}
                   </button>
@@ -327,11 +327,11 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
         )}
 
         {/* Session Note and Report Actions - Mobile */}
-        <div className="mb-3 pt-3 border-t border-gray-100 flex items-center space-x-3 flex-wrap">
+        <div className="mb-3 pt-3 border-t border-gray-100 dark:border-gray-600 flex items-center space-x-3 flex-wrap">
           {session.session_notes && session.session_notes.trim().length > 0 ? (
             <button
               onClick={() => onViewNote?.(session.id)}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center space-x-1"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium flex items-center space-x-1"
             >
               <FileText className="h-4 w-4" />
               <span>View Notes</span>
@@ -339,7 +339,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
           ) : (
             <button
               onClick={() => onCreateNote?.(session.id)}
-              className="text-sm px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 font-medium flex items-center space-x-1 transition-colors"
+              className="text-sm px-3 py-1.5 bg-primary-50 dark:bg-gray-700 text-primary-700 dark:text-primary-300 rounded-lg hover:bg-primary-100 dark:hover:bg-gray-600 font-medium flex items-center space-x-1 transition-colors"
             >
               <Plus className="h-4 w-4" />
               <span>Take Notes</span>
@@ -359,10 +359,10 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
 
         {/* Assigned Questionnaires - Mobile (Below Payment) */}
         {assignedQuestionnaires.length > 0 && (
-          <div className="mb-3 pt-3 border-t border-gray-200">
+          <div className="mb-3 pt-3 border-t border-gray-200 dark:border-gray-600">
             <div className="flex items-center space-x-2 mb-3">
               <ClipboardList className="h-4 w-4 text-primary-600" />
-              <h5 className="text-sm font-semibold text-gray-900">
+              <h5 className="text-sm font-semibold text-gray-900 dark:text-white">
                 Assigned Questionnaires
               </h5>
             </div>
@@ -389,8 +389,8 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
                     onClick={() => setSelectedQuestionnaire(questionnaire)}
                     className={`flex-1 text-left transition-colors ${
                       questionnaire.status === 'pending'
-                        ? 'text-gray-500 cursor-not-allowed'
-                        : 'text-gray-700 hover:text-primary-600 hover:underline cursor-pointer'
+                        ? 'text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                        : 'text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:underline cursor-pointer'
                     }`}
                     disabled={questionnaire.status === 'pending'}
                     title={questionnaire.status === 'pending' ? 'Waiting for client to complete' : 'Click to view'}
@@ -401,7 +401,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
                   {/* Delete Icon */}
                   <button
                     onClick={() => setDeleteConfirmQuestionnaire(questionnaire.assignment_id)}
-                    className="flex-shrink-0 p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                    className="flex-shrink-0 p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
                     title="Delete assignment"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -413,7 +413,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
         )}
 
         {/* Created At Footer */}
-        <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
           Created {new Date(session.created_at).toLocaleString()}
         </div>
       </div>

@@ -852,7 +852,7 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
   };
 
   const renderField = (label, fieldName, type = 'text', options = null, memberType = null, memberIndex = null) => {
-    const value = memberType 
+    const value = memberType
       ? (memberType === 'father' || memberType === 'mother'
           ? familyMembers[memberType][fieldName] || ''
           : familyMembers[memberType === 'sibling' ? 'siblings' : 'others'][memberIndex][fieldName] || '')
@@ -862,21 +862,23 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
       ? (e) => handleFamilyMemberChange(memberType, memberIndex, fieldName, e.target.value)
       : (e) => handleInputChange(fieldName, e.target.value);
 
+    const inputBaseClasses = "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white";
+
     return (
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
         {type === 'textarea' ? (
           <textarea
             value={value}
             onChange={onChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={inputBaseClasses}
             rows={3}
           />
         ) : type === 'select' && options ? (
           <select
             value={value}
             onChange={onChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={inputBaseClasses}
           >
             <option value="">Select...</option>
             {options.map(opt => (
@@ -888,21 +890,21 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
             type="date"
             value={value}
             onChange={onChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={inputBaseClasses}
           />
         ) : type === 'number' ? (
           <input
             type="number"
             value={value}
             onChange={onChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={inputBaseClasses}
           />
         ) : (
           <input
             type="text"
             value={value}
             onChange={onChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={inputBaseClasses}
           />
         )}
       </div>
@@ -915,14 +917,14 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
     const prefix = isSibling ? `Sibling ${index + 1}` : isOther ? `Other ${index + 1}` : type.charAt(0).toUpperCase() + type.slice(1);
     
     return (
-      <div className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50">
+      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-4 bg-gray-50 dark:bg-gray-800">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-semibold text-gray-800">{prefix}</h4>
+          <h4 className="font-semibold text-gray-800 dark:text-white">{prefix}</h4>
           {(isSibling || isOther) && (
             <button
               type="button"
               onClick={() => isSibling ? removeSibling(index) : removeOther(index)}
-              className="text-red-600 hover:text-red-800"
+              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -1140,7 +1142,7 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
                 onChange={(e) => setNewComplaint(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addComplaint()}
                 placeholder="Enter chief complaint"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               />
               <button
                 type="button"
@@ -1152,12 +1154,12 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
             </div>
             <div className="space-y-2">
               {formData.chief_complaints.map((complaint, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span>{complaint}</span>
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                  <span className="dark:text-white">{complaint}</span>
                   <button
                     type="button"
                     onClick={() => removeComplaint(index)}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -1183,7 +1185,7 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
             {renderField('2. History of psychiatric illness /Retardation / Suicide / Substance /Dependency / Epilepsy', 'family_history_psychiatric_illness', 'textarea')}
             
             <div>
-              <h4 className="font-semibold mb-4">3. History of family members</h4>
+              <h4 className="font-semibold mb-4 dark:text-white">3. History of family members</h4>
               
               {/* Father */}
               {renderFamilyMemberFields('father', familyMembers.father)}
@@ -1194,17 +1196,17 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
               {/* Siblings */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h5 className="font-medium">Siblings</h5>
+                  <h5 className="font-medium dark:text-white">Siblings</h5>
                   <button
                     type="button"
                     onClick={addSibling}
-                    className="flex items-center gap-1 text-primary-600 hover:text-primary-800"
+                    className="flex items-center gap-1 text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
                   >
                     <Plus className="h-4 w-4" />
                     Add Sibling
                   </button>
                 </div>
-                {familyMembers.siblings.map((sibling, index) => 
+                {familyMembers.siblings.map((sibling, index) =>
                   renderFamilyMemberFields('sibling', sibling, index)
                 )}
               </div>
@@ -1212,17 +1214,17 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
               {/* Others */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h5 className="font-medium">Others</h5>
+                  <h5 className="font-medium dark:text-white">Others</h5>
                   <button
                     type="button"
                     onClick={addOther}
-                    className="flex items-center gap-1 text-primary-600 hover:text-primary-800"
+                    className="flex items-center gap-1 text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
                   >
                     <Plus className="h-4 w-4" />
                     Add Other
                   </button>
                 </div>
-                {familyMembers.others.map((other, index) => 
+                {familyMembers.others.map((other, index) =>
                   renderFamilyMemberFields('other', other, index)
                 )}
               </div>
@@ -1231,7 +1233,7 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
             </div>
             
             <div>
-              <h4 className="font-semibold mb-4">4. Family Interaction Pattern</h4>
+              <h4 className="font-semibold mb-4 dark:text-white">4. Family Interaction Pattern</h4>
               {renderField('Communication', 'family_history_interaction_communication', 'textarea')}
               {renderField('Leadership', 'family_history_interaction_leadership', 'textarea')}
               {renderField('Decision Making', 'family_history_interaction_decision_making', 'textarea')}
@@ -1240,7 +1242,7 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
               {renderField('Cohesiveness', 'family_history_interaction_cohesiveness', 'textarea')}
               {renderField('Family Burden', 'family_history_interaction_family_burden', 'textarea')}
               
-              <h5 className="font-medium mt-4 mb-2">Expressed Emotion</h5>
+              <h5 className="font-medium mt-4 mb-2 dark:text-white">Expressed Emotion</h5>
               {renderField('a) Warmth', 'family_history_expressed_emotion_warmth', 'text')}
               {renderField('b) Hostility', 'family_history_expressed_emotion_hostility', 'text')}
               {renderField('c) Critical comments', 'family_history_expressed_emotion_critical_comments', 'text')}
@@ -1270,7 +1272,7 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
         </button>
         {expandedSections.has(6) && (
           <div className="space-y-4">
-            <h4 className="font-semibold">1. Birth & Development History</h4>
+            <h4 className="font-semibold dark:text-white">1. Birth & Development History</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderField('Date of birth', 'personal_history_birth_date', 'date')}
               {renderField('Place of birth', 'personal_history_birth_place')}
@@ -1305,7 +1307,7 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
         </button>
         {expandedSections.has(7) && (
           <div className="space-y-4">
-            <h4 className="font-semibold">Academic history</h4>
+            <h4 className="font-semibold dark:text-white">Academic history</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderField('Age & standard of admission', 'scholastic_age_standard_admission')}
               {renderField('Highest grade completed', 'scholastic_highest_grade_completed')}
@@ -1522,22 +1524,22 @@ const CaseHistoryForm = ({ userId, partnerId, userName }) => {
             {renderField('1. Evolution and Sequence of Symptoms', 'present_illness_evolution_symptoms', 'textarea')}
             
             <div>
-              <h4 className="font-semibold mb-2">2. Mode of onset</h4>
+              <h4 className="font-semibold mb-2 dark:text-white">2. Mode of onset</h4>
               {renderField('Mode of onset (a. Sudden/ Abrupt (within 48 hrs.) b. Acute (within 2weeks) c. Insidious (>2weeks))', 'present_illness_mode_onset', 'textarea')}
             </div>
             
             <div>
-              <h4 className="font-semibold mb-2">3. Course of illness</h4>
+              <h4 className="font-semibold mb-2 dark:text-white">3. Course of illness</h4>
               {renderField('Course of illness (a. Continuous b. Episodic c. Fluctuating d. Others (specify))', 'present_illness_course', 'textarea')}
             </div>
             
             <div>
-              <h4 className="font-semibold mb-2">4. Progress</h4>
+              <h4 className="font-semibold mb-2 dark:text-white">4. Progress</h4>
               {renderField('Progress (a. Status Quo b. Improving c. Deteriorating d. Static)', 'present_illness_progress', 'textarea')}
             </div>
             
             <div>
-              <h4 className="font-semibold mb-2">5. Biological Functioning (Any change)</h4>
+              <h4 className="font-semibold mb-2 dark:text-white">5. Biological Functioning (Any change)</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {renderField('1. Sleep (a. Unchanged b. Increased c. Decreased)', 'present_illness_sleep_change')}
                 {renderField('2. Appetite (a. Unchanged b. Increased c. Decreased)', 'present_illness_appetite_change')}
