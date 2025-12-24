@@ -433,7 +433,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
           {/* Past Sessions */}
           {past.length > 0 && (
             <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Past Sessions</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Past Sessions</h3>
               <div className="space-y-4">
                 {past.map(session => {
                   const meetLink = getMeetLink(session);
