@@ -57,11 +57,12 @@ class Organization {
     return result.rows;
   }
 
-  static async update(id, orgData) {
+  static async update(id, orgData, client = null) {
     const { 
       name, email, contact, address, photo_url, gst_no, subscription_plan, video_sessions_enabled,
       theraptrack_controlled, number_of_therapists, subscription_plan_id, 
-      subscription_billing_period, subscription_start_date, subscription_end_date 
+      subscription_billing_period, subscription_start_date, subscription_end_date,
+      razorpay_subscription_id, razorpay_customer_id, payment_status
     } = orgData;
 
     console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
@@ -134,6 +135,18 @@ class Organization {
       updates.push(`subscription_end_date = $${paramIndex++}`);
       values.push(subscription_end_date);
     }
+    if (razorpay_subscription_id !== undefined) {
+      updates.push(`razorpay_subscription_id = $${paramIndex++}`);
+      values.push(razorpay_subscription_id);
+    }
+    if (razorpay_customer_id !== undefined) {
+      updates.push(`razorpay_customer_id = $${paramIndex++}`);
+      values.push(razorpay_customer_id);
+    }
+    if (payment_status !== undefined) {
+      updates.push(`payment_status = $${paramIndex++}`);
+      values.push(payment_status);
+    }
 
     if (updates.length === 0) {
       // No fields to update, just return the current record
@@ -151,7 +164,8 @@ class Organization {
     console.log('Executing update query:', query);
     console.log('Query values:', values);
 
-    const result = await db.query(query, values);
+    const dbClient = client || db;
+    const result = await dbClient.query(query, values);
     console.log('Update result:', result.rows[0]);
     return result.rows[0];
   }
@@ -177,6 +191,73 @@ class Organization {
     `;
     const result = await db.query(query, [orgId]);
     return result.rows;
+  }
+
+  /**
+   * Cancel organization subscription (marks as cancelled, retains access until end date)
+   * @param {number} id - Organization ID
+   * @param {Object} client - Optional database client for transactions
+   * @returns {Promise<Object>} Updated organization with cancellation
+   */
+  static async cancelSubscription(id, client = null) {
+    const query = `
+      UPDATE organizations
+      SET is_cancelled = TRUE,
+          cancellation_date = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Get active subscription details for an organization
+   * @param {number} id - Organization ID
+   * @returns {Promise<Object|null>} Organization with subscription details
+   */
+  static async getActiveSubscription(id) {
+    const query = `
+      SELECT o.*,
+             sp.plan_name,
+             sp.min_sessions,
+             sp.max_sessions,
+             sp.has_video,
+             sp.video_hours,
+             sp.organization_monthly_price,
+             sp.organization_quarterly_price,
+             sp.organization_yearly_price
+      FROM organizations o
+      LEFT JOIN subscription_plans sp ON o.subscription_plan_id = sp.id
+      WHERE o.id = $1
+        AND (o.subscription_end_date IS NULL OR o.subscription_end_date > CURRENT_TIMESTAMP)
+        AND (o.is_cancelled = FALSE OR o.is_cancelled IS NULL)
+    `;
+    const result = await db.query(query, [id]);
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Check if organization subscription is active
+   * @param {Object} organization - Organization object
+   * @returns {boolean} Whether subscription is active
+   */
+  static isSubscriptionActive(organization) {
+    if (!organization || !organization.subscription_plan_id) return false;
+    
+    const now = new Date();
+    const endDate = organization.subscription_end_date ? new Date(organization.subscription_end_date) : null;
+    
+    // If cancelled, check if still within active period
+    if (organization.is_cancelled) {
+      return endDate && endDate > now;
+    }
+    
+    // Not cancelled, check if not expired
+    return !endDate || endDate > now;
   }
 
   /**

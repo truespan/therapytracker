@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { organizationAPI, subscriptionPlanAPI } from '../../services/api';
+import { organizationAPI, subscriptionPlanAPI, razorpayAPI } from '../../services/api';
 import {
   CreditCard, Users, CheckCircle, XCircle, AlertCircle,
   Save, Trash2, Edit, Plus, Calendar, Loader, Building2
 } from 'lucide-react';
 import PlanSelectionModal from '../common/PlanSelectionModal';
+import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
+import { useAuth } from '../../context/AuthContext';
 
 const NonControlledSubscriptionManagement = ({ organizationId, organizationName }) => {
+  const { user } = useAuth();
   const [partners, setPartners] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -110,21 +113,106 @@ const NonControlledSubscriptionManagement = ({ organizationId, organizationName 
       setError('');
       setSuccessMessage('');
 
-      await organizationAPI.assignPartnerSubscriptionsToAll(organizationId, {
+      // Find the selected plan to check if it's Free Plan
+      const selectedPlan = organizationPlans.find(plan => plan.id === planId);
+      const isFreePlan = selectedPlan && (
+        selectedPlan.plan_name.toLowerCase() === 'free plan' ||
+        (selectedPlan.organization_monthly_price === 0 && billingPeriod === 'monthly')
+      );
+
+      // If Free Plan, skip payment and directly assign subscriptions
+      if (isFreePlan) {
+        await organizationAPI.assignPartnerSubscriptionsToAll(organizationId, {
+          subscription_plan_id: planId,
+          billing_period: billingPeriod
+        });
+
+        setSuccessMessage(`Free Plan assigned to all ${partners.length} therapist(s) successfully`);
+        setShowPlanModal(false);
+        setSelectedPartner(null);
+        setBulkMode(false);
+        await loadData();
+        setTimeout(() => setSuccessMessage(''), 5000);
+        return;
+      }
+
+      // For paid plans, proceed with Razorpay payment flow
+      // Step 1: Create Razorpay order (organization paying for all partners)
+      const orderResponse = await razorpayAPI.createOrder({
         subscription_plan_id: planId,
-        billing_period: billingPeriod
+        billing_period: billingPeriod,
+        number_of_therapists: partners.length // Total number of therapists
       });
 
-      setSuccessMessage(`Subscription plan assigned to all ${partners.length} therapist(s) successfully`);
-      setShowPlanModal(false);
-      setSelectedPartner(null);
-      setBulkMode(false);
-      await loadData();
-      setTimeout(() => setSuccessMessage(''), 5000);
+      const order = orderResponse.data.order;
+
+      // Step 2: Initialize Razorpay checkout
+      let paymentDetails;
+      try {
+        paymentDetails = await initializeRazorpayCheckout(order, {
+          name: 'Therapy Tracker',
+          description: `Subscription Plan for ${partners.length} therapist(s) - ${billingPeriod}`,
+          prefill: {
+            name: user?.name || organizationName || '',
+            email: user?.email || '',
+            contact: user?.contact || '',
+          },
+        });
+      } catch (paymentError) {
+        // User cancelled or payment failed
+        if (paymentError.message.includes('cancelled')) {
+          setError('Payment was cancelled. Please try again when ready.');
+        } else {
+          setError(paymentError.message || 'Payment initialization failed. Please try again.');
+        }
+        setShowPlanModal(false);
+        setTimeout(() => setError(''), 5000);
+        return;
+      }
+
+      // Step 3: Verify payment with backend
+      try {
+        await razorpayAPI.verifyPayment({
+          razorpay_order_id: paymentDetails.razorpay_order_id,
+          razorpay_payment_id: paymentDetails.razorpay_payment_id,
+          razorpay_signature: paymentDetails.razorpay_signature,
+        });
+
+        // Payment verified successfully, now assign subscriptions to all partners
+        await organizationAPI.assignPartnerSubscriptionsToAll(organizationId, {
+          subscription_plan_id: planId,
+          billing_period: billingPeriod
+        });
+
+        setSuccessMessage(`Payment successful! Subscription plan assigned to all ${partners.length} therapist(s) successfully`);
+        setShowPlanModal(false);
+        setSelectedPartner(null);
+        setBulkMode(false);
+
+        // Wait a moment for backend to process
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Refresh subscription data
+        await loadData();
+
+        // Force another refresh after a moment
+        setTimeout(async () => {
+          await loadData();
+        }, 1000);
+
+        setTimeout(() => setSuccessMessage(''), 5000);
+      } catch (verifyError) {
+        // Payment verification failed
+        console.error('Payment verification failed:', verifyError);
+        setError(verifyError.response?.data?.error || 'Payment verification failed. Please contact support if payment was deducted.');
+        setShowPlanModal(false);
+        setTimeout(() => setError(''), 5000);
+      }
     } catch (err) {
       console.error('Failed to assign plan to all partners:', err);
-      setError(err.response?.data?.error || 'Failed to assign subscription plan to all partners');
+      setError(err.response?.data?.error || err.message || 'Failed to assign subscription plan to all partners. Please try again.');
       setShowPlanModal(false);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setSaving(false);
     }
@@ -138,21 +226,106 @@ const NonControlledSubscriptionManagement = ({ organizationId, organizationName 
       setError('');
       setSuccessMessage('');
 
-      await organizationAPI.assignPartnerSubscriptions(organizationId, {
-        partner_ids: [selectedPartner.id],
+      // Find the selected plan to check if it's Free Plan
+      const selectedPlan = organizationPlans.find(plan => plan.id === planId);
+      const isFreePlan = selectedPlan && (
+        selectedPlan.plan_name.toLowerCase() === 'free plan' ||
+        (selectedPlan.organization_monthly_price === 0 && billingPeriod === 'monthly')
+      );
+
+      // If Free Plan, skip payment and directly assign subscription
+      if (isFreePlan) {
+        await organizationAPI.assignPartnerSubscriptions(organizationId, {
+          partner_ids: [selectedPartner.id],
+          subscription_plan_id: planId,
+          billing_period: billingPeriod
+        });
+
+        setSuccessMessage(`Free Plan assigned to ${selectedPartner.name} successfully`);
+        setShowPlanModal(false);
+        setSelectedPartner(null);
+        await loadData();
+        setTimeout(() => setSuccessMessage(''), 5000);
+        return;
+      }
+
+      // For paid plans, proceed with Razorpay payment flow
+      // Step 1: Create Razorpay order (organization paying for partner's subscription)
+      const orderResponse = await razorpayAPI.createOrder({
         subscription_plan_id: planId,
-        billing_period: billingPeriod
+        billing_period: billingPeriod,
+        number_of_therapists: 1 // Paying for one partner
       });
 
-      setSuccessMessage(`Subscription plan assigned to ${selectedPartner.name} successfully`);
-      setShowPlanModal(false);
-      setSelectedPartner(null);
-      await loadData();
-      setTimeout(() => setSuccessMessage(''), 5000);
+      const order = orderResponse.data.order;
+
+      // Step 2: Initialize Razorpay checkout
+      let paymentDetails;
+      try {
+        paymentDetails = await initializeRazorpayCheckout(order, {
+          name: 'Therapy Tracker',
+          description: `Subscription Plan for ${selectedPartner.name} - ${billingPeriod}`,
+          prefill: {
+            name: user?.name || organizationName || '',
+            email: user?.email || '',
+            contact: user?.contact || '',
+          },
+        });
+      } catch (paymentError) {
+        // User cancelled or payment failed
+        if (paymentError.message.includes('cancelled')) {
+          setError('Payment was cancelled. Please try again when ready.');
+        } else {
+          setError(paymentError.message || 'Payment initialization failed. Please try again.');
+        }
+        setShowPlanModal(false);
+        setTimeout(() => setError(''), 5000);
+        return;
+      }
+
+      // Step 3: Verify payment with backend
+      try {
+        await razorpayAPI.verifyPayment({
+          razorpay_order_id: paymentDetails.razorpay_order_id,
+          razorpay_payment_id: paymentDetails.razorpay_payment_id,
+          razorpay_signature: paymentDetails.razorpay_signature,
+        });
+
+        // Payment verified successfully, now assign the subscription
+        await organizationAPI.assignPartnerSubscriptions(organizationId, {
+          partner_ids: [selectedPartner.id],
+          subscription_plan_id: planId,
+          billing_period: billingPeriod
+        });
+
+        setSuccessMessage(`Payment successful! Subscription plan assigned to ${selectedPartner.name} successfully`);
+        setShowPlanModal(false);
+        setSelectedPartner(null);
+
+        // Wait a moment for backend to process
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Refresh subscription data
+        await loadData();
+
+        // Force another refresh after a moment
+        setTimeout(async () => {
+          await loadData();
+        }, 1000);
+
+        setTimeout(() => setSuccessMessage(''), 5000);
+      } catch (verifyError) {
+        // Payment verification failed
+        console.error('Payment verification failed:', verifyError);
+        setError(verifyError.response?.data?.error || 'Payment verification failed. Please contact support if payment was deducted.');
+        setShowPlanModal(false);
+        setTimeout(() => setError(''), 5000);
+      }
     } catch (err) {
       console.error('Failed to assign plan:', err);
-      setError(err.response?.data?.error || 'Failed to assign subscription plan');
+      setError(err.response?.data?.error || err.message || 'Failed to assign subscription plan. Please try again.');
       setShowPlanModal(false);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setSaving(false);
     }

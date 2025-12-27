@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { subscriptionPlanAPI } from '../../services/api';
-import { Plus, Edit2, Trash2, Save, X, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, AlertCircle, CheckCircle, Check, X as XIcon } from 'lucide-react';
 
 const SubscriptionPlansTab = () => {
   const [plans, setPlans] = useState([]);
@@ -16,14 +16,20 @@ const SubscriptionPlansTab = () => {
   const [formData, setFormData] = useState({
     plan_name: '',
     plan_type: 'individual',
-    min_sessions: '',
+    min_sessions: '0',
     max_sessions: '',
     has_video: false,
-    video_hours: '',
-    extra_video_rate: '',
+    has_whatsapp: false,
+    has_advanced_assessments: false,
+    has_report_generation: false,
+    has_custom_branding: false,
+    has_advanced_analytics: false,
+    has_priority_support: false,
+    has_email_support: false,
     min_therapists: '',
     max_therapists: '',
     plan_order: '',
+    plan_duration_days: '',
     individual_yearly_price: '',
     individual_quarterly_price: '',
     individual_monthly_price: '',
@@ -60,14 +66,20 @@ const SubscriptionPlansTab = () => {
     setFormData({
       plan_name: '',
       plan_type: 'individual',
-      min_sessions: '',
+      min_sessions: '0',
       max_sessions: '',
       has_video: false,
-      video_hours: '',
-      extra_video_rate: '',
+      has_whatsapp: false,
+      has_advanced_assessments: false,
+      has_report_generation: false,
+      has_custom_branding: false,
+      has_advanced_analytics: false,
+      has_priority_support: false,
+      has_email_support: false,
       min_therapists: '',
       max_therapists: '',
       plan_order: '',
+      plan_duration_days: '',
       individual_yearly_price: '',
       individual_quarterly_price: '',
       individual_monthly_price: '',
@@ -100,14 +112,20 @@ const SubscriptionPlansTab = () => {
     setFormData({
       plan_name: plan.plan_name || '',
       plan_type: plan.plan_type || 'individual',
-      min_sessions: plan.min_sessions || '',
-      max_sessions: plan.max_sessions || '',
+      min_sessions: plan.min_sessions !== null && plan.min_sessions !== undefined ? plan.min_sessions : '0',
+      max_sessions: plan.max_sessions !== null && plan.max_sessions !== undefined ? plan.max_sessions : '',
       has_video: plan.has_video || false,
-      video_hours: plan.video_hours || '',
-      extra_video_rate: plan.extra_video_rate || '',
+      has_whatsapp: plan.has_whatsapp || false,
+      has_advanced_assessments: plan.has_advanced_assessments || false,
+      has_report_generation: plan.has_report_generation || false,
+      has_custom_branding: plan.has_custom_branding || false,
+      has_advanced_analytics: plan.has_advanced_analytics || false,
+      has_priority_support: plan.has_priority_support || false,
+      has_email_support: plan.has_email_support || false,
       min_therapists: plan.min_therapists || '',
       max_therapists: plan.max_therapists || '',
       plan_order: plan.plan_order || '',
+      plan_duration_days: plan.plan_duration_days || '',
       individual_yearly_price: plan.individual_yearly_price || '',
       individual_quarterly_price: plan.individual_quarterly_price || '',
       individual_monthly_price: plan.individual_monthly_price || '',
@@ -150,14 +168,26 @@ const SubscriptionPlansTab = () => {
 
     try {
       // Validate form
-      if (!formData.plan_name || !formData.min_sessions || !formData.max_sessions) {
-        setError('Plan name, min sessions, and max sessions are required');
+      if (!formData.plan_name || formData.plan_name.trim() === '') {
+        setError('Plan name is required');
         setSaving(false);
         return;
       }
 
-      if (parseInt(formData.min_sessions) < 0 || parseInt(formData.max_sessions) < parseInt(formData.min_sessions)) {
-        setError('Invalid session limits. Max must be >= min, and min must be >= 0');
+      if (formData.min_sessions === null || formData.min_sessions === undefined || formData.min_sessions === '') {
+        setError('Min sessions is required');
+        setSaving(false);
+        return;
+      }
+
+      if (parseInt(formData.min_sessions) < 0) {
+        setError('Min sessions must be >= 0');
+        setSaving(false);
+        return;
+      }
+
+      if (formData.max_sessions && parseInt(formData.max_sessions) < parseInt(formData.min_sessions)) {
+        setError('Invalid session limits. Max must be >= min, or leave empty for unlimited');
         setSaving(false);
         return;
       }
@@ -176,19 +206,6 @@ const SubscriptionPlansTab = () => {
         }
       }
 
-      // Validate video fields if video is enabled
-      if (formData.has_video) {
-        if (!formData.video_hours || parseInt(formData.video_hours) < 0) {
-          setError('Video hours is required when video feature is enabled');
-          setSaving(false);
-          return;
-        }
-        if (!formData.extra_video_rate || parseFloat(formData.extra_video_rate) < 0) {
-          setError('Extra video rate is required when video feature is enabled');
-          setSaving(false);
-          return;
-        }
-      }
 
       // Validate all prices
       const priceFields = [
@@ -213,9 +230,17 @@ const SubscriptionPlansTab = () => {
         plan_name: formData.plan_name,
         plan_type: formData.plan_type,
         min_sessions: parseInt(formData.min_sessions),
-        max_sessions: parseInt(formData.max_sessions),
+        max_sessions: formData.max_sessions ? parseInt(formData.max_sessions) : null,
         has_video: formData.has_video,
+        has_whatsapp: formData.has_whatsapp,
+        has_advanced_assessments: formData.has_advanced_assessments,
+        has_report_generation: formData.has_report_generation,
+        has_custom_branding: formData.has_custom_branding,
+        has_advanced_analytics: formData.has_advanced_analytics,
+        has_priority_support: formData.has_priority_support,
+        has_email_support: formData.has_email_support,
         plan_order: formData.plan_order ? parseInt(formData.plan_order) : 0,
+        plan_duration_days: formData.plan_duration_days ? parseInt(formData.plan_duration_days) : null,
         individual_yearly_price: parseFloat(formData.individual_yearly_price),
         individual_quarterly_price: parseFloat(formData.individual_quarterly_price),
         individual_monthly_price: parseFloat(formData.individual_monthly_price),
@@ -231,14 +256,6 @@ const SubscriptionPlansTab = () => {
         organization_monthly_enabled: formData.organization_monthly_enabled
       };
 
-      // Add video fields if enabled
-      if (formData.has_video) {
-        submitData.video_hours = parseInt(formData.video_hours);
-        submitData.extra_video_rate = parseFloat(formData.extra_video_rate);
-      } else {
-        submitData.video_hours = null;
-        submitData.extra_video_rate = null;
-      }
 
       // Add therapist range for organization plans
       if (formData.plan_type === 'organization') {
@@ -408,14 +425,9 @@ const SubscriptionPlansTab = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-center">
                       {plan.has_video ? (
-                        <div className="flex flex-col items-center">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {plan.video_hours}hrs
-                          </span>
-                          {plan.extra_video_rate && (
-                            <span className="text-xs text-gray-500 mt-1">₹{plan.extra_video_rate}/min</span>
-                          )}
-                        </div>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Yes
+                        </span>
                       ) : (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                           No
@@ -477,9 +489,9 @@ const SubscriptionPlansTab = () => {
       {/* Create/Edit Modal */}
       {(showCreateModal || showEditModal) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">
+          <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-dark-bg-secondary border-b border-gray-200 dark:border-dark-border px-6 py-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
                 {editingPlan ? 'Edit Subscription Plan' : 'Create Subscription Plan'}
               </h2>
               <button
@@ -489,16 +501,16 @@ const SubscriptionPlansTab = () => {
                   setEditingPlan(null);
                   resetForm();
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-dark-text-secondary"
               >
                 <X className="h-6 w-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-6 dark:bg-dark-bg-secondary">
               {/* Plan Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   Plan Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -506,7 +518,7 @@ const SubscriptionPlansTab = () => {
                   name="plan_name"
                   value={formData.plan_name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
                   placeholder="e.g., Plan 1, Plan 2"
                   required
                 />
@@ -515,22 +527,23 @@ const SubscriptionPlansTab = () => {
               {/* Plan Type and Order */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                     Plan Type <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="plan_type"
                     value={formData.plan_type}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
                     required
                   >
                     <option value="individual">Individual</option>
                     <option value="organization">Organization</option>
+                    <option value="common">Common (Both)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                     Display Order
                   </label>
                   <input
@@ -548,7 +561,7 @@ const SubscriptionPlansTab = () => {
               {/* Session Limits */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                     Min Sessions <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -556,77 +569,159 @@ const SubscriptionPlansTab = () => {
                     name="min_sessions"
                     value={formData.min_sessions}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
                     placeholder="0"
                     min="0"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Max Sessions <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                    Max Sessions {formData.max_sessions === '' || formData.max_sessions === null ? '(Unlimited)' : ''}
                   </label>
                   <input
                     type="number"
                     name="max_sessions"
                     value={formData.max_sessions}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="100"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
+                    placeholder="Leave empty for unlimited"
                     min="0"
-                    required
                   />
                 </div>
               </div>
 
-              {/* Video Feature */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="has_video"
-                  checked={formData.has_video}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-700">
-                  Includes Video Feature
+              {/* Plan Duration */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  Plan Duration (Days)
                 </label>
+                <input
+                  type="number"
+                  name="plan_duration_days"
+                  value={formData.plan_duration_days}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
+                  placeholder="Leave empty for no limit (e.g., 7 for Free Plan)"
+                  min="1"
+                />
               </div>
 
-              {/* Video Details (conditional on has_video) */}
-              {formData.has_video && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Video Hours per Month
-                    </label>
-                    <input
-                      type="number"
-                      name="video_hours"
-                      value={formData.video_hours}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="10"
-                      min="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Extra Video Rate (₹/min)
-                    </label>
-                    <input
-                      type="number"
-                      name="extra_video_rate"
-                      value={formData.extra_video_rate}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      placeholder="0.75"
-                      step="0.01"
-                      min="0"
-                    />
-                  </div>
+              {/* Feature Summary Box */}
+              <div className="bg-gray-50 dark:bg-dark-bg-tertiary border border-gray-200 dark:border-dark-border rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary mb-3">Plan Features Summary</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {[
+                    { key: 'has_video', label: 'Video Feature' },
+                    { key: 'has_whatsapp', label: 'WhatsApp' },
+                    { key: 'has_advanced_assessments', label: 'Advanced Assessments' },
+                    { key: 'has_report_generation', label: 'Report Generation' },
+                    { key: 'has_custom_branding', label: 'Custom Branding' },
+                    { key: 'has_advanced_analytics', label: 'Advanced Analytics' },
+                    { key: 'has_priority_support', label: 'Priority Support' },
+                    { key: 'has_email_support', label: 'Email Support' }
+                  ].map((feature) => (
+                    <div key={feature.key} className="flex items-center space-x-2">
+                      {formData[feature.key] ? (
+                        <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <XIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      )}
+                      <span className={`text-sm ${formData[feature.key] ? 'text-green-700 dark:text-green-300 font-medium' : 'text-red-700 dark:text-red-300'}`}>
+                        {feature.label}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+
+              {/* Feature Toggles */}
+              <div className="border-t border-gray-200 dark:border-dark-border pt-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4">Feature Toggles</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_video"
+                      checked={formData.has_video}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Video Feature</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_whatsapp"
+                      checked={formData.has_whatsapp}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">WhatsApp</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_advanced_assessments"
+                      checked={formData.has_advanced_assessments}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Advanced Assessments</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_report_generation"
+                      checked={formData.has_report_generation}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Report Generation</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_custom_branding"
+                      checked={formData.has_custom_branding}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Custom Branding</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_advanced_analytics"
+                      checked={formData.has_advanced_analytics}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Advanced Analytics</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_priority_support"
+                      checked={formData.has_priority_support}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Priority Support</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_email_support"
+                      checked={formData.has_email_support}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Email Support</span>
+                  </label>
+                </div>
+              </div>
+
 
               {/* Therapist Range (conditional on plan_type=organization) */}
               {formData.plan_type === 'organization' && (
@@ -875,16 +970,16 @@ const SubscriptionPlansTab = () => {
                   onChange={handleChange}
                   className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
                 />
-                <label className="ml-2 block text-sm text-gray-700">
+                <label className="ml-2 block text-sm text-gray-700 dark:text-dark-text-secondary">
                   Plan is Active
                 </label>
               </div>
 
               {/* Error Message */}
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-2">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <span className="text-red-700">{error}</span>
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <span className="text-red-700 dark:text-red-300">{error}</span>
                 </div>
               )}
 
@@ -898,7 +993,7 @@ const SubscriptionPlansTab = () => {
                     setEditingPlan(null);
                     resetForm();
                   }}
-                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="px-6 py-2 border border-gray-300 dark:border-dark-border rounded-lg text-gray-700 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors"
                 >
                   Cancel
                 </button>

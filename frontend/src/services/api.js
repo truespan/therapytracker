@@ -97,6 +97,10 @@ export const partnerAPI = {
   getUsers: (id) => api.get(`/partners/${id}/users`),
   setDefaultReportTemplate: (id, templateId) => api.post(`/partners/${id}/default-report-template`, { template_id: templateId }),
   getDefaultReportTemplate: (id) => api.get(`/partners/${id}/default-report-template`),
+  selectSubscription: (data) => api.post('/partners/subscription/select', data),
+  cancelSubscription: () => api.post('/partners/subscription/cancel'),
+  updateFeeSettings: (id, data) => api.post(`/partners/${id}/fee-settings`, data),
+  getFeeSettings: (id) => api.get(`/partners/${id}/fee-settings`),
 };
 
 // Organization APIs
@@ -109,6 +113,7 @@ export const organizationAPI = {
   update: (id, data) => api.put(`/organizations/${id}`, data),
   getPartners: (id) => api.get(`/organizations/${id}/partners`),
   getUsers: (id) => api.get(`/organizations/${id}/users`),
+  cancelSubscription: () => api.post('/organizations/subscription/cancel'),
   
   // Partner subscription management (available for all organizations)
   getPartnerSubscriptions: (id) => api.get(`/organizations/${id}/partner-subscriptions`),
@@ -401,6 +406,15 @@ export const backgroundAPI = {
 // Contact API
 export const contactAPI = {
   submit: (formData) => api.post('/contact', formData),
+};
+
+// Razorpay Payment APIs
+export const razorpayAPI = {
+  createOrder: (data) => api.post('/razorpay/create-order', data),
+  verifyPayment: (data) => api.post('/razorpay/verify-payment', data),
+  createBookingOrder: (data) => api.post('/razorpay/create-booking-order', data),
+  verifyBookingPayment: (data) => api.post('/razorpay/verify-booking-payment', data),
+  getPaymentHistory: () => api.get('/razorpay/payment-history'),
 };
 
 export default api;

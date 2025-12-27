@@ -1,8 +1,8 @@
 import React from 'react';
-import { Calendar, Clock, Video, MapPin, User, X } from 'lucide-react';
+import { Calendar, Clock, Video, MapPin, User, X, DollarSign, IndianRupee } from 'lucide-react';
 import { formatTime } from '../../utils/dateUtils';
 
-const BookingConfirmationModal = ({ slot, partnerName, onConfirm, onCancel, loading }) => {
+const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, onCancel, loading }) => {
   if (!slot) return null;
 
   const formattedDate = new Date(slot.slot_date + 'T00:00:00').toLocaleDateString('en-US', {
@@ -13,6 +13,28 @@ const BookingConfirmationModal = ({ slot, partnerName, onConfirm, onCancel, load
   });
 
   const isOnline = slot.location_type === 'online' || slot.status.includes('online');
+
+  // Fee calculations - ensure values are numbers
+  const sessionFee = parseFloat(feeSettings?.session_fee) || 0;
+  const bookingFee = parseFloat(feeSettings?.booking_fee) || 0;
+  const currency = feeSettings?.fee_currency || 'INR';
+  const remaining = sessionFee > bookingFee ? sessionFee - bookingFee : 0;
+
+  // Currency symbol helper
+  const getCurrencySymbol = (curr) => {
+    const symbols = {
+      'INR': '₹',
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'AUD': 'A$',
+      'CAD': 'C$'
+    };
+    return symbols[curr] || curr;
+  };
+
+  const currencySymbol = getCurrencySymbol(currency);
+  const hasFees = sessionFee > 0 || bookingFee > 0;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -81,15 +103,54 @@ const BookingConfirmationModal = ({ slot, partnerName, onConfirm, onCancel, load
             </div>
           </div>
 
+          {/* Fee Details Section */}
+          {hasFees && (
+            <div className="mt-4 bg-green-50 dark:bg-dark-bg-secondary border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-green-900 dark:text-green-300 mb-3 flex items-center">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Fee Details
+              </h4>
+              <div className="space-y-2">
+                {sessionFee > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Per session fee:</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">
+                      {currencySymbol}{sessionFee.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {bookingFee > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Booking fee (to be paid now):</span>
+                    <span className="text-sm font-semibold text-green-700 dark:text-green-400">
+                      {currencySymbol}{bookingFee.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {remaining > 0 && (
+                  <div className="flex justify-between items-center pt-2 border-t border-green-200 dark:border-green-700">
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Remaining (to be paid later):</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">
+                      {currencySymbol}{remaining.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="mt-4 p-3 bg-yellow-50 dark:bg-dark-bg-secondary border border-yellow-200 dark:border-yellow-800 rounded-md">
             <p className="text-sm text-yellow-800 dark:text-yellow-300">
               <strong>Important:</strong> Please arrive on time for your appointment.
               {isOnline && ' You will receive session details after booking.'}
+              {hasFees && bookingFee > 0 && ' You will be redirected to payment gateway to complete the booking.'}
             </p>
           </div>
 
           <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-4">
-            Are you sure you want to book this appointment?
+            {hasFees && bookingFee > 0 
+              ? 'Click "Proceed to Payment" to complete your booking.'
+              : 'Are you sure you want to book this appointment?'}
           </p>
         </div>
 
@@ -110,7 +171,9 @@ const BookingConfirmationModal = ({ slot, partnerName, onConfirm, onCancel, load
                 loading ? 'cursor-wait' : ''
               }`}
             >
-              {loading ? 'Booking...' : 'Confirm Booking'}
+              {loading 
+                ? (hasFees && bookingFee > 0 ? 'Processing...' : 'Booking...') 
+                : (hasFees && bookingFee > 0 ? 'Proceed to Payment' : 'Confirm Booking')}
             </button>
           </div>
         </div>

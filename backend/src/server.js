@@ -11,7 +11,15 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+
+// JSON body parser - skip webhook route (needs raw body for signature verification)
+app.use((req, res, next) => {
+  if (req.path === '/api/razorpay/webhook') {
+    return next(); // Skip JSON parsing for webhook route
+  }
+  express.json()(req, res, next);
+});
+
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory

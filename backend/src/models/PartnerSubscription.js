@@ -168,8 +168,16 @@ class PartnerSubscription {
    * @param {string} updateData.billing_period - New billing period
    * @returns {Promise<Object>} Updated subscription assignment
    */
-  static async update(id, updateData) {
-    const { subscription_plan_id, billing_period } = updateData;
+  static async update(id, updateData, client = null) {
+    const {
+      subscription_plan_id,
+      billing_period,
+      razorpay_subscription_id,
+      razorpay_payment_id,
+      payment_status,
+      subscription_start_date,
+      subscription_end_date
+    } = updateData;
     const updates = [];
     const values = [];
     let paramIndex = 1;
@@ -181,6 +189,26 @@ class PartnerSubscription {
     if (billing_period !== undefined) {
       updates.push(`billing_period = $${paramIndex++}`);
       values.push(billing_period);
+    }
+    if (razorpay_subscription_id !== undefined) {
+      updates.push(`razorpay_subscription_id = $${paramIndex++}`);
+      values.push(razorpay_subscription_id);
+    }
+    if (razorpay_payment_id !== undefined) {
+      updates.push(`razorpay_payment_id = $${paramIndex++}`);
+      values.push(razorpay_payment_id);
+    }
+    if (payment_status !== undefined) {
+      updates.push(`payment_status = $${paramIndex++}`);
+      values.push(payment_status);
+    }
+    if (subscription_start_date !== undefined) {
+      updates.push(`subscription_start_date = $${paramIndex++}`);
+      values.push(subscription_start_date);
+    }
+    if (subscription_end_date !== undefined) {
+      updates.push(`subscription_end_date = $${paramIndex++}`);
+      values.push(subscription_end_date);
     }
 
     if (updates.length === 0) {
@@ -197,7 +225,8 @@ class PartnerSubscription {
       RETURNING *
     `;
 
-    const result = await db.query(query, values);
+    const dbClient = client || db;
+    const result = await dbClient.query(query, values);
     return result.rows[0];
   }
 
@@ -258,6 +287,101 @@ class PartnerSubscription {
     }
 
     return totalDeleted;
+  }
+
+  /**
+   * Cancel a subscription (marks as cancelled, retains access until end date)
+   * @param {number} id - Subscription assignment ID
+   * @param {Object} client - Optional database client for transactions
+   * @returns {Promise<Object>} Updated subscription with cancellation
+   */
+  static async cancelSubscription(id, client = null) {
+    const query = `
+      UPDATE partner_subscriptions
+      SET is_cancelled = TRUE,
+          cancellation_date = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Cancel subscription by partner ID (cancels the most recent active subscription)
+   * @param {number} partnerId - Partner ID
+   * @param {Object} client - Optional database client for transactions
+   * @returns {Promise<Object>} Updated subscription with cancellation
+   */
+  static async cancelSubscriptionByPartnerId(partnerId, client = null) {
+    const query = `
+      UPDATE partner_subscriptions
+      SET is_cancelled = TRUE,
+          cancellation_date = CURRENT_TIMESTAMP,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = (
+        SELECT id FROM partner_subscriptions
+        WHERE partner_id = $1
+        ORDER BY assigned_at DESC
+        LIMIT 1
+      )
+      RETURNING *
+    `;
+
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [partnerId]);
+    return result.rows[0];
+  }
+
+  /**
+   * Get active subscription for a partner
+   * @param {number} partnerId - Partner ID
+   * @returns {Promise<Object|null>} Active subscription or null
+   */
+  static async getActiveSubscription(partnerId) {
+    const query = `
+      SELECT ps.*, 
+             sp.plan_name,
+             sp.min_sessions,
+             sp.max_sessions,
+             sp.has_video,
+             sp.video_hours,
+             sp.individual_monthly_price,
+             sp.individual_quarterly_price,
+             sp.individual_yearly_price
+      FROM partner_subscriptions ps
+      JOIN subscription_plans sp ON ps.subscription_plan_id = sp.id
+      WHERE ps.partner_id = $1
+        AND (ps.subscription_end_date IS NULL OR ps.subscription_end_date > CURRENT_TIMESTAMP)
+        AND (ps.is_cancelled = FALSE OR ps.is_cancelled IS NULL)
+      ORDER BY ps.assigned_at DESC
+      LIMIT 1
+    `;
+    const result = await db.query(query, [partnerId]);
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Check if subscription is active (not expired and not cancelled, or cancelled but still within period)
+   * @param {Object} subscription - Subscription object
+   * @returns {boolean} Whether subscription is active
+   */
+  static isActive(subscription) {
+    if (!subscription) return false;
+    
+    const now = new Date();
+    const endDate = subscription.subscription_end_date ? new Date(subscription.subscription_end_date) : null;
+    
+    // If cancelled, check if still within active period
+    if (subscription.is_cancelled) {
+      return endDate && endDate > now;
+    }
+    
+    // Not cancelled, check if not expired
+    return !endDate || endDate > now;
   }
 }
 

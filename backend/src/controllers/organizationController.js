@@ -1236,6 +1236,64 @@ const bulkUpdateTherapistVideoSettings = async (req, res) => {
   }
 };
 
+/**
+ * Cancel organization subscription
+ */
+const cancelOrganizationSubscription = async (req, res) => {
+  try {
+    const organizationId = req.user.id; // Get organization ID from authenticated user
+    const Organization = require('../models/Organization');
+    const RazorpayService = require('../services/razorpayService');
+
+    // Get the organization's current subscription
+    const organization = await Organization.findById(organizationId);
+    
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    if (!organization.subscription_plan_id) {
+      return res.status(404).json({ error: 'No active subscription found' });
+    }
+
+    // Check if subscription is already cancelled
+    if (organization.is_cancelled) {
+      return res.status(400).json({ error: 'Subscription is already cancelled' });
+    }
+
+    // Check if it's a paid subscription
+    if (!organization.subscription_end_date) {
+      return res.status(400).json({ error: 'Cannot cancel free subscription' });
+    }
+
+    // Cancel in Razorpay if razorpay_subscription_id exists
+    if (organization.razorpay_subscription_id) {
+      try {
+        await RazorpayService.cancelSubscription(organization.razorpay_subscription_id, {
+          cancel_at_cycle_end: 1 // Cancel at end of billing cycle
+        });
+      } catch (razorpayError) {
+        console.error('Razorpay cancellation error:', razorpayError);
+        // Continue with database cancellation even if Razorpay fails
+      }
+    }
+
+    // Cancel in database
+    const cancelledOrganization = await Organization.cancelSubscription(organizationId);
+
+    res.json({
+      message: 'Subscription cancelled successfully. You will retain access until the end of your billing period.',
+      organization: cancelledOrganization
+    });
+  } catch (error) {
+    console.error('Cancel organization subscription error:', error);
+    res.status(500).json({
+      error: 'Failed to cancel subscription',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   getOrganizationById,
@@ -1258,6 +1316,7 @@ module.exports = {
   verifyTherapistSignupToken,
   getTherapistsVideoSettings,
   updateTherapistVideoSettings,
-  bulkUpdateTherapistVideoSettings
+  bulkUpdateTherapistVideoSettings,
+  cancelOrganizationSubscription
 };
 

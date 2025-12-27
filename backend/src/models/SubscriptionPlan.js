@@ -8,11 +8,17 @@ class SubscriptionPlan {
       min_sessions,
       max_sessions,
       has_video,
-      video_hours,
-      extra_video_rate,
+      has_whatsapp,
+      has_advanced_assessments,
+      has_report_generation,
+      has_custom_branding,
+      has_advanced_analytics,
+      has_priority_support,
+      has_email_support,
       min_therapists,
       max_therapists,
       plan_order,
+      plan_duration_days,
       individual_yearly_price,
       individual_quarterly_price,
       individual_monthly_price,
@@ -31,14 +37,16 @@ class SubscriptionPlan {
     const query = `
       INSERT INTO subscription_plans (
         plan_name, plan_type, min_sessions, max_sessions, has_video,
-        video_hours, extra_video_rate, min_therapists, max_therapists, plan_order,
+        has_whatsapp, has_advanced_assessments, has_report_generation,
+        has_custom_branding, has_advanced_analytics, has_priority_support, has_email_support,
+        min_therapists, max_therapists, plan_order, plan_duration_days,
         individual_yearly_price, individual_quarterly_price, individual_monthly_price,
         organization_yearly_price, organization_quarterly_price, organization_monthly_price,
         is_active,
         individual_yearly_enabled, individual_quarterly_enabled, individual_monthly_enabled,
         organization_yearly_enabled, organization_quarterly_enabled, organization_monthly_enabled
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
       RETURNING *
     `;
 
@@ -46,13 +54,19 @@ class SubscriptionPlan {
       plan_name,
       plan_type || 'individual',
       min_sessions,
-      max_sessions,
+      max_sessions !== undefined ? max_sessions : null,
       has_video !== undefined ? has_video : false,
-      video_hours || null,
-      extra_video_rate || null,
+      has_whatsapp !== undefined ? has_whatsapp : false,
+      has_advanced_assessments !== undefined ? has_advanced_assessments : false,
+      has_report_generation !== undefined ? has_report_generation : false,
+      has_custom_branding !== undefined ? has_custom_branding : false,
+      has_advanced_analytics !== undefined ? has_advanced_analytics : false,
+      has_priority_support !== undefined ? has_priority_support : false,
+      has_email_support !== undefined ? has_email_support : false,
       min_therapists || null,
       max_therapists || null,
       plan_order !== undefined ? plan_order : 0,
+      plan_duration_days !== undefined ? plan_duration_days : null,
       individual_yearly_price,
       individual_quarterly_price,
       individual_monthly_price,
@@ -98,11 +112,17 @@ class SubscriptionPlan {
       min_sessions,
       max_sessions,
       has_video,
-      video_hours,
-      extra_video_rate,
+      has_whatsapp,
+      has_advanced_assessments,
+      has_report_generation,
+      has_custom_branding,
+      has_advanced_analytics,
+      has_priority_support,
+      has_email_support,
       min_therapists,
       max_therapists,
       plan_order,
+      plan_duration_days,
       individual_yearly_price,
       individual_quarterly_price,
       individual_monthly_price,
@@ -137,19 +157,39 @@ class SubscriptionPlan {
     }
     if (max_sessions !== undefined) {
       updates.push(`max_sessions = $${paramIndex++}`);
-      values.push(max_sessions);
+      values.push(max_sessions === null ? null : max_sessions);
     }
     if (has_video !== undefined) {
       updates.push(`has_video = $${paramIndex++}`);
       values.push(has_video);
     }
-    if (video_hours !== undefined) {
-      updates.push(`video_hours = $${paramIndex++}`);
-      values.push(video_hours);
+    if (has_whatsapp !== undefined) {
+      updates.push(`has_whatsapp = $${paramIndex++}`);
+      values.push(has_whatsapp);
     }
-    if (extra_video_rate !== undefined) {
-      updates.push(`extra_video_rate = $${paramIndex++}`);
-      values.push(extra_video_rate);
+    if (has_advanced_assessments !== undefined) {
+      updates.push(`has_advanced_assessments = $${paramIndex++}`);
+      values.push(has_advanced_assessments);
+    }
+    if (has_report_generation !== undefined) {
+      updates.push(`has_report_generation = $${paramIndex++}`);
+      values.push(has_report_generation);
+    }
+    if (has_custom_branding !== undefined) {
+      updates.push(`has_custom_branding = $${paramIndex++}`);
+      values.push(has_custom_branding);
+    }
+    if (has_advanced_analytics !== undefined) {
+      updates.push(`has_advanced_analytics = $${paramIndex++}`);
+      values.push(has_advanced_analytics);
+    }
+    if (has_priority_support !== undefined) {
+      updates.push(`has_priority_support = $${paramIndex++}`);
+      values.push(has_priority_support);
+    }
+    if (has_email_support !== undefined) {
+      updates.push(`has_email_support = $${paramIndex++}`);
+      values.push(has_email_support);
     }
     if (min_therapists !== undefined) {
       updates.push(`min_therapists = $${paramIndex++}`);
@@ -162,6 +202,10 @@ class SubscriptionPlan {
     if (plan_order !== undefined) {
       updates.push(`plan_order = $${paramIndex++}`);
       values.push(plan_order);
+    }
+    if (plan_duration_days !== undefined) {
+      updates.push(`plan_duration_days = $${paramIndex++}`);
+      values.push(plan_duration_days === null ? null : plan_duration_days);
     }
     if (individual_yearly_price !== undefined) {
       updates.push(`individual_yearly_price = $${paramIndex++}`);
@@ -275,13 +319,14 @@ class SubscriptionPlan {
 
   /**
    * Get individual practitioner plans (optionally exclude Free Plan from modal)
+   * Includes both 'individual' and 'common' plan types
    * @param {boolean} excludeFreePlan - Whether to exclude Free Plan from results
    * @returns {Promise<Array>} Individual plans
    */
   static async getIndividualPlans(excludeFreePlan = false) {
     let query = `
       SELECT * FROM subscription_plans
-      WHERE plan_type = 'individual' AND is_active = TRUE
+      WHERE (plan_type = 'individual' OR plan_type = 'common') AND is_active = TRUE
     `;
 
     if (excludeFreePlan) {
@@ -296,16 +341,21 @@ class SubscriptionPlan {
 
   /**
    * Get organization plans filtered by therapist count
+   * Includes both 'organization' and 'common' plan types
+   * For 'common' plans, therapist count restrictions don't apply
    * @param {number} therapistCount - Number of therapists in organization
    * @returns {Promise<Array>} Filtered organization plans
    */
   static async getOrganizationPlans(therapistCount) {
     const query = `
       SELECT * FROM subscription_plans
-      WHERE plan_type = 'organization'
+      WHERE (
+        plan_type = 'common' OR
+        (plan_type = 'organization'
+         AND min_therapists <= $1
+         AND max_therapists >= $1)
+      )
       AND is_active = TRUE
-      AND min_therapists <= $1
-      AND max_therapists >= $1
       ORDER BY plan_order ASC
     `;
 
@@ -315,6 +365,7 @@ class SubscriptionPlan {
 
   /**
    * Validate if a plan is compatible with organization therapist count
+   * Common plans are always valid, organization plans must match therapist count
    * @param {number} planId - Plan ID
    * @param {number} therapistCount - Number of therapists
    * @returns {Promise<boolean>} Whether plan is valid for this org
@@ -323,10 +374,13 @@ class SubscriptionPlan {
     const query = `
       SELECT COUNT(*) as count FROM subscription_plans
       WHERE id = $1
-      AND plan_type = 'organization'
-      AND min_therapists <= $2
-      AND max_therapists >= $2
       AND is_active = TRUE
+      AND (
+        plan_type = 'common' OR
+        (plan_type = 'organization'
+         AND min_therapists <= $2
+         AND max_therapists >= $2)
+      )
     `;
 
     const result = await db.query(query, [planId, therapistCount]);
@@ -335,6 +389,9 @@ class SubscriptionPlan {
 }
 
 module.exports = SubscriptionPlan;
+
+
+
 
 
 

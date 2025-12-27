@@ -55,7 +55,7 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
   ];
 
   return (
-    <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md p-6 mb-6">
+    <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md p-6">
       <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-900 dark:text-dark-text-primary">
         <Calendar className="h-5 w-5 mr-2 text-primary-600 dark:text-dark-primary-500" />
         Create Availability Slot

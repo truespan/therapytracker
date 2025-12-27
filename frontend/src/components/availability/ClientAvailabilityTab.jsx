@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, RefreshCw, AlertCircle } from 'lucide-react';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import BookingConfirmationModal from './BookingConfirmationModal';
-import { availabilityAPI, appointmentAPI } from '../../services/api';
+import { availabilityAPI, appointmentAPI, partnerAPI, razorpayAPI } from '../../services/api';
+import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 
 const ClientAvailabilityTab = ({ userId, partners }) => {
   const [selectedPartner, setSelectedPartner] = useState(null);
@@ -11,6 +12,7 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [feeSettings, setFeeSettings] = useState(null);
 
   useEffect(() => {
     // Auto-select partner if only one exists
@@ -22,8 +24,23 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
   useEffect(() => {
     if (selectedPartner) {
       loadAvailableSlots(selectedPartner.id);
+      loadFeeSettings(selectedPartner.id);
     }
   }, [selectedPartner]);
+
+  /**
+   * Load fee settings for selected partner
+   */
+  const loadFeeSettings = async (partnerId) => {
+    try {
+      const response = await partnerAPI.getFeeSettings(partnerId);
+      setFeeSettings(response.data.feeSettings);
+    } catch (error) {
+      console.error('Failed to load fee settings:', error);
+      // Continue without fee settings
+      setFeeSettings(null);
+    }
+  };
 
   /**
    * Load available slots for selected partner
@@ -50,35 +67,120 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
   };
 
   /**
-   * Confirm booking
+   * Confirm booking - with payment flow if booking fee exists
    */
   const confirmBooking = async () => {
     try {
       setBookingLoading(true);
-      const response = await availabilityAPI.bookSlot(selectedSlot.id);
 
-      setShowBookingModal(false);
+      const bookingFee = feeSettings?.booking_fee || 0;
 
-      // Check if there was a Google Calendar conflict
-      if (response.data.google_conflict) {
-        alert(
-          'Booking successful!\n\n' +
-          'Note: There was a conflict with Google Calendar, so the appointment was not added to the calendar. ' +
-          'However, your booking has been confirmed in the system.'
-        );
+      // If booking fee exists, initiate payment flow
+      if (bookingFee > 0) {
+        await handleBookingWithPayment();
       } else {
-        alert('Appointment booked successfully! The appointment has been added to your calendar.');
+        // Direct booking without payment
+        await handleDirectBooking();
       }
-
-      // Reload slots to show updated availability
-      loadAvailableSlots(selectedPartner.id);
     } catch (error) {
       console.error('Failed to book slot:', error);
       const errorMessage = error.response?.data?.error || 'Failed to book appointment';
       alert(errorMessage);
-    } finally {
       setBookingLoading(false);
     }
+  };
+
+  /**
+   * Handle booking with payment
+   */
+  const handleBookingWithPayment = async () => {
+    try {
+      // Create Razorpay order for booking fee
+      const orderResponse = await razorpayAPI.createBookingOrder({
+        slot_id: selectedSlot.id,
+        partner_id: selectedPartner.id
+      });
+
+      const order = orderResponse.data.order;
+
+      // Get user details for prefill
+      const userDetails = {
+        name: '', // Will be filled from user context if available
+        email: '',
+        contact: ''
+      };
+
+      // Initialize Razorpay checkout
+      const paymentResult = await initializeRazorpayCheckout(order, {
+        name: 'TheraP Track',
+        description: 'Booking Fee Payment',
+        prefill: userDetails
+      });
+
+      // Verify payment
+      const verifyResponse = await razorpayAPI.verifyBookingPayment({
+        razorpay_order_id: paymentResult.razorpay_order_id,
+        razorpay_payment_id: paymentResult.razorpay_payment_id,
+        razorpay_signature: paymentResult.razorpay_signature,
+        slot_id: selectedSlot.id
+      });
+
+      if (verifyResponse.data.booking_confirmed) {
+        // Payment successful, now book the slot
+        const bookingResponse = await availabilityAPI.bookSlot(selectedSlot.id);
+
+        setShowBookingModal(false);
+        setBookingLoading(false);
+
+        // Check if there was a Google Calendar conflict
+        if (bookingResponse.data.google_conflict) {
+          alert(
+            'Payment successful! Booking confirmed!\n\n' +
+            'Note: There was a conflict with Google Calendar, so the appointment was not added to the calendar. ' +
+            'However, your booking has been confirmed in the system.'
+          );
+        } else {
+          alert('Payment successful! Appointment booked successfully! The appointment has been added to your calendar.');
+        }
+
+        // Reload slots to show updated availability
+        loadAvailableSlots(selectedPartner.id);
+      } else {
+        throw new Error('Payment verification failed');
+      }
+    } catch (error) {
+      setBookingLoading(false);
+      if (error.message === 'Payment cancelled by user') {
+        setShowBookingModal(false);
+        alert('Payment cancelled. Your booking was not completed.');
+      } else {
+        throw error;
+      }
+    }
+  };
+
+  /**
+   * Handle direct booking without payment
+   */
+  const handleDirectBooking = async () => {
+    const response = await availabilityAPI.bookSlot(selectedSlot.id);
+
+    setShowBookingModal(false);
+    setBookingLoading(false);
+
+    // Check if there was a Google Calendar conflict
+    if (response.data.google_conflict) {
+      alert(
+        'Booking successful!\n\n' +
+        'Note: There was a conflict with Google Calendar, so the appointment was not added to the calendar. ' +
+        'However, your booking has been confirmed in the system.'
+      );
+    } else {
+      alert('Appointment booked successfully! The appointment has been added to your calendar.');
+    }
+
+    // Reload slots to show updated availability
+    loadAvailableSlots(selectedPartner.id);
   };
 
   /**
@@ -178,6 +280,7 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
         <BookingConfirmationModal
           slot={selectedSlot}
           partnerName={selectedPartner.name}
+          feeSettings={feeSettings}
           onConfirm={confirmBooking}
           onCancel={cancelBooking}
           loading={bookingLoading}

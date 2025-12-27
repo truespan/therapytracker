@@ -347,13 +347,110 @@ const assignToAllPartners = async (req, res) => {
   }
 };
 
+/**
+ * Allow a partner to select their own subscription plan
+ * Only allowed for partners in TheraPTrack controlled organizations
+ */
+const selectOwnSubscription = async (req, res) => {
+  try {
+    const partnerId = req.user.id;
+    const { subscription_plan_id, billing_period } = req.body;
+
+    // Get partner details
+    const partner = await Partner.findById(partnerId);
+    if (!partner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+
+    // Check if partner belongs to an organization
+    if (!partner.organization_id) {
+      return res.status(400).json({ 
+        error: 'You must belong to an organization to select a subscription plan' 
+      });
+    }
+
+    // Get organization details
+    const organization = await Organization.findById(partner.organization_id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Only allow for TheraPTrack controlled organizations
+    if (!organization.theraptrack_controlled) {
+      return res.status(403).json({ 
+        error: 'You can only select a plan if your organization is TheraPTrack controlled' 
+      });
+    }
+
+    // Validate required fields
+    if (!subscription_plan_id) {
+      return res.status(400).json({ error: 'subscription_plan_id is required' });
+    }
+
+    if (!billing_period || !['monthly', 'quarterly', 'yearly'].includes(billing_period)) {
+      return res.status(400).json({ 
+        error: 'billing_period is required and must be one of: monthly, quarterly, yearly' 
+      });
+    }
+
+    // Validate subscription plan exists and is for individuals
+    const plan = await SubscriptionPlan.findById(subscription_plan_id);
+    if (!plan) {
+      return res.status(404).json({ error: 'Subscription plan not found' });
+    }
+
+    // Check if the plan is for individuals (or common)
+    if (plan.plan_type === 'organization') {
+      return res.status(400).json({ 
+        error: 'This plan is for organizations only. Please select an individual plan.' 
+      });
+    }
+
+    // Check if billing period is enabled for this plan
+    const enabledKey = `individual_${billing_period}_enabled`;
+    if (!plan[enabledKey]) {
+      return res.status(400).json({ 
+        error: `${billing_period} billing is not enabled for this plan` 
+      });
+    }
+
+    // Remove existing subscriptions for this partner
+    await PartnerSubscription.bulkRemove([partnerId]);
+
+    // Create new subscription assignment
+    const subscription = await PartnerSubscription.create({
+      partner_id: partnerId,
+      subscription_plan_id: parseInt(subscription_plan_id),
+      billing_period
+    });
+
+    res.json({
+      success: true,
+      message: 'Subscription plan selected successfully',
+      subscription
+    });
+  } catch (error) {
+    console.error('Select own subscription error:', error);
+    res.status(500).json({
+      error: 'Failed to select subscription plan',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getOrganizationPartnerSubscriptions,
   assignSubscriptions,
   updateSubscription,
   removeSubscriptions,
-  assignToAllPartners
+  assignToAllPartners,
+  selectOwnSubscription
 };
+
+
+
+
+
 
 
 

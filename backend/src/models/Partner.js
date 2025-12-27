@@ -96,7 +96,7 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency, video_sessions_enabled } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency, session_fee, booking_fee, video_sessions_enabled } = partnerData;
     const query = `
       UPDATE partners
       SET name = COALESCE($1, name),
@@ -116,8 +116,10 @@ class Partner {
           fee_min = CASE WHEN $15::DECIMAL IS NULL THEN fee_min ELSE $15::DECIMAL END,
           fee_max = CASE WHEN $16::DECIMAL IS NULL THEN fee_max ELSE $16::DECIMAL END,
           fee_currency = COALESCE($17, fee_currency),
-          video_sessions_enabled = COALESCE($18, video_sessions_enabled)
-      WHERE id = $19
+          session_fee = CASE WHEN $18::DECIMAL IS NULL THEN session_fee ELSE $18::DECIMAL END,
+          booking_fee = CASE WHEN $19::DECIMAL IS NULL THEN booking_fee ELSE $19::DECIMAL END,
+          video_sessions_enabled = COALESCE($20, video_sessions_enabled)
+      WHERE id = $21
       RETURNING *
     `;
     const values = [
@@ -127,6 +129,7 @@ class Partner {
       other_practice_details !== undefined ? other_practice_details : null,
       email_verified, default_report_template_id, default_report_background,
       fee_min !== undefined ? fee_min : null, fee_max !== undefined ? fee_max : null, fee_currency,
+      session_fee !== undefined ? session_fee : null, booking_fee !== undefined ? booking_fee : null,
       video_sessions_enabled, id
     ];
     const result = await db.query(query, values);
@@ -405,6 +408,46 @@ class Partner {
       RETURNING id, name, email, video_sessions_enabled
     `;
     const result = await db.query(query, [partnerId, enabled]);
+    return result.rows[0];
+  }
+
+  /**
+   * Update fee settings for a partner
+   * @param {number} partnerId - Partner ID
+   * @param {Object} feeData - Fee data { session_fee, booking_fee, fee_currency }
+   * @returns {Promise<Object>} Updated partner record
+   */
+  static async updateFeeSettings(partnerId, feeData) {
+    const { session_fee, booking_fee, fee_currency } = feeData;
+    const query = `
+      UPDATE partners
+      SET session_fee = $2,
+          booking_fee = $3,
+          fee_currency = COALESCE($4, fee_currency)
+      WHERE id = $1
+      RETURNING id, name, session_fee, booking_fee, fee_currency
+    `;
+    const result = await db.query(query, [
+      partnerId,
+      session_fee !== undefined ? session_fee : null,
+      booking_fee !== undefined ? booking_fee : null,
+      fee_currency || 'INR'
+    ]);
+    return result.rows[0];
+  }
+
+  /**
+   * Get fee settings for a partner
+   * @param {number} partnerId - Partner ID
+   * @returns {Promise<Object>} Partner fee settings
+   */
+  static async getFeeSettings(partnerId) {
+    const query = `
+      SELECT id, name, session_fee, booking_fee, fee_currency
+      FROM partners
+      WHERE id = $1
+    `;
+    const result = await db.query(query, [partnerId]);
     return result.rows[0];
   }
 }

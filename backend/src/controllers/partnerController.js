@@ -19,10 +19,18 @@ const getPartnerById = async (req, res) => {
 
       const PartnerSubscription = require('../models/PartnerSubscription');
       
-      // If organization is TheraPTrack controlled, get or create partner's individual subscription assignment
+      // If organization is TheraPTrack controlled, get partner's individual subscription
       if (organization.theraptrack_controlled) {
-        // Get or create Free Plan subscription if partner doesn't have one
-        partner.subscription = await PartnerSubscription.getOrCreateFreePlan(id);
+        // First check if partner has any subscription (including paid plans)
+        const partnerSubscriptions = await PartnerSubscription.findByPartnerId(id);
+        
+        if (partnerSubscriptions.length > 0) {
+          // Partner has a subscription (could be Free Plan or a paid plan)
+          partner.subscription = partnerSubscriptions[0];
+        } else {
+          // Partner doesn't have any subscription, create Free Plan
+          partner.subscription = await PartnerSubscription.getOrCreateFreePlan(id);
+        }
       } else {
         // For non-TheraPTrack controlled organizations, fetch the partner's assigned subscription
         const partnerSubscriptions = await PartnerSubscription.findByPartnerId(id);
@@ -379,6 +387,150 @@ const getDefaultReportBackground = async (req, res) => {
   }
 };
 
+/**
+ * Cancel partner subscription
+ */
+const cancelSubscription = async (req, res) => {
+  try {
+    const partnerId = req.user.id; // Get partner ID from authenticated user
+    const PartnerSubscription = require('../models/PartnerSubscription');
+    const RazorpayService = require('../services/razorpayService');
+
+    // Get the partner's current subscription
+    const subscriptions = await PartnerSubscription.findByPartnerId(partnerId);
+    
+    if (!subscriptions || subscriptions.length === 0) {
+      return res.status(404).json({ error: 'No active subscription found' });
+    }
+
+    const currentSubscription = subscriptions[0];
+
+    // Check if subscription is already cancelled
+    if (currentSubscription.is_cancelled) {
+      return res.status(400).json({ error: 'Subscription is already cancelled' });
+    }
+
+    // Check if it's a paid subscription
+    if (!currentSubscription.subscription_end_date) {
+      return res.status(400).json({ error: 'Cannot cancel free subscription' });
+    }
+
+    // Cancel in Razorpay if razorpay_subscription_id exists
+    if (currentSubscription.razorpay_subscription_id) {
+      try {
+        await RazorpayService.cancelSubscription(currentSubscription.razorpay_subscription_id, {
+          cancel_at_cycle_end: 1 // Cancel at end of billing cycle
+        });
+      } catch (razorpayError) {
+        console.error('Razorpay cancellation error:', razorpayError);
+        // Continue with database cancellation even if Razorpay fails
+      }
+    }
+
+    // Cancel in database
+    const cancelledSubscription = await PartnerSubscription.cancelSubscription(currentSubscription.id);
+
+    res.json({
+      message: 'Subscription cancelled successfully. You will retain access until the end of your billing period.',
+      subscription: cancelledSubscription
+    });
+  } catch (error) {
+    console.error('Cancel subscription error:', error);
+    res.status(500).json({
+      error: 'Failed to cancel subscription',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Update fee settings for a partner
+ */
+const updateFeeSettings = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { session_fee, booking_fee, fee_currency } = req.body;
+
+    // Check authorization - only the partner themselves can update their fees
+    if (req.user.userType === 'partner' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to update fee settings for this partner' });
+    }
+
+    // Validate that at least one fee field is provided
+    if (session_fee === undefined && booking_fee === undefined && !fee_currency) {
+      return res.status(400).json({ error: 'At least one fee field must be provided' });
+    }
+
+    // Validate fee values are non-negative
+    if (session_fee !== undefined && session_fee !== null && session_fee < 0) {
+      return res.status(400).json({ error: 'Session fee must be non-negative' });
+    }
+
+    if (booking_fee !== undefined && booking_fee !== null && booking_fee < 0) {
+      return res.status(400).json({ error: 'Booking fee must be non-negative' });
+    }
+
+    // Validate currency code (basic validation)
+    if (fee_currency && !/^[A-Z]{3}$/.test(fee_currency)) {
+      return res.status(400).json({ error: 'Currency must be a valid 3-letter ISO code (e.g., INR, USD)' });
+    }
+
+    const updatedPartner = await Partner.updateFeeSettings(id, {
+      session_fee,
+      booking_fee,
+      fee_currency
+    });
+
+    if (!updatedPartner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+
+    res.json({
+      message: 'Fee settings updated successfully',
+      feeSettings: {
+        session_fee: updatedPartner.session_fee,
+        booking_fee: updatedPartner.booking_fee,
+        fee_currency: updatedPartner.fee_currency
+      }
+    });
+  } catch (error) {
+    console.error('Update fee settings error:', error);
+    res.status(500).json({
+      error: 'Failed to update fee settings',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Get fee settings for a partner
+ */
+const getFeeSettings = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const partner = await Partner.getFeeSettings(id);
+
+    if (!partner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+
+    res.json({
+      feeSettings: {
+        session_fee: partner.session_fee,
+        booking_fee: partner.booking_fee,
+        fee_currency: partner.fee_currency || 'INR'
+      }
+    });
+  } catch (error) {
+    console.error('Get fee settings error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch fee settings',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getPartnerById,
   updatePartner,
@@ -389,6 +541,9 @@ module.exports = {
   getAvailableBackgrounds,
   getBackgroundPreview,
   setDefaultReportBackground,
-  getDefaultReportBackground
+  getDefaultReportBackground,
+  cancelSubscription,
+  updateFeeSettings,
+  getFeeSettings
 };
 

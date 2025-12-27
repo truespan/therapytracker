@@ -4,9 +4,13 @@ import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCir
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import DarkModeToggle from '../common/DarkModeToggle';
-import { googleCalendarAPI, partnerAPI, subscriptionPlanAPI, organizationAPI } from '../../services/api';
+import { googleCalendarAPI, partnerAPI, subscriptionPlanAPI, organizationAPI, razorpayAPI } from '../../services/api';
 import ChangePasswordSection from '../common/ChangePasswordSection';
 import PlanSelectionModal from '../common/PlanSelectionModal';
+import CancellationConfirmDialog from '../common/CancellationConfirmDialog';
+import SubscriptionStatusBadge from '../common/SubscriptionStatusBadge';
+import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
+import { getPlanSelectionButtonText, canCancelSubscription } from '../../utils/subscriptionHelper';
 
 const PartnerSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -20,6 +24,8 @@ const PartnerSettings = () => {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [availablePlans, setAvailablePlans] = useState([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
+  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   // Form state for editable fields
   const [formData, setFormData] = useState({
@@ -223,40 +229,171 @@ const PartnerSettings = () => {
     }
   };
 
-  // Handle plan selection
+  // Handle subscription cancellation
+  const handleCancelSubscription = async () => {
+    try {
+      setCancelling(true);
+      setSaveMessage({ type: '', text: '' });
+
+      await partnerAPI.cancelSubscription();
+
+      setSaveMessage({
+        type: 'success',
+        text: 'Subscription cancelled successfully. You will retain access until the end of your billing period.'
+      });
+
+      setShowCancellationDialog(false);
+
+      // Refresh subscription data
+      await loadOrganizationSubscription();
+      await refreshUser();
+
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 8000);
+    } catch (err) {
+      console.error('Failed to cancel subscription:', err);
+      setSaveMessage({
+        type: 'error',
+        text: err.response?.data?.error || 'Failed to cancel subscription. Please try again.'
+      });
+      setShowCancellationDialog(false);
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  // Handle plan selection with Razorpay payment flow (or direct update for Free Plan)
   const handlePlanSelection = async (planId, billingPeriod) => {
     try {
       setSaving(true);
       setSaveMessage({ type: '', text: '' });
 
-      // Assign the plan to this partner
-      await organizationAPI.assignPartnerSubscriptions(user.organization_id, {
-        partner_ids: [user.id],
+      // Find the selected plan to check if it's Free Plan
+      const selectedPlan = availablePlans.find(plan => plan.id === planId);
+      const isFreePlan = selectedPlan && (
+        selectedPlan.plan_name.toLowerCase() === 'free plan' ||
+        (selectedPlan.individual_monthly_price === 0 && billingPeriod === 'monthly')
+      );
+
+      // If Free Plan, skip payment and directly update subscription
+      if (isFreePlan) {
+        await partnerAPI.selectSubscription({
+          subscription_plan_id: planId,
+          billing_period: billingPeriod
+        });
+
+        setSaveMessage({
+          type: 'success',
+          text: 'Free Plan activated successfully!'
+        });
+
+        setShowPlanModal(false);
+
+        // Refresh subscription data
+        await loadOrganizationSubscription();
+        
+        // Refresh user context to get updated subscription
+        await refreshUser();
+
+        // Clear success message after 5 seconds
+        setTimeout(() => {
+          setSaveMessage({ type: '', text: '' });
+        }, 5000);
+        return;
+      }
+
+      // For paid plans, proceed with Razorpay payment flow
+      // Step 1: Create Razorpay order
+      const orderResponse = await razorpayAPI.createOrder({
         subscription_plan_id: planId,
         billing_period: billingPeriod
       });
 
-      setSaveMessage({
-        type: 'success',
-        text: 'Subscription plan updated successfully!'
-      });
+      const order = orderResponse.data.order;
 
-      setShowPlanModal(false);
+      // Step 2: Initialize Razorpay checkout
+      let paymentDetails;
+      try {
+        paymentDetails = await initializeRazorpayCheckout(order, {
+          name: 'Therapy Tracker',
+          description: `Subscription Plan - ${billingPeriod}`,
+          prefill: {
+            name: user?.name || '',
+            email: user?.email || '',
+            contact: user?.contact || '',
+          },
+        });
+      } catch (paymentError) {
+        // User cancelled or payment failed
+        if (paymentError.message.includes('cancelled')) {
+          setSaveMessage({
+            type: 'info',
+            text: 'Payment was cancelled. Please try again when ready.'
+          });
+        } else {
+          setSaveMessage({
+            type: 'error',
+            text: paymentError.message || 'Payment initialization failed. Please try again.'
+          });
+        }
+        setShowPlanModal(false);
+        setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
+        return;
+      }
 
-      // Refresh subscription data
-      await loadOrganizationSubscription();
+      // Step 3: Verify payment with backend
+      try {
+        await razorpayAPI.verifyPayment({
+          razorpay_order_id: paymentDetails.razorpay_order_id,
+          razorpay_payment_id: paymentDetails.razorpay_payment_id,
+          razorpay_signature: paymentDetails.razorpay_signature,
+        });
 
-      // Clear success message after 5 seconds
-      setTimeout(() => {
-        setSaveMessage({ type: '', text: '' });
-      }, 5000);
+        // Payment verified successfully
+        setSaveMessage({
+          type: 'success',
+          text: 'Payment successful! Subscription plan updated successfully!'
+        });
+
+        setShowPlanModal(false);
+
+        // Wait a moment for backend to process the update
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Refresh subscription data (force reload)
+        await loadOrganizationSubscription();
+        
+        // Refresh user context to get updated subscription
+        await refreshUser();
+
+        // Force another refresh after a moment to ensure UI is updated
+        setTimeout(async () => {
+          await loadOrganizationSubscription();
+          await refreshUser();
+        }, 1000);
+
+        // Clear success message after 5 seconds
+        setTimeout(() => {
+          setSaveMessage({ type: '', text: '' });
+        }, 5000);
+      } catch (verifyError) {
+        // Payment verification failed
+        console.error('Payment verification failed:', verifyError);
+        setSaveMessage({
+          type: 'error',
+          text: verifyError.response?.data?.error || 'Payment verification failed. Please contact support if payment was deducted.'
+        });
+        setShowPlanModal(false);
+        setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
+      }
     } catch (err) {
-      console.error('Failed to assign plan:', err);
+      console.error('Failed to process payment:', err);
       setSaveMessage({
         type: 'error',
-        text: err.response?.data?.error || 'Failed to update subscription plan. Please try again.'
+        text: err.response?.data?.error || err.message || 'Failed to process payment. Please try again.'
       });
       setShowPlanModal(false);
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
     } finally {
       setSaving(false);
     }
@@ -717,8 +854,8 @@ const PartnerSettings = () => {
             {/* For TheraPTrack Controlled Organizations: Always show partner's individual subscription (Free Plan if not explicitly assigned) */}
             {organizationSubscription.theraptrack_controlled && partnerSubscription && partnerSubscription.plan_name && (
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4 dark:bg-indigo-900/20 dark:border-indigo-800">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex-1">
                     <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Assigned Plan: </span>
                     <span className="text-lg font-bold text-indigo-600 dark:text-dark-primary-500">
                       {partnerSubscription.plan_name}
@@ -731,11 +868,18 @@ const PartnerSettings = () => {
                       </span>
                     )}
                   </div>
-                  {partnerSubscription.has_video && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                      Video Enabled
-                    </span>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {partnerSubscription.has_video && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        Video Enabled
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Subscription Status Badge */}
+                <div className="mb-3">
+                  <SubscriptionStatusBadge subscription={partnerSubscription} showEndDate={true} />
                 </div>
                 {partnerSubscription.billing_period && (
                   <div className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
@@ -758,28 +902,52 @@ const PartnerSettings = () => {
               </div>
             )}
 
-            {/* Select Plan Button for TheraPTrack Controlled Organizations */}
-            {organizationSubscription.theraptrack_controlled && (
-              <div className="mt-4">
-                <button
-                  onClick={() => {
-                    loadIndividualPlans();
-                    setShowPlanModal(true);
-                  }}
-                  disabled={loadingPlans || saving}
-                  className="btn btn-primary flex items-center space-x-2"
-                >
-                  <CreditCard className="h-4 w-4" />
-                  <span>{loadingPlans ? 'Loading Plans...' : 'Select Plan'}</span>
-                </button>
-              </div>
-            )}
+            {/* Select Plan / Upgrade Button for TheraPTrack Controlled Organizations */}
+            {organizationSubscription.theraptrack_controlled && (() => {
+              const buttonText = getPlanSelectionButtonText(
+                partnerSubscription,
+                availablePlans,
+                partnerSubscription?.billing_period || 'monthly',
+                'individual'
+              );
+              
+              // If buttonText is null, don't show the button
+              if (!buttonText) return null;
+              
+              return (
+                <div className="mt-4 flex items-center space-x-3">
+                  <button
+                    onClick={() => {
+                      loadIndividualPlans();
+                      setShowPlanModal(true);
+                    }}
+                    disabled={loadingPlans || saving}
+                    className="btn btn-primary flex items-center space-x-2"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    <span>{loadingPlans ? 'Loading Plans...' : buttonText}</span>
+                  </button>
+                  
+                  {/* Cancel Subscription Button */}
+                  {canCancelSubscription(partnerSubscription) && (
+                    <button
+                      onClick={() => setShowCancellationDialog(true)}
+                      disabled={saving || cancelling}
+                      className="btn btn-secondary flex items-center space-x-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
+                    >
+                      <XCircle className="h-4 w-4" />
+                      <span>Cancel Subscription</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* For Non-TheraPTrack Controlled Organizations: Show partner's assigned subscription */}
             {!organizationSubscription.theraptrack_controlled && partnerSubscription?.plan_name && (
               <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-4 dark:bg-dark-bg-secondary dark:border-dark-border">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex-1">
                     <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Assigned Plan: </span>
                     <span className="text-lg font-bold text-primary-600 dark:text-dark-primary-500">
                       {partnerSubscription.plan_name}
@@ -796,6 +964,12 @@ const PartnerSettings = () => {
                     </span>
                   )}
                 </div>
+                
+                {/* Subscription Status Badge */}
+                <div className="mb-3">
+                  <SubscriptionStatusBadge subscription={partnerSubscription} showEndDate={true} />
+                </div>
+                
                 {partnerSubscription.billing_period && (
                   <div className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
                     Billing Period: <span className="font-medium capitalize dark:text-dark-text-primary">{partnerSubscription.billing_period}</span>
@@ -827,6 +1001,17 @@ const PartnerSettings = () => {
           userType="individual"
           onClose={() => setShowPlanModal(false)}
           onSelectPlan={handlePlanSelection}
+        />
+      )}
+
+      {/* Cancellation Confirmation Dialog */}
+      {showCancellationDialog && (
+        <CancellationConfirmDialog
+          subscriptionEndDate={partnerSubscription?.subscription_end_date}
+          planName={partnerSubscription?.plan_name}
+          onConfirm={handleCancelSubscription}
+          onCancel={() => setShowCancellationDialog(false)}
+          isProcessing={cancelling}
         />
       )}
     </div>

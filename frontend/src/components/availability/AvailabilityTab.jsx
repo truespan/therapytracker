@@ -3,6 +3,7 @@ import { Upload, RefreshCw } from 'lucide-react';
 import AvailabilitySlotForm from './AvailabilitySlotForm';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import ConflictWarningModal from './ConflictWarningModal';
+import BookingFeeCard from './BookingFeeCard';
 import { availabilityAPI } from '../../services/api';
 import { formatTime, getUserTimezone } from '../../utils/dateUtils';
 
@@ -226,13 +227,19 @@ const AvailabilityTab = ({ partnerId }) => {
         </p>
       </div>
 
-      {/* Slot Creation Form */}
-      <AvailabilitySlotForm
-        formData={formData}
-        onChange={setFormData}
-        onSubmit={handleCreateSlot}
-        loading={loading}
-      />
+      {/* Two Column Layout for Forms */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Slot Creation Form */}
+        <AvailabilitySlotForm
+          formData={formData}
+          onChange={setFormData}
+          onSubmit={handleCreateSlot}
+          loading={loading}
+        />
+
+        {/* Booking Fee Card */}
+        <BookingFeeCard partnerId={partnerId} />
+      </div>
 
       {/* Publish Button */}
       <div className="flex items-center justify-between bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md p-4">

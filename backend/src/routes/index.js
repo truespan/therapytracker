@@ -85,6 +85,10 @@ router.get('/backgrounds/preview/:filename', authenticateToken, partnerControlle
 router.post('/partners/:id/default-report-background', authenticateToken, checkRole('partner'), partnerController.setDefaultReportBackground);
 router.get('/partners/:id/default-report-background', authenticateToken, checkRole('partner'), partnerController.getDefaultReportBackground);
 
+// Fee management routes
+router.post('/partners/:id/fee-settings', authenticateToken, checkRole('partner'), partnerController.updateFeeSettings);
+router.get('/partners/:id/fee-settings', authenticateToken, partnerController.getFeeSettings);
+
 // ==================== CASE HISTORY ROUTES ====================
 router.get('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.getCaseHistory);
 router.post('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.saveCaseHistory);
@@ -100,6 +104,7 @@ router.get('/organizations', organizationController.getAllOrganizations);
 router.get('/organizations/verify-signup-token/:token', organizationController.verifyTherapistSignupToken);
 router.get('/organizations/:id', authenticateToken, organizationController.getOrganizationById);
 router.put('/organizations/:id', authenticateToken, organizationController.updateOrganization);
+router.post('/organizations/subscription/cancel', authenticateToken, checkRole('organization'), organizationController.cancelOrganizationSubscription);
 router.get('/organizations/:id/partners', authenticateToken, checkRole('organization'), organizationController.getOrganizationPartners);
 router.get('/organizations/:id/users', authenticateToken, checkRole('organization'), organizationController.getOrganizationUsers);
 
@@ -131,6 +136,10 @@ router.put('/organizations/:id/therapists/video-settings/bulk', authenticateToke
 
 // Subscription plans for individual therapists (public endpoint for signup)
 router.get('/subscription-plans/individual', subscriptionPlanController.getIndividualTherapistPlans);
+
+// Partner subscription selection (for partners to select their own plan)
+router.post('/partners/subscription/select', authenticateToken, checkRole('partner'), partnerSubscriptionController.selectOwnSubscription);
+router.post('/partners/subscription/cancel', authenticateToken, checkRole('partner'), partnerController.cancelSubscription);
 
 // Organization partner subscription management (available for all organizations)
 router.get('/organizations/:id/partner-subscriptions', authenticateToken, checkRole('organization'), partnerSubscriptionController.getOrganizationPartnerSubscriptions);
@@ -266,6 +275,10 @@ router.get('/report-templates/:id/download', authenticateToken, checkRole('partn
 
 // ==================== SUBSCRIPTION PLAN ROUTES ====================
 router.use('/subscription-plans', subscriptionPlanRoutes);
+
+// ==================== RAZORPAY PAYMENT ROUTES ====================
+const razorpayRoutes = require('./razorpayRoutes');
+router.use('/razorpay', razorpayRoutes);
 
 // ==================== GENERATED REPORTS ROUTES ====================
 // Partner routes for generated reports

@@ -77,11 +77,17 @@ const createPlan = async (req, res) => {
       min_sessions,
       max_sessions,
       has_video,
-      video_hours,
-      extra_video_rate,
+      has_whatsapp,
+      has_advanced_assessments,
+      has_report_generation,
+      has_custom_branding,
+      has_advanced_analytics,
+      has_priority_support,
+      has_email_support,
       min_therapists,
       max_therapists,
       plan_order,
+      plan_duration_days,
       individual_yearly_price,
       individual_quarterly_price,
       individual_monthly_price,
@@ -98,16 +104,16 @@ const createPlan = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!plan_name || min_sessions === undefined || max_sessions === undefined) {
+    if (!plan_name || min_sessions === undefined) {
       return res.status(400).json({
-        error: 'Plan name, min_sessions, and max_sessions are required'
+        error: 'Plan name and min_sessions are required'
       });
     }
 
     // Validate plan_type
-    if (plan_type && !['individual', 'organization'].includes(plan_type)) {
+    if (plan_type && !['individual', 'organization', 'common'].includes(plan_type)) {
       return res.status(400).json({
-        error: 'plan_type must be either "individual" or "organization"'
+        error: 'plan_type must be "individual", "organization", or "common"'
       });
     }
 
@@ -125,18 +131,40 @@ const createPlan = async (req, res) => {
       }
     }
 
-    // Validate video hours when has_video is true
-    if (has_video && !video_hours) {
+    // Validate therapist ranges for common plans (must be NULL)
+    if (plan_type === 'common') {
+      if (min_therapists !== null && min_therapists !== undefined) {
+        return res.status(400).json({
+          error: 'Common plans must have NULL min_therapists and max_therapists'
+        });
+      }
+      if (max_therapists !== null && max_therapists !== undefined) {
+        return res.status(400).json({
+          error: 'Common plans must have NULL min_therapists and max_therapists'
+        });
+      }
+    }
+
+
+    // Validate session limits (max_sessions can be NULL for unlimited)
+    if (min_sessions < 0) {
       return res.status(400).json({
-        error: 'video_hours is required when has_video is true'
+        error: 'min_sessions must be >= 0'
+      });
+    }
+    if (max_sessions !== null && max_sessions !== undefined && max_sessions < min_sessions) {
+      return res.status(400).json({
+        error: 'Invalid session limits. max_sessions must be >= min_sessions or NULL for unlimited'
       });
     }
 
-    // Validate session limits
-    if (min_sessions < 0 || max_sessions < min_sessions) {
-      return res.status(400).json({
-        error: 'Invalid session limits. min_sessions must be >= 0 and max_sessions must be >= min_sessions'
-      });
+    // Validate plan_duration_days (must be positive integer if provided)
+    if (plan_duration_days !== null && plan_duration_days !== undefined) {
+      if (typeof plan_duration_days !== 'number' || plan_duration_days < 1 || !Number.isInteger(plan_duration_days)) {
+        return res.status(400).json({
+          error: 'plan_duration_days must be a positive integer or NULL'
+        });
+      }
     }
 
     // Validate prices
@@ -177,13 +205,19 @@ const createPlan = async (req, res) => {
       plan_name,
       plan_type: plan_type || 'individual',
       min_sessions: parseInt(min_sessions),
-      max_sessions: parseInt(max_sessions),
+      max_sessions: max_sessions === null || max_sessions === undefined ? null : parseInt(max_sessions),
       has_video: has_video !== undefined ? has_video : false,
-      video_hours: video_hours ? parseInt(video_hours) : null,
-      extra_video_rate: extra_video_rate ? parseFloat(extra_video_rate) : null,
+      has_whatsapp: has_whatsapp !== undefined ? has_whatsapp : false,
+      has_advanced_assessments: has_advanced_assessments !== undefined ? has_advanced_assessments : false,
+      has_report_generation: has_report_generation !== undefined ? has_report_generation : false,
+      has_custom_branding: has_custom_branding !== undefined ? has_custom_branding : false,
+      has_advanced_analytics: has_advanced_analytics !== undefined ? has_advanced_analytics : false,
+      has_priority_support: has_priority_support !== undefined ? has_priority_support : false,
+      has_email_support: has_email_support !== undefined ? has_email_support : false,
       min_therapists: min_therapists ? parseInt(min_therapists) : null,
       max_therapists: max_therapists ? parseInt(max_therapists) : null,
       plan_order: plan_order !== undefined ? parseInt(plan_order) : 0,
+      plan_duration_days: plan_duration_days !== undefined ? (plan_duration_days === null ? null : parseInt(plan_duration_days)) : null,
       individual_yearly_price: parseFloat(individual_yearly_price),
       individual_quarterly_price: parseFloat(individual_quarterly_price),
       individual_monthly_price: parseFloat(individual_monthly_price),
@@ -231,18 +265,73 @@ const updatePlan = async (req, res) => {
       });
     }
 
-    // Validate session limits if provided
+    // Validate plan_type if provided
+    if (updateData.plan_type !== undefined && !['individual', 'organization', 'common'].includes(updateData.plan_type)) {
+      return res.status(400).json({
+        error: 'plan_type must be "individual", "organization", or "common"'
+      });
+    }
+
+    // Validate session limits if provided (max_sessions can be NULL for unlimited)
     if (updateData.min_sessions !== undefined || updateData.max_sessions !== undefined) {
       const minSessions = updateData.min_sessions !== undefined 
         ? parseInt(updateData.min_sessions) 
         : existingPlan.min_sessions;
       const maxSessions = updateData.max_sessions !== undefined 
-        ? parseInt(updateData.max_sessions) 
+        ? (updateData.max_sessions === null ? null : parseInt(updateData.max_sessions))
         : existingPlan.max_sessions;
 
-      if (minSessions < 0 || maxSessions < minSessions) {
+      if (minSessions < 0) {
         return res.status(400).json({
-          error: 'Invalid session limits. min_sessions must be >= 0 and max_sessions must be >= min_sessions'
+          error: 'min_sessions must be >= 0'
+        });
+      }
+      if (maxSessions !== null && maxSessions !== undefined && maxSessions < minSessions) {
+        return res.status(400).json({
+          error: 'Invalid session limits. max_sessions must be >= min_sessions or NULL for unlimited'
+        });
+      }
+    }
+
+    // Validate plan_duration_days if provided
+    if (updateData.plan_duration_days !== undefined) {
+      if (updateData.plan_duration_days !== null && 
+          (typeof updateData.plan_duration_days !== 'number' || updateData.plan_duration_days < 1 || !Number.isInteger(updateData.plan_duration_days))) {
+        return res.status(400).json({
+          error: 'plan_duration_days must be a positive integer or NULL'
+        });
+      }
+    }
+
+    // Validate therapist ranges for organization plans
+    if (updateData.plan_type === 'organization' || (updateData.plan_type === undefined && existingPlan.plan_type === 'organization')) {
+      const minTherapists = updateData.min_therapists !== undefined ? updateData.min_therapists : existingPlan.min_therapists;
+      const maxTherapists = updateData.max_therapists !== undefined ? updateData.max_therapists : existingPlan.max_therapists;
+      
+      if (updateData.min_therapists !== undefined || updateData.max_therapists !== undefined) {
+        if (!minTherapists || !maxTherapists) {
+          return res.status(400).json({
+            error: 'Organization plans require min_therapists and max_therapists'
+          });
+        }
+        if (minTherapists < 1 || maxTherapists < minTherapists) {
+          return res.status(400).json({
+            error: 'Invalid therapist range. min_therapists must be >= 1 and max_therapists must be >= min_therapists'
+          });
+        }
+      }
+    }
+
+    // Validate therapist ranges for common plans (must be NULL)
+    if (updateData.plan_type === 'common' || (updateData.plan_type === undefined && existingPlan.plan_type === 'common')) {
+      if (updateData.min_therapists !== undefined && updateData.min_therapists !== null) {
+        return res.status(400).json({
+          error: 'Common plans must have NULL min_therapists and max_therapists'
+        });
+      }
+      if (updateData.max_therapists !== undefined && updateData.max_therapists !== null) {
+        return res.status(400).json({
+          error: 'Common plans must have NULL min_therapists and max_therapists'
         });
       }
     }
@@ -293,8 +382,39 @@ const updatePlan = async (req, res) => {
     if (updateData.has_video !== undefined) {
       updateData.has_video = Boolean(updateData.has_video);
     }
+    if (updateData.has_whatsapp !== undefined) {
+      updateData.has_whatsapp = Boolean(updateData.has_whatsapp);
+    }
+    if (updateData.has_advanced_assessments !== undefined) {
+      updateData.has_advanced_assessments = Boolean(updateData.has_advanced_assessments);
+    }
+    if (updateData.has_report_generation !== undefined) {
+      updateData.has_report_generation = Boolean(updateData.has_report_generation);
+    }
+    if (updateData.has_custom_branding !== undefined) {
+      updateData.has_custom_branding = Boolean(updateData.has_custom_branding);
+    }
+    if (updateData.has_advanced_analytics !== undefined) {
+      updateData.has_advanced_analytics = Boolean(updateData.has_advanced_analytics);
+    }
+    if (updateData.has_priority_support !== undefined) {
+      updateData.has_priority_support = Boolean(updateData.has_priority_support);
+    }
+    if (updateData.has_email_support !== undefined) {
+      updateData.has_email_support = Boolean(updateData.has_email_support);
+    }
     if (updateData.is_active !== undefined) {
       updateData.is_active = Boolean(updateData.is_active);
+    }
+
+    // Convert plan_duration_days if provided
+    if (updateData.plan_duration_days !== undefined) {
+      updateData.plan_duration_days = updateData.plan_duration_days === null ? null : parseInt(updateData.plan_duration_days);
+    }
+
+    // Convert max_sessions if provided (allow NULL)
+    if (updateData.max_sessions !== undefined) {
+      updateData.max_sessions = updateData.max_sessions === null ? null : parseInt(updateData.max_sessions);
     }
     if (updateData.individual_yearly_enabled !== undefined) {
       updateData.individual_yearly_enabled = Boolean(updateData.individual_yearly_enabled);
@@ -456,7 +576,7 @@ const getIndividualTherapistPlans = async (req, res) => {
 
 /**
  * Get individual practitioner plans for selection modal
- * Excludes Free Plan from selection (users are auto-assigned or can't manually select it)
+ * Excludes Free Plan - users cannot downgrade to Free Plan
  */
 const getIndividualPlansForSelection = async (req, res) => {
   try {
@@ -476,6 +596,7 @@ const getIndividualPlansForSelection = async (req, res) => {
 
 /**
  * Get organization plans filtered by therapist count
+ * Excludes Free Plan - organizations cannot downgrade to Free Plan
  */
 const getOrganizationPlansForSelection = async (req, res) => {
   try {
@@ -488,10 +609,13 @@ const getOrganizationPlansForSelection = async (req, res) => {
     }
 
     const plans = await SubscriptionPlan.getOrganizationPlans(parseInt(therapist_count));
+    
+    // Filter out Free Plan
+    const filteredPlans = plans.filter(plan => plan.plan_name.toLowerCase() !== 'free plan');
 
     res.json({
       success: true,
-      plans,
+      plans: filteredPlans,
       therapist_count: parseInt(therapist_count)
     });
   } catch (error) {
@@ -515,6 +639,9 @@ module.exports = {
   getIndividualPlansForSelection,
   getOrganizationPlansForSelection
 };
+
+
+
 
 
 
