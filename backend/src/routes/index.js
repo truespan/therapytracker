@@ -280,6 +280,11 @@ router.use('/subscription-plans', subscriptionPlanRoutes);
 const razorpayRoutes = require('./razorpayRoutes');
 router.use('/razorpay', razorpayRoutes);
 
+// ==================== EARNINGS ROUTES ====================
+const earningsController = require('../controllers/earningsController');
+router.get('/earnings/summary', authenticateToken, earningsController.getEarningsSummary);
+router.get('/earnings', authenticateToken, earningsController.getEarnings);
+
 // ==================== GENERATED REPORTS ROUTES ====================
 // Partner routes for generated reports
 router.post('/reports', authenticateToken, checkRole('partner'), generatedReportController.createReport);

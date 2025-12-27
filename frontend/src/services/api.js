@@ -417,5 +417,11 @@ export const razorpayAPI = {
   getPaymentHistory: () => api.get('/razorpay/payment-history'),
 };
 
+// Earnings APIs
+export const earningsAPI = {
+  getSummary: () => api.get('/earnings/summary'),
+  getEarnings: (params) => api.get('/earnings', { params }),
+};
+
 export default api;
 

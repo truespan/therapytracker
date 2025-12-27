@@ -19,7 +19,9 @@ import SessionNotesTab from '../sessions/SessionNotesTab';
 import PartnerReportsTab from '../reports/PartnerReportsTab';
 import ClientReportsTab from '../reports/ClientReportsTab';
 import AvailabilityTab from '../availability/AvailabilityTab';
+import EarningsTab from '../earnings/EarningsTab';
 import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon, CalendarClock, Edit } from 'lucide-react';
+import { CurrencyIcon } from '../../utils/currencyIcon';
 import CreatePatientModal from '../partner/CreatePatientModal';
 import EditClientModal from '../partner/EditClientModal';
 import DarkModeToggle from '../common/DarkModeToggle';
@@ -81,7 +83,11 @@ const PartnerDashboard = () => {
 
   useEffect(() => {
     loadPartnerUsers();
-  }, [user.id]);
+    // Debug: Log user organization data
+    console.log('PartnerDashboard - User object:', user);
+    console.log('PartnerDashboard - Organization:', user?.organization);
+    console.log('PartnerDashboard - theraptrack_controlled:', user?.organization?.theraptrack_controlled);
+  }, [user.id, user?.organization]);
 
   useEffect(() => {
     // Check if video sessions are enabled for this partner's organization
@@ -424,7 +430,7 @@ const PartnerDashboard = () => {
             }`}
           >
             <ClipboardList className="h-5 w-5" />
-            <span className="text-xs">Questionnaires & Reports</span>
+            <span className="text-xs">Questionnaires</span>
           </button>
           <button
             onClick={() => setActiveTab('calendar')}
@@ -437,6 +443,19 @@ const PartnerDashboard = () => {
             <Calendar className="h-5 w-5" />
             <span className="text-xs">Calendar</span>
           </button>
+          {user?.organization?.theraptrack_controlled && (
+            <button
+              onClick={() => setActiveTab('earnings')}
+              className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+                activeTab === 'earnings'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
+              }`}
+            >
+              <CurrencyIcon className="h-5 w-5" />
+              <span className="text-xs">Earnings</span>
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('settings')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
@@ -496,7 +515,7 @@ const PartnerDashboard = () => {
             }`}
           >
             <BarChart3 className="inline h-5 w-5 mr-2" />
-            Charts & Insights
+            Charts
           </button>
           {videoSessionsEnabled && (
             <button
@@ -508,7 +527,7 @@ const PartnerDashboard = () => {
               }`}
             >
               <Video className="inline h-5 w-5 mr-2" />
-              Video Sessions
+              Video
             </button>
           )}
           <button
@@ -523,7 +542,7 @@ const PartnerDashboard = () => {
             }`}
           >
             <ClipboardList className="inline h-5 w-5 mr-2" />
-            Questionnaires & Reports
+            Questionnaires
           </button>
           <button
             onClick={() => setActiveTab('calendar')}
@@ -536,6 +555,19 @@ const PartnerDashboard = () => {
             <Calendar className="inline h-5 w-5 mr-2" />
             Calendar
           </button>
+          {user?.organization?.theraptrack_controlled && (
+            <button
+              onClick={() => setActiveTab('earnings')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'earnings'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
+              }`}
+            >
+              <CurrencyIcon className="inline h-5 w-5 mr-2" />
+              Earnings
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('settings')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -846,7 +878,7 @@ const PartnerDashboard = () => {
         onSuccess={handleEditClientSuccess}
       />
 
-      {/* Charts & Insights Tab */}
+      {/* Charts Tab */}
       {activeTab === 'charts' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Mobile Dropdown - Show only on mobile/tablet */}
@@ -946,7 +978,7 @@ const PartnerDashboard = () => {
         </div>
       )}
 
-      {/* Video Sessions Tab */}
+      {/* Video Tab */}
       {activeTab === 'video' && videoSessionsEnabled && (
         <VideoSessionsTab
           partnerId={user.id}
@@ -1025,6 +1057,11 @@ const PartnerDashboard = () => {
           partnerId={user.id}
           users={users}
         />
+      )}
+
+      {/* Earnings Tab */}
+      {activeTab === 'earnings' && user?.organization?.theraptrack_controlled && (
+        <EarningsTab />
       )}
 
       {/* Settings Tab */}

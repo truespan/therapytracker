@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { therapySessionAPI, questionnaireAPI } from '../../services/api';
-import { Calendar, Clock, FileText, DollarSign, Edit, Trash2, Send, Tag, ClipboardList, Video, X, Plus } from 'lucide-react';
+import { Calendar, Clock, FileText, Edit, Trash2, Send, Tag, ClipboardList, Video, X, Plus } from 'lucide-react';
 import QuestionnaireViewModal from '../questionnaires/QuestionnaireViewModal';
+import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDeleted, onCreateNote, onViewNote, onGenerateReport }) => {
   const [showPaymentNotes, setShowPaymentNotes] = useState(false);
@@ -162,7 +163,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
           {session.payment_notes && (
             <div className="mb-3">
               <div className="flex items-start text-sm">
-                <DollarSign className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                <CurrencyIcon className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <span className="font-medium text-gray-700 dark:text-gray-300">Payment:</span>
                   <p className="text-gray-600 dark:text-gray-300 mt-1">
@@ -307,7 +308,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
         {session.payment_notes && (
           <div className="mb-3">
             <div className="flex items-start text-sm">
-              <DollarSign className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+              <CurrencyIcon className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
                 <span className="font-medium text-gray-700 dark:text-gray-300">Payment:</span>
                 <p className="text-gray-600 dark:text-gray-300 mt-1">

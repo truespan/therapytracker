@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { therapySessionAPI } from '../../services/api';
-import { X, FileText, DollarSign, User, Calendar, Clock, Video } from 'lucide-react';
+import { X, FileText, User, Calendar, Clock, Video } from 'lucide-react';
+import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -152,7 +153,7 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
             {/* Payment Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <DollarSign className="inline h-4 w-4 mr-1" />
+                <CurrencyIcon className="inline h-4 w-4 mr-1" />
                 Payment Related Notes (Optional)
               </label>
               <input

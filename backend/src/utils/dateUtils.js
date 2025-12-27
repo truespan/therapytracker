@@ -15,7 +15,9 @@ const {
   differenceInMinutes: dateFnsDifferenceInMinutes,
   format: dateFnsFormat,
   parseISO,
-  isValid
+  isValid,
+  getDay,
+  startOfDay
 } = require('date-fns');
 
 const {
@@ -293,6 +295,27 @@ function formatTime(date) {
   return dateFnsFormat(dateObj, 'HH:mm');
 }
 
+/**
+ * Calculate the next Friday date from a given date (or today if not provided)
+ * Returns the date of the next upcoming Friday, or today if today is Friday
+ * @param {Date} [fromDate] - Optional starting date (defaults to today)
+ * @returns {Date} Next Friday date
+ */
+function getNextFriday(fromDate = null) {
+  const startDate = fromDate ? startOfDay(fromDate) : startOfDay(new Date());
+  
+  if (!isValid(startDate)) {
+    throw new Error('Invalid date provided');
+  }
+
+  const currentDay = getDay(startDate); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+  const daysUntilFriday = currentDay === 5 ? 0 : // Today is Friday, return today
+                          currentDay < 5 ? (5 - currentDay) : // Before Friday, days until Friday
+                          (7 - currentDay + 5); // After Friday, days until next Friday
+
+  return dateFnsAddDays(startDate, daysUntilFriday);
+}
+
 module.exports = {
   // UTC Management
   getCurrentUTC,
@@ -319,5 +342,8 @@ module.exports = {
 
   // Display Formatting
   formatDate,
-  formatTime
+  formatTime,
+
+  // Payout Scheduling
+  getNextFriday
 };

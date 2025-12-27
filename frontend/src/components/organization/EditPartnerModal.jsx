@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, MapPin, Calendar, Users, Award, FileText, DollarSign } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Calendar, Users, Award, FileText } from 'lucide-react';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import ImageUpload from '../common/ImageUpload';
+import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -472,7 +473,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
                 <div className="flex-1">
                   <label className="block text-xs font-medium text-gray-600 mb-1">Min</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <CurrencyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
                       type="number"
                       name="fee_min"
@@ -492,7 +493,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
                 <div className="flex-1">
                   <label className="block text-xs font-medium text-gray-600 mb-1">Max</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <CurrencyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
                       type="number"
                       name="fee_max"

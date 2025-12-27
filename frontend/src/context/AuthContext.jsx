@@ -109,7 +109,23 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(savedUser));
       // Update last activity timestamp to now since we're restoring the session
       localStorage.setItem('lastActivityTimestamp', Date.now().toString());
-      setLoading(false);
+      
+      // Refresh user data from server to get latest organization info
+      authAPI.getCurrentUser()
+        .then(response => {
+          const updatedUser = response.data.user;
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          setUser(updatedUser);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Failed to refresh user data:', error);
+          // If token is invalid, logout
+          if (error.response?.status === 401) {
+            logout(false);
+          }
+          setLoading(false);
+        });
     } else {
       setLoading(false);
     }

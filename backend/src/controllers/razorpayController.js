@@ -5,6 +5,7 @@ const RazorpaySubscription = require('../models/RazorpaySubscription');
 const SubscriptionPlan = require('../models/SubscriptionPlan');
 const PartnerSubscription = require('../models/PartnerSubscription');
 const Organization = require('../models/Organization');
+const Earnings = require('../models/Earnings');
 const db = require('../config/database');
 
 /**
@@ -359,6 +360,10 @@ const handleWebhook = async (req, res) => {
       await handlePaymentSuccess(event);
     } else if (event.event === 'payment.failed') {
       await handlePaymentFailure(event);
+    } else if (event.event === 'payment.transferred' || event.event === 'payment.settled') {
+      await handlePaymentSettled(event);
+    } else if (event.event === 'payout.processed' || event.event === 'payout.completed') {
+      await handlePayoutProcessed(event);
     } else if (event.event === 'subscription.activated' || event.event === 'subscription.charged') {
       await handleSubscriptionActivated(event);
     } else if (event.event === 'subscription.cancelled' || event.event === 'subscription.completed') {
@@ -421,6 +426,89 @@ async function handleSubscriptionCancelled(event) {
     status: subscription.status,
     ended_at: new Date()
   });
+}
+
+/**
+ * Handle payment settlement - update earnings from 'pending' to 'available'
+ */
+async function handlePaymentSettled(event) {
+  const payment = event.payload.payment?.entity;
+  
+  if (!payment || !payment.id) {
+    console.warn('[EARNINGS] Payment settlement event missing payment entity');
+    return;
+  }
+
+  try {
+    // Find earnings record by Razorpay payment ID
+    const earnings = await Earnings.findByPaymentId(payment.id);
+    
+    if (earnings && earnings.status === 'pending') {
+      // Calculate next Friday for payout scheduling
+      const { getNextFriday } = require('../utils/dateUtils');
+      const { formatDate } = require('../utils/dateUtils');
+      const nextFriday = getNextFriday();
+      const payoutDate = formatDate(nextFriday); // Format as YYYY-MM-DD for DATE column
+      
+      // Update earnings status to 'available' and set payout_date
+      await Earnings.updateStatusByPaymentId(payment.id, 'available', payoutDate);
+      
+      console.log(`[EARNINGS] Updated earnings status to 'available' for payment ${payment.id}, scheduled for payout on ${payoutDate}`);
+    } else if (earnings) {
+      console.log(`[EARNINGS] Earnings for payment ${payment.id} already has status: ${earnings.status}`);
+    } else {
+      console.log(`[EARNINGS] No earnings record found for payment ${payment.id}`);
+    }
+  } catch (error) {
+    console.error('[EARNINGS] Error handling payment settlement:', error);
+    // Don't throw - webhook should still respond successfully
+  }
+}
+
+/**
+ * Handle payout processed - update earnings from 'available' to 'withdrawn'
+ * Note: Razorpay payouts may not directly reference payment IDs in webhook payload
+ * We update earnings based on payout_date matching or manual processing
+ */
+async function handlePayoutProcessed(event) {
+  const payout = event.payload.payout?.entity;
+  
+  if (!payout || !payout.id) {
+    console.warn('[EARNINGS] Payout event missing payout entity');
+    return;
+  }
+
+  try {
+    // Extract payout date from payout entity (typically in epoch seconds)
+    const payoutDate = payout.settled_at ? new Date(payout.settled_at * 1000) : new Date();
+    const { formatDate } = require('../utils/dateUtils');
+    const payoutDateFormatted = formatDate(payoutDate);
+    
+    // Update all earnings with matching payout_date from 'available' to 'withdrawn'
+    // This assumes weekly batch payouts on Fridays
+    // Note: payout_id linking is optional - we update status even if payout record doesn't exist
+    const updateQuery = `
+      UPDATE earnings
+      SET status = 'withdrawn',
+          updated_at = CURRENT_TIMESTAMP
+      WHERE status = 'available'
+        AND payout_date = $1
+      RETURNING *
+    `;
+    
+    const result = await db.query(updateQuery, [payoutDateFormatted]);
+    
+    if (result.rows.length > 0) {
+      console.log(`[EARNINGS] Updated ${result.rows.length} earnings records to 'withdrawn' for payout ${payout.id} on ${payoutDateFormatted}`);
+    } else {
+      // Alternative: Update based on payout amount and date range if exact date match fails
+      // For now, log that manual review may be needed
+      console.log(`[EARNINGS] Payout ${payout.id} processed on ${payoutDateFormatted}. No earnings updated automatically. Manual linking may be required.`);
+    }
+  } catch (error) {
+    console.error('[EARNINGS] Error handling payout processed:', error);
+    // Don't throw - webhook should still respond successfully
+  }
 }
 
 /**
@@ -569,6 +657,52 @@ const verifyBookingPayment = async (req, res) => {
 
     // Update order status
     await RazorpayOrder.updateStatus(razorpay_order_id, payment.status);
+
+    // Create earnings record if payment is successful
+    if (payment.status === 'captured' || payment.status === 'authorized') {
+      try {
+        // Get partner_id from order metadata
+        const orderMetadata = dbOrder.metadata || {};
+        const partnerIdFromMetadata = orderMetadata.partner_id;
+        
+        // Try to find appointment_id from slot_id if available
+        let appointmentId = null;
+        if (slot_id) {
+          const slotQuery = `SELECT appointment_id FROM availability_slots WHERE id = $1`;
+          const slotResult = await db.query(slotQuery, [slot_id]);
+          if (slotResult.rows[0] && slotResult.rows[0].appointment_id) {
+            appointmentId = slotResult.rows[0].appointment_id;
+          }
+        }
+
+        // Find partner by partner_id string (e.g., "AB12345") to get internal ID
+        if (partnerIdFromMetadata) {
+          const Partner = require('../models/Partner');
+          const partner = await Partner.findByPartnerId(partnerIdFromMetadata);
+          
+          if (partner) {
+            // Create earnings record - 100% goes to partner
+            await Earnings.create({
+              recipient_id: partner.id,
+              recipient_type: 'partner',
+              razorpay_payment_id: payment.id,
+              amount: dbPayment.amount, // Full booking fee amount
+              currency: dbPayment.currency,
+              status: 'pending', // Waiting for Razorpay settlement
+              appointment_id: appointmentId,
+              payout_date: null // Will be set when settled
+            });
+
+            console.log(`[EARNINGS] Created earnings record for partner ${partner.id} from booking payment ${payment.id}`);
+          } else {
+            console.warn(`[EARNINGS] Partner not found for partner_id: ${partnerIdFromMetadata}`);
+          }
+        }
+      } catch (earningsError) {
+        // Log error but don't fail the payment verification
+        console.error('[EARNINGS] Failed to create earnings record:', earningsError);
+      }
+    }
 
     res.json({
       message: 'Booking payment verified successfully',

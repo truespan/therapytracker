@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Save, RefreshCw } from 'lucide-react';
+import { Save, RefreshCw } from 'lucide-react';
 import { partnerAPI } from '../../services/api';
+import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const BookingFeeCard = ({ partnerId }) => {
   const [feeData, setFeeData] = useState({
@@ -119,7 +120,7 @@ const BookingFeeCard = ({ partnerId }) => {
   return (
     <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md p-6">
       <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-900 dark:text-dark-text-primary">
-        <DollarSign className="h-5 w-5 mr-2 text-primary-600 dark:text-dark-primary-500" />
+        <CurrencyIcon className="h-5 w-5 mr-2 text-primary-600 dark:text-dark-primary-500" />
         Set Booking Fee
       </h3>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { therapySessionAPI, appointmentAPI, videoSessionAPI } from '../../services/api';
-import { X, FileText, DollarSign, User, Calendar, Clock, AlertTriangle, Video, Settings } from 'lucide-react';
+import { X, FileText, User, Calendar, Clock, AlertTriangle, Video, Settings } from 'lucide-react';
+import { CurrencyIcon } from '../../utils/currencyIcon';
 import { isAfter, differenceInMinutes, format, addMinutes } from 'date-fns';
 import { getUserTimezone, combineDateAndTime, convertLocalToUTC } from '../../utils/dateUtils';
 import ConflictConfirmationModal from './ConflictConfirmationModal';
@@ -430,7 +431,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
             {/* Payment Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                <DollarSign className="inline h-4 w-4 mr-1" />
+                <CurrencyIcon className="inline h-4 w-4 mr-1" />
                 Payment Related Notes (Optional)
               </label>
               <input

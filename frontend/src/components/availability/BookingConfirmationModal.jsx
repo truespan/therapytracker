@@ -1,6 +1,7 @@
 import React from 'react';
-import { Calendar, Clock, Video, MapPin, User, X, DollarSign, IndianRupee } from 'lucide-react';
+import { Calendar, Clock, Video, MapPin, User, X } from 'lucide-react';
 import { formatTime } from '../../utils/dateUtils';
+import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, onCancel, loading }) => {
   if (!slot) return null;
@@ -107,7 +108,7 @@ const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, o
           {hasFees && (
             <div className="mt-4 bg-green-50 dark:bg-dark-bg-secondary border border-green-200 dark:border-green-800 rounded-lg p-4">
               <h4 className="text-sm font-semibold text-green-900 dark:text-green-300 mb-3 flex items-center">
-                <DollarSign className="h-4 w-4 mr-2" />
+                <CurrencyIcon className="h-4 w-4 mr-2" />
                 Fee Details
               </h4>
               <div className="space-y-2">

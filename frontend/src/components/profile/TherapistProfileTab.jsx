@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { userAPI } from '../../services/api';
-import { User, Briefcase, Award, FileText, DollarSign, Languages, CreditCard, Calendar } from 'lucide-react';
+import { User, Briefcase, Award, FileText, Languages, CreditCard, Calendar } from 'lucide-react';
+import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const TherapistProfileTab = ({ userId }) => {
   const [therapist, setTherapist] = useState(null);
@@ -166,7 +167,7 @@ const TherapistProfileTab = ({ userId }) => {
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <div className="h-10 w-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <CurrencyIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
               <div className="ml-4 flex-1">

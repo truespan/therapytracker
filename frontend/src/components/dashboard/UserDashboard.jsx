@@ -302,7 +302,7 @@ const UserDashboard = () => {
               }`}
             >
               <Video className="inline h-5 w-5 mr-2" />
-              Video Sessions
+              Video
             </button>
           )}
           <button
@@ -314,7 +314,7 @@ const UserDashboard = () => {
             }`}
           >
             <BarChart3 className="inline h-5 w-5 mr-2" />
-            Charts & Insights
+            Charts
           </button>
           <button
             onClick={() => setActiveTab('questionnaires')}

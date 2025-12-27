@@ -264,6 +264,13 @@ const login = async (req, res) => {
         if (userDetails && userDetails.organization_id) {
           const org = await Organization.findById(userDetails.organization_id);
           userDetails.organization_video_sessions_enabled = org?.video_sessions_enabled ?? true;
+          // Include organization object with theraptrack_controlled
+          userDetails.organization = {
+            id: org.id,
+            name: org.name,
+            theraptrack_controlled: org.theraptrack_controlled ?? false,
+            video_sessions_enabled: org.video_sessions_enabled ?? true
+          };
         }
         break;
       case 'organization':
@@ -318,6 +325,13 @@ const getCurrentUser = async (req, res) => {
         if (userDetails && userDetails.organization_id) {
           const org = await Organization.findById(userDetails.organization_id);
           userDetails.organization_video_sessions_enabled = org?.video_sessions_enabled ?? true;
+          // Include organization object with theraptrack_controlled
+          userDetails.organization = {
+            id: org.id,
+            name: org.name,
+            theraptrack_controlled: org.theraptrack_controlled ?? false,
+            video_sessions_enabled: org.video_sessions_enabled ?? true
+          };
         }
         break;
       case 'organization':
