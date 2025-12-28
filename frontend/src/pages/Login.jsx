@@ -109,9 +109,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-bg-secondary dark:to-dark-bg-primary py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-lg shadow-xl p-8">
+        <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl p-8">
           <div className="text-center mb-8">
             <Link to="/" className="inline-block mb-4">
               <div className="h-16 w-16 mx-auto bg-white rounded-full flex items-center justify-center p-2 shadow-md hover:shadow-lg transition-shadow cursor-pointer">
@@ -122,19 +122,19 @@ const Login = () => {
                 />
               </div>
             </Link>
-            <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-            <p className="text-gray-600 mt-2">Sign in to your account</p>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome Back</h2>
+            <p className="text-gray-600 dark:text-dark-text-secondary mt-2">Sign in to your account</p>
           </div>
 
           {successMessage && (
-            <div className="mb-4 p-3 bg-success-50 border border-success-200 rounded-lg flex items-center space-x-2 text-success-700">
+            <div className="mb-4 p-3 bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 rounded-lg flex items-center space-x-2 text-success-700 dark:text-success-300">
               <CheckCircle className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm">{successMessage}</span>
             </div>
           )}
 
           {error && (
-            <div className="mb-4 p-3 bg-error-50 border border-error-200 rounded-lg flex items-center space-x-2 text-error-700">
+            <div className="mb-4 p-3 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg flex items-center space-x-2 text-error-700 dark:text-error-300">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
@@ -155,7 +155,7 @@ const Login = () => {
                 placeholder="email@example.com or 9876543210"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
                 Enter phone number without country code (e.g., 9876543210)
               </p>
             </div>
@@ -168,7 +168,7 @@ const Login = () => {
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  className="text-sm text-primary-600 dark:text-dark-primary-500 hover:text-primary-700 dark:hover:text-dark-primary-400 font-medium"
                 >
                   Forgot Password?
                 </Link>
@@ -186,7 +186,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary hover:text-gray-700 dark:hover:text-dark-text-secondary"
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -209,10 +209,10 @@ const Login = () => {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-gray-300 dark:border-dark-border"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white dark:bg-dark-bg-tertiary text-gray-500 dark:text-dark-text-tertiary">Or continue with</span>
               </div>
             </div>
 
@@ -230,14 +230,14 @@ const Login = () => {
           </div>
 
           <div className="mt-6 text-center space-y-3">
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-dark-text-secondary">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/signup" className="text-primary-600 dark:text-dark-primary-500 hover:text-primary-700 dark:hover:text-dark-primary-400 font-medium">
                 Sign up
               </Link>
             </p>
-            <div className="pt-3 border-t border-gray-200">
-              <p className="text-xs text-gray-500">
+            <div className="pt-3 border-t border-gray-200 dark:border-dark-border">
+              <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">
                 Admin users should login with their admin credentials
               </p>
             </div>

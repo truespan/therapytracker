@@ -230,9 +230,9 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-bg-secondary dark:to-dark-bg-primary py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-xl p-4 sm:p-8">
+        <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl p-4 sm:p-8">
           <div className="text-center mb-6 sm:mb-8">
             <button
               onClick={() => navigate('/')}
@@ -244,18 +244,18 @@ const Signup = () => {
                 className="h-full w-full object-contain"
               />
             </button>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Patient Account</h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-2">Join TheraP Track today</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Create Patient Account</h2>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-dark-text-secondary mt-2">Join TheraP Track today</p>
           </div>
 
-          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary-50 border border-primary-200 rounded-lg">
-            <p className="text-xs sm:text-sm text-primary-900">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
+            <p className="text-xs sm:text-sm text-primary-900 dark:text-primary-200">
               <strong>Note:</strong> This signup is for patients/clients only and not for Therapists.
             </p>
           </div>
 
           {apiError && (
-            <div className="mb-4 p-3 bg-error-50 border border-error-200 rounded-lg flex items-center space-x-2 text-error-700">
+            <div className="mb-4 p-3 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg flex items-center space-x-2 text-error-700 dark:text-error-300">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm">{apiError}</span>
             </div>
@@ -264,10 +264,10 @@ const Signup = () => {
           <div className="mb-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-gray-300 dark:border-dark-border"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or sign up with</span>
+                <span className="px-2 bg-white dark:bg-dark-bg-tertiary text-gray-500 dark:text-dark-text-tertiary">Or sign up with</span>
               </div>
             </div>
 
@@ -297,7 +297,7 @@ const Signup = () => {
                   className="input"
                   placeholder="Full name"
                 />
-                {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
+                {errors.name && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.name}</p>}
               </div>
 
               {/* Sex */}
@@ -321,7 +321,7 @@ const Signup = () => {
                   className="input"
                   placeholder="Age"
                 />
-                {errors.age && <p className="text-red-600 text-sm mt-1">{errors.age}</p>}
+                {errors.age && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.age}</p>}
               </div>
 
               {/* Email */}
@@ -335,8 +335,8 @@ const Signup = () => {
                   className="input"
                   placeholder="you@example.com (optional)"
                 />
-                {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
-                <p className="text-gray-500 text-xs mt-1">
+                {errors.email && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.email}</p>}
+                <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">
                   Recommended: Email will be used for forgot password feature. If not provided, mobile number will be used as username for login
                 </p>
               </div>
@@ -382,8 +382,8 @@ const Signup = () => {
                     pattern="[0-9]*"
                   />
                 </div>
-                {errors.contact && <p className="text-red-600 text-sm mt-1">{errors.contact}</p>}
-                <p className="text-gray-500 text-xs mt-1">Enter phone number without country code</p>
+                {errors.contact && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.contact}</p>}
+                <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">Enter phone number without country code</p>
               </div>
 
               {/* Partner ID */}
@@ -394,13 +394,13 @@ const Signup = () => {
                   name="partner_id"
                   value={formData.partner_id}
                   onChange={handleChange}
-                  className={`input ${partnerIdFromUrl ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  className={`input ${partnerIdFromUrl ? 'bg-gray-100 dark:bg-dark-bg-primary cursor-not-allowed' : ''}`}
                   placeholder="e.g., AB12345"
                   maxLength="7"
                   readOnly={!!partnerIdFromUrl}
                 />
-                {errors.partner_id && <p className="text-red-600 text-sm mt-1">{errors.partner_id}</p>}
-                <p className="text-gray-500 text-xs mt-1">
+                {errors.partner_id && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.partner_id}</p>}
+                <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">
                   {partnerIdFromUrl
                     ? 'Partner ID has been pre-filled from the signup link'
                     : 'Enter the 7-character Partner ID provided by your therapist (2 letters + 5 digits)'}
@@ -435,7 +435,7 @@ const Signup = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary hover:text-gray-700 dark:hover:text-dark-text-secondary"
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -444,7 +444,7 @@ const Signup = () => {
                     )}
                   </button>
                 </div>
-                {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
+                {errors.password && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.password}</p>}
               </div>
 
               {/* Confirm Password */}
@@ -462,7 +462,7 @@ const Signup = () => {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary hover:text-gray-700 dark:hover:text-dark-text-secondary"
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -472,7 +472,7 @@ const Signup = () => {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-red-600 text-sm mt-1">{errors.confirmPassword}</p>
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.confirmPassword}</p>
                 )}
               </div>
             </div>
@@ -487,9 +487,9 @@ const Signup = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-dark-text-secondary">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/login" className="text-primary-600 dark:text-dark-primary-500 hover:text-primary-700 dark:hover:text-dark-primary-400 font-medium">
                 Sign in
               </Link>
             </p>

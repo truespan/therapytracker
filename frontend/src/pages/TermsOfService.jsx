@@ -16,11 +16,13 @@ const TermsOfService = () => {
           </div>
           <div className="flex items-center justify-center mb-6">
             <Link to="/" className="inline-block">
-              <img
-                src="/TheraPTrackLogoBgRemoved.png"
-                alt="TheraP Track Logo"
-                className="h-12 w-12 object-contain hover:opacity-80 transition-opacity"
-              />
+              <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center p-2 shadow-md hover:shadow-lg transition-shadow cursor-pointer">
+                <img
+                  src="/TheraPTrackLogoBgRemoved.png"
+                  alt="TheraP Track Logo"
+                  className="h-full w-full object-contain"
+                />
+              </div>
             </Link>
           </div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-dark-text-primary mb-6 text-center">Terms of Service</h1>
