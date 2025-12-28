@@ -1,6 +1,7 @@
 -- TheraP Track Database Schema
 
 -- Drop tables if they exist (for clean setup)
+DROP TABLE IF EXISTS blogs CASCADE;
 DROP TABLE IF EXISTS contact_submissions CASCADE;
 DROP TABLE IF EXISTS user_profiles CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
@@ -35,6 +36,7 @@ CREATE TABLE partners (
     address TEXT,
     photo_url TEXT,
     organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    can_post_blogs BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -115,6 +117,22 @@ CREATE TABLE contact_submissions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Blogs table
+CREATE TABLE blogs (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    excerpt TEXT,
+    content TEXT NOT NULL,
+    category VARCHAR(100),
+    author_id INTEGER NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+    author_type VARCHAR(20) NOT NULL DEFAULT 'partner',
+    featured_image_url TEXT,
+    published BOOLEAN DEFAULT FALSE,
+    published_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better query performance
 CREATE INDEX idx_partners_organization ON partners(organization_id);
 CREATE INDEX idx_partners_partner_id ON partners(partner_id);
@@ -127,6 +145,10 @@ CREATE INDEX idx_profile_fields_user_session ON profile_fields(user_id, session_
 CREATE INDEX idx_profile_fields_session ON profile_fields(session_id);
 CREATE INDEX idx_contact_submissions_email ON contact_submissions(email);
 CREATE INDEX idx_contact_submissions_created_at ON contact_submissions(created_at);
+CREATE INDEX idx_blogs_author ON blogs(author_id);
+CREATE INDEX idx_blogs_published ON blogs(published, published_at);
+CREATE INDEX idx_blogs_category ON blogs(category);
+CREATE INDEX idx_blogs_created_at ON blogs(created_at);
 
 -- Insert default profile fields
 -- Rating scale: "Excellent", "Good", "Fair", "Poor", "Very Poor"

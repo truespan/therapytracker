@@ -134,6 +134,11 @@ router.get('/organizations/:id/therapists/video-settings', authenticateToken, ch
 router.put('/organizations/:id/therapists/:therapistId/video-settings', authenticateToken, checkRole('organization'), organizationController.updateTherapistVideoSettings);
 router.put('/organizations/:id/therapists/video-settings/bulk', authenticateToken, checkRole('organization'), organizationController.bulkUpdateTherapistVideoSettings);
 
+// Organization therapist blog permission management (for theraptrack-controlled organizations)
+router.get('/organizations/:id/therapists/blog-permissions', authenticateToken, checkRole('organization'), organizationController.getTherapistsBlogPermissions);
+router.post('/organizations/:id/therapists/:partnerId/blog-permission/grant', authenticateToken, checkRole('organization'), organizationController.grantBlogPermission);
+router.post('/organizations/:id/therapists/:partnerId/blog-permission/revoke', authenticateToken, checkRole('organization'), organizationController.revokeBlogPermission);
+
 // Subscription plans for individual therapists (public endpoint for signup)
 router.get('/subscription-plans/individual', subscriptionPlanController.getIndividualTherapistPlans);
 
@@ -312,6 +317,10 @@ router.post('/user/reports/:id/mark-viewed', authenticateToken, checkRole('user'
 // ==================== CONTACT FORM ROUTES ====================
 const contactController = require('../controllers/contactController');
 router.post('/contact', contactController.submitContact);
+
+// ==================== BLOG ROUTES ====================
+const blogRoutes = require('./blogRoutes');
+router.use('/blogs', blogRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

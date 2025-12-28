@@ -8,6 +8,7 @@ import ChangePasswordSection from '../common/ChangePasswordSection';
 import NonControlledSubscriptionManagement from './NonControlledSubscriptionManagement';
 import DarkModeToggle from '../common/DarkModeToggle';
 import TherapistVideoSettings from './TherapistVideoSettings';
+import TherapistBlogPermissions from './TherapistBlogPermissions';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -511,6 +512,26 @@ const OrganizationSettings = () => {
             </p>
             
             <TherapistVideoSettings
+              organizationId={user.id}
+              organizationName={user.name}
+            />
+          </div>
+        )}
+
+        {/* Therapist Blog Permission Management - Only for TheraPTrack controlled organizations */}
+        {subscriptionDetails?.theraptrack_controlled && (
+          <div className="border-t border-gray-200 dark:border-dark-border pt-6">
+            <div className="flex items-center mb-4">
+              <FileText className="h-6 w-6 mr-2 text-primary-600 dark:text-dark-primary-500" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
+                Therapist Blog Permission Management
+              </h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
+              Grant or revoke blog posting permissions for therapists in your organization. Only therapists with permission can create and edit blog posts.
+            </p>
+            
+            <TherapistBlogPermissions
               organizationId={user.id}
               organizationName={user.name}
             />

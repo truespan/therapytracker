@@ -1237,6 +1237,183 @@ const bulkUpdateTherapistVideoSettings = async (req, res) => {
 };
 
 /**
+ * Get all therapists for an organization with their blog permission status
+ */
+const getTherapistsBlogPermissions = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to view this organization\'s therapists' });
+    }
+
+    // Check if organization is TheraPTrack controlled
+    if (!organization.theraptrack_controlled) {
+      return res.status(403).json({
+        error: 'Blog permission management is only available for TheraPTrack controlled organizations'
+      });
+    }
+
+    // Get therapists with blog permission status
+    const result = await db.query(
+      `SELECT id, name, email, partner_id, can_post_blogs, created_at
+       FROM partners
+       WHERE organization_id = $1
+       ORDER BY name`,
+      [id]
+    );
+
+    res.json({
+      success: true,
+      therapists: result.rows
+    });
+  } catch (error) {
+    console.error('Get therapists blog permissions error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch therapists blog permissions',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Grant blog permission to a therapist
+ */
+const grantBlogPermission = async (req, res) => {
+  try {
+    const { id, partnerId } = req.params;
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to update this organization\'s therapists' });
+    }
+
+    // Check if organization is TheraPTrack controlled
+    if (!organization.theraptrack_controlled) {
+      return res.status(403).json({
+        error: 'Blog permission management is only available for TheraPTrack controlled organizations'
+      });
+    }
+
+    // Find partner
+    const partner = await Partner.findById(partnerId);
+    if (!partner) {
+      return res.status(404).json({ error: 'Therapist not found' });
+    }
+
+    // Verify partner belongs to organization
+    if (partner.organization_id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Therapist does not belong to this organization' });
+    }
+
+    // Check if already has permission
+    if (partner.can_post_blogs) {
+      return res.status(400).json({ error: 'Therapist already has blog posting permission' });
+    }
+
+    // Grant permission
+    const result = await db.query(
+      'UPDATE partners SET can_post_blogs = TRUE WHERE id = $1 AND organization_id = $2 RETURNING id, name, email, can_post_blogs',
+      [partnerId, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Therapist not found or update failed' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Blog posting permission granted successfully',
+      therapist: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Grant blog permission error:', error);
+    res.status(500).json({
+      error: 'Failed to grant blog permission',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Revoke blog permission from a therapist
+ */
+const revokeBlogPermission = async (req, res) => {
+  try {
+    const { id, partnerId } = req.params;
+
+    // Check if organization exists
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Unauthorized to update this organization\'s therapists' });
+    }
+
+    // Check if organization is TheraPTrack controlled
+    if (!organization.theraptrack_controlled) {
+      return res.status(403).json({
+        error: 'Blog permission management is only available for TheraPTrack controlled organizations'
+      });
+    }
+
+    // Find partner
+    const partner = await Partner.findById(partnerId);
+    if (!partner) {
+      return res.status(404).json({ error: 'Therapist not found' });
+    }
+
+    // Verify partner belongs to organization
+    if (partner.organization_id !== parseInt(id)) {
+      return res.status(403).json({ error: 'Therapist does not belong to this organization' });
+    }
+
+    // Check if already doesn't have permission
+    if (!partner.can_post_blogs) {
+      return res.status(400).json({ error: 'Therapist does not have blog posting permission' });
+    }
+
+    // Revoke permission
+    const result = await db.query(
+      'UPDATE partners SET can_post_blogs = FALSE WHERE id = $1 AND organization_id = $2 RETURNING id, name, email, can_post_blogs',
+      [partnerId, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Therapist not found or update failed' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Blog posting permission revoked successfully',
+      therapist: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Revoke blog permission error:', error);
+    res.status(500).json({
+      error: 'Failed to revoke blog permission',
+      details: error.message
+    });
+  }
+};
+
+/**
  * Cancel organization subscription
  */
 const cancelOrganizationSubscription = async (req, res) => {
@@ -1317,6 +1494,9 @@ module.exports = {
   getTherapistsVideoSettings,
   updateTherapistVideoSettings,
   bulkUpdateTherapistVideoSettings,
-  cancelOrganizationSubscription
+  cancelOrganizationSubscription,
+  getTherapistsBlogPermissions,
+  grantBlogPermission,
+  revokeBlogPermission
 };
 

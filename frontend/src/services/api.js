@@ -19,13 +19,15 @@ api.interceptors.request.use(
     console.log('[API Debug] Params:', config.params);
 
     // Don't add auth token for public endpoints like email verification
+    // Note: /blogs/my/blogs requires authentication, so exclude it from public endpoints
     const isPublicEndpoint = config.url.includes('/auth/verify-email') ||
                              config.url.includes('/auth/signup') ||
                              config.url.includes('/auth/login') ||
                              config.url.includes('/auth/forgot-password') ||
                              config.url.includes('/auth/reset-password') ||
                              config.url.includes('/google-calendar/callback') ||
-                             config.url.includes('/contact');
+                             config.url.includes('/contact') ||
+                             (config.url.includes('/blogs') && config.method === 'get' && !config.url.includes('/blogs/my/blogs'));
 
     if (token && !isPublicEndpoint) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -51,13 +53,15 @@ api.interceptors.response.use(
     console.error('[API Debug] Error message:', error.message);
 
     // Don't auto-redirect to login for public endpoints
+    // Note: /blogs/my/blogs requires authentication, so exclude it from public endpoints
     const isPublicEndpoint = error.config?.url?.includes('/auth/verify-email') ||
                              error.config?.url?.includes('/auth/signup') ||
                              error.config?.url?.includes('/auth/login') ||
                              error.config?.url?.includes('/auth/forgot-password') ||
                              error.config?.url?.includes('/auth/reset-password') ||
                              error.config?.url?.includes('/google-calendar/callback') ||
-                             error.config?.url?.includes('/contact');
+                             error.config?.url?.includes('/contact') ||
+                             (error.config?.url?.includes('/blogs') && error.config?.method === 'get' && !error.config?.url?.includes('/blogs/my/blogs'));
 
     if (error.response?.status === 401 && !isPublicEndpoint) {
       localStorage.removeItem('token');
@@ -144,6 +148,11 @@ export const organizationAPI = {
     api.put(`/organizations/${organizationId}/therapists/${therapistId}/video-settings`, { video_sessions_enabled }),
   bulkUpdateTherapistVideoSettings: (organizationId, therapistIds, video_sessions_enabled) =>
     api.put(`/organizations/${organizationId}/therapists/video-settings/bulk`, { therapistIds, video_sessions_enabled }),
+
+  // Therapist blog permission management (for theraptrack-controlled organizations)
+  getTherapistsBlogPermissions: (organizationId) => api.get(`/organizations/${organizationId}/therapists/blog-permissions`),
+  grantBlogPermission: (organizationId, partnerId) => api.post(`/organizations/${organizationId}/therapists/${partnerId}/blog-permission/grant`),
+  revokeBlogPermission: (organizationId, partnerId) => api.post(`/organizations/${organizationId}/therapists/${partnerId}/blog-permission/revoke`),
 };
 
 // Admin APIs
@@ -417,6 +426,19 @@ export const backgroundAPI = {
 // Contact API
 export const contactAPI = {
   submit: (formData) => api.post('/contact', formData),
+};
+
+// Blog API
+export const blogAPI = {
+  getAll: (published = true) => {
+    const params = published === false ? { published: 'false' } : {};
+    return api.get('/blogs', { params });
+  },
+  getById: (id) => api.get(`/blogs/${id}`),
+  getMyBlogs: () => api.get('/blogs/my/blogs'),
+  create: (data) => api.post('/blogs', data),
+  update: (id, data) => api.put(`/blogs/${id}`, data),
+  delete: (id) => api.delete(`/blogs/${id}`)
 };
 
 // Razorpay Payment APIs
