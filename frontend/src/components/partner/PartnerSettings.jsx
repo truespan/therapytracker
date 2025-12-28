@@ -48,11 +48,54 @@ const PartnerSettings = () => {
       // Parse contact to extract country code and number
       const parseContact = (contact) => {
         if (!contact) return { countryCode: '+91', number: '' };
-        const match = contact.match(/^(\+\d{1,3})(\d+)$/);
+        
+        // Ensure contact is a string and trim whitespace
+        const contactStr = String(contact).trim();
+        
+        // Handle numbers with + prefix (e.g., +917996336719, +91996336719, +11234567890)
+        // Try common country codes first (prioritize +91, +1)
+        if (contactStr.startsWith('+91')) {
+          return { countryCode: '+91', number: contactStr.substring(3) };
+        }
+        if (contactStr.startsWith('+1')) {
+          return { countryCode: '+1', number: contactStr.substring(2) };
+        }
+        
+        // Fallback for other + prefixes
+        const match = contactStr.match(/^(\+\d{1,3})(\d+)$/);
         if (match) {
           return { countryCode: match[1], number: match[2] };
         }
-        return { countryCode: '+91', number: contact };
+
+        // Handle numbers without + prefix but with country code (e.g., 91996336719)
+        // Pattern: 91 followed by 9-10 digits (total 11-12 characters)
+        // This handles Indian numbers with country code but no + prefix
+        // Example: 91996336719 → countryCode: +91, number: 996336719
+        const indiaMatch = contactStr.match(/^(91)(\d{9,10})$/);
+        if (indiaMatch) {
+          return { countryCode: '+91', number: indiaMatch[2] };
+        }
+        
+        // Handle US numbers without + prefix (e.g., 11234567890)
+        // Pattern: 1 followed by exactly 10 digits (total 11 characters)
+        const usMatch = contactStr.match(/^(1)(\d{10})$/);
+        if (usMatch) {
+          return { countryCode: '+1', number: usMatch[2] };
+        }
+
+        // Handle numbers without country code (e.g., 77996336719 or 7996336719)
+        // Check if it looks like an Indian number (starts with 6-9 and has 10-11 digits)
+        // The regex /^[6-9]\d{9,10}$/ matches:
+        // - 7996336719 (10 digits total: 7 followed by 9 more digits)
+        // - 77996336719 (11 digits total: 7 followed by 10 more digits)
+        // In both cases, we preserve ALL digits as they are part of the local number
+        if (contactStr.match(/^[6-9]\d{9,10}$/)) {
+          return { countryCode: '+91', number: contactStr };
+        }
+
+        // Default fallback - preserve the original contact as number
+        // This ensures no digits are lost for unexpected formats
+        return { countryCode: '+91', number: contactStr };
       };
 
       const { countryCode, number } = parseContact(user.contact);

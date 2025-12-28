@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Save, CreditCard, Users, Calculator, Sun, Video } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
+import CountryCodeSelect from '../common/CountryCodeSelect';
 import { googleCalendarAPI, organizationAPI, subscriptionPlanAPI } from '../../services/api';
 import ChangePasswordSection from '../common/ChangePasswordSection';
 import NonControlledSubscriptionManagement from './NonControlledSubscriptionManagement';
@@ -10,7 +11,10 @@ import TherapistVideoSettings from './TherapistVideoSettings';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
-  const [contact, setContact] = useState('');
+  const [formData, setFormData] = useState({
+    countryCode: '+91',
+    contact: ''
+  });
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -22,7 +26,65 @@ const OrganizationSettings = () => {
   // Initialize form fields when user data is available
   useEffect(() => {
     if (user) {
-      setContact(user.contact || '');
+      // Parse contact to extract country code and number
+      const parseContact = (contact) => {
+        if (!contact) return { countryCode: '+91', number: '' };
+        
+        // Ensure contact is a string and trim whitespace
+        const contactStr = String(contact).trim();
+        
+        // Handle numbers with + prefix (e.g., +917996336719, +91996336719, +11234567890)
+        // Try common country codes first (prioritize +91, +1)
+        if (contactStr.startsWith('+91')) {
+          return { countryCode: '+91', number: contactStr.substring(3) };
+        }
+        if (contactStr.startsWith('+1')) {
+          return { countryCode: '+1', number: contactStr.substring(2) };
+        }
+        
+        // Fallback for other + prefixes
+        const match = contactStr.match(/^(\+\d{1,3})(\d+)$/);
+        if (match) {
+          return { countryCode: match[1], number: match[2] };
+        }
+
+        // Handle numbers without + prefix but with country code (e.g., 91996336719)
+        // Pattern: 91 followed by 9-10 digits (total 11-12 characters)
+        // This handles Indian numbers with country code but no + prefix
+        // Example: 91996336719 → countryCode: +91, number: 996336719
+        const indiaMatch = contactStr.match(/^(91)(\d{9,10})$/);
+        if (indiaMatch) {
+          return { countryCode: '+91', number: indiaMatch[2] };
+        }
+        
+        // Handle US numbers without + prefix (e.g., 11234567890)
+        // Pattern: 1 followed by exactly 10 digits (total 11 characters)
+        const usMatch = contactStr.match(/^(1)(\d{10})$/);
+        if (usMatch) {
+          return { countryCode: '+1', number: usMatch[2] };
+        }
+
+        // Handle numbers without country code (e.g., 77996336719 or 7996336719)
+        // Check if it looks like an Indian number (starts with 6-9 and has 10-11 digits)
+        // The regex /^[6-9]\d{9,10}$/ matches:
+        // - 7996336719 (10 digits total: 7 followed by 9 more digits)
+        // - 77996336719 (11 digits total: 7 followed by 10 more digits)
+        // In both cases, we preserve ALL digits as they are part of the local number
+        if (contactStr.match(/^[6-9]\d{9,10}$/)) {
+          return { countryCode: '+91', number: contactStr };
+        }
+
+        // Default fallback - preserve the original contact as number
+        // This ensures no digits are lost for unexpected formats
+        return { countryCode: '+91', number: contactStr };
+      };
+
+      const { countryCode, number } = parseContact(user.contact || '');
+      
+      setFormData({
+        countryCode: countryCode,
+        contact: number
+      });
       setAddress(user.address || '');
       loadSubscriptionDetails();
     }
@@ -45,6 +107,14 @@ const OrganizationSettings = () => {
 
 
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSave = async () => {
     if (!user?.id) return;
 
@@ -53,23 +123,25 @@ const OrganizationSettings = () => {
     setSuccessMessage('');
 
     try {
+      // Combine country code with contact number
+      const contact = `${formData.countryCode}${formData.contact.trim()}`;
+
       // Validate contact format if provided (should include country code)
       if (contact && contact.trim()) {
         const contactRegex = /^\+\d{1,3}\d{7,15}$/;
         if (!contactRegex.test(contact.trim())) {
-          setErrorMessage('Invalid contact format. Must include country code (e.g., +911234567890)');
+          setErrorMessage('Invalid contact format. Phone number must be 7-15 digits.');
           setLoading(false);
           return;
         }
       }
 
       // Prepare update data - ensure both fields are explicitly sent
-      const trimmedContact = contact.trim();
       const trimmedAddress = address.trim();
       
       const updateData = {
         // Always include contact field
-        contact: trimmedContact || null,
+        contact: contact || null,
         // Always include address field - use empty string instead of null for better compatibility
         address: trimmedAddress || ''
       };
@@ -95,9 +167,21 @@ const OrganizationSettings = () => {
   };
 
   const hasChanges = () => {
-    const currentContact = user?.contact || '';
+    // Parse current contact to compare
+    const parseContact = (contact) => {
+      if (!contact) return { countryCode: '+91', number: '' };
+      const match = contact.match(/^(\+\d{1,3})(\d+)$/);
+      if (match) {
+        return { countryCode: match[1], number: match[2] };
+      }
+      return { countryCode: '+91', number: contact };
+    };
+
+    const currentContact = parseContact(user?.contact || '');
     const currentAddress = user?.address || '';
-    return contact !== currentContact || address !== currentAddress;
+    return formData.countryCode !== currentContact.countryCode || 
+           formData.contact !== currentContact.number || 
+           address !== currentAddress;
   };
 
   return (
@@ -168,17 +252,25 @@ const OrganizationSettings = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
               Contact Number
             </label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
-              <input
-                type="text"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-                placeholder="+911234567890"
-                className="input pr-10"
+            <div className="flex space-x-2">
+              <CountryCodeSelect
+                value={formData.countryCode}
+                onChange={handleChange}
+                name="countryCode"
               />
+              <div className="relative flex-1">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+                <input
+                  type="tel"
+                  name="contact"
+                  value={formData.contact}
+                  onChange={handleChange}
+                  placeholder="1234567890"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                />
+              </div>
             </div>
-            <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">Include country code (e.g., +91 for India)</p>
+            <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">Enter phone number without country code</p>
           </div>
 
           {/* Address - Editable */}

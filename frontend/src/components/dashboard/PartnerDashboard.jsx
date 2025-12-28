@@ -702,7 +702,18 @@ const PartnerDashboard = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-xs sm:text-sm text-gray-600 dark:text-dark-text-secondary space-y-1 sm:space-y-0">
                       <span>{selectedUser.sex}, {selectedUser.age} years</span>
                       {selectedUser.email && <span className="truncate">{selectedUser.email}</span>}
-                      {selectedUser.contact && <span>{selectedUser.contact}</span>}
+                      {selectedUser.contact && (() => {
+                        // Format phone number for display - ensure full number is shown with proper formatting
+                        const contact = selectedUser.contact || '';
+                        // If contact starts with +, it already has country code, display as is
+                        // Otherwise, ensure we're displaying the full number
+                        if (contact.startsWith('+')) {
+                          return <span>{contact}</span>;
+                        } else {
+                          // If no country code, display as is (shouldn't happen but handle it)
+                          return <span>{contact}</span>;
+                        }
+                      })()}
                     </div>
                   </div>
                   <button
