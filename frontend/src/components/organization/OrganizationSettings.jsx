@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Save, CreditCard, Users, Calculator, Sun, Video } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Save, CreditCard, Users, Calculator, Sun, Video, Edit, X } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import { googleCalendarAPI, organizationAPI, subscriptionPlanAPI } from '../../services/api';
@@ -19,6 +19,8 @@ const OrganizationSettings = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState(null);
   
   // Subscription state
   const [subscriptionDetails, setSubscriptionDetails] = useState(null);
@@ -81,10 +83,12 @@ const OrganizationSettings = () => {
 
       const { countryCode, number } = parseContact(user.contact || '');
       
-      setFormData({
+      const initialFormData = {
         countryCode: countryCode,
         contact: number
-      });
+      };
+      setFormData(initialFormData);
+      setOriginalFormData({ ...initialFormData, address: user.address || '' });
       setAddress(user.address || '');
       loadSubscriptionDetails();
     }
@@ -109,10 +113,37 @@ const OrganizationSettings = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name === 'address') {
+      setAddress(value);
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+    // Clear messages when user starts editing
+    if (successMessage) setSuccessMessage('');
+    if (errorMessage) setErrorMessage('');
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    // Store current form data as original when entering edit mode
+    setOriginalFormData({ ...formData, address: address });
+  };
+
+  const handleCancel = () => {
+    // Reset form data to original values
+    if (originalFormData) {
+      setFormData({
+        countryCode: originalFormData.countryCode,
+        contact: originalFormData.contact
+      });
+      setAddress(originalFormData.address || '');
+    }
+    setIsEditing(false);
+    setSuccessMessage('');
+    setErrorMessage('');
   };
 
   const handleSave = async () => {
@@ -151,6 +182,12 @@ const OrganizationSettings = () => {
       
       await organizationAPI.update(user.id, updateData);
 
+      // Update original form data to current values
+      setOriginalFormData({ ...formData, address: address });
+      
+      // Exit edit mode
+      setIsEditing(false);
+
       setSuccessMessage('Settings saved successfully!');
       
       // Refresh user data to get updated values
@@ -188,11 +225,24 @@ const OrganizationSettings = () => {
     <div className="max-w-4xl mx-auto">
       <div className="card dark:bg-dark-bg-tertiary">
         <div className="border-b border-gray-200 dark:border-dark-border pb-4 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
-            <Building2 className="h-6 w-6 mr-2 text-indigo-600 dark:text-dark-primary-500" />
-            Organization Settings
-          </h2>
-          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage your organization logo and view your information</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
+                <Building2 className="h-6 w-6 mr-2 text-indigo-600 dark:text-dark-primary-500" />
+                Organization Settings
+              </h2>
+              <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage your organization logo and view your information</p>
+            </div>
+            {!isEditing && (
+              <button
+                onClick={handleEdit}
+                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              >
+                <Edit className="h-4 w-4" />
+                <span>Edit</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -257,6 +307,7 @@ const OrganizationSettings = () => {
                 value={formData.countryCode}
                 onChange={handleChange}
                 name="countryCode"
+                disabled={!isEditing}
               />
               <div className="relative flex-1">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
@@ -265,8 +316,13 @@ const OrganizationSettings = () => {
                   name="contact"
                   value={formData.contact}
                   onChange={handleChange}
+                  disabled={!isEditing}
                   placeholder="1234567890"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                  className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    isEditing 
+                      ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                  }`}
                 />
               </div>
             </div>
@@ -281,28 +337,45 @@ const OrganizationSettings = () => {
             <div className="relative">
               <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <textarea
+                name="address"
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={handleChange}
+                disabled={!isEditing}
                 rows="3"
                 placeholder="Enter organization address"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent outline-none text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary resize-y"
+                className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent outline-none dark:placeholder-dark-text-tertiary resize-y ${
+                  isEditing 
+                    ? 'bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary' 
+                    : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                }`}
               />
             </div>
           </div>
 
-          {/* Save Button */}
-          <div className="flex items-center justify-end pt-4 border-t border-gray-200 dark:border-dark-border">
-            <button
-              onClick={handleSave}
-              disabled={loading || !hasChanges()}
-              className={`btn btn-primary flex items-center space-x-2 ${
-                loading || !hasChanges() ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              <Save className="h-4 w-4" />
-              <span>{loading ? 'Saving...' : 'Save Changes'}</span>
-            </button>
-          </div>
+          {/* Save and Cancel Buttons */}
+          {isEditing && (
+            <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-dark-border">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={loading}
+                className="flex items-center space-x-2 px-6 py-2 bg-gray-200 dark:bg-dark-bg-secondary text-gray-700 dark:text-dark-text-primary rounded-lg hover:bg-gray-300 dark:hover:bg-dark-bg-primary transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <X className="h-4 w-4" />
+                <span>Cancel</span>
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={loading || !hasChanges()}
+                className={`btn btn-primary flex items-center space-x-2 ${
+                  loading || !hasChanges() ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                <Save className="h-4 w-4" />
+                <span>{loading ? 'Saving...' : 'Save Changes'}</span>
+              </button>
+            </div>
+          )}
 
           {/* Success Message */}
           {successMessage && (

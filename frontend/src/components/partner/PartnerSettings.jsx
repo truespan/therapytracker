@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText, CreditCard, Sun } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText, CreditCard, Sun, Edit, X, Save } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import DarkModeToggle from '../common/DarkModeToggle';
@@ -26,6 +26,8 @@ const PartnerSettings = () => {
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState(null);
 
   // Form state for editable fields
   const [formData, setFormData] = useState({
@@ -100,7 +102,7 @@ const PartnerSettings = () => {
 
       const { countryCode, number } = parseContact(user.contact);
 
-      setFormData({
+      const initialFormData = {
         age: user.age || '',
         countryCode: countryCode,
         contact: number,
@@ -112,7 +114,9 @@ const PartnerSettings = () => {
         fee_min: user.fee_min || '',
         fee_max: user.fee_max || '',
         fee_currency: user.fee_currency || 'INR'
-      });
+      };
+      setFormData(initialFormData);
+      setOriginalFormData(initialFormData);
     }
   }, [user]);
 
@@ -215,6 +219,21 @@ const PartnerSettings = () => {
     }
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    // Store current form data as original when entering edit mode
+    setOriginalFormData({ ...formData });
+  };
+
+  const handleCancel = () => {
+    // Reset form data to original values
+    if (originalFormData) {
+      setFormData({ ...originalFormData });
+    }
+    setIsEditing(false);
+    setSaveMessage({ type: '', text: '' });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -241,6 +260,12 @@ const PartnerSettings = () => {
       
       // Refresh user data
       await refreshUser();
+      
+      // Update original form data to current values
+      setOriginalFormData({ ...formData });
+      
+      // Exit edit mode
+      setIsEditing(false);
       
       setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
       setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
@@ -446,11 +471,24 @@ const PartnerSettings = () => {
     <div className="max-w-4xl mx-auto">
       <div className="card">
         <div className="border-b border-gray-200 pb-4 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
-            <User className="h-6 w-6 mr-2 text-primary-600" />
-            Profile Settings
-          </h2>
-          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage your profile information</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
+                <User className="h-6 w-6 mr-2 text-primary-600" />
+                Profile Settings
+              </h2>
+              <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage your profile information</p>
+            </div>
+            {!isEditing && (
+              <button
+                onClick={handleEdit}
+                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              >
+                <Edit className="h-4 w-4" />
+                <span>Edit</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -523,7 +561,12 @@ const PartnerSettings = () => {
                     name="age"
                     value={formData.age}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                    disabled={!isEditing}
+                    className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      isEditing 
+                        ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                        : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                    }`}
                     placeholder="Age"
                     min="18"
                     max="100"
@@ -542,7 +585,7 @@ const PartnerSettings = () => {
                 <input
                   type="email"
                   value={user?.email || ''}
-                  className="input bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
+                  className="input pl-10 bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
@@ -559,6 +602,7 @@ const PartnerSettings = () => {
                   value={formData.countryCode}
                   onChange={handleChange}
                   name="countryCode"
+                  disabled={!isEditing}
                 />
                 <div className="relative flex-1">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
@@ -567,7 +611,12 @@ const PartnerSettings = () => {
                     name="contact"
                     value={formData.contact}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                    disabled={!isEditing}
+                    className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      isEditing 
+                        ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                        : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                    }`}
                     placeholder="1234567890"
                   />
                 </div>
@@ -586,7 +635,12 @@ const PartnerSettings = () => {
                   name="qualification"
                   value={formData.qualification}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                  disabled={!isEditing}
+                  className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    isEditing 
+                      ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                  }`}
                   placeholder="e.g., M.D. Psychiatry, Clinical Psychologist"
                 />
               </div>
@@ -604,7 +658,12 @@ const PartnerSettings = () => {
                   name="license_id"
                   value={formData.license_id}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                  disabled={!isEditing}
+                  className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    isEditing 
+                      ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                  }`}
                   placeholder="e.g., PSY-12345, MED-67890"
                 />
               </div>
@@ -621,8 +680,13 @@ const PartnerSettings = () => {
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
+                  disabled={!isEditing}
                   rows="3"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                  className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    isEditing 
+                      ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                  }`}
                   placeholder="Enter full address"
                 />
               </div>
@@ -639,8 +703,13 @@ const PartnerSettings = () => {
                   name="work_experience"
                   value={formData.work_experience}
                   onChange={handleChange}
+                  disabled={!isEditing}
                   rows="3"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                  className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    isEditing 
+                      ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                  }`}
                   placeholder="Enter work experience details"
                 />
               </div>
@@ -657,8 +726,13 @@ const PartnerSettings = () => {
                   name="other_practice_details"
                   value={formData.other_practice_details}
                   onChange={handleChange}
+                  disabled={!isEditing}
                   rows="3"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                  className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                    isEditing 
+                      ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                  }`}
                   placeholder="Enter other significant work related details"
                 />
               </div>
@@ -680,7 +754,12 @@ const PartnerSettings = () => {
                         name="fee_min"
                         value={formData.fee_min}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                        disabled={!isEditing}
+                        className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          isEditing 
+                            ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                            : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                        }`}
                         placeholder="0.00"
                         min="0"
                         step="0.01"
@@ -696,7 +775,12 @@ const PartnerSettings = () => {
                         name="fee_max"
                         value={formData.fee_max}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                        disabled={!isEditing}
+                        className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          isEditing 
+                            ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                            : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                        }`}
                         placeholder="0.00"
                         min="0"
                         step="0.01"
@@ -709,7 +793,12 @@ const PartnerSettings = () => {
                       name="fee_currency"
                       value={formData.fee_currency}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                      disabled={!isEditing}
+                      className={`w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        isEditing 
+                          ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                          : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                      }`}
                     >
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
@@ -739,16 +828,28 @@ const PartnerSettings = () => {
               </div>
             )}
 
-            {/* Save Button */}
-            <div className="flex justify-end pt-4 border-t">
-              <button
-                type="submit"
-                disabled={saving}
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
+            {/* Save and Cancel Buttons */}
+            {isEditing && (
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={saving}
+                  className="flex items-center space-x-2 px-6 py-2 bg-gray-200 dark:bg-dark-bg-secondary text-gray-700 dark:text-dark-text-primary rounded-lg hover:bg-gray-300 dark:hover:bg-dark-bg-primary transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <X className="h-4 w-4" />
+                  <span>Cancel</span>
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center space-x-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+                </button>
+              </div>
+            )}
 
             {/* Email Verification Status */}
             {user && (

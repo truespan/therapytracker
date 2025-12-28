@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CountryCodeSelect = ({ value, onChange, name = 'countryCode', className = '' }) => {
+const CountryCodeSelect = ({ value, onChange, name = 'countryCode', className = '', disabled = false }) => {
   const countryCodes = [
     { code: '+91', flag: '🇮🇳', country: 'India' },
     { code: '+1', flag: '🇺🇸', country: 'USA' },
@@ -29,7 +29,8 @@ const CountryCodeSelect = ({ value, onChange, name = 'countryCode', className = 
       name={name}
       value={value}
       onChange={onChange}
-      className={`input w-24 text-sm px-2 ${className}`}
+      disabled={disabled}
+      className={`input w-24 text-sm px-2 ${className} ${disabled ? 'opacity-75 cursor-not-allowed' : ''}`}
     >
       {countryCodes.map(({ code, flag }) => (
         <option key={code} value={code}>
