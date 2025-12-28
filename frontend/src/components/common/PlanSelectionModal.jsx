@@ -85,15 +85,15 @@ const PlanSelectionModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full my-8">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-7xl w-full my-8">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div className="p-6 border-b border-gray-200 dark:border-dark-border flex items-center justify-between sticky top-0 bg-white dark:bg-dark-bg-tertiary z-10">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
               <CreditCard className="h-6 w-6 mr-2 text-indigo-600" />
               {isBulkMode ? `Select Plan for All Therapists` : `Select Your Subscription Plan`}
             </h2>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
               {isBulkMode
                 ? `Choose a plan to apply to all therapists in ${organizationName}`
                 : `Choose the plan that best fits your needs`}

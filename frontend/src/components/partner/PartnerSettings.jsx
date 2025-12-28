@@ -528,7 +528,7 @@ const PartnerSettings = () => {
                 <input
                   type="text"
                   value={user?.name || ''}
-                  className="input bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
+                  className="input bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
@@ -544,7 +544,7 @@ const PartnerSettings = () => {
                 <input
                   type="text"
                   value={user?.sex || ''}
-                  className="input bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
+                  className="input bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
@@ -565,7 +565,7 @@ const PartnerSettings = () => {
                     className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                       isEditing 
                         ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                        : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                        : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                     }`}
                     placeholder="Age"
                     min="18"
@@ -585,7 +585,7 @@ const PartnerSettings = () => {
                 <input
                   type="email"
                   value={user?.email || ''}
-                  className="input pl-10 bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75"
+                  className="input pl-10 bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75"
                   disabled
                   readOnly
                 />
@@ -615,7 +615,7 @@ const PartnerSettings = () => {
                     className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                       isEditing 
                         ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                        : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                        : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                     }`}
                     placeholder="1234567890"
                   />
@@ -639,7 +639,7 @@ const PartnerSettings = () => {
                   className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                     isEditing 
                       ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                      : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                   }`}
                   placeholder="e.g., M.D. Psychiatry, Clinical Psychologist"
                 />
@@ -662,7 +662,7 @@ const PartnerSettings = () => {
                   className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                     isEditing 
                       ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                      : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                   }`}
                   placeholder="e.g., PSY-12345, MED-67890"
                 />
@@ -685,7 +685,7 @@ const PartnerSettings = () => {
                   className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                     isEditing 
                       ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                      : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                   }`}
                   placeholder="Enter full address"
                 />
@@ -708,7 +708,7 @@ const PartnerSettings = () => {
                   className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                     isEditing 
                       ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                      : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                   }`}
                   placeholder="Enter work experience details"
                 />
@@ -731,7 +731,7 @@ const PartnerSettings = () => {
                   className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                     isEditing 
                       ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                      : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                   }`}
                   placeholder="Enter other significant work related details"
                 />
@@ -758,7 +758,7 @@ const PartnerSettings = () => {
                         className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                           isEditing 
                             ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                            : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                            : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                         }`}
                         placeholder="0.00"
                         min="0"
@@ -779,7 +779,7 @@ const PartnerSettings = () => {
                         className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                           isEditing 
                             ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                            : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                            : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                         }`}
                         placeholder="0.00"
                         min="0"
@@ -797,7 +797,7 @@ const PartnerSettings = () => {
                       className={`w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                         isEditing 
                           ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                          : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                          : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                       }`}
                     >
                       <option value="USD">USD ($)</option>

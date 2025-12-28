@@ -430,12 +430,12 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
       {/* Delete Confirmation Dialog */}
       {deleteConfirmQuestionnaire && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Assignment</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">Delete Assignment</h3>
+            <p className="text-gray-600 dark:text-dark-text-secondary mb-4">
               Are you sure you want to delete this questionnaire assignment? This action cannot be undone.
             </p>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mb-6">
               Note: This will not affect any charts already created using this questionnaire's data.
             </p>
             <div className="flex justify-end space-x-3">

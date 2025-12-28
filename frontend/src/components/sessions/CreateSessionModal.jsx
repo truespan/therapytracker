@@ -271,39 +271,39 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
-                <FileText className="h-6 w-6 text-primary-600" />
+              <div className="p-2 bg-primary-100 dark:bg-dark-bg-secondary rounded-lg">
+                <FileText className="h-6 w-6 text-primary-600 dark:text-dark-primary-500" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Create New Session</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Create New Session</h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button onClick={onClose} className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary">
               <X className="h-6 w-6" />
             </button>
           </div>
 
           {/* Google Calendar Connection Warning */}
           {checkingGoogleCalendar && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-blue-300 text-sm">
               Checking Google Calendar connection...
             </div>
           )}
           
           {!checkingGoogleCalendar && !googleCalendarConnected && (
-            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0">
-                  <Video className="h-5 w-5 text-yellow-600" />
+                  <Video className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-yellow-800 mb-1">
+                  <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-1">
                     Google Calendar Required for Video Sessions
                   </h3>
-                  <p className="text-sm text-yellow-700 mb-3">
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">
                     Please connect your Google Calendar to create video sessions with automatic Google Meet links.
                     Without this connection, you can only create regular therapy sessions.
                   </p>
@@ -317,7 +317,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
                     </button>
                     <button
                       onClick={() => setGoogleCalendarConnected(true)}
-                      className="px-3 py-1.5 text-yellow-700 text-sm underline hover:text-yellow-800"
+                      className="px-3 py-1.5 text-yellow-700 dark:text-yellow-300 text-sm underline hover:text-yellow-800 dark:hover:text-yellow-200"
                     >
                       I'll connect later
                     </button>
@@ -328,7 +328,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
           )}
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
               {error}
             </div>
           )}
@@ -336,7 +336,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Client Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 <User className="inline h-4 w-4 mr-1" />
                 Select Client *
               </label>
@@ -346,7 +346,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
                 onChange={handleChange}
                 required
                 disabled={!!selectedUser}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary disabled:bg-gray-100 dark:disabled:bg-dark-bg-secondary disabled:cursor-not-allowed"
               >
                 <option value="">-- Select a client --</option>
                 {clients && clients.map(client => (
@@ -359,7 +359,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
 
             {/* Session Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 <FileText className="inline h-4 w-4 mr-1" />
                 Session Title *
               </label>
@@ -370,14 +370,14 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
                 onChange={handleChange}
                 required
                 placeholder="Enter session title..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
               />
             </div>
 
             {/* Session Date and Time */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   <Calendar className="inline h-4 w-4 mr-1" />
                   Session Date *
                 </label>
@@ -387,11 +387,11 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
                   value={formData.session_date}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   <Clock className="inline h-4 w-4 mr-1" />
                   Session Time *
                 </label>
@@ -401,14 +401,14 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
                   value={formData.session_time}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary"
                 />
               </div>
             </div>
 
             {/* Session Duration */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 <Clock className="inline h-4 w-4 mr-1" />
                 Duration (minutes) *
               </label>
@@ -417,7 +417,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
                 value={formData.session_duration}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary"
               >
                 <option value="">Select duration</option>
                 <option value="30">30 minutes</option>
@@ -430,7 +430,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
 
             {/* Payment Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 <CurrencyIcon className="inline h-4 w-4 mr-1" />
                 Payment Related Notes (Optional)
               </label>
@@ -440,23 +440,23 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
                 value={formData.payment_notes}
                 onChange={handleChange}
                 placeholder="₹5000 paid..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 pt-4 border-t dark:border-dark-border">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text-primary rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-primary transition-colors"
                 disabled={loading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
                 {loading ? 'Creating Session...' : 'Create Session'}
@@ -469,32 +469,32 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       {/* Future Date Warning Dialog */}
       {showFutureDateWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-start space-x-3 mb-4">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100">
-                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-orange-100 dark:bg-orange-900/30">
+                  <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-1">
                   Future Date and Time Warning
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
                   You are creating a session with a future date and time. Please confirm that you want to proceed with creating this session.
                 </p>
               </div>
               <button
                 onClick={handleCancelFutureDate}
                 disabled={loading}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <p className="text-xs text-orange-800">
+            <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+              <p className="text-xs text-orange-800 dark:text-orange-300">
                 <strong>Session Date & Time:</strong> {formData.session_date} at {formData.session_time}
               </p>
             </div>
@@ -504,14 +504,14 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
               <button
                 onClick={handleCancelFutureDate}
                 disabled={loading}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-gray-700 dark:text-dark-text-primary bg-gray-100 dark:bg-dark-bg-primary rounded-lg hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmFutureDate}
                 disabled={loading}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue
               </button>
@@ -523,32 +523,32 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       {/* Confirmation Dialog */}
       {showConfirmDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-start space-x-3 mb-4">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100">
-                  <FileText className="h-5 w-5 text-yellow-600" />
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100 dark:bg-yellow-900/30">
+                  <FileText className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-1">
                   Confirm Session Creation
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
                   Once a session is created, it <strong>cannot be deleted</strong>. The session will be permanently recorded in the client's session history.
                 </p>
               </div>
               <button
                 onClick={() => setShowConfirmDialog(false)}
                 disabled={loading}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-xs text-yellow-800">
+            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-xs text-yellow-800 dark:text-yellow-300">
                 <strong>Note:</strong> You can edit session notes later.
               </p>
             </div>
@@ -558,14 +558,14 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
               <button
                 onClick={() => setShowConfirmDialog(false)}
                 disabled={loading}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-gray-700 dark:text-dark-text-primary bg-gray-100 dark:bg-dark-bg-primary rounded-lg hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmCreate}
                 disabled={loading}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Creating...' : 'Yes, Create Session'}
               </button>

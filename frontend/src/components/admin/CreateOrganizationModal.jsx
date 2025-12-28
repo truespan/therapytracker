@@ -97,17 +97,17 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-full sm:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl w-full max-w-full sm:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
-          <h2 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center">
+        <div className="sticky top-0 bg-white dark:bg-dark-bg-tertiary border-b border-gray-200 dark:border-dark-border px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
             <Building2 className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-primary-700" />
             <span className="hidden sm:inline">Create New Organization</span>
             <span className="sm:hidden">New Organization</span>
           </h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors"
             disabled={isLoading}
           >
             <X className="h-5 w-5 sm:h-6 sm:w-6" />

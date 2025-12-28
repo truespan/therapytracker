@@ -198,16 +198,16 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+        <div className="sticky top-0 bg-white dark:bg-dark-bg-tertiary border-b border-gray-200 dark:border-dark-border px-6 py-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
             <Users className="h-6 w-6 mr-2 text-primary-600" />
             Edit Therapist
           </h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors"
             disabled={isLoading}
           >
             <X className="h-6 w-6" />
@@ -218,8 +218,8 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Partner ID Display */}
           {partner && partner.partner_id && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <span className="text-sm font-medium text-gray-700">Partner ID: </span>
+            <div className="bg-gray-50 dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border rounded-lg p-3">
+              <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Partner ID: </span>
               <span className="text-sm font-bold text-primary-600">{partner.partner_id}</span>
             </div>
           )}
@@ -243,17 +243,17 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Full Name <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter therapist's full name"
@@ -266,14 +266,14 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
           {/* Sex and Age */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Sex <span className="text-red-500">*</span>
               </label>
               <select
                 name="sex"
                 value={formData.sex}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border ${
                   errors.sex ? 'border-red-500' : 'border-gray-300'
                 }`}
                 disabled={isLoading}
@@ -286,17 +286,17 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Age (Optional)
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="number"
                   name="age"
                   value={formData.age}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                     errors.age ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Age"
@@ -311,17 +311,17 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Email <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="therapist@example.com"
@@ -330,7 +330,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
             </div>
             {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
             {partner && formData.email !== partner.email && (
-              <p className="mt-1 text-xs text-amber-600">
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                 Changing email will require re-verification. A new verification email will be sent.
               </p>
             )}
@@ -338,7 +338,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
           {/* Contact Number */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Contact Number <span className="text-red-500">*</span>
             </label>
             <div className="flex space-x-2">
@@ -348,13 +348,13 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
                 name="countryCode"
               />
               <div className="relative flex-1">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="tel"
                   name="contact"
                   value={formData.contact}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                     errors.contact ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="1234567890"
@@ -367,17 +367,17 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
           {/* Qualification */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Qualification <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 name="qualification"
                 value={formData.qualification}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                   errors.qualification ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="e.g., M.D. Psychiatry, Clinical Psychologist"
@@ -389,17 +389,17 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
           {/* Practitioner License ID */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Practitioner License ID (Optional)
             </label>
             <div className="relative">
-              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 name="license_id"
                 value={formData.license_id}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                 placeholder="e.g., PSY-12345, MED-67890"
                 disabled={isLoading}
               />
@@ -408,17 +408,17 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
           {/* Address */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Address (Optional)
             </label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <textarea
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
                 rows="3"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                 placeholder="Enter full address"
                 disabled={isLoading}
               />
@@ -427,17 +427,17 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
           {/* Work Experience */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Work Experience (Optional)
             </label>
             <div className="relative">
-              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <textarea
                 name="work_experience"
                 value={formData.work_experience}
                 onChange={handleChange}
                 rows="3"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                 placeholder="Enter work experience details"
                 disabled={isLoading}
               />
@@ -446,17 +446,17 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
           {/* Other Practice Details */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Other Practice Details (Optional)
             </label>
             <div className="relative">
-              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <textarea
                 name="other_practice_details"
                 value={formData.other_practice_details}
                 onChange={handleChange}
                 rows="3"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                 placeholder="Enter other significant work related details"
                 disabled={isLoading}
               />
@@ -465,21 +465,21 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
 
           {/* Fee Range */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Fee Range (Optional)
             </label>
             <div className="space-y-2">
               <div className="flex items-start gap-3">
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Min</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Min</label>
                   <div className="relative">
-                    <CurrencyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <CurrencyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                     <input
                       type="number"
                       name="fee_min"
                       value={formData.fee_min}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                         errors.fee_min ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="0.00"
@@ -491,15 +491,15 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
                   {errors.fee_min && <p className="mt-1 text-xs text-red-500">{errors.fee_min}</p>}
                 </div>
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Max</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Max</label>
                   <div className="relative">
-                    <CurrencyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <CurrencyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                     <input
                       type="number"
                       name="fee_max"
                       value={formData.fee_max}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                         errors.fee_max ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="0.00"
@@ -511,12 +511,12 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
                   {errors.fee_max && <p className="mt-1 text-xs text-red-500">{errors.fee_max}</p>}
                 </div>
                 <div className="w-32">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Currency</label>
                   <select
                     name="fee_currency"
                     value={formData.fee_currency}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
                     disabled={isLoading}
                   >
                     <option value="USD">USD ($)</option>
@@ -530,7 +530,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
                   </select>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
                 This information will appear on the therapist's profile as part of the search feature used by individual clients.
               </p>
             </div>
@@ -547,11 +547,11 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
           )}
 
           {/* Actions */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-dark-border">
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="px-4 py-2 text-gray-700 dark:text-dark-text-primary bg-gray-100 dark:bg-dark-bg-primary rounded-lg hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary transition-colors font-medium"
               disabled={isLoading}
             >
               Cancel

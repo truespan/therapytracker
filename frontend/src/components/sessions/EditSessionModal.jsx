@@ -72,17 +72,17 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
-                <Edit className="h-6 w-6 text-primary-600" />
+              <div className="p-2 bg-primary-100 dark:bg-dark-bg-secondary rounded-lg">
+                <Edit className="h-6 w-6 text-primary-600 dark:text-dark-primary-500" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Edit Session</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Edit Session</h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <button onClick={onClose} className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary">
               <X className="h-6 w-6" />
             </button>
           </div>

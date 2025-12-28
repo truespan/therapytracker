@@ -188,73 +188,77 @@ const Home = () => {
       </div>
 
       {/* Key Features Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">Key Features</h2>
-        <p className="text-center text-gray-600 mb-12 text-lg">
-          Everything you need to manage your therapy practice effectively
-        </p>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => {
-            const IconComponent = feature.icon;
-            return (
-              <div 
-                key={index}
-                className="card text-center p-8 hover:shadow-xl transition-shadow duration-300 border-2 border-transparent hover:border-primary-200"
-              >
-                <div className={`${feature.color} mb-6 flex justify-center`}>
-                  <IconComponent className="h-16 w-16" />
-                </div>
-                <h3 className="text-2xl font-semibold mb-4 text-gray-900">{feature.title}</h3>
-                <p className="text-gray-600 mb-4 leading-relaxed">
-                  {feature.description}
-                </p>
-                {feature.hasVisual && (
-                  <div className="mt-6 bg-white rounded-lg p-4 border border-gray-200">
-                    <ResponsiveContainer width="100%" height={250}>
-                      <RechartsRadar data={chartSampleData}>
-                        <PolarGrid stroke="#e5e7eb" />
-                        <PolarAngleAxis 
-                          dataKey="field" 
-                          tick={{ fill: '#374151', fontSize: 10 }}
-                          tickLine={false}
-                        />
-                        <PolarRadiusAxis
-                          angle={90}
-                          domain={[0, 5]}
-                          tick={{ fill: '#6b7280', fontSize: 8 }}
-                          tickCount={6}
-                        />
-                        <Radar
-                          name="Progress"
-                          dataKey="value"
-                          stroke="#00897b"
-                          fill="#00897b"
-                          fillOpacity={0.3}
-                          strokeWidth={2}
-                        />
-                      </RechartsRadar>
-                    </ResponsiveContainer>
-                    <p className="text-xs text-gray-500 mt-2">Example: Client Progress Visualization</p>
+      <div className="bg-white dark:bg-dark-bg-primary py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-dark-text-primary">Key Features</h2>
+          <p className="text-center text-gray-600 dark:text-dark-text-secondary mb-12 text-lg">
+            Everything you need to manage your therapy practice effectively
+          </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => {
+              const IconComponent = feature.icon;
+              return (
+                <div 
+                  key={index}
+                  className="card text-center p-8 hover:shadow-xl transition-shadow duration-300 border-2 border-transparent hover:border-primary-200 dark:hover:border-dark-border"
+                >
+                  <div className={`${feature.color} mb-6 flex justify-center`}>
+                    <IconComponent className="h-16 w-16" />
                   </div>
-                )}
-              </div>
-            );
-          })}
+                  <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">{feature.title}</h3>
+                  <p className="text-gray-600 dark:text-dark-text-secondary mb-4 leading-relaxed">
+                    {feature.description}
+                  </p>
+                  {feature.hasVisual && (
+                    <div className="mt-6 bg-white dark:bg-dark-bg-secondary rounded-lg p-4 border border-gray-200 dark:border-dark-border">
+                      <ResponsiveContainer width="100%" height={250}>
+                        <RechartsRadar data={chartSampleData}>
+                          <PolarGrid stroke="#e5e7eb" className="dark:stroke-dark-border" />
+                          <PolarAngleAxis 
+                            dataKey="field" 
+                            tick={{ fill: '#374151', fontSize: 10 }}
+                            tickLine={false}
+                            className="dark:[&_text]:fill-dark-text-secondary"
+                          />
+                          <PolarRadiusAxis
+                            angle={90}
+                            domain={[0, 5]}
+                            tick={{ fill: '#6b7280', fontSize: 8 }}
+                            tickCount={6}
+                            className="dark:[&_text]:fill-dark-text-tertiary"
+                          />
+                          <Radar
+                            name="Progress"
+                            dataKey="value"
+                            stroke="#00897b"
+                            fill="#00897b"
+                            fillOpacity={0.3}
+                            strokeWidth={2}
+                          />
+                        </RechartsRadar>
+                      </ResponsiveContainer>
+                      <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-2">Example: Client Progress Visualization</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Benefits Section */}
-      <div className="bg-gray-50 py-20">
+      <div className="bg-gray-50 dark:bg-dark-bg-secondary py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">How This Helps You</h2>
-          <p className="text-center text-gray-600 mb-12 text-lg">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-dark-text-primary">How This Helps You</h2>
+          <p className="text-center text-gray-600 dark:text-dark-text-secondary mb-12 text-lg">
             Transform your therapy practice with powerful management tools
           </p>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {benefits.map((benefit, index) => (
-              <div key={index} className="flex items-start gap-3 bg-white p-6 rounded-lg shadow-sm">
-                <CheckCircle className="h-6 w-6 text-primary-600 flex-shrink-0 mt-1" />
-                <p className="text-gray-700">{benefit.text}</p>
+              <div key={index} className="flex items-start gap-3 bg-white dark:bg-dark-bg-tertiary p-6 rounded-lg shadow-sm">
+                <CheckCircle className="h-6 w-6 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-1" />
+                <p className="text-gray-700 dark:text-dark-text-secondary">{benefit.text}</p>
               </div>
             ))}
           </div>
@@ -262,66 +266,66 @@ const Home = () => {
       </div>
 
       {/* How It Works */}
-      <div className="bg-white py-20">
+      <div className="bg-white dark:bg-dark-bg-primary py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900">How It Works</h2>
-          <p className="text-center text-gray-600 mb-12 text-lg">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-dark-text-primary">How It Works</h2>
+          <p className="text-center text-gray-600 dark:text-dark-text-secondary mb-12 text-lg">
             Get started in four simple steps
           </p>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="bg-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+              <div className="bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
                 1
               </div>
-              <h4 className="font-semibold mb-2 text-lg">Sign Up</h4>
-              <p className="text-sm text-gray-600">Create your account as a user, therapist, or organization</p>
+              <h4 className="font-semibold mb-2 text-lg text-gray-900 dark:text-dark-text-primary">Sign Up</h4>
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Create your account as a user, therapist, or organization</p>
             </div>
             <div className="text-center">
-              <div className="bg-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+              <div className="bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
                 2
               </div>
-              <h4 className="font-semibold mb-2 text-lg">Initial Assessment</h4>
-              <p className="text-sm text-gray-600">Complete your mind-body profile questionnaire</p>
+              <h4 className="font-semibold mb-2 text-lg text-gray-900 dark:text-dark-text-primary">Initial Assessment</h4>
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Complete your mind-body profile questionnaire</p>
             </div>
             <div className="text-center">
-              <div className="bg-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+              <div className="bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
                 3
               </div>
-              <h4 className="font-semibold mb-2 text-lg">Track Progress</h4>
-              <p className="text-sm text-gray-600">Re-rate yourself after each therapy session</p>
+              <h4 className="font-semibold mb-2 text-lg text-gray-900 dark:text-dark-text-primary">Track Progress</h4>
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Re-rate yourself after each therapy session</p>
             </div>
             <div className="text-center">
-              <div className="bg-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+              <div className="bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
                 4
               </div>
-              <h4 className="font-semibold mb-2 text-lg">Visualize Growth</h4>
-              <p className="text-sm text-gray-600">See your progress on interactive charts</p>
+              <h4 className="font-semibold mb-2 text-lg text-gray-900 dark:text-dark-text-primary">Visualize Growth</h4>
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary">See your progress on interactive charts</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Let's Talk Contact Form */}
-      <div id="lets-talk" className="bg-gradient-to-br from-primary-50 to-primary-100 py-20">
+      <div id="lets-talk" className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-bg-secondary dark:to-dark-bg-primary py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="flex justify-center gap-4 mb-6">
-              <MessageCircle className="h-8 w-8 text-primary-600" />
-              <Mail className="h-8 w-8 text-primary-600" />
-              <Phone className="h-8 w-8 text-primary-600" />
+              <MessageCircle className="h-8 w-8 text-primary-600 dark:text-dark-primary-500" />
+              <Mail className="h-8 w-8 text-primary-600 dark:text-dark-primary-500" />
+              <Phone className="h-8 w-8 text-primary-600 dark:text-dark-primary-500" />
             </div>
-            <h2 className="text-4xl font-bold mb-4 text-gray-900">Get in touch to begin your free trial</h2>
-            <p className="text-lg text-gray-600">
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-dark-text-primary">Get in touch to begin your free trial</h2>
+            <p className="text-lg text-gray-600 dark:text-dark-text-secondary">
               We will get back to you within 24 hrs.
             </p>
           </div>
           
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-xl p-8">
+          <form onSubmit={handleSubmit} className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl p-8">
             {formStatus.type && (
               <div className={`mb-6 p-4 rounded-lg ${
                 formStatus.type === 'success' 
-                  ? 'bg-green-50 text-green-800 border border-green-200' 
-                  : 'bg-red-50 text-red-800 border border-red-200'
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800' 
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800'
               }`}>
                 {formStatus.message}
               </div>
@@ -329,8 +333,8 @@ const Home = () => {
             
             <div className="space-y-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Name <span className="text-red-500">*</span>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                  Name <span className="text-red-500 dark:text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -338,14 +342,14 @@ const Home = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-primary-500 dark:focus:border-dark-primary-500 bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                   placeholder="Your name"
                 />
               </div>
               
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email <span className="text-red-500">*</span>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                  Email <span className="text-red-500 dark:text-red-400">*</span>
                 </label>
                 <input
                   type="email"
@@ -353,13 +357,13 @@ const Home = () => {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-primary-500 dark:focus:border-dark-primary-500 bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                   placeholder="your.email@example.com"
                 />
               </div>
               
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                   Message
                 </label>
                 <textarea
@@ -367,7 +371,7 @@ const Home = () => {
                   rows="5"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-primary-500 dark:focus:border-dark-primary-500 bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                   placeholder="Tell us how we can help you..."
                 />
               </div>
@@ -375,7 +379,7 @@ const Home = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-primary-600 dark:bg-dark-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>

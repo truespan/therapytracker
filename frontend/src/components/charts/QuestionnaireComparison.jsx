@@ -771,14 +771,14 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
       {/* Chart View Popup Modal */}
       {viewingChart && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-full sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl w-full max-w-full sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="p-6 border-b border-gray-200 flex justify-between items-start">
+            <div className="p-6 border-b border-gray-200 dark:border-dark-border flex justify-between items-start">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">
                   {viewingChart.questionnaire_name || 'Questionnaire Comparison'}
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">
                   {viewingChart.chart_display_type?.charAt(0).toUpperCase() + viewingChart.chart_display_type?.slice(1)} Chart
                   {' '}&bull;{' '}
                   {viewingChart.selected_assignments?.length || 0} submissions compared
@@ -795,7 +795,7 @@ const QuestionnaireComparison = ({ userId, partnerId, userName, sentCharts = [],
               </div>
               <button
                 onClick={closeChartPopup}
-                className="text-gray-400 hover:text-gray-600 p-1"
+                className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary p-1"
               >
                 <X className="h-6 w-6" />
               </button>

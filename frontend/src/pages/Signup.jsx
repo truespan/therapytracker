@@ -337,7 +337,7 @@ const Signup = () => {
                 />
                 {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
                 <p className="text-gray-500 text-xs mt-1">
-                  If not provided, mobile number will be used as username for login
+                  Recommended: Email will be used for forgot password feature. If not provided, mobile number will be used as username for login
                 </p>
               </div>
 

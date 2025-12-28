@@ -149,16 +149,16 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-            <Users className="h-6 w-6 mr-2 text-primary-600" />
+        <div className="sticky top-0 bg-white dark:bg-dark-bg-tertiary border-b border-gray-200 dark:border-dark-border px-6 py-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
+            <Users className="h-6 w-6 mr-2 text-primary-600 dark:text-dark-primary-500" />
             Add New Therapist
           </h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors"
             disabled={isLoading}
           >
             <X className="h-6 w-6" />
@@ -169,17 +169,17 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Full Name <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                   errors.name ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter therapist's full name"
@@ -192,14 +192,14 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
           {/* Sex and Age */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Sex <span className="text-red-500">*</span>
               </label>
               <select
                 name="sex"
                 value={formData.sex}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border ${
                   errors.sex ? 'border-red-500' : 'border-gray-300'
                 }`}
                 disabled={isLoading}
@@ -212,20 +212,20 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Age (Optional)
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="number"
                   name="age"
                   value={formData.age}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                    errors.age ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Age"
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
+                  errors.age ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Age"
                   min="18"
                   max="100"
                   disabled={isLoading}
@@ -237,17 +237,17 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Email <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                   errors.email ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="therapist@example.com"
@@ -255,14 +255,14 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
               />
             </div>
             {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
               A verification email will be sent to this address
             </p>
           </div>
 
           {/* Contact Number */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Contact Number <span className="text-red-500">*</span>
             </label>
             <div className="flex space-x-2">
@@ -272,13 +272,13 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 name="countryCode"
               />
               <div className="relative flex-1">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="tel"
                   name="contact"
                   value={formData.contact}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                     errors.contact ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="1234567890"
@@ -291,17 +291,17 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           {/* Qualification */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Qualification <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 name="qualification"
                 value={formData.qualification}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                   errors.qualification ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="e.g., M.D. Psychiatry, Clinical Psychologist"
@@ -313,17 +313,17 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           {/* Practitioner License ID */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Practitioner License ID (Optional)
             </label>
             <div className="relative">
-              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 name="license_id"
                 value={formData.license_id}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                 placeholder="e.g., PSY-12345, MED-67890"
                 disabled={isLoading}
               />
@@ -332,17 +332,17 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           {/* Address */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Address (Optional)
             </label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <textarea
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
                 rows="3"
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                 placeholder="Enter full address"
                 disabled={isLoading}
               />
@@ -351,11 +351,11 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           {/* Work Experience */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Work Experience (Optional)
             </label>
             <div className="relative">
-              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <textarea
                 name="work_experience"
                 value={formData.work_experience}
@@ -370,11 +370,11 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           {/* Other Practice Details */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Other Practice Details (Optional)
             </label>
             <div className="relative">
-              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <textarea
                 name="other_practice_details"
                 value={formData.other_practice_details}
@@ -389,13 +389,13 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           {/* Fee Range */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Fee Range (Optional)
             </label>
             <div className="space-y-2">
               <div className="flex items-start gap-3">
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Min</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Min</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium">₹</span>
                     <input
@@ -403,7 +403,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                       name="fee_min"
                       value={formData.fee_min}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                         errors.fee_min ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="0.00"
@@ -415,7 +415,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                   {errors.fee_min && <p className="mt-1 text-xs text-red-500">{errors.fee_min}</p>}
                 </div>
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Max</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Max</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium">₹</span>
                     <input
@@ -423,7 +423,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                       name="fee_max"
                       value={formData.fee_max}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                         errors.fee_max ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="0.00"
@@ -435,12 +435,12 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                   {errors.fee_max && <p className="mt-1 text-xs text-red-500">{errors.fee_max}</p>}
                 </div>
                 <div className="w-32">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Currency</label>
                   <select
                     name="fee_currency"
                     value={formData.fee_currency}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
                     disabled={isLoading}
                   >
                     <option value="USD">USD ($)</option>
@@ -454,7 +454,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                   </select>
                 </div>
               </div>
-              <p className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
+              <p className="mt-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
                 <strong>Note:</strong> This data will be displayed to your clients as part of your profile in client's dashboard.
               </p>
             </div>
@@ -462,33 +462,33 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           {/* Language Preferences */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Language Preferences (Optional)
             </label>
             <div className="relative">
-              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type="text"
                 name="language_preferences"
                 value={formData.language_preferences}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                 placeholder="e.g., English, Hindi, Tamil"
                 disabled={isLoading}
               />
             </div>
-            <p className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
+            <p className="mt-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
               <strong>Note:</strong> This data will be displayed to your clients as part of your profile in client's dashboard.
             </p>
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Initial Password <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
@@ -503,13 +503,13 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary hover:text-gray-700 dark:hover:text-dark-text-secondary"
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
             {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
-            <p className="mt-1 text-xs text-amber-600 flex items-center">
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400 flex items-center">
               <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
               <span>The therapist will use this password for initial login <strong>after email verification</strong></span>
             </p>
@@ -517,17 +517,17 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Confirm Password <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:border-dark-border dark:placeholder-dark-text-tertiary ${
                   errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Confirm password"
@@ -536,7 +536,7 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary hover:text-gray-700 dark:hover:text-dark-text-secondary"
               >
                 {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
@@ -545,11 +545,11 @@ const CreatePartnerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-dark-border">
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              className="px-4 py-2 text-gray-700 dark:text-dark-text-primary bg-gray-100 dark:bg-dark-bg-primary rounded-lg hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary transition-colors font-medium"
               disabled={isLoading}
             >
               Cancel

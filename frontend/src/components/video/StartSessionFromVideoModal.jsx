@@ -68,36 +68,36 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                 <Video className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Start Session from Video</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Start Session from Video</h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200">
+            <button onClick={onClose} className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary">
               <X className="h-6 w-6" />
             </button>
           </div>
 
           {/* Video Session Info Display */}
-          <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900 border border-purple-200 dark:border-purple-700 rounded-lg">
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Video Session Details</h3>
+          <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+            <h3 className="font-semibold text-gray-900 dark:text-dark-text-primary mb-3">Video Session Details</h3>
             <div className="space-y-2 text-sm">
-              <div className="flex items-center text-gray-700 dark:text-gray-300">
+              <div className="flex items-center text-gray-700 dark:text-dark-text-secondary">
                 <User className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
                 <span className="font-medium mr-2">Client:</span>
                 <span>{videoSession.user_name}</span>
               </div>
-              <div className="flex items-center text-gray-700 dark:text-gray-300">
+              <div className="flex items-center text-gray-700 dark:text-dark-text-secondary">
                 <Calendar className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
                 <span className="font-medium mr-2">Date:</span>
                 <span>{new Date(videoSession.session_date).toLocaleDateString()}</span>
               </div>
-              <div className="flex items-center text-gray-700 dark:text-gray-300">
+              <div className="flex items-center text-gray-700 dark:text-dark-text-secondary">
                 <Clock className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
                 <span className="font-medium mr-2">Time:</span>
                 <span>{new Date(videoSession.session_date).toLocaleTimeString([], {
@@ -109,7 +109,7 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-300 text-sm">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
               {error}
             </div>
           )}
@@ -117,7 +117,7 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Session Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 <FileText className="inline h-4 w-4 mr-1" />
                 Session Title *
               </label>
@@ -128,16 +128,16 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
                 onChange={handleChange}
                 required
                 placeholder="Enter session title..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
                 This field is mandatory and describes the main topic or focus of the session
               </p>
             </div>
 
             {/* Session Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Session Description / Notes (Optional)
               </label>
               <textarea
@@ -146,13 +146,13 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
                 onChange={handleChange}
                 rows="4"
                 placeholder="Add detailed notes about the session, key discussion points, observations, etc..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
               />
             </div>
 
             {/* Payment Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 <CurrencyIcon className="inline h-4 w-4 mr-1" />
                 Payment Related Notes (Optional)
               </label>
@@ -162,23 +162,23 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
                 value={formData.payment_notes}
                 onChange={handleChange}
                 placeholder="₹5000 paid..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-3 pt-4 border-t dark:border-gray-600">
+            <div className="flex justify-end space-x-3 pt-4 border-t dark:border-dark-border">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="px-6 py-2 border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text-primary rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-primary transition-colors"
                 disabled={loading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
                 {loading ? 'Creating Session...' : 'Create Session'}
@@ -191,32 +191,32 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
       {/* Confirmation Dialog */}
       {showConfirmDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-start space-x-3 mb-4">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100 dark:bg-yellow-900">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-100 dark:bg-yellow-900/30">
                   <FileText className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-1">
                   Confirm Session Creation
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
                   Once a session is created, it <strong>cannot be deleted</strong>. The session will be permanently recorded in the client's session history.
                 </p>
               </div>
               <button
                 onClick={() => setShowConfirmDialog(false)}
                 disabled={loading}
-                className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-              <p className="text-xs text-yellow-800 dark:text-yellow-200">
+            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-xs text-yellow-800 dark:text-yellow-300">
                 <strong>Note:</strong> You can edit session notes later.
               </p>
             </div>
@@ -226,14 +226,14 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
               <button
                 onClick={() => setShowConfirmDialog(false)}
                 disabled={loading}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-gray-700 dark:text-dark-text-primary bg-gray-100 dark:bg-dark-bg-primary rounded-lg hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmCreate}
                 disabled={loading}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Creating...' : 'Yes, Create Session'}
               </button>

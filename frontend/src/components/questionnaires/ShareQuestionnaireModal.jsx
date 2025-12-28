@@ -117,15 +117,15 @@ const ShareQuestionnaireModal = ({ isOpen, onClose, questionnaire, ownerType, ow
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-border">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">
             Share Questionnaire: {questionnaire?.name}
           </h2>
           <button
             onClick={() => onClose(false)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors"
           >
             <X className="h-6 w-6" />
           </button>

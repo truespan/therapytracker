@@ -18,13 +18,13 @@ const ConflictWarningModal = ({ conflict, onProceed, onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-red-50 border-b border-red-200 px-6 py-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-dark-border px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <AlertTriangle className="h-6 w-6 text-red-600 mr-3" />
-              <h3 className="text-lg font-semibold text-red-900">
+              <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 mr-3" />
+              <h3 className="text-lg font-semibold text-red-900 dark:text-red-400">
                 Google Calendar Conflict Detected
               </h3>
             </div>

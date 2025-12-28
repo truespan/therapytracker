@@ -145,14 +145,14 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b dark:border-dark-border">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
             {appointment ? 'Edit Appointment' : 'New Appointment'}
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition"
+            className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition"
           >
             <X className="h-5 w-5" />
           </button>
@@ -160,28 +160,28 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-2 text-red-700 dark:text-red-400">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2 text-green-700">
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center space-x-2 text-green-700 dark:text-green-400">
               <CheckCircle className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm">{success}</span>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Client <span className="text-red-500">*</span>
             </label>
             <select
               name="user_id"
               value={formData.user_id}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
               required
             >
               <option value="">Select a client</option>
@@ -194,7 +194,7 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -203,14 +203,14 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
               value={formData.title}
               onChange={handleChange}
               placeholder="e.g., Therapy Session"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Date <span className="text-red-500">*</span>
               </label>
               <input
@@ -218,13 +218,13 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
                 name="appointment_date"
                 value={formData.appointment_date}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                 Time <span className="text-red-500">*</span>
               </label>
               <input
@@ -232,14 +232,14 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
                 name="appointment_time"
                 value={formData.appointment_time}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Duration (minutes) <span className="text-red-500">*</span>
             </label>
             <select
@@ -247,7 +247,7 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
               value={formData.duration_minutes}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
             >
               <option value="">Select duration</option>
               <option value="30">30 minutes</option>
@@ -259,7 +259,7 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
               Notes
             </label>
             <textarea
@@ -268,7 +268,7 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
               onChange={handleChange}
               rows="3"
               placeholder="Add any notes about this appointment..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary dark:placeholder-dark-text-tertiary resize-none"
             />
           </div>
 
@@ -287,7 +287,7 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+              className="flex-1 py-2 px-4 bg-gray-200 dark:bg-dark-bg-primary text-gray-700 dark:text-dark-text-primary rounded-lg hover:bg-gray-300 dark:hover:bg-dark-bg-tertiary transition"
             >
               Cancel
             </button>
