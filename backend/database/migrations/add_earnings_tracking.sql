@@ -62,3 +62,4 @@ COMMENT ON COLUMN earnings.status IS 'pending: not yet available, available: rea
 COMMENT ON COLUMN payouts.status IS 'pending: scheduled, processing: being processed, completed: successfully paid, failed: payment failed, cancelled: cancelled';
 
 
+

@@ -39,3 +39,4 @@ COMMENT ON COLUMN organizations.cancellation_date IS
 'Timestamp when organization subscription was cancelled';
 
 
+
