@@ -223,7 +223,7 @@ const PartnerDashboard = () => {
   const handleCopySignupUrl = () => {
     if (user?.partner_id) {
       const baseUrl = window.location.origin;
-      const signupUrl = `${baseUrl}/signup?partner_id=${user.partner_id}`;
+      const signupUrl = `${baseUrl}/signup?therapist_id=${user.partner_id}`;
       navigator.clipboard.writeText(signupUrl);
       setCopiedSignupUrl(true);
       setTimeout(() => setCopiedSignupUrl(false), 2000);

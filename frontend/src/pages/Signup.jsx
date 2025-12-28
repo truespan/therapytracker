@@ -8,7 +8,7 @@ import { Activity, AlertCircle, Eye, EyeOff } from 'lucide-react';
 const Signup = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const partnerIdFromUrl = searchParams.get('partner_id') || '';
+  const partnerIdFromUrl = searchParams.get('therapist_id') || '';
 
   const [formData, setFormData] = useState({
     name: '',
