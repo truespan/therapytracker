@@ -417,7 +417,7 @@ const Home = () => {
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: `url('/backgroundImg2.jpeg')`
+              backgroundImage: `url('/backgroundImg2.webp')`
             }}
           ></div>
 
@@ -488,27 +488,74 @@ const Home = () => {
               About Us
             </h2>
             <div className="w-24 h-1 bg-primary-600 dark:bg-dark-primary-600 mx-auto mb-6"></div>
-            <p className="text-lg text-gray-600 dark:text-dark-text-secondary max-w-2xl mx-auto">
-              Content coming soon. We're building something amazing for therapy practices.
-            </p>
           </div>
 
-          {/* Placeholder for About Us content */}
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div className="h-64 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-dark-bg-secondary dark:to-dark-bg-tertiary rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <Users className="h-16 w-16 text-primary-600 dark:text-dark-primary-500 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-dark-text-tertiary">About Us Content Placeholder</p>
-                </div>
+          {/* About Us Content */}
+          <div className="max-w-4xl mx-auto space-y-12">
+            {/* Main Description */}
+            <div className="space-y-4">
+              <p className="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed">
+                TheraP Track is exclusively designed for therapists to manage appointments, sessions, assessments with automatic scoring, and visual tracking of client progress. The idea originated when an IT professional met a therapist, and together they identified the challenges therapists face with administrative tasks and fragmented tools during sessions.
+              </p>
+              <p className="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed">
+                TheraP Track provides technical support to therapists without replacing them. The platform is built solely for therapists, with a deep understanding of clinical practice, respect for professional judgment, and adherence to ethical boundaries.
+              </p>
+              <p className="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed">
+                After a successful one-month Beta phase, TheraP Track was further developed by integrating feedback, insights, and ethically approved features from practicing therapists, creating a platform that streamlines clinical practice responsibly and effectively.
+              </p>
+            </div>
+
+            {/* Mission and Vision Section */}
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Mission */}
+              <div className="p-6 bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md border-t-4 border-primary-600 dark:border-dark-primary-600">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                  Our Mission
+                </h3>
+                <p className="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed">
+                  To empower therapists in providing effective care by reducing their administrative burden during and around clinical sessions.
+                </p>
+              </div>
+
+              {/* Vision */}
+              <div className="p-6 bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md border-t-4 border-primary-600 dark:border-dark-primary-600">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                  Our Vision
+                </h3>
+                <p className="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed">
+                  To build a Therapist-first, trusted digital platform where therapists are empowered with ethical, professional and intuitive technology that enhances their clinical practice.
+                </p>
               </div>
             </div>
+
+            {/* Why We Exist Section */}
             <div className="space-y-6">
-              <div className="h-64 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-dark-bg-secondary dark:to-dark-bg-tertiary rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <Sparkles className="h-16 w-16 text-primary-600 dark:text-dark-primary-500 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-dark-text-tertiary">Mission & Vision Placeholder</p>
-                </div>
+              <h3 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">
+                Why We Exist
+              </h3>
+              
+              <div className="space-y-4">
+                <h4 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary">
+                  Key Challenges Therapists Face:
+                </h4>
+                
+                <ul className="space-y-3 list-disc list-inside text-gray-700 dark:text-dark-text-secondary">
+                  <li className="text-lg leading-relaxed">
+                    <span className="font-medium">Time-consuming administrative tasks:</span> Managing appointments, session notes, assessments, visual progress tracking take significant time
+                  </li>
+                  <li className="text-lg leading-relaxed">
+                    <span className="font-medium">Missed Appointments:</span> No easy way to share the availability with clients or send reminders for upcoming sessions
+                  </li>
+                  <li className="text-lg leading-relaxed">
+                    <span className="font-medium">Struggling with Multiple Tools:</span> Facing struggle in handling multiple tools and papers for one session, making workflow cumbersome
+                  </li>
+                </ul>
+              </div>
+
+              <div className="mt-6 p-6 bg-primary-50 dark:bg-dark-bg-secondary rounded-lg border-l-4 border-primary-600 dark:border-dark-primary-600">
+                <p className="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed">
+                  TheraP Track combines appointment scheduling, session notes, assessments, and visual progress tracking into a single platform, simplifying therapy management. It replaces multiple tools with one organized workspace – allows therapists to focus more on clinical practice while maintaining professional and ethical standard.
+                </p>
               </div>
             </div>
           </div>
@@ -651,7 +698,7 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70 dark:opacity-70"
           style={{
-            backgroundImage: `url('/backgroundImg4.jpeg')`
+            backgroundImage: `url('/backgroundImg4.webp')`
           }}
         ></div>
         {/* Overlay to ensure text readability */}
@@ -713,13 +760,13 @@ const Home = () => {
       <section id="login" className="py-24 relative scroll-mt-28">
         {/* Background image - transitioning from Blogs section */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-25 dark:opacity-15"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 dark:opacity-30"
           style={{
-            backgroundImage: `url('/backgroundImg4.jpeg')`
+            backgroundImage: `url('/backgroundImg5.webp')`
           }}
         ></div>
         {/* Gradient overlay matching current style but with image underneath */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-50/90 via-primary-100/80 to-primary-50/90 dark:from-dark-bg-secondary/90 dark:via-dark-bg-primary/80 dark:to-dark-bg-secondary/90"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-50/60 via-primary-100/50 to-primary-50/60 dark:from-dark-bg-secondary/60 dark:via-dark-bg-primary/50 dark:to-dark-bg-secondary/60"></div>
         
         <div className="relative z-10 max-w-md mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
