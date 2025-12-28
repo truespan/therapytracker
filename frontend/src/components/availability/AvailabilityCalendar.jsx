@@ -197,8 +197,7 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
           text: 'text-blue-800 dark:text-blue-300',
           badge: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
         };
-      case 'not_available_online':
-      case 'not_available_offline':
+      case 'not_available':
         return {
           bg: 'bg-gray-50 dark:bg-dark-bg-tertiary',
           border: 'border-gray-300 dark:border-dark-border',

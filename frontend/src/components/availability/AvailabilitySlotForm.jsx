@@ -48,10 +48,9 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
   };
 
   const statusOptions = [
-    { value: 'available_online', label: 'Available Online', color: 'text-green-700' },
-    { value: 'available_offline', label: 'Available Offline', color: 'text-blue-700' },
-    { value: 'not_available_online', label: 'Not Available Online', color: 'text-gray-700' },
-    { value: 'not_available_offline', label: 'Not Available Offline', color: 'text-gray-700' },
+    { value: 'available_online', label: 'Available Online' },
+    { value: 'available_offline', label: 'Available Offline' },
+    { value: 'not_available', label: 'Not Available' },
   ];
 
   return (
@@ -125,11 +124,11 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
             <select
               value={formData.status}
               onChange={(e) => onChange({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
               required
             >
               {statusOptions.map(option => (
-                <option key={option.value} value={option.value} className={option.color}>
+                <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
