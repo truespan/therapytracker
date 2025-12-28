@@ -568,7 +568,7 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 dark:opacity-8"
           style={{
-            backgroundImage: `url('/backgroundImg3.jpeg')`
+            backgroundImage: `url('/backgroundImg3.webp')`
           }}
         ></div>
         {/* Gradient overlay for smooth transition */}
