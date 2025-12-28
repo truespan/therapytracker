@@ -569,6 +569,21 @@ class Organization {
     await db.query(query, [organizationId]);
     return true;
   }
+
+  /**
+   * Update Razorpay contact ID for an organization
+   */
+  static async updateRazorpayContactId(id, contactId, client = null) {
+    const query = `
+      UPDATE organizations
+      SET razorpay_contact_id = $1
+      WHERE id = $2
+      RETURNING *
+    `;
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [contactId, id]);
+    return result.rows[0];
+  }
 }
 
 module.exports = Organization;

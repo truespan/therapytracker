@@ -29,7 +29,7 @@ const getEarningsSummary = async (req, res) => {
         withdrawn_amount: parseFloat(summary.withdrawn_amount || 0),
         total_earnings: parseFloat(summary.total_earnings || 0),
         upcoming_payout: parseFloat(summary.upcoming_payout || 0),
-        pending_held_earnings: parseFloat(summary.pending_held_earnings || 0),
+        pending_earnings: parseFloat(summary.pending_earnings || 0),
         completed_sessions: parseInt(sessionStats.completed_sessions || 0),
         cancellations_no_shows: parseInt(sessionStats.cancellations_no_shows || 0),
         revenue_by_month: revenueByMonth.map(row => ({

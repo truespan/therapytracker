@@ -296,12 +296,12 @@ function formatTime(date) {
 }
 
 /**
- * Calculate the next Friday date from a given date (or today if not provided)
- * Returns the date of the next upcoming Friday, or today if today is Friday
+ * Calculate the next Saturday date from a given date (or today if not provided)
+ * Returns the date of the next upcoming Saturday, or today if today is Saturday
  * @param {Date} [fromDate] - Optional starting date (defaults to today)
- * @returns {Date} Next Friday date
+ * @returns {Date} Next Saturday date
  */
-function getNextFriday(fromDate = null) {
+function getNextSaturday(fromDate = null) {
   const startDate = fromDate ? startOfDay(fromDate) : startOfDay(new Date());
   
   if (!isValid(startDate)) {
@@ -309,11 +309,11 @@ function getNextFriday(fromDate = null) {
   }
 
   const currentDay = getDay(startDate); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
-  const daysUntilFriday = currentDay === 5 ? 0 : // Today is Friday, return today
-                          currentDay < 5 ? (5 - currentDay) : // Before Friday, days until Friday
-                          (7 - currentDay + 5); // After Friday, days until next Friday
+  const daysUntilSaturday = currentDay === 6 ? 0 : // Today is Saturday, return today
+                            currentDay < 6 ? (6 - currentDay) : // Before Saturday, days until Saturday
+                            (7 - currentDay + 6); // After Saturday, days until next Saturday
 
-  return dateFnsAddDays(startDate, daysUntilFriday);
+  return dateFnsAddDays(startDate, daysUntilSaturday);
 }
 
 module.exports = {
@@ -345,5 +345,5 @@ module.exports = {
   formatTime,
 
   // Payout Scheduling
-  getNextFriday
+  getNextSaturday
 };

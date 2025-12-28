@@ -61,3 +61,4 @@ COMMENT ON TABLE payouts IS 'Tracks payouts/withdrawals for partners and organiz
 COMMENT ON COLUMN earnings.status IS 'pending: not yet available, available: ready for withdrawal, held: held for some reason, withdrawn: already paid out, cancelled: cancelled';
 COMMENT ON COLUMN payouts.status IS 'pending: scheduled, processing: being processed, completed: successfully paid, failed: payment failed, cancelled: cancelled';
 
+

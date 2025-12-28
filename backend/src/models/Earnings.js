@@ -54,7 +54,8 @@ class Earnings {
         COALESCE(SUM(CASE WHEN status = 'available' THEN amount ELSE 0 END), 0) as available_balance,
         COALESCE(SUM(CASE WHEN status = 'withdrawn' THEN amount ELSE 0 END), 0) as withdrawn_amount,
         COALESCE(SUM(CASE WHEN status IN ('available', 'withdrawn') THEN amount ELSE 0 END), 0) as total_earnings,
-        COALESCE(SUM(CASE WHEN status = 'available' THEN amount ELSE 0 END), 0) as upcoming_payout
+        COALESCE(SUM(CASE WHEN status = 'available' THEN amount ELSE 0 END), 0) as upcoming_payout,
+        COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pending_earnings
       FROM earnings
       WHERE recipient_id = $1 AND recipient_type = $2
     `;
@@ -202,6 +203,70 @@ class Earnings {
 
     const result = await db.query(query, values);
     return result.rows;
+  }
+
+  /**
+   * Get all unique recipients with earnings summary (candidates for payout)
+   * Returns only recipients with total_earnings > 0
+   */
+  static async getEarningsCandidates() {
+    const query = `
+      SELECT 
+        recipient_id,
+        recipient_type,
+        COALESCE(SUM(CASE WHEN status = 'available' THEN amount ELSE 0 END), 0) as available_balance,
+        COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pending_earnings,
+        COALESCE(SUM(CASE WHEN status = 'withdrawn' THEN amount ELSE 0 END), 0) as withdrawn_amount,
+        COALESCE(SUM(CASE WHEN status IN ('available', 'withdrawn', 'pending') THEN amount ELSE 0 END), 0) as total_earnings
+      FROM earnings
+      GROUP BY recipient_id, recipient_type
+      HAVING COALESCE(SUM(CASE WHEN status IN ('available', 'withdrawn', 'pending') THEN amount ELSE 0 END), 0) > 0
+      ORDER BY recipient_type, recipient_id
+    `;
+
+    const result = await db.query(query);
+    return result.rows;
+  }
+
+  /**
+   * Get available earnings records for a recipient (for payout linking)
+   */
+  static async getAvailableEarnings(recipientId, recipientType) {
+    const query = `
+      SELECT id, amount, payout_date
+      FROM earnings
+      WHERE recipient_id = $1 
+        AND recipient_type = $2
+        AND status = 'available'
+      ORDER BY created_at ASC
+    `;
+
+    const result = await db.query(query, [recipientId, recipientType]);
+    return result.rows;
+  }
+
+  /**
+   * Link earnings records to a payout
+   * Updates payout_id and payout_date for specified earnings records
+   */
+  static async updatePayoutForEarnings(earningsIds, payoutId, payoutDate, client = null) {
+    if (!earningsIds || earningsIds.length === 0) {
+      return { rowCount: 0 };
+    }
+
+    const query = `
+      UPDATE earnings
+      SET payout_id = $1,
+          payout_date = $2,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ANY($3::int[])
+        AND status = 'available'
+      RETURNING *
+    `;
+
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [payoutId, payoutDate, earningsIds]);
+    return result;
   }
 }
 

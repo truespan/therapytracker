@@ -19,7 +19,7 @@ Razorpay Settles Payment (T+2/T+3 days)
     ↓ (webhook: payment.transferred/settled)
 Update Earnings Status → 'available'
     ↓
-Friday Payout Batch
+Saturday Payout Batch
     ↓
 Transfer to Partner Bank
     ↓ (webhook: payout.processed)
@@ -52,7 +52,7 @@ WHERE recipient_id = $1
 
 **Business Logic:**
 - Sum of all earnings with `status = 'available'`
-- These are payments that have been settled by Razorpay and are ready for the next Friday payout batch
+- These are payments that have been settled by Razorpay and are ready for the next Saturday payout batch
 - Money is in the merchant account and can be transferred
 
 ### 2. Withdrawn Amount
@@ -93,7 +93,7 @@ WHERE recipient_id = $1
 
 ### 4. Upcoming Payout
 
-**Definition:** Amount scheduled for next Friday's payout batch
+**Definition:** Amount scheduled for next Saturday's payout batch
 
 **Calculation:**
 ```sql
@@ -106,7 +106,7 @@ WHERE recipient_id = $1
 
 **Business Logic:**
 - Sum of all earnings with `status = 'available'`
-- All available earnings are included in the next Friday payout batch
+- All available earnings are included in the next Saturday payout batch
 - Same as Available Balance (all available funds are paid out weekly)
 
 ## Database Schema
@@ -138,7 +138,7 @@ CREATE TABLE earnings (
 - **`recipient_type`**: 'partner' or 'organization'
 - **`razorpay_payment_id`**: Links to Razorpay payment record
 - **`status`**: Current status in the earnings lifecycle
-- **`payout_date`**: Scheduled Friday date for payout (set when status becomes 'available')
+- **`payout_date`**: Scheduled Saturday date for payout (set when status becomes 'available')
 - **`amount`**: Earnings amount (100% of booking fee goes to partner/org)
 
 ## Implementation Details
@@ -184,15 +184,15 @@ await Earnings.create({
 1. Webhook received from Razorpay when payment is settled
 2. Find earnings record by `razorpay_payment_id`
 3. If status is `'pending'`, update to `'available'`
-4. Set `payout_date` to next Friday using `getNextFriday()` utility
+4. Set `payout_date` to next Saturday using `getNextSaturday()` utility
 5. Earnings are now ready for withdrawal
 
 **Code Example:**
 ```javascript
 const earnings = await Earnings.findByPaymentId(payment.id);
 if (earnings && earnings.status === 'pending') {
-  const nextFriday = getNextFriday();
-  const payoutDate = formatDate(nextFriday);
+  const nextSaturday = getNextSaturday();
+  const payoutDate = formatDate(nextSaturday);
   await Earnings.updateStatusByPaymentId(payment.id, 'available', payoutDate);
 }
 ```
@@ -239,21 +239,21 @@ await db.query(updateQuery, [payoutDateFormatted]);
 
 ## Utility Functions
 
-### getNextFriday()
+### getNextSaturday()
 
 **Location:** `backend/src/utils/dateUtils.js`
 
-**Purpose:** Calculate the next Friday date for payout scheduling
+**Purpose:** Calculate the next Saturday date for payout scheduling
 
 **Usage:**
 ```javascript
-const { getNextFriday } = require('../utils/dateUtils');
-const nextFriday = getNextFriday(); // Returns Date object
+const { getNextSaturday } = require('../utils/dateUtils');
+const nextSaturday = getNextSaturday(); // Returns Date object
 ```
 
 **Logic:**
-- If today is Friday, returns today
-- Otherwise, returns the next upcoming Friday
+- If today is Saturday, returns today
+- Otherwise, returns the next upcoming Saturday
 
 ## Webhook Configuration
 
@@ -323,9 +323,9 @@ POST /api/razorpay/webhook
 
 ### Payout Schedule
 
-- **Weekly batch payouts on Fridays**
+- **Weekly batch payouts on Saturdays**
 - All `available` earnings are included in the payout batch
-- Payout date is set to next Friday when earnings become `available`
+- Payout date is set to next Saturday when earnings become `available`
 - After payout webhook, earnings status changes to `withdrawn`
 
 ### Error Handling
@@ -345,7 +345,7 @@ POST /api/razorpay/webhook
 2. **Payment Settlement → Status Update**
    - Trigger `payment.transferred` webhook
    - Verify status changes to `'available'`
-   - Check `payout_date` is set to next Friday
+   - Check `payout_date` is set to next Saturday
 
 3. **Payout Processing → Final Status**
    - Trigger `payout.processed` webhook

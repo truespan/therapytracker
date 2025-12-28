@@ -285,6 +285,12 @@ const earningsController = require('../controllers/earningsController');
 router.get('/earnings/summary', authenticateToken, earningsController.getEarningsSummary);
 router.get('/earnings', authenticateToken, earningsController.getEarnings);
 
+// ==================== PAYOUT ROUTES ====================
+const payoutController = require('../controllers/payoutController');
+router.get('/admin/payouts/candidates', authenticateToken, checkRole('admin'), payoutController.getPayoutCandidates);
+router.post('/admin/payouts/create', authenticateToken, checkRole('admin'), payoutController.createPayout);
+router.get('/admin/payouts', authenticateToken, checkRole('admin'), payoutController.getPayoutHistory);
+
 // ==================== GENERATED REPORTS ROUTES ====================
 // Partner routes for generated reports
 router.post('/reports', authenticateToken, checkRole('partner'), generatedReportController.createReport);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { earningsAPI } from '../../services/api';
-import { Activity, TrendingUp, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { Activity, TrendingUp, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 
@@ -94,7 +94,7 @@ const EarningsTab = () => {
               Payments received via TheraPTrack's integrated payment gateways will be processed as follows:
             </p>
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-1">
-              <strong>Friday:</strong> All payments received after last Friday's payout.
+              <strong>Saturday:</strong> All payments received after last Saturday's payout.
             </p>
             <p className="text-sm text-blue-800 dark:text-blue-200">
               You can read about payment gateway charges{' '}
@@ -109,6 +109,24 @@ const EarningsTab = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Pending Earnings */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-1">Pending Earnings</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
+                {formatCurrency(earningsData.pending_earnings || 0)}
+              </p>
+            </div>
+            <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+              <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Payment captured, waiting for Razorpay settlement (T+2/T+3 days)
+          </p>
+        </div>
+
         {/* Available Balance */}
         <div className="card p-6">
           <div className="flex items-center justify-between mb-4">
@@ -122,6 +140,9 @@ const EarningsTab = () => {
               <CurrencyIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Payment settled, ready for withdrawal (money in merchant account)
+          </p>
         </div>
 
         {/* Withdrawn Amount */}
@@ -137,6 +158,9 @@ const EarningsTab = () => {
               <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Total payment transferred to partner/organization bank account
+          </p>
         </div>
 
         {/* Total Earnings */}
@@ -150,21 +174,6 @@ const EarningsTab = () => {
             </div>
             <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
               <CurrencyIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-            </div>
-          </div>
-        </div>
-
-        {/* Upcoming Payout */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-1">Upcoming Payout</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
-                {formatCurrency(earningsData.upcoming_payout)}
-              </p>
-            </div>
-            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-              <Calendar className="h-6 w-6 text-amber-600 dark:text-amber-400" />
             </div>
           </div>
         </div>

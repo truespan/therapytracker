@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LogOut, User, LayoutDashboard, FileText, CreditCard, PlusCircle } from 'lucide-react';
+import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const AdminLayout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -18,6 +19,7 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/report-templates', label: 'Reports Template', icon: FileText },
     { path: '/admin/subscription-plans', label: 'Subscription Plans', icon: CreditCard },
     { path: '/admin/create-plans', label: 'Create Plans', icon: PlusCircle },
+    { path: '/admin/payouts', label: 'Payouts', icon: CurrencyIcon },
   ];
 
   const isActive = (path) => {
@@ -85,8 +87,8 @@ const AdminLayout = ({ children }) => {
                       py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col lg:flex-row items-center gap-1 lg:gap-2 flex-shrink-0 transition-colors
                       ${
                         active
-                          ? 'border-primary-600 text-primary-700'
-                          : 'border-transparent text-umbra-500 hover:text-umbra-700'
+                          ? 'border-primary-600 text-primary-700 dark:text-primary-400'
+                          : 'border-transparent text-umbra-500 hover:text-umbra-700 dark:text-gray-400 dark:hover:text-gray-300'
                       }
                     `}
                   >

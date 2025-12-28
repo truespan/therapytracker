@@ -16,3 +16,4 @@ UPDATE razorpay_orders SET status = 'captured' WHERE status = 'captured';
 
 COMMENT ON CONSTRAINT razorpay_orders_status_check ON razorpay_orders IS 'Allows Razorpay order statuses: created, attempted, paid, failed, captured';
 
+

@@ -77,6 +77,21 @@ class Partner {
     return result.rows[0];
   }
 
+  /**
+   * Update Razorpay contact ID for a partner
+   */
+  static async updateRazorpayContactId(id, contactId, client = null) {
+    const query = `
+      UPDATE partners
+      SET razorpay_contact_id = $1
+      WHERE id = $2
+      RETURNING *
+    `;
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [contactId, id]);
+    return result.rows[0];
+  }
+
   static async findByEmail(email) {
     const query = 'SELECT * FROM partners WHERE email = $1';
     const result = await db.query(query, [email]);

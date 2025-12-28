@@ -270,6 +270,143 @@ class RazorpayService {
   }
 
   /**
+   * Create a Razorpay contact for payout processing
+   * @param {Object} contactData - Contact data
+   * @param {string} contactData.name - Contact name
+   * @param {string} contactData.email - Contact email (optional)
+   * @param {string} contactData.contact - Contact phone number (optional)
+   * @param {string} contactData.type - Contact type ('customer', 'vendor', 'self')
+   * @param {Object} contactData.notes - Additional notes
+   * @returns {Promise<Object>} Razorpay contact object
+   */
+  static async createContact(contactData) {
+    try {
+      const { name, email, contact: phone, type = 'vendor', notes = {} } = contactData;
+
+      const options = {
+        name: name,
+        type: type,
+        notes: notes
+      };
+
+      // Add email if provided
+      if (email) {
+        options.email = email;
+      }
+
+      // Add contact (phone) if provided
+      if (phone) {
+        options.contact = phone;
+      }
+
+      const razorpay = getRazorpayInstance();
+      const contact = await razorpay.contacts.create(options);
+      return contact;
+    } catch (error) {
+      console.error('Razorpay create contact error:', error);
+      throw new Error(`Failed to create Razorpay contact: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get Razorpay contact details
+   * @param {string} contactId - Razorpay contact ID
+   * @returns {Promise<Object>} Contact details
+   */
+  static async getContact(contactId) {
+    try {
+      const razorpay = getRazorpayInstance();
+      const contact = await razorpay.contacts.fetch(contactId);
+      return contact;
+    } catch (error) {
+      console.error('Razorpay get contact error:', error);
+      throw new Error(`Failed to get Razorpay contact: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create a Razorpay payout
+   * @param {Object} payoutData - Payout data
+   * @param {string} payoutData.contact_id - Razorpay contact ID (required)
+   * @param {string} payoutData.fund_account_id - Fund account ID (if available, preferred method)
+   * @param {number} payoutData.amount - Amount in paise (smallest currency unit)
+   * @param {string} payoutData.currency - Currency code (default: INR)
+   * @param {string} payoutData.mode - Payout mode ('IMPS', 'NEFT', 'RTGS') - default: 'IMPS'
+   * @param {string} payoutData.purpose - Payout purpose (default: 'payout')
+   * @param {string} payoutData.account_number - Account number (required if fund_account_id not provided)
+   * @param {string} payoutData.ifsc - IFSC code (required if fund_account_id not provided)
+   * @param {string} payoutData.account_holder_name - Account holder name (required if fund_account_id not provided)
+   * @param {Object} payoutData.notes - Additional notes
+   * @returns {Promise<Object>} Razorpay payout object
+   * 
+   * Note: Razorpay payouts require a fund_account. If fund_account_id is provided, use it directly.
+   * Otherwise, provide account_number, ifsc, and account_holder_name to create fund account structure inline.
+   */
+  static async createPayout(payoutData) {
+    try {
+      const {
+        contact_id,
+        fund_account_id,
+        amount,
+        currency = 'INR',
+        mode = 'IMPS',
+        purpose = 'payout',
+        account_number,
+        ifsc,
+        account_holder_name,
+        notes = {}
+      } = payoutData;
+
+      if (!contact_id) {
+        throw new Error('contact_id is required for payout creation');
+      }
+
+      const options = {
+        amount: amount, // Amount in paise
+        currency: currency,
+        mode: mode,
+        purpose: purpose,
+        queue_if_low_balance: true,
+        notes: notes
+      };
+
+      // If fund_account_id is provided, use it directly (preferred method)
+      if (fund_account_id) {
+        options.fund_account = fund_account_id;
+        // Account number might still be needed at top level for some Razorpay configurations
+        if (account_number) {
+          options.account_number = account_number;
+        }
+      } else {
+        // Create fund account structure inline
+        // Note: Razorpay may require fund accounts to be created separately first
+        // This structure may work for simplified payout creation
+        if (!account_number || !ifsc || !account_holder_name) {
+          throw new Error('account_number, ifsc, and account_holder_name are required when fund_account_id is not provided');
+        }
+
+        options.account_number = account_number;
+        options.fund_account = {
+          contact_id: contact_id,
+          account_type: 'bank_account',
+          bank_account: {
+            name: account_holder_name,
+            ifsc: ifsc,
+            account_number: account_number
+          }
+        };
+      }
+
+      const razorpay = getRazorpayInstance();
+      const payout = await razorpay.payouts.create(options);
+      return payout;
+    } catch (error) {
+      console.error('Razorpay create payout error:', error);
+      throw new Error(`Failed to create Razorpay payout: ${error.message}`);
+    }
+  }
+
+  /**
    * Create order and save to database
    * @param {Object} orderData - Order data
    * @param {number} orderData.customer_id - Customer ID

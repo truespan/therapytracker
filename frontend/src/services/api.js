@@ -167,6 +167,17 @@ export const adminAPI = {
   downloadTemplate: (id) => api.get(`/admin/report-templates/${id}/download`, {
     responseType: 'blob'
   }),
+  // Payouts
+  getPayoutCandidates: () => api.get('/admin/payouts/candidates'),
+  createPayout: (data) => api.post('/admin/payouts/create', data),
+  getPayoutHistory: (filters) => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.start_date) params.append('start_date', filters.start_date);
+    if (filters?.end_date) params.append('end_date', filters.end_date);
+    if (filters?.limit) params.append('limit', filters.limit);
+    return api.get(`/admin/payouts?${params.toString()}`);
+  },
 };
 
 // Subscription Plan APIs

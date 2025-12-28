@@ -444,11 +444,11 @@ async function handlePaymentSettled(event) {
     const earnings = await Earnings.findByPaymentId(payment.id);
     
     if (earnings && earnings.status === 'pending') {
-      // Calculate next Friday for payout scheduling
-      const { getNextFriday } = require('../utils/dateUtils');
+      // Calculate next Saturday for payout scheduling
+      const { getNextSaturday } = require('../utils/dateUtils');
       const { formatDate } = require('../utils/dateUtils');
-      const nextFriday = getNextFriday();
-      const payoutDate = formatDate(nextFriday); // Format as YYYY-MM-DD for DATE column
+      const nextSaturday = getNextSaturday();
+      const payoutDate = formatDate(nextSaturday); // Format as YYYY-MM-DD for DATE column
       
       // Update earnings status to 'available' and set payout_date
       await Earnings.updateStatusByPaymentId(payment.id, 'available', payoutDate);
@@ -485,7 +485,7 @@ async function handlePayoutProcessed(event) {
     const payoutDateFormatted = formatDate(payoutDate);
     
     // Update all earnings with matching payout_date from 'available' to 'withdrawn'
-    // This assumes weekly batch payouts on Fridays
+    // This assumes weekly batch payouts on Saturdays
     // Note: payout_id linking is optional - we update status even if payout record doesn't exist
     const updateQuery = `
       UPDATE earnings
