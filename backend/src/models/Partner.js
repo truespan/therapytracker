@@ -1,6 +1,87 @@
 const db = require('../config/database');
+const { encrypt, decrypt } = require('../services/encryptionService');
 
 class Partner {
+  /**
+   * Encrypt bank account fields before storing
+   * @param {Object} data - Partner data with bank account fields
+   * @returns {Object} Data with encrypted bank account fields
+   */
+  static encryptBankAccountFields(data) {
+    const encrypted = { ...data };
+    
+    try {
+      if (encrypted.bank_account_holder_name) {
+        encrypted.bank_account_holder_name = encrypt(encrypted.bank_account_holder_name);
+      }
+      if (encrypted.bank_account_number) {
+        encrypted.bank_account_number = encrypt(encrypted.bank_account_number);
+      }
+      if (encrypted.bank_ifsc_code) {
+        encrypted.bank_ifsc_code = encrypt(encrypted.bank_ifsc_code);
+      }
+      if (encrypted.bank_name) {
+        encrypted.bank_name = encrypt(encrypted.bank_name);
+      }
+    } catch (error) {
+      console.error('Error encrypting bank account fields:', error);
+      throw new Error('Failed to encrypt bank account details');
+    }
+    
+    return encrypted;
+  }
+
+  /**
+   * Decrypt bank account fields after retrieving from database
+   * @param {Object} partner - Partner record from database
+   * @returns {Object} Partner with decrypted bank account fields
+   */
+  static decryptBankAccountFields(partner) {
+    if (!partner) return partner;
+    
+    const decrypted = { ...partner };
+    
+    // Decrypt each field individually to handle mixed encrypted/plain text data
+    // (for backward compatibility during migration)
+    if (decrypted.bank_account_holder_name) {
+      try {
+        decrypted.bank_account_holder_name = decrypt(decrypted.bank_account_holder_name);
+      } catch (error) {
+        // If decryption fails, assume it's plain text (backward compatibility)
+        // Keep the original value
+        console.warn(`Partner ${partner.id}: bank_account_holder_name appears to be plain text`);
+      }
+    }
+    
+    if (decrypted.bank_account_number) {
+      try {
+        decrypted.bank_account_number = decrypt(decrypted.bank_account_number);
+      } catch (error) {
+        // If decryption fails, assume it's plain text (backward compatibility)
+        console.warn(`Partner ${partner.id}: bank_account_number appears to be plain text`);
+      }
+    }
+    
+    if (decrypted.bank_ifsc_code) {
+      try {
+        decrypted.bank_ifsc_code = decrypt(decrypted.bank_ifsc_code);
+      } catch (error) {
+        // If decryption fails, assume it's plain text (backward compatibility)
+        console.warn(`Partner ${partner.id}: bank_ifsc_code appears to be plain text`);
+      }
+    }
+    
+    if (decrypted.bank_name) {
+      try {
+        decrypted.bank_name = decrypt(decrypted.bank_name);
+      } catch (error) {
+        // If decryption fails, assume it's plain text (backward compatibility)
+        console.warn(`Partner ${partner.id}: bank_name appears to be plain text`);
+      }
+    }
+    
+    return decrypted;
+  }
   // Generate a unique Partner ID based on organization name
   static async generatePartnerId(organizationId) {
     // Fetch organization name
@@ -74,7 +155,10 @@ class Partner {
   static async findById(id) {
     const query = 'SELECT * FROM partners WHERE id = $1';
     const result = await db.query(query, [id]);
-    return result.rows[0];
+    if (result.rows[0]) {
+      return this.decryptBankAccountFields(result.rows[0]);
+    }
+    return null;
   }
 
   /**
@@ -95,19 +179,25 @@ class Partner {
   static async findByEmail(email) {
     const query = 'SELECT * FROM partners WHERE email = $1';
     const result = await db.query(query, [email]);
-    return result.rows[0];
+    if (result.rows[0]) {
+      return this.decryptBankAccountFields(result.rows[0]);
+    }
+    return null;
   }
 
   static async findByPartnerId(partnerId) {
     const query = 'SELECT * FROM partners WHERE partner_id = $1';
     const result = await db.query(query, [partnerId]);
-    return result.rows[0];
+    if (result.rows[0]) {
+      return this.decryptBankAccountFields(result.rows[0]);
+    }
+    return null;
   }
 
   static async findByOrganization(organizationId) {
     const query = 'SELECT * FROM partners WHERE organization_id = $1';
     const result = await db.query(query, [organizationId]);
-    return result.rows;
+    return result.rows.map(row => this.decryptBankAccountFields(row));
   }
 
   static async update(id, partnerData) {
@@ -199,21 +289,24 @@ class Partner {
       values.push(video_sessions_enabled);
     }
     
-    // Bank account fields
+    // Bank account fields - encrypt before storing
     let bankDetailsChanged = false;
     if (bank_account_holder_name !== undefined) {
+      const encrypted = bank_account_holder_name ? encrypt(bank_account_holder_name) : null;
       updates.push(`bank_account_holder_name = $${paramIndex++}`);
-      values.push(bank_account_holder_name);
+      values.push(encrypted);
       bankDetailsChanged = true;
     }
     if (bank_account_number !== undefined) {
+      const encrypted = bank_account_number ? encrypt(bank_account_number) : null;
       updates.push(`bank_account_number = $${paramIndex++}`);
-      values.push(bank_account_number);
+      values.push(encrypted);
       bankDetailsChanged = true;
     }
     if (bank_ifsc_code !== undefined) {
+      const encrypted = bank_ifsc_code ? encrypt(bank_ifsc_code) : null;
       updates.push(`bank_ifsc_code = $${paramIndex++}`);
-      values.push(bank_ifsc_code);
+      values.push(encrypted);
       bankDetailsChanged = true;
     }
     // Reset verification when bank details change
@@ -222,8 +315,9 @@ class Partner {
       updates.push(`bank_account_verified_at = NULL`);
     }
     if (bank_name !== undefined) {
+      const encrypted = bank_name ? encrypt(bank_name) : null;
       updates.push(`bank_name = $${paramIndex++}`);
-      values.push(bank_name);
+      values.push(encrypted);
     }
     if (bank_account_verified !== undefined) {
       updates.push(`bank_account_verified = $${paramIndex++}`);
@@ -249,7 +343,10 @@ class Partner {
     `;
 
     const result = await db.query(query, values);
-    return result.rows[0];
+    if (result.rows[0]) {
+      return this.decryptBankAccountFields(result.rows[0]);
+    }
+    return null;
   }
 
   static async delete(id) {
