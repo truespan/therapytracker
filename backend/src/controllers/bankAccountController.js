@@ -39,12 +39,13 @@ const updatePartnerBankAccount = async (req, res) => {
     }
 
     // Update partner bank account
+    // Note: bank_account_verified will be automatically set to FALSE by the model
+    // when bank details change, so we don't need to pass it explicitly
     const updated = await Partner.update(id, {
       bank_account_holder_name: bank_account_holder_name.trim(),
       bank_account_number: bank_account_number.trim(),
       bank_ifsc_code: bank_ifsc_code.toUpperCase().trim(),
-      bank_name: bank_name ? bank_name.trim() : null,
-      bank_account_verified: false // Reset verification when details change
+      bank_name: bank_name ? bank_name.trim() : null
     });
 
     // Mask account number for response

@@ -319,7 +319,9 @@ class Partner {
       updates.push(`bank_name = $${paramIndex++}`);
       values.push(encrypted);
     }
-    if (bank_account_verified !== undefined) {
+    // Only allow explicit bank_account_verified update if bank details haven't changed
+    // (to avoid duplicate assignment error)
+    if (bank_account_verified !== undefined && !bankDetailsChanged) {
       updates.push(`bank_account_verified = $${paramIndex++}`);
       values.push(bank_account_verified);
       if (bank_account_verified === true) {
