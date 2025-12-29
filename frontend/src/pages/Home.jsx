@@ -40,6 +40,15 @@ const Home = () => {
     login: ''
   });
 
+  // Lazy loading state - track which images should be loaded
+  const [imagesToLoad, setImagesToLoad] = useState({
+    hero: true,        // Load hero immediately (above the fold)
+    about: false,      // Lazy load
+    howItWorks: false, // Lazy load
+    blogs: false,      // Lazy load
+    login: false       // Lazy load
+  });
+
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
     if (section) {
@@ -93,6 +102,7 @@ const Home = () => {
   }, []);
 
   // Update background images based on screen size for responsive loading
+  // Only loads images that are marked for loading (lazy loading)
   useEffect(() => {
     const updateBackgrounds = () => {
       const width = window.innerWidth;
@@ -110,21 +120,67 @@ const Home = () => {
       const img4Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg4);
       const img5Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg5);
 
-      setBackgroundImages({
-        hero: heroUrls[size],
-        about: img3Urls[size],
-        howItWorks: img3Urls[size],
-        blogs: img4Urls[size],
-        login: img5Urls[size]
-      });
+      setBackgroundImages(prev => ({
+        hero: imagesToLoad.hero ? heroUrls[size] : prev.hero,
+        about: imagesToLoad.about ? img3Urls[size] : prev.about,
+        howItWorks: imagesToLoad.howItWorks ? img3Urls[size] : prev.howItWorks,
+        blogs: imagesToLoad.blogs ? img4Urls[size] : prev.blogs,
+        login: imagesToLoad.login ? img5Urls[size] : prev.login
+      }));
     };
 
-    // Set initial backgrounds
+    // Set initial backgrounds (only for images that should be loaded)
     updateBackgrounds();
 
     // Update on window resize
     window.addEventListener('resize', updateBackgrounds);
     return () => window.removeEventListener('resize', updateBackgrounds);
+  }, [imagesToLoad]);
+
+  // Lazy load background images using Intersection Observer
+  useEffect(() => {
+    // Hero image loads immediately, so skip it
+    const lazyLoadSections = [
+      { sectionId: 'about-us', imageKey: 'about' },
+      { sectionId: 'how-it-works', imageKey: 'howItWorks' },
+      { sectionId: 'blogs-news', imageKey: 'blogs' },
+      { sectionId: 'login', imageKey: 'login' }
+    ];
+
+    const observers = [];
+
+    lazyLoadSections.forEach(({ sectionId, imageKey }) => {
+      const section = document.getElementById(sectionId);
+      if (!section) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            // When section comes into view (with 200px margin for preloading)
+            if (entry.isIntersecting) {
+              setImagesToLoad(prev => ({
+                ...prev,
+                [imageKey]: true
+              }));
+              // Disconnect observer after loading to prevent unnecessary checks
+              observer.disconnect();
+            }
+          });
+        },
+        {
+          rootMargin: '200px', // Start loading 200px before section comes into view
+          threshold: 0.01 // Trigger when even 1% of section is visible
+        }
+      );
+
+      observer.observe(section);
+      observers.push(observer);
+    });
+
+    // Cleanup: disconnect all observers on unmount
+    return () => {
+      observers.forEach(observer => observer.disconnect());
+    };
   }, []);
 
   // Sample data for chart visual
@@ -462,7 +518,11 @@ const Home = () => {
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: backgroundImages.hero ? `url('${backgroundImages.hero}')` : `url('/backgroundImg2.webp')`
+              backgroundImage: imagesToLoad.hero && backgroundImages.hero 
+                ? `url('${backgroundImages.hero}')` 
+                : imagesToLoad.hero 
+                  ? `url('/backgroundImg2.webp')` 
+                  : 'none'
             }}
           ></div>
 
@@ -521,7 +581,11 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 dark:opacity-30"
           style={{
-            backgroundImage: backgroundImages.about ? `url('${backgroundImages.about}')` : `url('/backgroundImg3.webp')`
+            backgroundImage: imagesToLoad.about && backgroundImages.about 
+              ? `url('${backgroundImages.about}')` 
+              : imagesToLoad.about 
+                ? `url('/backgroundImg3.webp')` 
+                : 'none'
           }}
         ></div>
         {/* Light overlay to ensure readability */}
@@ -613,7 +677,11 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 dark:opacity-8"
           style={{
-            backgroundImage: backgroundImages.howItWorks ? `url('${backgroundImages.howItWorks}')` : `url('/backgroundImg3.webp')`
+            backgroundImage: imagesToLoad.howItWorks && backgroundImages.howItWorks 
+              ? `url('${backgroundImages.howItWorks}')` 
+              : imagesToLoad.howItWorks 
+                ? `url('/backgroundImg3.webp')` 
+                : 'none'
           }}
         ></div>
         {/* Gradient overlay for smooth transition */}
@@ -743,7 +811,11 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70 dark:opacity-70"
           style={{
-            backgroundImage: backgroundImages.blogs ? `url('${backgroundImages.blogs}')` : `url('/backgroundImg4.webp')`
+            backgroundImage: imagesToLoad.blogs && backgroundImages.blogs 
+              ? `url('${backgroundImages.blogs}')` 
+              : imagesToLoad.blogs 
+                ? `url('/backgroundImg4.webp')` 
+                : 'none'
           }}
         ></div>
         {/* Overlay to ensure text readability */}
@@ -807,7 +879,11 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 dark:opacity-30"
           style={{
-            backgroundImage: backgroundImages.login ? `url('${backgroundImages.login}')` : `url('/backgroundImg5.webp')`
+            backgroundImage: imagesToLoad.login && backgroundImages.login 
+              ? `url('${backgroundImages.login}')` 
+              : imagesToLoad.login 
+                ? `url('/backgroundImg5.webp')` 
+                : 'none'
           }}
         ></div>
         {/* Gradient overlay matching current style but with image underneath */}
