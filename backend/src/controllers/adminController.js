@@ -490,26 +490,78 @@ const checkAndCreateEarnings = async (req, res) => {
       orderMetadata = typeof dbOrder.metadata === 'string' ? JSON.parse(dbOrder.metadata) : dbOrder.metadata;
     }
 
-    // Check if this is a booking payment
-    if (!orderMetadata.payment_type || orderMetadata.payment_type !== 'booking_fee') {
+    // Check payment type and determine recipient
+    // For booking_fee payments, we get partner_id from metadata
+    // For subscription payments, we get customer_id and customer_type from order
+    let recipientId = null;
+    let recipientType = null;
+    let partnerInfo = null;
+
+    // Strategy 1: Check if it's a booking fee payment (has partner_id in notes)
+    if (orderMetadata.partner_id) {
+      // Try to find partner by partner_id string (booking fee payment)
+      const partner = await Partner.findByPartnerId(orderMetadata.partner_id);
+      if (partner) {
+        recipientId = partner.id;
+        recipientType = 'partner';
+        partnerInfo = {
+          name: partner.name,
+          partner_id: partner.partner_id
+        };
+      } else {
+        return res.status(404).json({
+          error: `Partner not found for partner_id: ${orderMetadata.partner_id}`,
+          order_metadata: orderMetadata,
+          customer_type: dbOrder.customer_type
+        });
+      }
+    } 
+    // Strategy 2: Check if order has partner/organization as customer (subscription payment)
+    else if (dbOrder.customer_type === 'partner' || dbOrder.customer_type === 'organization') {
+      recipientId = dbOrder.customer_id;
+      recipientType = dbOrder.customer_type;
+
+      if (dbOrder.customer_type === 'partner') {
+        const partner = await Partner.findById(dbOrder.customer_id);
+        if (partner) {
+          partnerInfo = {
+            name: partner.name,
+            partner_id: partner.partner_id
+          };
+        }
+      } else if (dbOrder.customer_type === 'organization') {
+        const org = await Organization.findById(dbOrder.customer_id);
+        if (org) {
+          partnerInfo = {
+            name: org.name
+          };
+        }
+      }
+    } 
+    // Strategy 3: If customer_type is 'user' but no partner_id in notes, this might be a booking payment
+    // but the notes weren't saved properly - we can't determine the recipient
+    else {
+      // Unknown payment type or missing info
       return res.status(400).json({
-        error: 'This payment is not a booking fee payment',
-        payment_type: orderMetadata.payment_type || 'not set'
+        error: 'Cannot determine recipient for earnings. Missing partner_id in order notes or invalid customer_type.',
+        payment_type: orderMetadata.payment_type || 'not set',
+        customer_type: dbOrder.customer_type || 'not set',
+        order_metadata: orderMetadata,
+        debug_info: {
+          has_partner_id_in_notes: !!orderMetadata.partner_id,
+          has_payment_type_in_notes: !!orderMetadata.payment_type,
+          order_customer_id: dbOrder.customer_id,
+          order_customer_type: dbOrder.customer_type
+        }
       });
     }
 
-    const partnerIdFromMetadata = orderMetadata.partner_id;
-    if (!partnerIdFromMetadata) {
+    // recipientId and recipientType are now set above based on payment type
+    if (!recipientId || !recipientType) {
       return res.status(400).json({
-        error: 'Partner ID not found in order metadata'
-      });
-    }
-
-    // Find partner by partner_id string
-    const partner = await Partner.findByPartnerId(partnerIdFromMetadata);
-    if (!partner) {
-      return res.status(404).json({
-        error: `Partner not found for partner_id: ${partnerIdFromMetadata}`
+        error: 'Could not determine recipient for earnings creation',
+        order_metadata: orderMetadata,
+        customer_type: dbOrder.customer_type
       });
     }
 
@@ -525,8 +577,8 @@ const checkAndCreateEarnings = async (req, res) => {
 
     // Create earnings record
     const earnings = await Earnings.create({
-      recipient_id: partner.id,
-      recipient_type: 'partner',
+      recipient_id: recipientId,
+      recipient_type: recipientType,
       razorpay_payment_id: razorpay_payment_id,
       amount: payment.amount,
       currency: payment.currency,
@@ -535,7 +587,7 @@ const checkAndCreateEarnings = async (req, res) => {
       payout_date: null
     });
 
-    console.log(`[ADMIN] Created earnings record for partner ${partner.id} (${partner.name}) from payment ${razorpay_payment_id} (amount: ${payment.amount} ${payment.currency})`);
+    console.log(`[ADMIN] Created earnings record for ${recipientType} ${recipientId}${partnerInfo ? ` (${partnerInfo.name})` : ''} from payment ${razorpay_payment_id} (amount: ${payment.amount} ${payment.currency})`);
 
     res.json({
       success: true,
@@ -544,8 +596,8 @@ const checkAndCreateEarnings = async (req, res) => {
         id: earnings.id,
         recipient_id: earnings.recipient_id,
         recipient_type: earnings.recipient_type,
-        partner_name: partner.name,
-        partner_id_string: partner.partner_id,
+        recipient_name: partnerInfo?.name,
+        partner_id_string: partnerInfo?.partner_id,
         amount: parseFloat(earnings.amount),
         currency: earnings.currency,
         status: earnings.status,

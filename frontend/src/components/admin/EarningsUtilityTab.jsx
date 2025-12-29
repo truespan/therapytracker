@@ -107,9 +107,11 @@ const EarningsUtilityTab = () => {
       {/* Error Message */}
       {error && (
         <div className="card p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-          <div className="flex items-center space-x-2 text-red-600 dark:text-red-400">
-            <AlertCircle className="h-5 w-5" />
-            <span>{error}</span>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2 text-red-600 dark:text-red-400">
+              <AlertCircle className="h-5 w-5" />
+              <span className="font-medium">{error}</span>
+            </div>
           </div>
         </div>
       )}
