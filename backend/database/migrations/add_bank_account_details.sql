@@ -3,20 +3,23 @@
 -- Date: 2025-01-XX
 
 -- Step 1: Add bank account fields to partners table
+-- Note: Using TEXT type to accommodate encrypted data format (iv:salt:encrypted:authTag)
+-- Encrypted data is much longer than plain text (typically 200-500+ characters)
 ALTER TABLE partners
-ADD COLUMN IF NOT EXISTS bank_account_holder_name VARCHAR(255),
-ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(50),
-ADD COLUMN IF NOT EXISTS bank_ifsc_code VARCHAR(20),
-ADD COLUMN IF NOT EXISTS bank_name VARCHAR(255),
+ADD COLUMN IF NOT EXISTS bank_account_holder_name TEXT,
+ADD COLUMN IF NOT EXISTS bank_account_number TEXT,
+ADD COLUMN IF NOT EXISTS bank_ifsc_code TEXT,
+ADD COLUMN IF NOT EXISTS bank_name TEXT,
 ADD COLUMN IF NOT EXISTS bank_account_verified BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS bank_account_verified_at TIMESTAMP;
 
 -- Step 2: Add bank account fields to organizations table
+-- Note: Using TEXT type to accommodate encrypted data format (iv:salt:encrypted:authTag)
 ALTER TABLE organizations
-ADD COLUMN IF NOT EXISTS bank_account_holder_name VARCHAR(255),
-ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(50),
-ADD COLUMN IF NOT EXISTS bank_ifsc_code VARCHAR(20),
-ADD COLUMN IF NOT EXISTS bank_name VARCHAR(255),
+ADD COLUMN IF NOT EXISTS bank_account_holder_name TEXT,
+ADD COLUMN IF NOT EXISTS bank_account_number TEXT,
+ADD COLUMN IF NOT EXISTS bank_ifsc_code TEXT,
+ADD COLUMN IF NOT EXISTS bank_name TEXT,
 ADD COLUMN IF NOT EXISTS bank_account_verified BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS bank_account_verified_at TIMESTAMP;
 

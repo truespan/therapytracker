@@ -75,7 +75,19 @@ console.log(generateEncryptionKey());
 
 ## Migration
 
-### Encrypting Existing Data
+### Step 1: Increase Column Sizes (Required)
+
+**IMPORTANT**: Before using encryption, you must increase the column sizes to accommodate encrypted data.
+
+Run this migration:
+
+```bash
+psql -U postgres -d therapy_tracker -f backend/database/migrations/increase_bank_account_column_sizes.sql
+```
+
+This changes the column types from `VARCHAR(50)`/`VARCHAR(20)` to `TEXT` to accommodate the encrypted format which is much longer than plain text.
+
+### Step 2: Encrypting Existing Data
 
 If you have existing plain text bank account data, run the migration script:
 

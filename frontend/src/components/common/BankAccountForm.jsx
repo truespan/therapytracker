@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, AlertCircle, Loader, CreditCard } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Loader, CreditCard, Edit2, Save } from 'lucide-react';
 import { bankAccountAPI } from '../../services/api';
 
 const BankAccountForm = ({ userType, onUpdate }) => {
@@ -7,6 +7,8 @@ const BankAccountForm = ({ userType, onUpdate }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [originalBankData, setOriginalBankData] = useState(null);
   const [bankData, setBankData] = useState({
     bank_account_holder_name: '',
     bank_account_number: '',
@@ -31,12 +33,14 @@ const BankAccountForm = ({ userType, onUpdate }) => {
         setBankAccountInfo(response.data.data);
         // Pre-fill form if account exists (but we can't show full account number)
         if (response.data.data.bank_account_holder_name) {
-          setBankData({
+          const initialData = {
             bank_account_holder_name: response.data.data.bank_account_holder_name || '',
             bank_account_number: '', // Don't pre-fill for security
             bank_ifsc_code: response.data.data.bank_ifsc_code || '',
             bank_name: response.data.data.bank_name || ''
-          });
+          };
+          setBankData(initialData);
+          setOriginalBankData(initialData);
         }
       }
     } catch (err) {
@@ -48,11 +52,37 @@ const BankAccountForm = ({ userType, onUpdate }) => {
   };
 
   const handleChange = (e) => {
+    if (!isEditing) return; // Prevent changes when not in edit mode
+    
     const { name, value } = e.target;
     setBankData(prev => ({
       ...prev,
       [name]: value
     }));
+    setError('');
+    setSuccess('');
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setError('');
+    setSuccess('');
+  };
+
+  const handleCancel = () => {
+    // Restore original data
+    if (originalBankData) {
+      setBankData({ ...originalBankData });
+    } else {
+      // If no original data, reset to empty or current bank account info
+      setBankData({
+        bank_account_holder_name: bankAccountInfo?.bank_account_holder_name || '',
+        bank_account_number: '',
+        bank_ifsc_code: bankAccountInfo?.bank_ifsc_code || '',
+        bank_name: bankAccountInfo?.bank_name || ''
+      });
+    }
+    setIsEditing(false);
     setError('');
     setSuccess('');
   };
@@ -69,6 +99,12 @@ const BankAccountForm = ({ userType, onUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent submission if not in edit mode
+    if (!isEditing) {
+      return;
+    }
+    
     setError('');
     setSuccess('');
     setSaving(true);
@@ -113,7 +149,10 @@ const BankAccountForm = ({ userType, onUpdate }) => {
         setSuccess(response.data.message || 'Bank account details updated successfully');
         setBankAccountInfo(response.data.data);
         // Clear account number from form for security
-        setBankData(prev => ({ ...prev, bank_account_number: '' }));
+        const updatedData = { ...bankData, bank_account_number: '' };
+        setBankData(updatedData);
+        setOriginalBankData(updatedData);
+        setIsEditing(false); // Exit edit mode after successful save
         if (onUpdate) {
           onUpdate();
         }
@@ -193,6 +232,20 @@ const BankAccountForm = ({ userType, onUpdate }) => {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Edit Button - Show when not editing */}
+        {!isEditing && (
+          <div className="flex justify-end mb-4">
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+            >
+              <Edit2 className="h-4 w-4" />
+              <span>Edit Bank Account Details</span>
+            </button>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Account Holder Name <span className="text-red-500">*</span>
@@ -202,7 +255,10 @@ const BankAccountForm = ({ userType, onUpdate }) => {
             name="bank_account_holder_name"
             value={bankData.bank_account_holder_name}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
+            disabled={!isEditing}
+            className={`w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary ${
+              !isEditing ? 'bg-gray-50 dark:bg-dark-bg-secondary cursor-not-allowed opacity-75' : ''
+            }`}
             placeholder="Enter account holder name"
             required
           />
@@ -217,9 +273,12 @@ const BankAccountForm = ({ userType, onUpdate }) => {
             name="bank_account_number"
             value={bankData.bank_account_number}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary font-mono"
+            disabled={!isEditing}
+            className={`w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary font-mono ${
+              !isEditing ? 'bg-gray-50 dark:bg-dark-bg-secondary cursor-not-allowed opacity-75' : ''
+            }`}
             placeholder={bankAccountInfo?.bank_account_number ? "Enter new account number" : "Enter account number"}
-            required
+            required={isEditing}
             maxLength={18}
             pattern="[0-9]{9,18}"
           />
@@ -237,9 +296,12 @@ const BankAccountForm = ({ userType, onUpdate }) => {
             name="bank_ifsc_code"
             value={bankData.bank_ifsc_code}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary uppercase"
+            disabled={!isEditing}
+            className={`w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary uppercase ${
+              !isEditing ? 'bg-gray-50 dark:bg-dark-bg-secondary cursor-not-allowed opacity-75' : ''
+            }`}
             placeholder="HDFC0001234"
-            required
+            required={isEditing}
             maxLength={11}
             style={{ textTransform: 'uppercase' }}
           />
@@ -257,13 +319,16 @@ const BankAccountForm = ({ userType, onUpdate }) => {
             name="bank_name"
             value={bankData.bank_name}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
+            disabled={!isEditing}
+            className={`w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary ${
+              !isEditing ? 'bg-gray-50 dark:bg-dark-bg-secondary cursor-not-allowed opacity-75' : ''
+            }`}
             placeholder="Enter bank name (optional)"
           />
         </div>
 
         {/* Display masked account number if exists */}
-        {bankAccountInfo?.bank_account_number && (
+        {bankAccountInfo?.bank_account_number && !isEditing && (
           <div className="p-3 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Current Account Number:</p>
             <p className="text-sm font-mono text-gray-900 dark:text-dark-text-primary">
@@ -272,25 +337,37 @@ const BankAccountForm = ({ userType, onUpdate }) => {
           </div>
         )}
 
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-          >
-            {saving ? (
-              <>
-                <Loader className="h-4 w-4 animate-spin" />
-                <span>Saving...</span>
-              </>
-            ) : (
-              <>
-                <CreditCard className="h-4 w-4" />
-                <span>Save Bank Account Details</span>
-              </>
-            )}
-          </button>
-        </div>
+        {/* Action Buttons - Show when editing */}
+        {isEditing && (
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-dark-border">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={saving}
+              className="px-4 py-2 bg-gray-200 dark:bg-dark-bg-secondary text-gray-700 dark:text-dark-text-primary rounded-lg hover:bg-gray-300 dark:hover:bg-dark-bg-primary transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <XCircle className="h-4 w-4" />
+              <span>Cancel</span>
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {saving ? (
+                <>
+                  <Loader className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  <span>Save Changes</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </form>
 
       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
