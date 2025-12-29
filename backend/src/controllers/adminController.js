@@ -2,6 +2,10 @@ const bcrypt = require('bcrypt');
 const Organization = require('../models/Organization');
 const Admin = require('../models/Admin');
 const Auth = require('../models/Auth');
+const Earnings = require('../models/Earnings');
+const RazorpayPayment = require('../models/RazorpayPayment');
+const RazorpayOrder = require('../models/RazorpayOrder');
+const Partner = require('../models/Partner');
 const db = require('../config/database');
 
 const SALT_ROUNDS = 10;
@@ -410,6 +414,153 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
+/**
+ * Check and create earnings for a payment if missing (Admin only)
+ * POST /api/admin/earnings/check-and-create
+ */
+const checkAndCreateEarnings = async (req, res) => {
+  try {
+    const { razorpay_payment_id } = req.body;
+
+    if (!razorpay_payment_id) {
+      return res.status(400).json({
+        error: 'razorpay_payment_id is required'
+      });
+    }
+
+    // Check if earnings already exist
+    const existingEarnings = await Earnings.findByPaymentId(razorpay_payment_id);
+    if (existingEarnings) {
+      // Get partner info for display
+      let partnerInfo = null;
+      if (existingEarnings.recipient_type === 'partner') {
+        const partner = await Partner.findById(existingEarnings.recipient_id);
+        if (partner) {
+          partnerInfo = {
+            name: partner.name,
+            partner_id: partner.partner_id
+          };
+        }
+      }
+
+      return res.json({
+        success: true,
+        message: 'Earnings record already exists',
+        earnings: {
+          id: existingEarnings.id,
+          recipient_id: existingEarnings.recipient_id,
+          recipient_type: existingEarnings.recipient_type,
+          amount: parseFloat(existingEarnings.amount),
+          currency: existingEarnings.currency,
+          status: existingEarnings.status,
+          created_at: existingEarnings.created_at,
+          partner_name: partnerInfo?.name,
+          partner_id_string: partnerInfo?.partner_id
+        }
+      });
+    }
+
+    // Get payment from database
+    const payment = await RazorpayPayment.findByPaymentId(razorpay_payment_id);
+    if (!payment) {
+      return res.status(404).json({
+        error: 'Payment not found in database'
+      });
+    }
+
+    // Get order from database
+    if (!payment.razorpay_order_id) {
+      return res.status(400).json({
+        error: 'Payment does not have an associated order'
+      });
+    }
+
+    const dbOrder = await RazorpayOrder.findByOrderId(payment.razorpay_order_id);
+    if (!dbOrder) {
+      return res.status(404).json({
+        error: 'Order not found in database'
+      });
+    }
+
+    // Parse order metadata
+    let orderMetadata = {};
+    if (dbOrder.notes) {
+      orderMetadata = typeof dbOrder.notes === 'string' ? JSON.parse(dbOrder.notes) : dbOrder.notes;
+    } else if (dbOrder.metadata) {
+      orderMetadata = typeof dbOrder.metadata === 'string' ? JSON.parse(dbOrder.metadata) : dbOrder.metadata;
+    }
+
+    // Check if this is a booking payment
+    if (!orderMetadata.payment_type || orderMetadata.payment_type !== 'booking_fee') {
+      return res.status(400).json({
+        error: 'This payment is not a booking fee payment',
+        payment_type: orderMetadata.payment_type || 'not set'
+      });
+    }
+
+    const partnerIdFromMetadata = orderMetadata.partner_id;
+    if (!partnerIdFromMetadata) {
+      return res.status(400).json({
+        error: 'Partner ID not found in order metadata'
+      });
+    }
+
+    // Find partner by partner_id string
+    const partner = await Partner.findByPartnerId(partnerIdFromMetadata);
+    if (!partner) {
+      return res.status(404).json({
+        error: `Partner not found for partner_id: ${partnerIdFromMetadata}`
+      });
+    }
+
+    // Try to find appointment_id from slot_id if available
+    let appointmentId = null;
+    if (orderMetadata.slot_id) {
+      const slotQuery = `SELECT appointment_id FROM availability_slots WHERE id = $1`;
+      const slotResult = await db.query(slotQuery, [orderMetadata.slot_id]);
+      if (slotResult.rows[0] && slotResult.rows[0].appointment_id) {
+        appointmentId = slotResult.rows[0].appointment_id;
+      }
+    }
+
+    // Create earnings record
+    const earnings = await Earnings.create({
+      recipient_id: partner.id,
+      recipient_type: 'partner',
+      razorpay_payment_id: razorpay_payment_id,
+      amount: payment.amount,
+      currency: payment.currency,
+      status: payment.status === 'captured' || payment.status === 'authorized' ? 'pending' : 'pending',
+      appointment_id: appointmentId,
+      payout_date: null
+    });
+
+    console.log(`[ADMIN] Created earnings record for partner ${partner.id} (${partner.name}) from payment ${razorpay_payment_id} (amount: ${payment.amount} ${payment.currency})`);
+
+    res.json({
+      success: true,
+      message: 'Earnings record created successfully',
+      earnings: {
+        id: earnings.id,
+        recipient_id: earnings.recipient_id,
+        recipient_type: earnings.recipient_type,
+        partner_name: partner.name,
+        partner_id_string: partner.partner_id,
+        amount: parseFloat(earnings.amount),
+        currency: earnings.currency,
+        status: earnings.status,
+        created_at: earnings.created_at
+      }
+    });
+  } catch (error) {
+    console.error('[ADMIN] Error checking/creating earnings:', error);
+    res.status(500).json({
+      error: 'Failed to check/create earnings',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   createOrganization,
@@ -418,6 +569,7 @@ module.exports = {
   activateOrganization,
   deleteOrganization,
   getOrganizationMetrics,
-  getDashboardStats
+  getDashboardStats,
+  checkAndCreateEarnings
 };
 
