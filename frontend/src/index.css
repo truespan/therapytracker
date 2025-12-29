@@ -325,3 +325,17 @@ code {
 .dark .ql-editor.ql-blank::before {
   color: #94A3B8; /* dark-text-tertiary */
 }
+
+/* Date, Time, and DateTime-Local Input Icons - Dark Mode Visibility */
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.dark input[type="time"]::-webkit-calendar-picker-indicator:hover,
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { appointmentAPI } from '../../services/api';
-import { X, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { X, AlertCircle, CheckCircle, Trash2, Calendar, Clock } from 'lucide-react';
 import {
   getUserTimezone,
   getDateForInput,
@@ -152,7 +152,7 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition"
+            className="text-gray-400 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition"
           >
             <X className="h-5 w-5" />
           </button>
@@ -211,6 +211,7 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                <Calendar className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Date <span className="text-red-500">*</span>
               </label>
               <input
@@ -225,6 +226,7 @@ const AppointmentModal = ({ partnerId, users, selectedSlot, appointment, onClose
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                <Clock className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Time <span className="text-red-500">*</span>
               </label>
               <input

@@ -108,7 +108,7 @@ const ScheduleVideoForSessionModal = ({ session, partnerId, onClose, onSuccess }
             onClick={onClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            <X className="h-5 w-5 text-gray-500 dark:text-white" />
           </button>
         </div>
 
@@ -141,7 +141,7 @@ const ScheduleVideoForSessionModal = ({ session, partnerId, onClose, onSuccess }
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                <Calendar className="h-4 w-4 inline mr-1" />
+                <Calendar className="h-4 w-4 inline mr-1 text-gray-700 dark:text-white" />
                 Date *
               </label>
               <input
@@ -156,7 +156,7 @@ const ScheduleVideoForSessionModal = ({ session, partnerId, onClose, onSuccess }
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                <Clock className="h-4 w-4 inline mr-1" />
+                <Clock className="h-4 w-4 inline mr-1 text-gray-700 dark:text-white" />
                 Time *
               </label>
               <input

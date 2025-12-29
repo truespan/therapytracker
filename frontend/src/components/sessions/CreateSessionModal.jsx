@@ -298,7 +298,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
               </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Create New Session</h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary">
+            <button onClick={onClose} className="text-gray-400 dark:text-white hover:text-gray-600 dark:hover:text-gray-300">
               <X className="h-6 w-6" />
             </button>
           </div>
@@ -354,7 +354,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
             {/* Client Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                <User className="inline h-4 w-4 mr-1" />
+                <User className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Select Client *
               </label>
               <select
@@ -377,7 +377,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
             {/* Session Title */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                <FileText className="inline h-4 w-4 mr-1" />
+                <FileText className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Session Title *
               </label>
               <input
@@ -395,7 +395,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  <Calendar className="inline h-4 w-4 mr-1" />
+                  <Calendar className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                   Session Date *
                 </label>
                 <input
@@ -409,7 +409,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  <Clock className="inline h-4 w-4 mr-1" />
+                  <Clock className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                   Session Time *
                 </label>
                 <input
@@ -426,7 +426,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
             {/* Session Duration */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                <Clock className="inline h-4 w-4 mr-1" />
+                <Clock className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Duration (minutes) *
               </label>
               <select
@@ -448,7 +448,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
             {/* Payment Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                <CurrencyIcon className="inline h-4 w-4 mr-1" />
+                <CurrencyIcon className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Payment Related Notes (Optional)
               </label>
               <input
@@ -504,7 +504,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
               <button
                 onClick={handleCancelFutureDate}
                 disabled={loading}
-                className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors"
+                className="text-gray-400 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -558,7 +558,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
               <button
                 onClick={() => setShowConfirmDialog(false)}
                 disabled={loading}
-                className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors"
+                className="text-gray-400 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>

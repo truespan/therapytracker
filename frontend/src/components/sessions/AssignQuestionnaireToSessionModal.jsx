@@ -144,8 +144,8 @@ const AssignQuestionnaireToSessionModal = ({ session, partnerId, userId, onClose
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Selection Counter */}
             <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-              <label className="text-sm font-medium text-gray-700">
-                <FileText className="inline h-4 w-4 mr-1" />
+              <label className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">
+                <FileText className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Select Questionnaires ({selectedQuestionnaires.length}/{MAX_SELECTIONS})
               </label>
               {selectedQuestionnaires.length > 0 && (

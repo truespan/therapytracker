@@ -166,7 +166,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Video Session Created!</h2>
               </div>
-              <button onClick={handleFinish} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200">
+              <button onClick={handleFinish} className="text-gray-400 dark:text-white hover:text-gray-600 dark:hover:text-gray-300">
                 <X className="h-6 w-6" />
               </button>
             </div>
@@ -254,7 +254,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
                 {session ? 'Edit Video Session' : 'Schedule Video Session'}
               </h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-200">
+            <button onClick={onClose} className="text-gray-400 dark:text-white hover:text-gray-600 dark:hover:text-gray-300">
               <X className="h-6 w-6" />
             </button>
           </div>
@@ -268,7 +268,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                <User className="inline h-4 w-4 mr-1" />
+                <User className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Select Client *
               </label>
               <select
@@ -306,7 +306,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  <Calendar className="inline h-4 w-4 mr-1" />
+                  <Calendar className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                   Start Date & Time *
                 </label>
                 <input
@@ -321,7 +321,7 @@ const VideoSessionModal = ({ partnerId, users, selectedSlot, session, onClose, o
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  <Clock className="inline h-4 w-4 mr-1" />
+                  <Clock className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                   Duration (minutes) *
                 </label>
                 <select

@@ -82,7 +82,7 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Edit Session</h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 dark:text-dark-text-tertiary hover:text-gray-600 dark:hover:text-dark-text-secondary">
+            <button onClick={onClose} className="text-gray-400 dark:text-white hover:text-gray-600 dark:hover:text-gray-300">
               <X className="h-6 w-6" />
             </button>
           </div>
@@ -103,8 +103,8 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Session Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <FileText className="inline h-4 w-4 mr-1" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                <FileText className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Session Title *
               </label>
               <input
@@ -114,15 +114,15 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
                 onChange={handleChange}
                 required
                 placeholder="Enter session title..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
               />
             </div>
 
             {/* Session Date and Time */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Calendar className="inline h-4 w-4 mr-1" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  <Calendar className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                   Session Date *
                 </label>
                 <input
@@ -131,12 +131,12 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
                   value={formData.session_date}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Clock className="inline h-4 w-4 mr-1" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  <Clock className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                   Session Time *
                 </label>
                 <input
@@ -145,15 +145,15 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
                   value={formData.session_time}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary"
                 />
               </div>
             </div>
 
             {/* Session Duration */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <Clock className="inline h-4 w-4 mr-1" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                <Clock className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Duration (minutes) *
               </label>
               <select
@@ -161,7 +161,7 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
                 value={formData.session_duration}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary"
               >
                 <option value="">Select duration</option>
                 <option value="30">30 minutes</option>
@@ -174,8 +174,8 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
 
             {/* Payment Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                <CurrencyIcon className="inline h-4 w-4 mr-1" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                <CurrencyIcon className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Payment Related Notes (Optional)
               </label>
               <input
@@ -184,23 +184,23 @@ const EditSessionModal = ({ session, onClose, onSuccess }) => {
                 value={formData.payment_notes}
                 onChange={handleChange}
                 placeholder="₹5000 paid..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 pt-4 border-t dark:border-dark-border">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text-primary rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-primary transition-colors"
                 disabled={loading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
                 {loading ? 'Saving Changes...' : 'Save Changes'}

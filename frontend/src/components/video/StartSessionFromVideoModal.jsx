@@ -130,7 +130,7 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
             {/* Session Title */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                <FileText className="inline h-4 w-4 mr-1" />
+                <FileText className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Session Title *
               </label>
               <input
@@ -165,7 +165,7 @@ const StartSessionFromVideoModal = ({ videoSession, partnerId, onClose, onSucces
             {/* Payment Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                <CurrencyIcon className="inline h-4 w-4 mr-1" />
+                <CurrencyIcon className="inline h-4 w-4 mr-1 text-gray-700 dark:text-white" />
                 Payment Related Notes (Optional)
               </label>
               <input
