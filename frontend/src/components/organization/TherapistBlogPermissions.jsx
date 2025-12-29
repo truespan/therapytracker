@@ -107,12 +107,14 @@ const TherapistBlogPermissions = ({ organizationId, organizationName }) => {
   const enabledCount = therapists.filter(t => t.can_post_blogs).length;
   const disabledCount = therapists.length - enabledCount;
 
-  // Collapsible view: show first 10 when collapsed, all when expanded
-  const INITIAL_DISPLAY_COUNT = 10;
+  // Collapsible view: show therapists with permission in compact view, without permission in collapsible section
+  const enabledTherapists = filteredTherapists.filter(t => t.can_post_blogs);
+  const disabledTherapists = filteredTherapists.filter(t => !t.can_post_blogs);
+  
   const displayTherapists = isExpanded 
-    ? filteredTherapists 
-    : filteredTherapists.slice(0, INITIAL_DISPLAY_COUNT);
-  const hasMoreTherapists = filteredTherapists.length > INITIAL_DISPLAY_COUNT;
+    ? [...enabledTherapists, ...disabledTherapists]
+    : enabledTherapists;
+  const hasDisabledTherapists = disabledTherapists.length > 0;
 
   return (
     <div className="space-y-4">
@@ -234,8 +236,8 @@ const TherapistBlogPermissions = ({ organizationId, organizationName }) => {
             </div>
           ))}
           
-          {/* Collapsible toggle button */}
-          {hasMoreTherapists && (
+          {/* Collapsible toggle button for therapists without permission */}
+          {hasDisabledTherapists && (
             <div className="flex justify-center pt-4">
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -243,8 +245,8 @@ const TherapistBlogPermissions = ({ organizationId, organizationName }) => {
               >
                 <span>
                   {isExpanded 
-                    ? `Show Less (${INITIAL_DISPLAY_COUNT} of ${filteredTherapists.length})` 
-                    : `Show All (${filteredTherapists.length - INITIAL_DISPLAY_COUNT} more)`}
+                    ? `Hide Therapists Without Permission (${disabledTherapists.length})` 
+                    : `Show Therapists Without Permission (${disabledTherapists.length})`}
                 </span>
                 {isExpanded ? (
                   <ChevronUp className="h-4 w-4" />
