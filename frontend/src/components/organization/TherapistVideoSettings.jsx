@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Video, Users, ToggleLeft, ToggleRight, Search, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Video, Users, ToggleLeft, ToggleRight, Search, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { organizationAPI } from '../../services/api';
 
 const TherapistVideoSettings = ({ organizationId, organizationName }) => {
@@ -12,6 +12,7 @@ const TherapistVideoSettings = ({ organizationId, organizationName }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [updatingTherapists, setUpdatingTherapists] = useState(new Set());
   const [orgVideoSessionsEnabled, setOrgVideoSessionsEnabled] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     loadTherapists();
@@ -111,6 +112,13 @@ const TherapistVideoSettings = ({ organizationId, organizationName }) => {
   const enabledCount = therapists.filter(t => t.video_sessions_enabled).length;
   const disabledCount = therapists.length - enabledCount;
 
+  // Collapsible view: show first 10 when collapsed, all when expanded
+  const INITIAL_DISPLAY_COUNT = 10;
+  const displayTherapists = isExpanded 
+    ? filteredTherapists 
+    : filteredTherapists.slice(0, INITIAL_DISPLAY_COUNT);
+  const hasMoreTherapists = filteredTherapists.length > INITIAL_DISPLAY_COUNT;
+
   if (!orgVideoSessionsEnabled) {
     return (
       <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
@@ -208,7 +216,7 @@ const TherapistVideoSettings = ({ organizationId, organizationName }) => {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredTherapists.map(therapist => (
+          {displayTherapists.map(therapist => (
             <div
               key={therapist.id}
               className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border"
@@ -256,6 +264,27 @@ const TherapistVideoSettings = ({ organizationId, organizationName }) => {
               </button>
             </div>
           ))}
+          
+          {/* Collapsible toggle button */}
+          {hasMoreTherapists && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-primary-600 dark:text-dark-primary-500 hover:text-primary-700 dark:hover:text-dark-primary-400 hover:bg-primary-50 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors"
+              >
+                <span>
+                  {isExpanded 
+                    ? `Show Less (${INITIAL_DISPLAY_COUNT} of ${filteredTherapists.length})` 
+                    : `Show All (${filteredTherapists.length - INITIAL_DISPLAY_COUNT} more)`}
+                </span>
+                {isExpanded ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
