@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const routes = require('./routes');
 const { scheduleSlotArchival } = require('./jobs/archiveOldSlots');
+const { scheduleExpiredSessionCompletion } = require('./jobs/completeExpiredSessions');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -72,6 +73,7 @@ app.listen(PORT, () => {
 
   // Initialize cron jobs
   scheduleSlotArchival();
+  scheduleExpiredSessionCompletion();
 });
 
 module.exports = app;

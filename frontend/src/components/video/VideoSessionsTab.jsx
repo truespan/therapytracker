@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { videoSessionAPI } from '../../services/api';
+import { videoSessionAPI, therapySessionAPI } from '../../services/api';
 import VideoSessionModal from './VideoSessionModal';
-import StartSessionFromVideoModal from './StartSessionFromVideoModal';
+import VideoSessionStartDialog from './VideoSessionStartDialog';
 import { Video, Calendar, Clock, User, Lock, Unlock, Copy, Check, Edit, Trash2, AlertCircle, FileText, CheckCircle, ExternalLink } from 'lucide-react';
-import { getMeetLink, formatTimeUntilSession, canJoinSession, generateShareText } from '../../utils/videoHelper';
+import { getMeetLink, formatTimeUntilSession, canJoinSession, generateShareText, openMeetLink } from '../../utils/videoHelper';
 
 const VideoSessionsTab = ({ partnerId, users }) => {
   const [sessions, setSessions] = useState([]);
@@ -12,8 +12,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [copied, setCopied] = useState(null);
-  const [showStartSessionModal, setShowStartSessionModal] = useState(false);
-  const [selectedVideoSession, setSelectedVideoSession] = useState(null);
+  const [showStartDialog, setShowStartDialog] = useState(false);
+  const [selectedVideoSessionForStart, setSelectedVideoSessionForStart] = useState(null);
 
   useEffect(() => {
     loadSessions();
@@ -63,7 +63,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
       loadSessions();
     } catch (err) {
       console.error('Failed to delete video session:', err);
-      alert('Failed to delete video session');
+      const errorMessage = err.response?.data?.error || 'Failed to delete video session';
+      alert(errorMessage);
     }
   };
 
@@ -85,19 +86,67 @@ const VideoSessionsTab = ({ partnerId, users }) => {
     handleCloseModal();
   };
 
-  const handleStartSession = (videoSession) => {
-    setSelectedVideoSession(videoSession);
-    setShowStartSessionModal(true);
+  const handleOpenMeet = async (session) => {
+    const meetLink = getMeetLink(session);
+    if (!meetLink) {
+      alert('No Google Meet link available for this session');
+      return;
+    }
+
+    // Check if user has dismissed the warning
+    const warningDismissed = localStorage.getItem('videoSessionAutoCreateWarningDismissed') === 'true';
+
+    if (!warningDismissed) {
+      // Show warning dialog
+      setSelectedVideoSessionForStart(session);
+      setShowStartDialog(true);
+    } else {
+      // Auto-create session and open Meet
+      await createSessionAndOpenMeet(session);
+    }
   };
 
-  const handleCloseStartSessionModal = () => {
-    setShowStartSessionModal(false);
-    setSelectedVideoSession(null);
+  const handleDialogConfirm = async () => {
+    setShowStartDialog(false);
+    if (selectedVideoSessionForStart) {
+      await createSessionAndOpenMeet(selectedVideoSessionForStart);
+      setSelectedVideoSessionForStart(null);
+    }
   };
 
-  const handleSessionCreated = () => {
-    loadSessions();
-    handleCloseStartSessionModal();
+  const handleDialogCancel = () => {
+    setShowStartDialog(false);
+    setSelectedVideoSessionForStart(null);
+  };
+
+  const createSessionAndOpenMeet = async (session) => {
+    try {
+      // Check if session already exists
+      if (session.has_therapy_session) {
+        // Just open Meet if session already exists
+        const meetLink = getMeetLink(session);
+        if (meetLink) {
+          openMeetLink(meetLink);
+        }
+        return;
+      }
+
+      // Create therapy session from video session
+      await therapySessionAPI.createFromVideoSession(session.id);
+
+      // Open Google Meet
+      const meetLink = getMeetLink(session);
+      if (meetLink) {
+        openMeetLink(meetLink);
+      }
+
+      // Reload sessions to update UI
+      loadSessions();
+    } catch (err) {
+      console.error('Failed to create session or open Meet:', err);
+      const errorMessage = err.response?.data?.error || 'Failed to create session. Please try again.';
+      alert(errorMessage);
+    }
   };
 
   const getStatusBadge = (session) => {
@@ -207,9 +256,6 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             {session.password_enabled && (
                               <Lock className="h-4 w-4 text-yellow-600" title="Password protected" />
                             )}
-                            {meetLink && (
-                              <ExternalLink className="h-4 w-4 text-blue-600" title="Google Meet link available" />
-                            )}
                           </div>
 
                           <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300 ml-8">
@@ -232,12 +278,6 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                               <Clock className="h-4 w-4" />
                               <span>{session.duration_minutes} minutes</span>
                             </div>
-                            {meetLink && (
-                              <div className="flex items-center space-x-2">
-                                <ExternalLink className="h-4 w-4 text-blue-600" />
-                                <span className="text-blue-600 font-medium truncate">{meetLink}</span>
-                              </div>
-                            )}
                             {!canJoin && (
                               <div className="text-primary-600 font-medium">
                                 Starts in: {formatTimeUntilSession(session.session_date)}
@@ -252,36 +292,24 @@ const VideoSessionsTab = ({ partnerId, users }) => {
 
                         <div className="flex items-center space-x-2 ml-4">
                           {meetLink ? (
-                            <a
-                              href={meetLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={() => handleOpenMeet(session)}
                               className="btn btn-primary text-sm flex items-center space-x-1"
+                              title="Open Google Meet"
                             >
                               <ExternalLink className="h-4 w-4" />
                               <span>Open Meet</span>
-                            </a>
+                            </button>
                           ) : (
                             <span className="text-xs text-gray-500">No Meet link</span>
                           )}
-                          {session.has_therapy_session ? (
-                            <button
-                              disabled
-                              className="btn btn-secondary text-sm flex items-center space-x-1 opacity-60 cursor-not-allowed"
-                              title="Session already created"
-                            >
+                          {session.has_therapy_session && (
+                            <div className="flex items-center space-x-1 text-green-700 dark:text-green-400">
                               <CheckCircle className="h-4 w-4" />
-                              <span>Session Created</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleStartSession(session)}
-                              className="btn btn-secondary text-sm flex items-center space-x-1"
-                              title="Create therapy session"
-                            >
-                              <FileText className="h-4 w-4" />
-                              <span>Create Session</span>
-                            </button>
+                              <span className="text-sm font-medium">
+                                {session.therapy_session_status === 'completed' ? 'Session Completed' : 'Session Created'}
+                              </span>
+                            </div>
                           )}
                           <button
                             onClick={() => handleCopyLink(session)}
@@ -320,9 +348,6 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           {session.password_enabled && (
                             <Lock className="h-3 w-3 text-yellow-600 flex-shrink-0" title="Password protected" />
                           )}
-                          {meetLink && (
-                            <ExternalLink className="h-3 w-3 text-blue-600 flex-shrink-0" title="Google Meet link available" />
-                          )}
                         </div>
 
                         <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300 mb-3">
@@ -345,12 +370,6 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             <Clock className="h-3 w-3 flex-shrink-0" />
                             <span>{session.duration_minutes} minutes</span>
                           </div>
-                          {meetLink && (
-                            <div className="flex items-center space-x-2">
-                              <ExternalLink className="h-3 w-3 text-blue-600 flex-shrink-0" />
-                              <span className="text-blue-600 font-medium text-xs truncate">{meetLink}</span>
-                            </div>
-                          )}
                           {!canJoin && (
                             <div className="text-primary-600 font-medium text-xs">
                               Starts in: {formatTimeUntilSession(session.session_date)}
@@ -361,36 +380,24 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                         {/* Mobile Buttons - Vertical Stack with smaller size */}
                         <div className="flex flex-col space-y-2 mb-3">
                           {meetLink ? (
-                            <a
-                              href={meetLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={() => handleOpenMeet(session)}
                               className="w-full py-1.5 px-3 bg-primary-600 text-white text-xs font-medium rounded-md hover:bg-primary-700 transition text-center flex items-center justify-center space-x-1"
+                              title="Open Google Meet"
                             >
                               <ExternalLink className="h-3 w-3" />
                               <span>Open Meet</span>
-                            </a>
+                            </button>
                           ) : (
                             <span className="text-xs text-gray-500 text-center">No Meet link</span>
                           )}
-                          {session.has_therapy_session ? (
-                            <button
-                              disabled
-                              className="w-full py-1.5 px-3 bg-gray-300 text-gray-600 text-xs font-medium rounded-md opacity-60 cursor-not-allowed flex items-center justify-center space-x-1"
-                              title="Session already created"
-                            >
-                              <FileText className="h-3 w-3" />
-                              <span>Create Session</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleStartSession(session)}
-                              className="w-full py-1.5 px-3 bg-gray-200 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-300 transition flex items-center justify-center space-x-1"
-                              title="Create therapy session"
-                            >
-                              <FileText className="h-3 w-3" />
-                              <span>Create Session</span>
-                            </button>
+                          {session.has_therapy_session && (
+                            <div className="flex items-center justify-center space-x-1 text-green-700 dark:text-green-400">
+                              <CheckCircle className="h-3 w-3" />
+                              <span className="text-xs font-medium">
+                                {session.therapy_session_status === 'completed' ? 'Session Completed' : 'Session Created'}
+                              </span>
+                            </div>
                           )}
                         </div>
 
@@ -450,9 +457,6 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             {session.password_enabled && (
                               <Lock className="h-4 w-4 text-yellow-600" title="Password protected" />
                             )}
-                            {meetLink && (
-                              <ExternalLink className="h-4 w-4 text-blue-600" title="Google Meet link available" />
-                            )}
                           </div>
 
                           <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300 ml-8">
@@ -475,47 +479,29 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                               <Clock className="h-4 w-4" />
                               <span>{session.duration_minutes} minutes</span>
                             </div>
-                            {meetLink && (
-                              <div className="flex items-center space-x-2">
-                                <ExternalLink className="h-4 w-4 text-blue-600" />
-                                <span className="text-blue-600 font-medium truncate">{meetLink}</span>
-                              </div>
-                            )}
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-2 ml-4">
                           {meetLink ? (
-                            <a
-                              href={meetLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={() => handleOpenMeet(session)}
                               className="btn btn-primary text-sm flex items-center space-x-1"
+                              title="Open Google Meet"
                             >
                               <ExternalLink className="h-4 w-4" />
                               <span>Open Meet</span>
-                            </a>
+                            </button>
                           ) : (
                             <span className="text-xs text-gray-500">No Meet link</span>
                           )}
-                          {session.has_therapy_session ? (
-                            <button
-                              disabled
-                              className="btn btn-secondary text-sm flex items-center space-x-1 opacity-60 cursor-not-allowed"
-                              title="Session already created"
-                            >
+                          {session.has_therapy_session && (
+                            <div className="flex items-center space-x-1 text-green-700 dark:text-green-400">
                               <CheckCircle className="h-4 w-4" />
-                              <span>Session Created</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleStartSession(session)}
-                              className="btn btn-secondary text-sm flex items-center space-x-1"
-                              title="Create therapy session"
-                            >
-                              <FileText className="h-4 w-4" />
-                              <span>Create Session</span>
-                            </button>
+                              <span className="text-sm font-medium">
+                                {session.therapy_session_status === 'completed' ? 'Session Completed' : 'Session Created'}
+                              </span>
+                            </div>
                           )}
                           <button
                             onClick={() => handleCopyLink(session)}
@@ -547,9 +533,6 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           {session.password_enabled && (
                             <Lock className="h-3 w-3 text-yellow-600 flex-shrink-0" title="Password protected" />
                           )}
-                          {meetLink && (
-                            <ExternalLink className="h-3 w-3 text-blue-600 flex-shrink-0" title="Google Meet link available" />
-                          )}
                         </div>
 
                         <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300 mb-3">
@@ -572,47 +555,29 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             <Clock className="h-3 w-3 flex-shrink-0" />
                             <span>{session.duration_minutes} minutes</span>
                           </div>
-                          {meetLink && (
-                            <div className="flex items-center space-x-2">
-                              <ExternalLink className="h-3 w-3 text-blue-600 flex-shrink-0" />
-                              <span className="text-blue-600 font-medium text-xs truncate">{meetLink}</span>
-                            </div>
-                          )}
                         </div>
 
                         {/* Mobile Buttons - Vertical Stack with smaller size */}
                         <div className="flex flex-col space-y-2 mb-3">
                           {meetLink ? (
-                            <a
-                              href={meetLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={() => handleOpenMeet(session)}
                               className="w-full py-1.5 px-3 bg-primary-600 text-white text-xs font-medium rounded-md hover:bg-primary-700 transition text-center flex items-center justify-center space-x-1"
+                              title="Open Google Meet"
                             >
                               <ExternalLink className="h-3 w-3" />
                               <span>Open Meet</span>
-                            </a>
+                            </button>
                           ) : (
                             <span className="text-xs text-gray-500 text-center">No Meet link</span>
                           )}
-                          {session.has_therapy_session ? (
-                            <button
-                              disabled
-                              className="w-full py-1.5 px-3 bg-gray-300 text-gray-600 text-xs font-medium rounded-md opacity-60 cursor-not-allowed flex items-center justify-center space-x-1"
-                              title="Session already created"
-                            >
-                              <FileText className="h-3 w-3" />
-                              <span>Create Session</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleStartSession(session)}
-                              className="w-full py-1.5 px-3 bg-gray-200 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-300 transition flex items-center justify-center space-x-1"
-                              title="Create therapy session"
-                            >
-                              <FileText className="h-3 w-3" />
-                              <span>Create Session</span>
-                            </button>
+                          {session.has_therapy_session && (
+                            <div className="flex items-center justify-center space-x-1 text-green-700 dark:text-green-400">
+                              <CheckCircle className="h-3 w-3" />
+                              <span className="text-xs font-medium">
+                                {session.therapy_session_status === 'completed' ? 'Session Completed' : 'Session Created'}
+                              </span>
+                            </div>
                           )}
                         </div>
 
@@ -657,12 +622,10 @@ const VideoSessionsTab = ({ partnerId, users }) => {
         />
       )}
 
-      {showStartSessionModal && selectedVideoSession && (
-        <StartSessionFromVideoModal
-          videoSession={selectedVideoSession}
-          partnerId={partnerId}
-          onClose={handleCloseStartSessionModal}
-          onSuccess={handleSessionCreated}
+      {showStartDialog && selectedVideoSessionForStart && (
+        <VideoSessionStartDialog
+          onConfirm={handleDialogConfirm}
+          onCancel={handleDialogCancel}
         />
       )}
     </div>

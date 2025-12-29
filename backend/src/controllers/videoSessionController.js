@@ -218,6 +218,22 @@ const deleteVideoSession = async (req, res) => {
       return res.status(404).json({ error: 'Video session not found' });
     }
 
+    // Check if therapy session exists for this video session
+    const TherapySession = require('../models/TherapySession');
+    const therapySessions = await TherapySession.findByPartnerAndUser(
+      session.partner_id,
+      session.user_id
+    );
+    const hasTherapySession = therapySessions.some(
+      ts => ts.video_session_id === parseInt(id)
+    );
+
+    if (hasTherapySession) {
+      return res.status(409).json({
+        error: 'Cannot delete video session. A therapy session has already been created for this video session.'
+      });
+    }
+
     // Delete from Google Calendar (non-blocking)
     try {
       await googleCalendarService.deleteVideoSessionFromGoogle(id);

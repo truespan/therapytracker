@@ -374,7 +374,9 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                           {item.has_session ? (
                             <div className="flex items-center space-x-1 text-green-700 dark:text-green-400 mt-2">
                               <CheckCircle className="h-3 w-3 dark:text-green-400" />
-                              <span className="font-medium">Session Created</span>
+                              <span className="font-medium">
+                                {item.session_status === 'completed' ? 'Session Completed' : 'Session Created'}
+                              </span>
                               {item.session_id && onNavigateToSession && (
                                 <button
                                   onClick={(e) => {
@@ -439,7 +441,9 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                           {item.has_session ? (
                             <div className="flex items-center space-x-2 text-green-700 dark:text-green-400">
                               <CheckCircle className="h-4 w-4 dark:text-green-400" />
-                              <span className="font-medium text-sm">Session Created</span>
+                              <span className="font-medium text-sm">
+                                {item.session_status === 'completed' ? 'Session Completed' : 'Session Created'}
+                              </span>
                               {item.session_id && onNavigateToSession && (
                                 <button
                                   onClick={(e) => {
@@ -521,7 +525,9 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                           {item.has_therapy_session ? (
                             <div className="w-full mt-2 flex items-center justify-center space-x-1 py-1 px-2 bg-gray-400 text-white rounded-full cursor-not-allowed dark:bg-dark-bg-secondary dark:text-dark-text-tertiary">
                               <CheckCircle className="h-3 w-3" />
-                              <span className="font-medium">Session Created</span>
+                              <span className="font-medium">
+                                {item.therapy_session_status === 'completed' ? 'Session Completed' : 'Session Created'}
+                              </span>
                             </div>
                           ) : (
                             <button
@@ -572,7 +578,9 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                           {item.has_therapy_session ? (
                             <div className="flex items-center space-x-2 text-gray-600 dark:text-dark-text-secondary">
                               <CheckCircle className="h-4 w-4" />
-                              <span className="font-medium text-sm">Session Created</span>
+                              <span className="font-medium text-sm">
+                                {item.therapy_session_status === 'completed' ? 'Session Completed' : 'Session Created'}
+                              </span>
                             </div>
                           ) : (
                             <div className="flex justify-center">

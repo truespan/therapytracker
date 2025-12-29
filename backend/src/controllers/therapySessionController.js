@@ -138,7 +138,7 @@ const getUserTherapySessions = async (req, res) => {
 const updateTherapySession = async (req, res) => {
   try {
     const { id } = req.params;
-    let { session_title, session_date, session_duration, session_notes, payment_notes } = req.body;
+    let { session_title, session_date, session_duration, session_notes, payment_notes, status } = req.body;
 
     // Validate session note length if provided
     if (session_notes !== undefined && session_notes !== null) {
@@ -169,7 +169,8 @@ const updateTherapySession = async (req, res) => {
       session_date,
       session_duration,
       session_notes,
-      payment_notes
+      payment_notes,
+      status
     });
 
     res.json({
@@ -328,9 +329,62 @@ const removeQuestionnaireFromSession = async (req, res) => {
   }
 };
 
+// Create therapy session automatically from video session
+const createSessionFromVideoSession = async (req, res) => {
+  try {
+    const { videoSessionId } = req.params;
+    const VideoSession = require('../models/VideoSession');
+
+    // Get video session details
+    const videoSession = await VideoSession.findById(videoSessionId);
+    if (!videoSession) {
+      return res.status(404).json({ error: 'Video session not found' });
+    }
+
+    // Check if therapy session already exists for this video session
+    const db = require('../config/database');
+    const checkQuery = 'SELECT id FROM therapy_sessions WHERE video_session_id = $1';
+    const checkResult = await db.query(checkQuery, [videoSessionId]);
+    const sessionExists = checkResult.rows.length > 0;
+
+    if (sessionExists) {
+      return res.status(409).json({
+        error: 'A therapy session has already been created for this video session'
+      });
+    }
+
+    // Update video session status to 'started'
+    await VideoSession.updateStatus(videoSessionId, 'started');
+
+    // Create therapy session with video session details
+    const newSession = await TherapySession.createStandalone({
+      partner_id: videoSession.partner_id,
+      user_id: videoSession.user_id,
+      session_title: videoSession.title,
+      session_date: videoSession.session_date,
+      session_duration: videoSession.duration_minutes,
+      session_notes: null,
+      payment_notes: null,
+      video_session_id: videoSessionId
+    });
+
+    res.status(201).json({
+      message: 'Therapy session created successfully from video session',
+      session: newSession
+    });
+  } catch (error) {
+    console.error('Create session from video session error:', error);
+    res.status(500).json({
+      error: 'Failed to create therapy session from video session',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   createTherapySession,
   createStandaloneSession,
+  createSessionFromVideoSession,
   getTherapySessionById,
   getPartnerTherapySessions,
   getPartnerUserSessions,

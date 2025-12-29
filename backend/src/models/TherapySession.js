@@ -22,18 +22,34 @@ class TherapySession {
       session_date,
       session_duration,
       session_notes,
-      payment_notes
+      payment_notes,
+      status
     } = sessionData;
 
     // Get the next session number for this user-partner pair
     const session_number = await this.getNextSessionNumber(partner_id, user_id);
 
+    // Determine status: if appointment end_date has passed, set to 'completed', otherwise use provided status or default to 'scheduled'
+    let sessionStatus = status || 'scheduled';
+    if (appointment_id) {
+      // Check if appointment end_date has passed
+      const appointmentQuery = 'SELECT end_date FROM appointments WHERE id = $1';
+      const appointmentResult = await db.query(appointmentQuery, [appointment_id]);
+      if (appointmentResult.rows.length > 0 && appointmentResult.rows[0].end_date) {
+        const endDate = new Date(appointmentResult.rows[0].end_date);
+        const now = new Date();
+        if (endDate < now) {
+          sessionStatus = 'completed';
+        }
+      }
+    }
+
     const query = `
       INSERT INTO therapy_sessions (
         appointment_id, partner_id, user_id,
-        session_title, session_date, session_duration, session_notes, payment_notes, session_number
+        session_title, session_date, session_duration, session_notes, payment_notes, session_number, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
     `;
     const values = [
@@ -45,7 +61,8 @@ class TherapySession {
       session_duration || null,
       session_notes || null,
       payment_notes || null,
-      session_number
+      session_number,
+      sessionStatus
     ];
 
     const result = await db.query(query, values);
@@ -54,17 +71,28 @@ class TherapySession {
 
   // Create standalone session (no appointment required)
   static async createStandalone(sessionData) {
-    const { partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id } = sessionData;
+    const { partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id, status } = sessionData;
 
     // Get the next session number for this user-partner pair
     const session_number = await this.getNextSessionNumber(partner_id, user_id);
 
+    // Determine status: if session_date + session_duration has passed, set to 'completed', otherwise use provided status or default to 'scheduled'
+    let sessionStatus = status || 'scheduled';
+    if (session_date && session_duration) {
+      const sessionDate = new Date(session_date);
+      const endDate = new Date(sessionDate.getTime() + session_duration * 60000); // Add duration in milliseconds
+      const now = new Date();
+      if (endDate < now) {
+        sessionStatus = 'completed';
+      }
+    }
+
     const query = `
-      INSERT INTO therapy_sessions (partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id, session_number)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO therapy_sessions (partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id, session_number, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
     `;
-    const values = [partner_id, user_id, session_title, session_date, session_duration || null, session_notes || null, payment_notes || null, video_session_id || null, session_number];
+    const values = [partner_id, user_id, session_title, session_date, session_duration || null, session_notes || null, payment_notes || null, video_session_id || null, session_number, sessionStatus];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -123,6 +151,7 @@ class TherapySession {
         ts.session_notes,
         ts.payment_notes,
         ts.session_number,
+        ts.status,
         ts.created_at,
         ts.updated_at,
         u.name as user_name,
@@ -176,7 +205,7 @@ class TherapySession {
 
   // Update a session
   static async update(id, sessionData) {
-    const { session_title, session_date, session_duration, session_notes, payment_notes } = sessionData;
+    const { session_title, session_date, session_duration, session_notes, payment_notes, status } = sessionData;
 
     // Build dynamic query to handle explicit null values for session_notes
     const query = `
@@ -189,6 +218,7 @@ class TherapySession {
             ELSE session_notes       -- Otherwise keep existing value
           END,
           payment_notes = COALESCE($5, payment_notes),
+          status = COALESCE($8, status),
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $6
       RETURNING *
@@ -196,7 +226,7 @@ class TherapySession {
 
     // Check if session_notes was explicitly provided in the request
     const sessionNotesProvided = sessionData.hasOwnProperty('session_notes');
-    const values = [session_title, session_date, session_duration, session_notes, payment_notes, id, sessionNotesProvided];
+    const values = [session_title, session_date, session_duration, session_notes, payment_notes, id, sessionNotesProvided, status];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -248,6 +278,27 @@ class TherapySession {
     const query = 'DELETE FROM therapy_sessions WHERE id = $1 RETURNING *';
     const result = await db.query(query, [id]);
     return result.rows[0];
+  }
+
+  // Mark expired therapy sessions as completed
+  static async markExpiredSessionsAsCompleted() {
+    const query = `
+      UPDATE therapy_sessions
+      SET status = 'completed', updated_at = CURRENT_TIMESTAMP
+      WHERE status IN ('scheduled', 'started')
+      AND (
+        (session_date + (session_duration || 0) * INTERVAL '1 minute') < CURRENT_TIMESTAMP
+        OR
+        (appointment_id IS NOT NULL AND EXISTS (
+          SELECT 1 FROM appointments a 
+          WHERE a.id = therapy_sessions.appointment_id 
+          AND a.end_date < CURRENT_TIMESTAMP
+        ))
+      )
+      RETURNING id
+    `;
+    const result = await db.query(query);
+    return result.rows.length;
   }
 }
 

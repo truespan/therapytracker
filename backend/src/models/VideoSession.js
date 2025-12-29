@@ -35,7 +35,8 @@ class VideoSession {
       password_enabled,
       notes,
       timezone,
-      meet_link
+      meet_link,
+      status
     } = sessionData;
 
     // Generate meeting room ID
@@ -49,12 +50,22 @@ class VideoSession {
       password = await this.hashPassword(plainPassword);
     }
 
+    // Determine status: if end_date has passed, set to 'completed', otherwise use provided status or default to 'scheduled'
+    let sessionStatus = status || 'scheduled';
+    if (end_date) {
+      const endDate = new Date(end_date);
+      const now = new Date();
+      if (endDate < now) {
+        sessionStatus = 'completed';
+      }
+    }
+
     const query = `
       INSERT INTO video_sessions (
         partner_id, user_id, title, session_date, end_date,
-        duration_minutes, meeting_room_id, password, password_enabled, notes, timezone, meet_link
+        duration_minutes, meeting_room_id, password, password_enabled, notes, timezone, meet_link, status
       )
-      VALUES ($1, $2, $3, $4::timestamptz, $5::timestamptz, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4::timestamptz, $5::timestamptz, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *
     `;
     const values = [
@@ -69,7 +80,8 @@ class VideoSession {
       password_enabled !== false, // Default to true
       notes,
       timezone || 'UTC',
-      meet_link || null
+      meet_link || null,
+      sessionStatus
     ];
 
     const result = await db.query(query, values);
@@ -106,6 +118,7 @@ class VideoSession {
         u.name as user_name,
         u.email as user_email,
         ts.id as therapy_session_id,
+        ts.status as therapy_session_status,
         CASE WHEN ts.id IS NOT NULL THEN true ELSE false END as has_therapy_session
       FROM video_sessions vs
       JOIN users u ON vs.user_id = u.id
@@ -129,7 +142,7 @@ class VideoSession {
       SELECT vs.*, p.name as partner_name, p.email as partner_email
       FROM video_sessions vs
       JOIN partners p ON vs.partner_id = p.id
-      WHERE vs.user_id = $1 AND vs.status IN ('scheduled', 'in_progress')
+      WHERE vs.user_id = $1 AND vs.status IN ('scheduled', 'started', 'in_progress')
       ORDER BY vs.session_date ASC
     `;
     const result = await db.query(query, [userId]);
@@ -223,6 +236,19 @@ class VideoSession {
     `;
     const result = await db.query(query, [status, id]);
     return result.rows[0];
+  }
+
+  // Mark expired video sessions as completed
+  static async markExpiredSessionsAsCompleted() {
+    const query = `
+      UPDATE video_sessions
+      SET status = 'completed', updated_at = CURRENT_TIMESTAMP
+      WHERE end_date < CURRENT_TIMESTAMP
+      AND status IN ('scheduled', 'started', 'in_progress')
+      RETURNING id
+    `;
+    const result = await db.query(query);
+    return result.rows.length;
   }
 }
 

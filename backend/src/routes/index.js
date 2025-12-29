@@ -189,6 +189,7 @@ router.get('/partners/whatsapp/logs', authenticateToken, checkRole('partner'), c
 // ==================== THERAPY SESSION ROUTES ====================
 router.post('/therapy-sessions', authenticateToken, checkRole('partner'), therapySessionController.createTherapySession);
 router.post('/therapy-sessions/standalone', authenticateToken, checkRole('partner'), therapySessionController.createStandaloneSession);
+router.post('/therapy-sessions/from-video/:videoSessionId', authenticateToken, checkRole('partner'), therapySessionController.createSessionFromVideoSession);
 router.get('/therapy-sessions/:id', authenticateToken, therapySessionController.getTherapySessionById);
 router.get('/partners/:partnerId/therapy-sessions', authenticateToken, therapySessionController.getPartnerTherapySessions);
 router.get('/partners/:partnerId/users/:userId/therapy-sessions', authenticateToken, therapySessionController.getPartnerUserSessions);

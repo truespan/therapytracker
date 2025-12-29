@@ -188,6 +188,22 @@ class Appointment {
           ORDER BY CASE WHEN ts.appointment_id IS NOT NULL THEN 0 ELSE 1 END
           LIMIT 1
         ) as session_id,
+        (
+          SELECT ts.status
+          FROM therapy_sessions ts
+          WHERE (
+            ts.appointment_id = a.id
+            OR (
+              ts.appointment_id IS NULL
+              AND ts.partner_id = a.partner_id
+              AND ts.user_id = a.user_id
+              AND DATE(ts.session_date) = DATE(a.appointment_date)
+              AND ABS(EXTRACT(EPOCH FROM (ts.session_date - a.appointment_date))) < 300
+            )
+          )
+          ORDER BY CASE WHEN ts.appointment_id IS NOT NULL THEN 0 ELSE 1 END
+          LIMIT 1
+        ) as session_status,
         CASE WHEN (
           SELECT ts.id
           FROM therapy_sessions ts
