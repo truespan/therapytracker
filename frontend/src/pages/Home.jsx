@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Radar, RadarChart as RechartsRadar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { contactAPI } from '../services/api';
+import { getResponsiveCloudinaryUrls, BACKGROUND_IMAGES } from '../utils/cloudinary';
 
 const Home = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -29,6 +30,15 @@ const Home = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
+
+  // Responsive background images state
+  const [backgroundImages, setBackgroundImages] = useState({
+    hero: '',
+    about: '',
+    howItWorks: '',
+    blogs: '',
+    login: ''
+  });
 
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
@@ -80,6 +90,41 @@ const Home = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Update background images based on screen size for responsive loading
+  useEffect(() => {
+    const updateBackgrounds = () => {
+      const width = window.innerWidth;
+      let size = 'desktop';
+      
+      if (width <= 768) {
+        size = 'mobile';
+      } else if (width <= 1280) {
+        size = 'tablet';
+      }
+
+      // Get responsive URLs for each background image
+      const heroUrls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg2);
+      const img3Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg3);
+      const img4Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg4);
+      const img5Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg5);
+
+      setBackgroundImages({
+        hero: heroUrls[size],
+        about: img3Urls[size],
+        howItWorks: img3Urls[size],
+        blogs: img4Urls[size],
+        login: img5Urls[size]
+      });
+    };
+
+    // Set initial backgrounds
+    updateBackgrounds();
+
+    // Update on window resize
+    window.addEventListener('resize', updateBackgrounds);
+    return () => window.removeEventListener('resize', updateBackgrounds);
   }, []);
 
   // Sample data for chart visual
@@ -417,7 +462,7 @@ const Home = () => {
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: `url('/backgroundImg2.webp')`
+              backgroundImage: backgroundImages.hero ? `url('${backgroundImages.hero}')` : `url('/backgroundImg2.webp')`
             }}
           ></div>
 
@@ -476,7 +521,7 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 dark:opacity-30"
           style={{
-            backgroundImage: `url('/backgroundImg3.webp')`
+            backgroundImage: backgroundImages.about ? `url('${backgroundImages.about}')` : `url('/backgroundImg3.webp')`
           }}
         ></div>
         {/* Light overlay to ensure readability */}
@@ -568,7 +613,7 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 dark:opacity-8"
           style={{
-            backgroundImage: `url('/backgroundImg3.webp')`
+            backgroundImage: backgroundImages.howItWorks ? `url('${backgroundImages.howItWorks}')` : `url('/backgroundImg3.webp')`
           }}
         ></div>
         {/* Gradient overlay for smooth transition */}
@@ -698,7 +743,7 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70 dark:opacity-70"
           style={{
-            backgroundImage: `url('/backgroundImg4.webp')`
+            backgroundImage: backgroundImages.blogs ? `url('${backgroundImages.blogs}')` : `url('/backgroundImg4.webp')`
           }}
         ></div>
         {/* Overlay to ensure text readability */}
@@ -762,7 +807,7 @@ const Home = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 dark:opacity-30"
           style={{
-            backgroundImage: `url('/backgroundImg5.webp')`
+            backgroundImage: backgroundImages.login ? `url('${backgroundImages.login}')` : `url('/backgroundImg5.webp')`
           }}
         ></div>
         {/* Gradient overlay matching current style but with image underneath */}
