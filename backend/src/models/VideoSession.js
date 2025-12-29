@@ -199,10 +199,11 @@ class VideoSession {
 
   static async checkConflict(partnerId, sessionDate, endDate, excludeId = null) {
     // Check conflicts with other video sessions
+    // Only check conflicts with active sessions (scheduled or in_progress), not completed or cancelled
     let videoQuery = `
       SELECT * FROM video_sessions
       WHERE partner_id = $1
-      AND status != 'cancelled'
+      AND status IN ('scheduled', 'in_progress')
       AND (
         (session_date <= $2 AND end_date > $2)
         OR (session_date < $3 AND end_date >= $3)
@@ -222,10 +223,11 @@ class VideoSession {
     }
 
     // Check conflicts with appointments
+    // Only check conflicts with active appointments (scheduled), not completed or cancelled
     const appointmentQuery = `
       SELECT * FROM appointments
       WHERE partner_id = $1
-      AND status != 'cancelled'
+      AND status = 'scheduled'
       AND (
         (appointment_date <= $2 AND end_date > $2)
         OR (appointment_date < $3 AND end_date >= $3)

@@ -78,10 +78,11 @@ class Appointment {
 
   static async checkConflict(partnerId, appointmentDate, endDate, excludeId = null) {
     // Check conflicts with other appointments
+    // Only check conflicts with active appointments (scheduled), not completed or cancelled
     let appointmentQuery = `
       SELECT * FROM appointments
       WHERE partner_id = $1
-      AND status != 'cancelled'
+      AND status = 'scheduled'
       AND (
         (appointment_date <= $2 AND end_date > $2)
         OR (appointment_date < $3 AND end_date >= $3)
@@ -101,10 +102,11 @@ class Appointment {
     }
 
     // Check conflicts with video sessions
+    // Only check conflicts with active sessions (scheduled or in_progress), not completed or cancelled
     const videoQuery = `
       SELECT * FROM video_sessions
       WHERE partner_id = $1
-      AND status != 'cancelled'
+      AND status IN ('scheduled', 'in_progress')
       AND (
         (session_date <= $2 AND end_date > $2)
         OR (session_date < $3 AND end_date >= $3)
@@ -117,12 +119,13 @@ class Appointment {
 
   static async getConflictDetails(partnerId, appointmentDate, endDate, excludeId = null) {
     // Get conflicting appointments with user details
+    // Only check conflicts with active appointments (scheduled), not completed or cancelled
     let appointmentQuery = `
       SELECT a.*, u.name as user_name, u.email as user_email
       FROM appointments a
       JOIN users u ON a.user_id = u.id
       WHERE a.partner_id = $1
-      AND a.status != 'cancelled'
+      AND a.status = 'scheduled'
       AND (
         (a.appointment_date <= $2 AND a.end_date > $2)
         OR (a.appointment_date < $3 AND a.end_date >= $3)
@@ -140,13 +143,14 @@ class Appointment {
     const conflicts = [...appointmentResult.rows];
 
     // Get conflicting video sessions with user details
+    // Only check conflicts with active sessions (scheduled or in_progress), not completed or cancelled
     const videoQuery = `
       SELECT v.*, u.name as user_name, u.email as user_email,
              v.session_date as appointment_date, v.end_date
       FROM video_sessions v
       JOIN users u ON v.user_id = u.id
       WHERE v.partner_id = $1
-      AND v.status != 'cancelled'
+      AND v.status IN ('scheduled', 'in_progress')
       AND (
         (v.session_date <= $2 AND v.end_date > $2)
         OR (v.session_date < $3 AND v.end_date >= $3)
