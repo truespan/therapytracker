@@ -399,6 +399,79 @@ async function handlePaymentSuccess(event) {
       metadata: payment
     });
   }
+
+  // Check if this is a booking payment and create earnings record if needed
+  if (payment.status === 'captured' || payment.status === 'authorized') {
+    try {
+      // Check if earnings record already exists (might have been created in verifyBookingPayment)
+      const existingEarnings = await Earnings.findByPaymentId(payment.id);
+      
+      if (!existingEarnings && payment.order_id) {
+        // Get order from database to check metadata
+        const dbOrder = await RazorpayOrder.findByOrderId(payment.order_id);
+        
+        if (dbOrder) {
+          // Parse notes/metadata - PostgreSQL JSONB fields are returned as objects by node-postgres
+          // But handle both cases: when stored as JSONB (object) or string
+          let orderMetadata = {};
+          if (dbOrder.notes) {
+            orderMetadata = typeof dbOrder.notes === 'string' ? JSON.parse(dbOrder.notes) : dbOrder.notes;
+          } else if (dbOrder.metadata) {
+            // Fallback to metadata property (for compatibility, though notes is the actual column)
+            orderMetadata = typeof dbOrder.metadata === 'string' ? JSON.parse(dbOrder.metadata) : dbOrder.metadata;
+          }
+          
+          // Check if this is a booking payment
+          if (orderMetadata && orderMetadata.payment_type === 'booking_fee') {
+            const partnerIdFromMetadata = orderMetadata.partner_id;
+            
+            if (partnerIdFromMetadata) {
+              // Find partner by partner_id string (e.g., "AB12345") to get internal ID
+              const Partner = require('../models/Partner');
+              const partner = await Partner.findByPartnerId(partnerIdFromMetadata);
+              
+              if (partner) {
+                // Try to find appointment_id from slot_id if available
+                let appointmentId = null;
+                if (orderMetadata.slot_id) {
+                  const slotQuery = `SELECT appointment_id FROM availability_slots WHERE id = $1`;
+                  const slotResult = await db.query(slotQuery, [orderMetadata.slot_id]);
+                  if (slotResult.rows[0] && slotResult.rows[0].appointment_id) {
+                    appointmentId = slotResult.rows[0].appointment_id;
+                  }
+                }
+
+                // Get payment amount - use existing payment record amount or calculate from payment entity
+                let paymentAmount = payment.amount / 100; // Convert from paise to rupees
+                if (existingPayment) {
+                  paymentAmount = existingPayment.amount;
+                }
+
+                // Create earnings record - 100% goes to partner
+                await Earnings.create({
+                  recipient_id: partner.id,
+                  recipient_type: 'partner',
+                  razorpay_payment_id: payment.id,
+                  amount: paymentAmount,
+                  currency: payment.currency,
+                  status: 'pending', // Waiting for Razorpay settlement
+                  appointment_id: appointmentId,
+                  payout_date: null // Will be set when settled
+                });
+
+                console.log(`[EARNINGS] Created earnings record for partner ${partner.id} from booking payment ${payment.id} (via webhook)`);
+              } else {
+                console.warn(`[EARNINGS] Partner not found for partner_id: ${partnerIdFromMetadata} (webhook)`);
+              }
+            }
+          }
+        }
+      }
+    } catch (earningsError) {
+      // Log error but don't fail the webhook processing
+      console.error('[EARNINGS] Failed to create earnings record in webhook:', earningsError);
+    }
+  }
 }
 
 async function handlePaymentFailure(event) {
@@ -567,7 +640,7 @@ const createBookingOrder = async (req, res) => {
       status: razorpayOrder.status,
       customer_id: userId,
       customer_type: 'user',
-      metadata: {
+      notes: {
         slot_id,
         partner_id,
         payment_type: 'booking_fee'
@@ -661,8 +734,15 @@ const verifyBookingPayment = async (req, res) => {
     // Create earnings record if payment is successful
     if (payment.status === 'captured' || payment.status === 'authorized') {
       try {
-        // Get partner_id from order metadata
-        const orderMetadata = dbOrder.metadata || {};
+        // Get partner_id from order notes/metadata
+        // PostgreSQL JSONB is returned as object by node-postgres
+        let orderMetadata = {};
+        if (dbOrder.notes) {
+          orderMetadata = typeof dbOrder.notes === 'string' ? JSON.parse(dbOrder.notes) : dbOrder.notes;
+        } else if (dbOrder.metadata) {
+          // Fallback for compatibility
+          orderMetadata = typeof dbOrder.metadata === 'string' ? JSON.parse(dbOrder.metadata) : dbOrder.metadata;
+        }
         const partnerIdFromMetadata = orderMetadata.partner_id;
         
         // Try to find appointment_id from slot_id if available
