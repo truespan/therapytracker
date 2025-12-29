@@ -99,14 +99,76 @@ class TherapySession {
 
   // Find session by ID
   static async findById(id) {
-    const query = 'SELECT * FROM therapy_sessions WHERE id = $1';
+    const query = `
+      SELECT 
+        ts.id,
+        ts.appointment_id,
+        ts.video_session_id,
+        ts.partner_id,
+        ts.user_id,
+        ts.session_title,
+        ts.session_date,
+        ts.session_duration,
+        ts.session_notes,
+        ts.payment_notes,
+        ts.session_number,
+        CASE
+          WHEN ts.status = 'cancelled' THEN 'cancelled'
+          WHEN ts.status = 'completed' THEN 'completed'
+          WHEN (
+            (ts.session_date + (COALESCE(ts.session_duration, 0) * INTERVAL '1 minute')) < CURRENT_TIMESTAMP
+            OR
+            (ts.appointment_id IS NOT NULL AND EXISTS (
+              SELECT 1 FROM appointments a 
+              WHERE a.id = ts.appointment_id 
+              AND a.end_date < CURRENT_TIMESTAMP
+            ))
+          ) THEN 'completed'
+          ELSE ts.status
+        END as status,
+        ts.created_at,
+        ts.updated_at
+      FROM therapy_sessions ts
+      WHERE ts.id = $1
+    `;
     const result = await db.query(query, [id]);
     return result.rows[0];
   }
 
   // Find session by appointment ID
   static async findByAppointmentId(appointmentId) {
-    const query = 'SELECT * FROM therapy_sessions WHERE appointment_id = $1';
+    const query = `
+      SELECT 
+        ts.id,
+        ts.appointment_id,
+        ts.video_session_id,
+        ts.partner_id,
+        ts.user_id,
+        ts.session_title,
+        ts.session_date,
+        ts.session_duration,
+        ts.session_notes,
+        ts.payment_notes,
+        ts.session_number,
+        CASE
+          WHEN ts.status = 'cancelled' THEN 'cancelled'
+          WHEN ts.status = 'completed' THEN 'completed'
+          WHEN (
+            (ts.session_date + (COALESCE(ts.session_duration, 0) * INTERVAL '1 minute')) < CURRENT_TIMESTAMP
+            OR
+            (ts.appointment_id IS NOT NULL AND EXISTS (
+              SELECT 1 FROM appointments a 
+              WHERE a.id = ts.appointment_id 
+              AND a.end_date < CURRENT_TIMESTAMP
+            ))
+          ) THEN 'completed'
+          ELSE ts.status
+        END as status,
+        ts.created_at,
+        ts.updated_at
+      FROM therapy_sessions ts
+      WHERE ts.appointment_id = $1
+    `;
     const result = await db.query(query, [appointmentId]);
     return result.rows[0];
   }
@@ -114,11 +176,38 @@ class TherapySession {
   // Get all sessions for a partner
   static async findByPartner(partnerId, startDate = null, endDate = null) {
     let query = `
-      SELECT ts.*,
-             u.name as user_name,
-             u.email as user_email,
-             a.appointment_date,
-             a.title as appointment_title
+      SELECT 
+        ts.id,
+        ts.appointment_id,
+        ts.video_session_id,
+        ts.partner_id,
+        ts.user_id,
+        ts.session_title,
+        ts.session_date,
+        ts.session_duration,
+        ts.session_notes,
+        ts.payment_notes,
+        ts.session_number,
+        CASE
+          WHEN ts.status = 'cancelled' THEN 'cancelled'
+          WHEN ts.status = 'completed' THEN 'completed'
+          WHEN (
+            (ts.session_date + (COALESCE(ts.session_duration, 0) * INTERVAL '1 minute')) < CURRENT_TIMESTAMP
+            OR
+            (ts.appointment_id IS NOT NULL AND EXISTS (
+              SELECT 1 FROM appointments a 
+              WHERE a.id = ts.appointment_id 
+              AND a.end_date < CURRENT_TIMESTAMP
+            ))
+          ) THEN 'completed'
+          ELSE ts.status
+        END as status,
+        ts.created_at,
+        ts.updated_at,
+        u.name as user_name,
+        u.email as user_email,
+        a.appointment_date,
+        a.title as appointment_title
       FROM therapy_sessions ts
       JOIN users u ON ts.user_id = u.id
       LEFT JOIN appointments a ON ts.appointment_id = a.id
@@ -152,6 +241,20 @@ class TherapySession {
         ts.payment_notes,
         ts.session_number,
         ts.status,
+        CASE
+          WHEN ts.status = 'cancelled' THEN 'cancelled'
+          WHEN ts.status = 'completed' THEN 'completed'
+          WHEN (
+            (ts.session_date + (COALESCE(ts.session_duration, 0) * INTERVAL '1 minute')) < CURRENT_TIMESTAMP
+            OR
+            (ts.appointment_id IS NOT NULL AND EXISTS (
+              SELECT 1 FROM appointments a 
+              WHERE a.id = ts.appointment_id 
+              AND a.end_date < CURRENT_TIMESTAMP
+            ))
+          ) THEN 'completed'
+          ELSE ts.status
+        END as computed_status,
         ts.created_at,
         ts.updated_at,
         u.name as user_name,
@@ -179,20 +282,53 @@ class TherapySession {
       WHERE ts.partner_id = $1 AND ts.user_id = $2
       GROUP BY ts.id, ts.appointment_id, ts.video_session_id, ts.partner_id, ts.user_id, ts.session_title,
                ts.session_date, ts.session_duration, ts.session_notes, ts.payment_notes, ts.session_number,
-               ts.created_at, ts.updated_at, u.name, a.appointment_date, a.title
+               ts.status, ts.created_at, ts.updated_at, u.name, a.appointment_date, a.title
       ORDER BY ts.session_date DESC
     `;
     const result = await db.query(query, [partnerId, userId]);
-    return result.rows;
+    
+    // Replace status with computed_status in the results
+    return result.rows.map(row => ({
+      ...row,
+      status: row.computed_status,
+      computed_status: undefined
+    }));
   }
 
   // Get all sessions for a user
   static async findByUser(userId) {
     const query = `
-      SELECT ts.*,
-             p.name as partner_name,
-             a.appointment_date,
-             a.title as appointment_title
+      SELECT 
+        ts.id,
+        ts.appointment_id,
+        ts.video_session_id,
+        ts.partner_id,
+        ts.user_id,
+        ts.session_title,
+        ts.session_date,
+        ts.session_duration,
+        ts.session_notes,
+        ts.payment_notes,
+        ts.session_number,
+        CASE
+          WHEN ts.status = 'cancelled' THEN 'cancelled'
+          WHEN ts.status = 'completed' THEN 'completed'
+          WHEN (
+            (ts.session_date + (COALESCE(ts.session_duration, 0) * INTERVAL '1 minute')) < CURRENT_TIMESTAMP
+            OR
+            (ts.appointment_id IS NOT NULL AND EXISTS (
+              SELECT 1 FROM appointments a 
+              WHERE a.id = ts.appointment_id 
+              AND a.end_date < CURRENT_TIMESTAMP
+            ))
+          ) THEN 'completed'
+          ELSE ts.status
+        END as status,
+        ts.created_at,
+        ts.updated_at,
+        p.name as partner_name,
+        a.appointment_date,
+        a.title as appointment_title
       FROM therapy_sessions ts
       JOIN partners p ON ts.partner_id = p.id
       LEFT JOIN appointments a ON ts.appointment_id = a.id
@@ -287,7 +423,7 @@ class TherapySession {
       SET status = 'completed', updated_at = CURRENT_TIMESTAMP
       WHERE status IN ('scheduled', 'started')
       AND (
-        (session_date + (session_duration || 0) * INTERVAL '1 minute') < CURRENT_TIMESTAMP
+        (session_date + (COALESCE(session_duration, 0) * INTERVAL '1 minute')) < CURRENT_TIMESTAMP
         OR
         (appointment_id IS NOT NULL AND EXISTS (
           SELECT 1 FROM appointments a 

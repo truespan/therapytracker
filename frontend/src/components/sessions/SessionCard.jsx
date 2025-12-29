@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { therapySessionAPI, questionnaireAPI } from '../../services/api';
-import { Calendar, Clock, FileText, Edit, Trash2, Send, Tag, ClipboardList, Video, X, Plus } from 'lucide-react';
+import { Calendar, Clock, FileText, Edit, Trash2, Send, Tag, ClipboardList, Video, X, Plus, VideoIcon } from 'lucide-react';
 import QuestionnaireViewModal from '../questionnaires/QuestionnaireViewModal';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 
-const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDeleted, onCreateNote, onViewNote, onGenerateReport }) => {
+const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDeleted, onCreateNote, onViewNote, onGenerateReport, onScheduleVideo }) => {
   const [showPaymentNotes, setShowPaymentNotes] = useState(false);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
   const [deleteConfirmQuestionnaire, setDeleteConfirmQuestionnaire] = useState(null);
@@ -103,6 +103,15 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
               </div>
             </div>
             <div className="flex items-center space-x-2 ml-4">
+              {onScheduleVideo && !session.video_session_id && (
+                <button
+                  onClick={() => onScheduleVideo(session)}
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Schedule Video Session"
+                >
+                  <VideoIcon className="h-4 w-4" />
+                </button>
+              )}
               <button
                 onClick={() => onEdit(session)}
                 className="p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -279,6 +288,15 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
             </div>
           </div>
           <div className="flex items-center space-x-2 ml-2">
+            {onScheduleVideo && !session.video_session_id && (
+              <button
+                onClick={() => onScheduleVideo(session)}
+                className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Schedule Video Session"
+              >
+                <VideoIcon className="h-4 w-4" />
+              </button>
+            )}
             <button
               onClick={() => onEdit(session)}
               className="p-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-gray-700 rounded-lg transition-colors"

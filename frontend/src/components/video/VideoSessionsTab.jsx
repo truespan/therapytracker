@@ -121,8 +121,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
 
   const createSessionAndOpenMeet = async (session) => {
     try {
-      // Check if session already exists
-      if (session.has_therapy_session) {
+      // Check if session already exists (either created from video session or linked to therapy session)
+      if (session.has_therapy_session || session.therapy_session_id) {
         // Just open Meet if session already exists
         const meetLink = getMeetLink(session);
         if (meetLink) {
@@ -144,8 +144,20 @@ const VideoSessionsTab = ({ partnerId, users }) => {
       loadSessions();
     } catch (err) {
       console.error('Failed to create session or open Meet:', err);
-      const errorMessage = err.response?.data?.error || 'Failed to create session. Please try again.';
-      alert(errorMessage);
+      
+      // Handle case where session already exists
+      if (err.response?.status === 409) {
+        // Session already exists, just open the meet link
+        const meetLink = getMeetLink(session);
+        if (meetLink) {
+          openMeetLink(meetLink);
+        }
+        // Reload to update UI
+        loadSessions();
+      } else {
+        const errorMessage = err.response?.data?.error || 'Failed to create session. Please try again.';
+        alert(errorMessage);
+      }
     }
   };
 

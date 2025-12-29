@@ -5,6 +5,7 @@ import SessionCard from './SessionCard';
 import CreateSessionModal from './CreateSessionModal';
 import EditSessionModal from './EditSessionModal';
 import AssignQuestionnaireToSessionModal from './AssignQuestionnaireToSessionModal';
+import ScheduleVideoForSessionModal from './ScheduleVideoForSessionModal';
 
 const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToNotes, onGenerateReport }, ref) => {
   const [sessions, setSessions] = useState([]);
@@ -16,6 +17,7 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showScheduleVideoModal, setShowScheduleVideoModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
 
   useEffect(() => {
@@ -79,10 +81,16 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
     setShowAssignModal(true);
   };
 
+  const handleScheduleVideo = (session) => {
+    setSelectedSession(session);
+    setShowScheduleVideoModal(true);
+  };
+
   const handleModalClose = () => {
     setShowCreateModal(false);
     setShowEditModal(false);
     setShowAssignModal(false);
+    setShowScheduleVideoModal(false);
     setSelectedSession(null);
   };
 
@@ -218,6 +226,7 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
                     session={session}
                     onEdit={handleEditSession}
                     onAssignQuestionnaire={handleAssignQuestionnaire}
+                    onScheduleVideo={handleScheduleVideo}
                     onQuestionnaireDeleted={loadSessions}
                     onCreateNote={onNavigateToNotes}
                     onViewNote={onNavigateToNotes}
@@ -254,6 +263,15 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
           session={selectedSession}
           partnerId={partnerId}
           userId={userId}
+          onClose={handleModalClose}
+          onSuccess={handleModalSuccess}
+        />
+      )}
+
+      {showScheduleVideoModal && selectedSession && (
+        <ScheduleVideoForSessionModal
+          session={selectedSession}
+          partnerId={partnerId}
           onClose={handleModalClose}
           onSuccess={handleModalSuccess}
         />

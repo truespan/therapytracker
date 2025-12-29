@@ -12,7 +12,8 @@ const createVideoSession = async (req, res) => {
       duration_minutes,
       password_enabled,
       notes,
-      timezone
+      timezone,
+      therapy_session_id
     } = req.body;
 
     if (!partner_id || !user_id || !title || !session_date || !end_date) {
@@ -55,8 +56,17 @@ const createVideoSession = async (req, res) => {
       duration_minutes,
       password_enabled,
       notes,
-      timezone
+      timezone,
+      therapy_session_id
     });
+
+    // If this video session is linked to a therapy session, update the therapy session
+    if (therapy_session_id) {
+      const TherapySession = require('../models/TherapySession');
+      await TherapySession.update(therapy_session_id, {
+        video_session_id: newSession.id
+      });
+    }
 
     // Sync to Google Calendar (non-blocking)
     try {

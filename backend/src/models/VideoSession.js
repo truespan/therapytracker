@@ -36,7 +36,8 @@ class VideoSession {
       notes,
       timezone,
       meet_link,
-      status
+      status,
+      therapy_session_id
     } = sessionData;
 
     // Generate meeting room ID
@@ -63,9 +64,9 @@ class VideoSession {
     const query = `
       INSERT INTO video_sessions (
         partner_id, user_id, title, session_date, end_date,
-        duration_minutes, meeting_room_id, password, password_enabled, notes, timezone, meet_link, status
+        duration_minutes, meeting_room_id, password, password_enabled, notes, timezone, meet_link, status, therapy_session_id
       )
-      VALUES ($1, $2, $3, $4::timestamptz, $5::timestamptz, $6, $7, $8, $9, $10, $11, $12, $13)
+      VALUES ($1, $2, $3, $4::timestamptz, $5::timestamptz, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *
     `;
     const values = [
@@ -81,7 +82,8 @@ class VideoSession {
       notes,
       timezone || 'UTC',
       meet_link || null,
-      sessionStatus
+      sessionStatus,
+      therapy_session_id || null
     ];
 
     const result = await db.query(query, values);
@@ -117,9 +119,9 @@ class VideoSession {
         vs.*,
         u.name as user_name,
         u.email as user_email,
-        ts.id as therapy_session_id,
+        COALESCE(ts.id, vs.therapy_session_id) as therapy_session_id,
         ts.status as therapy_session_status,
-        CASE WHEN ts.id IS NOT NULL THEN true ELSE false END as has_therapy_session
+        CASE WHEN (ts.id IS NOT NULL OR vs.therapy_session_id IS NOT NULL) THEN true ELSE false END as has_therapy_session
       FROM video_sessions vs
       JOIN users u ON vs.user_id = u.id
       LEFT JOIN therapy_sessions ts ON vs.id = ts.video_session_id
@@ -139,9 +141,16 @@ class VideoSession {
 
   static async findByUser(userId) {
     const query = `
-      SELECT vs.*, p.name as partner_name, p.email as partner_email
+      SELECT 
+        vs.*, 
+        p.name as partner_name, 
+        p.email as partner_email,
+        COALESCE(ts.id, vs.therapy_session_id) as therapy_session_id,
+        ts.status as therapy_session_status,
+        CASE WHEN (ts.id IS NOT NULL OR vs.therapy_session_id IS NOT NULL) THEN true ELSE false END as has_therapy_session
       FROM video_sessions vs
       JOIN partners p ON vs.partner_id = p.id
+      LEFT JOIN therapy_sessions ts ON vs.id = ts.video_session_id
       WHERE vs.user_id = $1 AND vs.status IN ('scheduled', 'started', 'in_progress')
       ORDER BY vs.session_date ASC
     `;
