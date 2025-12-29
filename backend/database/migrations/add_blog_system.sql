@@ -31,3 +31,4 @@ CREATE INDEX IF NOT EXISTS idx_blogs_created_at ON blogs(created_at);
 COMMENT ON COLUMN partners.can_post_blogs IS 'Permission flag to allow therapist to post blogs';
 COMMENT ON TABLE blogs IS 'Blog posts and news articles created by therapists with blog posting permission';
 
+

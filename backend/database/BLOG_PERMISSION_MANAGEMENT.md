@@ -122,3 +122,4 @@ await organizationAPI.revokeBlogPermission(organizationId, partnerId);
 - Permission changes are immediate and affect therapist's ability to post blogs
 - Revoking permission does not delete existing blog posts, but prevents new posts
 
+
