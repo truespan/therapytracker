@@ -310,7 +310,7 @@ export const therapySessionAPI = {
   getByPartnerAndUser: (partnerId, userId) => api.get(`/partners/${partnerId}/users/${userId}/therapy-sessions`),
   getByUser: (userId) => api.get(`/users/${userId}/therapy-sessions`),
   update: (id, data) => api.put(`/therapy-sessions/${id}`, data),
-  delete: (id) => api.delete(`/therapy-sessions/${id}`),
+  // delete method removed - therapy sessions cannot be deleted to maintain historical records
 
   // Session-questionnaire management
   assignQuestionnaire: (sessionId, data) => api.post(`/therapy-sessions/${sessionId}/assign-questionnaire`, data),

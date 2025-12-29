@@ -409,11 +409,10 @@ class TherapySession {
     return result.rows[0];
   }
 
-  // Delete a session
+  // Delete a session - DISABLED
+  // Therapy sessions cannot be deleted to maintain historical records and data integrity
   static async delete(id) {
-    const query = 'DELETE FROM therapy_sessions WHERE id = $1 RETURNING *';
-    const result = await db.query(query, [id]);
-    return result.rows[0];
+    throw new Error('Therapy sessions cannot be deleted. They are permanent records that must be preserved for historical data integrity.');
   }
 
   // Mark expired therapy sessions as completed

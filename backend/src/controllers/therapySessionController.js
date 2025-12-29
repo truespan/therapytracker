@@ -186,30 +186,13 @@ const updateTherapySession = async (req, res) => {
   }
 };
 
-// Delete a therapy session
+// Delete a therapy session - DISABLED
+// Therapy sessions cannot be deleted to maintain historical records and data integrity
 const deleteTherapySession = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const session = await TherapySession.findById(id);
-    if (!session) {
-      return res.status(404).json({ error: 'Therapy session not found' });
-    }
-
-    // Optionally revert appointment status if session was from appointment
-    if (session.appointment_id) {
-      await Appointment.update(session.appointment_id, { status: 'scheduled' });
-    }
-    await TherapySession.delete(id);
-
-    res.json({ message: 'Therapy session deleted successfully' });
-  } catch (error) {
-    console.error('Delete therapy session error:', error);
-    res.status(500).json({
-      error: 'Failed to delete therapy session',
-      details: error.message
-    });
-  }
+  return res.status(403).json({
+    error: 'Therapy sessions cannot be deleted',
+    message: 'Therapy sessions are permanent records and cannot be deleted to maintain historical data integrity. This includes sessions created from appointments and video sessions.'
+  });
 };
 
 // Create standalone session (without appointment)

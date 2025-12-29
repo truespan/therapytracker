@@ -734,9 +734,10 @@ const deleteClient = async (req, res) => {
       await client.query('DELETE FROM shared_charts WHERE user_id = $1', [clientId]);
       console.log(`[DELETE CLIENT] Deleted shared charts for user ${clientId}`);
 
-      // 5. Delete therapy sessions
-      await client.query('DELETE FROM therapy_sessions WHERE user_id = $1', [clientId]);
-      console.log(`[DELETE CLIENT] Deleted therapy sessions for user ${clientId}`);
+      // 5. Preserve therapy sessions - do not delete them
+      // Therapy sessions are permanent records and should be preserved even when client is deleted
+      // The user_id reference will remain, maintaining historical records
+      console.log(`[DELETE CLIENT] Preserving therapy sessions for user ${clientId} (sessions are permanent records)`);
 
       // 6. Delete video sessions
       await client.query('DELETE FROM video_sessions WHERE user_id = $1', [clientId]);

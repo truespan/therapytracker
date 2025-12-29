@@ -196,7 +196,7 @@ router.get('/partners/:partnerId/therapy-sessions', authenticateToken, therapySe
 router.get('/partners/:partnerId/users/:userId/therapy-sessions', authenticateToken, therapySessionController.getPartnerUserSessions);
 router.get('/users/:userId/therapy-sessions', authenticateToken, therapySessionController.getUserTherapySessions);
 router.put('/therapy-sessions/:id', authenticateToken, checkRole('partner'), therapySessionController.updateTherapySession);
-router.delete('/therapy-sessions/:id', authenticateToken, checkRole('partner'), therapySessionController.deleteTherapySession);
+// DELETE endpoint removed - therapy sessions cannot be deleted to maintain historical records
 
 // Session-questionnaire management
 router.post('/therapy-sessions/:sessionId/assign-questionnaire', authenticateToken, checkRole('partner'), therapySessionController.assignQuestionnaireToSession);
