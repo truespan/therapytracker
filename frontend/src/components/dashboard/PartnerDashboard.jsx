@@ -271,29 +271,47 @@ const PartnerDashboard = () => {
           </div>
         </div>
         {user.partner_id && (
-          <div className="card bg-primary-50 dark:bg-dark-bg-secondary border-2 border-primary-200 dark:border-dark-primary-700 ml-6">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
-              <div className="flex items-center space-x-3">
-                <p className="text-2xl font-bold text-primary-700 tracking-wider">
-                  {user.partner_id}
-                </p>
-                <button
-                  onClick={handleCopyPartnerId}
-                  className="p-2 hover:bg-primary-100 rounded-lg transition-colors"
-                  title="Copy Partner ID"
-                >
-                  {copiedPartnerId ? (
-                    <Check className="h-5 w-5 text-green-600" />
-                  ) : (
-                    <Copy className="h-5 w-5 text-primary-600" />
-                  )}
-                </button>
+          <div className="ml-6">
+            <div className="card bg-primary-50 dark:bg-dark-bg-secondary border-2 border-primary-200 dark:border-dark-primary-700 mb-2">
+              <div>
+                <p className="text-xs text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-xl font-bold text-primary-700 tracking-wider">
+                    {user.partner_id}
+                  </p>
+                  <button
+                    onClick={handleCopyPartnerId}
+                    className="p-1.5 hover:bg-primary-100 rounded-lg transition-colors"
+                    title="Copy Partner ID"
+                  >
+                    {copiedPartnerId ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-primary-600" />
+                    )}
+                  </button>
+                </div>
+                {copiedPartnerId && (
+                  <p className="text-xs text-green-600 mt-1">Copied!</p>
+                )}
               </div>
-              {copiedPartnerId && (
-                <p className="text-xs text-green-600 mt-1">Copied!</p>
-              )}
             </div>
+            <button
+              onClick={handleCopySignupUrl}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+            >
+              {copiedSignupUrl ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  URL Copied!
+                </>
+              ) : (
+                <>
+                  <LinkIcon className="h-4 w-4" />
+                  Get Signup URL
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>
@@ -329,22 +347,22 @@ const PartnerDashboard = () => {
       {/* Partner ID Section - Tablet only (mobile shows in hamburger, desktop shows above) */}
       {user.partner_id && (
         <div className="hidden sm:block lg:hidden mb-6">
-          <div className="card bg-primary-50 dark:bg-dark-bg-secondary border-2 border-primary-200 dark:border-dark-primary-700">
+          <div className="card bg-primary-50 dark:bg-dark-bg-secondary border-2 border-primary-200 dark:border-dark-primary-700 mb-2">
             <div>
-              <p className="text-sm text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
+              <p className="text-xs text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
               <div className="flex items-center justify-between">
-                <p className="text-2xl font-bold text-primary-700 tracking-wider">
+                <p className="text-xl font-bold text-primary-700 tracking-wider">
                   {user.partner_id}
                 </p>
                 <button
                   onClick={handleCopyPartnerId}
-                  className="p-2 hover:bg-primary-100 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-primary-100 rounded-lg transition-colors"
                   title="Copy Partner ID"
                 >
                   {copiedPartnerId ? (
-                    <Check className="h-5 w-5 text-green-600" />
+                    <Check className="h-4 w-4 text-green-600" />
                   ) : (
-                    <Copy className="h-5 w-5 text-primary-600" />
+                    <Copy className="h-4 w-4 text-primary-600" />
                   )}
                 </button>
               </div>
@@ -353,13 +371,48 @@ const PartnerDashboard = () => {
               )}
             </div>
           </div>
+          <button
+            onClick={handleCopySignupUrl}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+          >
+            {copiedSignupUrl ? (
+              <>
+                <Check className="h-4 w-4" />
+                URL Copied!
+              </>
+            ) : (
+              <>
+                <LinkIcon className="h-4 w-4" />
+                Get Signup URL
+              </>
+            )}
+          </button>
         </div>
       )}
 
       {/* Scrollable Tabs - Mobile & Tablet */}
       <div className="lg:hidden border-b border-gray-200 dark:border-dark-border mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="border-b border-gray-200 dark:border-dark-border py-3 px-4 -mx-4 sm:mx-0 sm:px-0">
+        <div className="border-b border-gray-200 dark:border-dark-border py-3 px-4 -mx-4 sm:mx-0 sm:px-0 flex items-center justify-between">
           <DarkModeToggle variant="button" showLabel />
+          {/* Show button next to Dark Mode only on mobile (below sm), not on tablet */}
+          {user.partner_id && (
+            <button
+              onClick={handleCopySignupUrl}
+              className="sm:hidden flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+            >
+              {copiedSignupUrl ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  URL Copied!
+                </>
+              ) : (
+                <>
+                  <LinkIcon className="h-4 w-4" />
+                  Get Signup URL
+                </>
+              )}
+            </button>
+          )}
         </div>
         <nav className="flex space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
           <button
@@ -629,22 +682,6 @@ const PartnerDashboard = () => {
             >
               <UserPlus className="h-5 w-5" />
               Create New Client
-            </button>
-            <button
-              onClick={handleCopySignupUrl}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-            >
-              {copiedSignupUrl ? (
-                <>
-                  <Check className="h-5 w-5" />
-                  URL Copied!
-                </>
-              ) : (
-                <>
-                  <LinkIcon className="h-5 w-5" />
-                  Get Signup URL
-                </>
-              )}
             </button>
           </div>
 
