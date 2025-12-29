@@ -30,9 +30,19 @@ const getBlogById = async (req, res) => {
 };
 
 // Get blogs by current author (authenticated)
+// For theraptrack_controlled organizations, return all organization blogs
 const getMyBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.findByAuthor(req.user.id);
+    let blogs;
+    
+    // If user is in theraptrack_controlled organization with blog permission, get all org blogs
+    if (req.blogPermission && req.blogPermission.theraptrackControlled) {
+      blogs = await Blog.findByOrganization(req.blogPermission.organizationId);
+    } else {
+      // Otherwise, only get own blogs
+      blogs = await Blog.findByAuthor(req.user.id);
+    }
+    
     res.json(blogs);
   } catch (error) {
     console.error('Error fetching my blogs:', error);
@@ -73,7 +83,7 @@ const createBlog = async (req, res) => {
   }
 };
 
-// Update blog (requires blog permission + ownership)
+// Update blog (requires blog permission + ownership or organization access)
 const updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
@@ -88,14 +98,20 @@ const updateBlog = async (req, res) => {
       return res.status(400).json({ error: 'Content cannot be empty' });
     }
 
-    // Verify blog exists and belongs to user
+    // Verify blog exists
     const existingBlog = await Blog.findById(id);
     if (!existingBlog) {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    if (existingBlog.author_id !== req.user.id) {
-      return res.status(403).json({ error: 'You can only edit your own blogs' });
+    // Check permissions: user can edit if:
+    // 1. They are the author, OR
+    // 2. They are in a theraptrack_controlled organization with blog permissions
+    const canEdit = existingBlog.author_id === req.user.id ||
+      (req.blogPermission && req.blogPermission.theraptrackControlled);
+
+    if (!canEdit) {
+      return res.status(403).json({ error: 'You do not have permission to edit this blog' });
     }
 
     const blogData = {
@@ -107,7 +123,11 @@ const updateBlog = async (req, res) => {
       published: published !== undefined ? (published === true || published === 'true') : existingBlog.published
     };
 
-    const blog = await Blog.update(id, blogData, req.user.id);
+    const organizationId = (req.blogPermission && req.blogPermission.theraptrackControlled) 
+      ? req.blogPermission.organizationId 
+      : null;
+    
+    const blog = await Blog.update(id, blogData, req.user.id, organizationId);
     if (!blog) {
       return res.status(404).json({ error: 'Blog not found or update failed' });
     }
@@ -119,22 +139,32 @@ const updateBlog = async (req, res) => {
   }
 };
 
-// Delete blog (requires blog permission + ownership)
+// Delete blog (requires blog permission + ownership or organization access)
 const deleteBlog = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verify blog exists and belongs to user
+    // Verify blog exists
     const existingBlog = await Blog.findById(id);
     if (!existingBlog) {
       return res.status(404).json({ error: 'Blog not found' });
     }
 
-    if (existingBlog.author_id !== req.user.id) {
-      return res.status(403).json({ error: 'You can only delete your own blogs' });
+    // Check permissions: user can delete if:
+    // 1. They are the author, OR
+    // 2. They are in a theraptrack_controlled organization with blog permissions
+    const canDelete = existingBlog.author_id === req.user.id ||
+      (req.blogPermission && req.blogPermission.theraptrackControlled);
+
+    if (!canDelete) {
+      return res.status(403).json({ error: 'You do not have permission to delete this blog' });
     }
 
-    const deletedBlog = await Blog.delete(id, req.user.id);
+    const organizationId = (req.blogPermission && req.blogPermission.theraptrackControlled) 
+      ? req.blogPermission.organizationId 
+      : null;
+
+    const deletedBlog = await Blog.delete(id, req.user.id, organizationId);
     if (!deletedBlog) {
       return res.status(404).json({ error: 'Blog not found or delete failed' });
     }

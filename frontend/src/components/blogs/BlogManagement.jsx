@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { blogAPI } from '../../services/api';
-import { FileText, Plus, Edit, Save, X, CheckCircle, XCircle, AlertCircle, Search, Calendar, Tag } from 'lucide-react';
+import { FileText, Plus, Edit, Save, X, CheckCircle, XCircle, AlertCircle, Search, Calendar, Tag, Trash2, User } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -17,6 +17,8 @@ const BlogManagement = () => {
   const [editingBlog, setEditingBlog] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [saving, setSaving] = useState(false);
+  const [blogToDelete, setBlogToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -170,6 +172,44 @@ const BlogManagement = () => {
     }
   };
 
+  const handleDeleteClick = (blog) => {
+    setBlogToDelete(blog);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!blogToDelete) return;
+
+    try {
+      setDeleting(true);
+      setError('');
+      setSuccessMessage('');
+      
+      await blogAPI.delete(blogToDelete.id);
+      setSuccessMessage('Blog deleted successfully!');
+      setBlogToDelete(null);
+      
+      // Reload blogs
+      await loadBlogs();
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to delete blog:', err);
+      setError(err.response?.data?.error || 'Failed to delete blog');
+      setBlogToDelete(null);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setBlogToDelete(null);
+  };
+
+  // Check if user is in theraptrack_controlled organization
+  const isTheraptrackControlled = user?.organization?.theraptrack_controlled || false;
+  const isOwnBlog = (blog) => blog.author_id === user?.id;
+
   const filteredBlogs = blogs.filter(blog => {
     if (!searchTerm) return true;
     const searchLower = searchTerm.toLowerCase();
@@ -206,10 +246,12 @@ const BlogManagement = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
-              My Blogs
+              {isTheraptrackControlled ? 'All Organization Blogs' : 'My Blogs'}
             </h2>
             <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">
-              Manage your blog posts and news articles
+              {isTheraptrackControlled 
+                ? 'Manage all blog posts and news articles from your organization'
+                : 'Manage your blog posts and news articles'}
             </p>
           </div>
           <button
@@ -305,19 +347,67 @@ const BlogManagement = () => {
                             : new Date(blog.created_at).toLocaleDateString()}
                         </span>
                       </div>
+                      {blog.author_name && (
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span>
+                            {blog.author_name}
+                            {!isOwnBlog(blog) && ' (Other Therapist)'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleEdit(blog)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors font-medium whitespace-nowrap"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEdit(blog)}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors font-medium whitespace-nowrap"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(blog)}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition-colors font-medium whitespace-nowrap"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {blogToDelete && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4">
+                Confirm Delete
+              </h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary mb-6">
+                Are you sure you want to delete the blog "{blogToDelete.title}"? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={handleDeleteCancel}
+                  disabled={deleting}
+                  className="px-4 py-2 text-gray-700 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

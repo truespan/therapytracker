@@ -63,8 +63,33 @@ class Blog {
     return result.rows;
   }
 
-  static async update(id, blogData, authorId) {
+  static async findByOrganization(organizationId) {
+    const query = `
+      SELECT b.*, p.name as author_name
+      FROM blogs b
+      JOIN partners p ON b.author_id = p.id
+      WHERE p.organization_id = $1 
+      ORDER BY b.created_at DESC
+    `;
+    const result = await db.query(query, [organizationId]);
+    return result.rows;
+  }
+
+  static async update(id, blogData, authorId, organizationId = null) {
     const { title, excerpt, content, category, featured_image_url, published } = blogData;
+    
+    // If organizationId is provided and blog author is in same organization, allow update
+    // Otherwise, only allow update if authorId matches
+    let whereClause = 'id = $7 AND author_id = $8';
+    if (organizationId) {
+      whereClause = `
+        id = $7 AND (
+          author_id = $8 OR 
+          author_id IN (SELECT id FROM partners WHERE organization_id = $9)
+        )
+      `;
+    }
+    
     const query = `
       UPDATE blogs 
       SET title = $1, 
@@ -79,30 +104,58 @@ class Blog {
             ELSE published_at 
           END,
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $7 AND author_id = $8
+      WHERE ${whereClause}
       RETURNING *
     `;
-    const values = [
-      title,
-      excerpt || null,
-      content,
-      category || null,
-      featured_image_url || null,
-      published || false,
-      id,
-      authorId
-    ];
+    
+    const values = organizationId
+      ? [
+          title,
+          excerpt || null,
+          content,
+          category || null,
+          featured_image_url || null,
+          published || false,
+          id,
+          authorId,
+          organizationId
+        ]
+      : [
+          title,
+          excerpt || null,
+          content,
+          category || null,
+          featured_image_url || null,
+          published || false,
+          id,
+          authorId
+        ];
+    
     const result = await db.query(query, values);
     return result.rows[0];
   }
 
-  static async delete(id, authorId) {
+  static async delete(id, authorId, organizationId = null) {
+    // If organizationId is provided and blog author is in same organization, allow delete
+    // Otherwise, only allow delete if authorId matches
+    let whereClause = 'id = $1 AND author_id = $2';
+    if (organizationId) {
+      whereClause = `
+        id = $1 AND (
+          author_id = $2 OR 
+          author_id IN (SELECT id FROM partners WHERE organization_id = $3)
+        )
+      `;
+    }
+    
     const query = `
       DELETE FROM blogs 
-      WHERE id = $1 AND author_id = $2
+      WHERE ${whereClause}
       RETURNING *
     `;
-    const result = await db.query(query, [id, authorId]);
+    
+    const values = organizationId ? [id, authorId, organizationId] : [id, authorId];
+    const result = await db.query(query, values);
     return result.rows[0];
   }
 
