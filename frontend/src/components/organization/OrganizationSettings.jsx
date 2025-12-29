@@ -9,6 +9,7 @@ import NonControlledSubscriptionManagement from './NonControlledSubscriptionMana
 import DarkModeToggle from '../common/DarkModeToggle';
 import TherapistVideoSettings from './TherapistVideoSettings';
 import TherapistBlogPermissions from './TherapistBlogPermissions';
+import BankAccountForm from '../common/BankAccountForm';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -440,6 +441,22 @@ const OrganizationSettings = () => {
               />
             </div>
           </div>
+
+          {/* Bank Account Section - Only show for non-TheraPTrack controlled organizations */}
+          {!subscriptionDetails?.theraptrack_controlled && (
+            <div className="border-t border-gray-200 dark:border-dark-border pt-6">
+              <div className="flex items-center mb-4">
+                <CreditCard className="h-6 w-6 mr-2 text-primary-600" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
+                  Bank Account Details
+                </h3>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
+                Add your bank account details to receive payouts
+              </p>
+              <BankAccountForm userType="organization" onUpdate={refreshUser} />
+            </div>
+          )}
 
           {/* Subscription Section - Only show for non-TheraPTrack controlled organizations */}
           {!subscriptionDetails?.theraptrack_controlled && (

@@ -9,6 +9,7 @@ import ChangePasswordSection from '../common/ChangePasswordSection';
 import PlanSelectionModal from '../common/PlanSelectionModal';
 import CancellationConfirmDialog from '../common/CancellationConfirmDialog';
 import SubscriptionStatusBadge from '../common/SubscriptionStatusBadge';
+import BankAccountForm from '../common/BankAccountForm';
 import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 import { getPlanSelectionButtonText, canCancelSubscription } from '../../utils/subscriptionHelper';
 
@@ -984,6 +985,24 @@ const PartnerSettings = () => {
             </div>
           </div>
         </form>
+
+        {/* Bank Account Section */}
+        {user?.organization?.theraptrack_controlled && (
+          <div className="card mt-6">
+            <div className="border-b border-gray-200 pb-4 mb-6">
+              <div className="flex items-center">
+                <CreditCard className="h-6 w-6 mr-2 text-primary-600" />
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
+                  Bank Account Details
+                </h3>
+              </div>
+              <p className="text-gray-600 dark:text-dark-text-secondary mt-1 text-sm">
+                Add your bank account details to receive payouts
+              </p>
+            </div>
+            <BankAccountForm userType="partner" onUpdate={refreshUser} />
+          </div>
+        )}
 
         <ChangePasswordSection />
 

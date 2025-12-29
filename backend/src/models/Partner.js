@@ -111,42 +111,143 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency, session_fee, booking_fee, video_sessions_enabled } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency, session_fee, booking_fee, video_sessions_enabled, bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified } = partnerData;
+    
+    // Build dynamic update query
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (sex !== undefined) {
+      updates.push(`sex = $${paramIndex++}`);
+      values.push(sex);
+    }
+    if (age !== undefined) {
+      updates.push(`age = $${paramIndex++}`);
+      values.push(age);
+    }
+    if (email !== undefined) {
+      updates.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+    if (contact !== undefined) {
+      updates.push(`contact = $${paramIndex++}`);
+      values.push(contact);
+    }
+    if (qualification !== undefined) {
+      updates.push(`qualification = $${paramIndex++}`);
+      values.push(qualification);
+    }
+    if (license_id !== undefined) {
+      updates.push(`license_id = $${paramIndex++}`);
+      values.push(license_id);
+    }
+    if (address !== undefined) {
+      updates.push(`address = $${paramIndex++}`);
+      values.push(address);
+    }
+    if (photo_url !== undefined) {
+      updates.push(`photo_url = $${paramIndex++}`);
+      values.push(photo_url);
+    }
+    if (work_experience !== undefined) {
+      updates.push(`work_experience = $${paramIndex++}`);
+      values.push(work_experience);
+    }
+    if (other_practice_details !== undefined) {
+      updates.push(`other_practice_details = $${paramIndex++}`);
+      values.push(other_practice_details);
+    }
+    if (email_verified !== undefined) {
+      updates.push(`email_verified = $${paramIndex++}`);
+      values.push(email_verified);
+    }
+    if (default_report_template_id !== undefined) {
+      updates.push(`default_report_template_id = $${paramIndex++}`);
+      values.push(default_report_template_id);
+    }
+    if (default_report_background !== undefined) {
+      updates.push(`default_report_background = $${paramIndex++}`);
+      values.push(default_report_background);
+    }
+    if (fee_min !== undefined) {
+      updates.push(`fee_min = $${paramIndex++}`);
+      values.push(fee_min);
+    }
+    if (fee_max !== undefined) {
+      updates.push(`fee_max = $${paramIndex++}`);
+      values.push(fee_max);
+    }
+    if (fee_currency !== undefined) {
+      updates.push(`fee_currency = $${paramIndex++}`);
+      values.push(fee_currency);
+    }
+    if (session_fee !== undefined) {
+      updates.push(`session_fee = $${paramIndex++}`);
+      values.push(session_fee);
+    }
+    if (booking_fee !== undefined) {
+      updates.push(`booking_fee = $${paramIndex++}`);
+      values.push(booking_fee);
+    }
+    if (video_sessions_enabled !== undefined) {
+      updates.push(`video_sessions_enabled = $${paramIndex++}`);
+      values.push(video_sessions_enabled);
+    }
+    
+    // Bank account fields
+    let bankDetailsChanged = false;
+    if (bank_account_holder_name !== undefined) {
+      updates.push(`bank_account_holder_name = $${paramIndex++}`);
+      values.push(bank_account_holder_name);
+      bankDetailsChanged = true;
+    }
+    if (bank_account_number !== undefined) {
+      updates.push(`bank_account_number = $${paramIndex++}`);
+      values.push(bank_account_number);
+      bankDetailsChanged = true;
+    }
+    if (bank_ifsc_code !== undefined) {
+      updates.push(`bank_ifsc_code = $${paramIndex++}`);
+      values.push(bank_ifsc_code);
+      bankDetailsChanged = true;
+    }
+    // Reset verification when bank details change
+    if (bankDetailsChanged) {
+      updates.push(`bank_account_verified = FALSE`);
+      updates.push(`bank_account_verified_at = NULL`);
+    }
+    if (bank_name !== undefined) {
+      updates.push(`bank_name = $${paramIndex++}`);
+      values.push(bank_name);
+    }
+    if (bank_account_verified !== undefined) {
+      updates.push(`bank_account_verified = $${paramIndex++}`);
+      values.push(bank_account_verified);
+      if (bank_account_verified === true) {
+        updates.push(`bank_account_verified_at = CURRENT_TIMESTAMP`);
+      } else {
+        updates.push(`bank_account_verified_at = NULL`);
+      }
+    }
+
+    if (updates.length === 0) {
+      // No fields to update, just return the current record
+      return this.findById(id);
+    }
+
+    values.push(id);
     const query = `
       UPDATE partners
-      SET name = COALESCE($1, name),
-          sex = COALESCE($2, sex),
-          age = CASE WHEN $3::INTEGER IS NULL THEN age ELSE $3::INTEGER END,
-          email = COALESCE($4, email),
-          contact = COALESCE($5, contact),
-          qualification = COALESCE($6, qualification),
-          license_id = $7,
-          address = COALESCE($8, address),
-          photo_url = COALESCE($9, photo_url),
-          work_experience = CASE WHEN $10::TEXT IS NULL THEN work_experience ELSE $10::TEXT END,
-          other_practice_details = CASE WHEN $11::TEXT IS NULL THEN other_practice_details ELSE $11::TEXT END,
-          email_verified = COALESCE($12, email_verified),
-          default_report_template_id = CASE WHEN $13::INTEGER IS NULL THEN default_report_template_id ELSE $13::INTEGER END,
-          default_report_background = COALESCE($14, default_report_background),
-          fee_min = CASE WHEN $15::DECIMAL IS NULL THEN fee_min ELSE $15::DECIMAL END,
-          fee_max = CASE WHEN $16::DECIMAL IS NULL THEN fee_max ELSE $16::DECIMAL END,
-          fee_currency = COALESCE($17, fee_currency),
-          session_fee = CASE WHEN $18::DECIMAL IS NULL THEN session_fee ELSE $18::DECIMAL END,
-          booking_fee = CASE WHEN $19::DECIMAL IS NULL THEN booking_fee ELSE $19::DECIMAL END,
-          video_sessions_enabled = COALESCE($20, video_sessions_enabled)
-      WHERE id = $21
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
       RETURNING *
     `;
-    const values = [
-      name, sex, age !== undefined ? age : null, email, contact, qualification,
-      license_id !== undefined ? license_id : null, address, photo_url,
-      work_experience !== undefined ? work_experience : null,
-      other_practice_details !== undefined ? other_practice_details : null,
-      email_verified, default_report_template_id, default_report_background,
-      fee_min !== undefined ? fee_min : null, fee_max !== undefined ? fee_max : null, fee_currency,
-      session_fee !== undefined ? session_fee : null, booking_fee !== undefined ? booking_fee : null,
-      video_sessions_enabled, id
-    ];
+
     const result = await db.query(query, values);
     return result.rows[0];
   }

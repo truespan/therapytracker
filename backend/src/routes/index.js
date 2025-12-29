@@ -89,6 +89,11 @@ router.get('/partners/:id/default-report-background', authenticateToken, checkRo
 router.post('/partners/:id/fee-settings', authenticateToken, checkRole('partner'), partnerController.updateFeeSettings);
 router.get('/partners/:id/fee-settings', authenticateToken, partnerController.getFeeSettings);
 
+// Bank account routes
+const bankAccountController = require('../controllers/bankAccountController');
+router.put('/partner/bank-account', authenticateToken, checkRole('partner'), bankAccountController.updatePartnerBankAccount);
+router.get('/partner/bank-account', authenticateToken, checkRole('partner'), bankAccountController.getPartnerBankAccount);
+
 // ==================== CASE HISTORY ROUTES ====================
 router.get('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.getCaseHistory);
 router.post('/users/:userId/case-history', authenticateToken, checkRole('partner'), caseHistoryController.saveCaseHistory);
@@ -138,6 +143,10 @@ router.put('/organizations/:id/therapists/video-settings/bulk', authenticateToke
 router.get('/organizations/:id/therapists/blog-permissions', authenticateToken, checkRole('organization'), organizationController.getTherapistsBlogPermissions);
 router.post('/organizations/:id/therapists/:partnerId/blog-permission/grant', authenticateToken, checkRole('organization'), organizationController.grantBlogPermission);
 router.post('/organizations/:id/therapists/:partnerId/blog-permission/revoke', authenticateToken, checkRole('organization'), organizationController.revokeBlogPermission);
+
+// Organization bank account routes
+router.put('/organization/bank-account', authenticateToken, checkRole('organization'), bankAccountController.updateOrganizationBankAccount);
+router.get('/organization/bank-account', authenticateToken, checkRole('organization'), bankAccountController.getOrganizationBankAccount);
 
 // Subscription plans for individual therapists (public endpoint for signup)
 router.get('/subscription-plans/individual', subscriptionPlanController.getIndividualTherapistPlans);
@@ -297,6 +306,9 @@ const payoutController = require('../controllers/payoutController');
 router.get('/admin/payouts/candidates', authenticateToken, checkRole('admin'), payoutController.getPayoutCandidates);
 router.post('/admin/payouts/create', authenticateToken, checkRole('admin'), payoutController.createPayout);
 router.get('/admin/payouts', authenticateToken, checkRole('admin'), payoutController.getPayoutHistory);
+
+// Admin bank account verification
+router.put('/admin/bank-account/verify/:recipientType/:recipientId', authenticateToken, checkRole('admin'), bankAccountController.verifyBankAccount);
 
 // ==================== GENERATED REPORTS ROUTES ====================
 // Partner routes for generated reports

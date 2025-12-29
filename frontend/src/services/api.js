@@ -460,5 +460,15 @@ export const earningsAPI = {
   getEarnings: (params) => api.get('/earnings', { params }),
 };
 
+// Bank Account APIs
+export const bankAccountAPI = {
+  updatePartner: (data) => api.put('/partner/bank-account', data),
+  getPartner: () => api.get('/partner/bank-account'),
+  updateOrganization: (data) => api.put('/organization/bank-account', data),
+  getOrganization: () => api.get('/organization/bank-account'),
+  verifyBankAccount: (recipientType, recipientId) => 
+    api.put(`/admin/bank-account/verify/${recipientType}/${recipientId}`),
+};
+
 export default api;
 

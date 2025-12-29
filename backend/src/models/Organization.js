@@ -62,7 +62,8 @@ class Organization {
       name, email, contact, address, photo_url, gst_no, subscription_plan, video_sessions_enabled,
       theraptrack_controlled, number_of_therapists, subscription_plan_id, 
       subscription_billing_period, subscription_start_date, subscription_end_date,
-      razorpay_subscription_id, razorpay_customer_id, payment_status
+      razorpay_subscription_id, razorpay_customer_id, payment_status,
+      bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified
     } = orgData;
 
     console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
@@ -146,6 +147,42 @@ class Organization {
     if (payment_status !== undefined) {
       updates.push(`payment_status = $${paramIndex++}`);
       values.push(payment_status);
+    }
+    
+    // Bank account fields
+    let bankDetailsChanged = false;
+    if (bank_account_holder_name !== undefined) {
+      updates.push(`bank_account_holder_name = $${paramIndex++}`);
+      values.push(bank_account_holder_name);
+      bankDetailsChanged = true;
+    }
+    if (bank_account_number !== undefined) {
+      updates.push(`bank_account_number = $${paramIndex++}`);
+      values.push(bank_account_number);
+      bankDetailsChanged = true;
+    }
+    if (bank_ifsc_code !== undefined) {
+      updates.push(`bank_ifsc_code = $${paramIndex++}`);
+      values.push(bank_ifsc_code);
+      bankDetailsChanged = true;
+    }
+    // Reset verification when bank details change
+    if (bankDetailsChanged) {
+      updates.push(`bank_account_verified = FALSE`);
+      updates.push(`bank_account_verified_at = NULL`);
+    }
+    if (bank_name !== undefined) {
+      updates.push(`bank_name = $${paramIndex++}`);
+      values.push(bank_name);
+    }
+    if (bank_account_verified !== undefined) {
+      updates.push(`bank_account_verified = $${paramIndex++}`);
+      values.push(bank_account_verified);
+      if (bank_account_verified === true) {
+        updates.push(`bank_account_verified_at = CURRENT_TIMESTAMP`);
+      } else {
+        updates.push(`bank_account_verified_at = NULL`);
+      }
     }
 
     if (updates.length === 0) {

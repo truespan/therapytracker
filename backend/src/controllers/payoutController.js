@@ -3,12 +3,18 @@ const Payout = require('../models/Payout');
 const Partner = require('../models/Partner');
 const Organization = require('../models/Organization');
 const RazorpayService = require('../services/razorpayService');
+const { calculatePayoutFee } = require('../services/transactionFeeService');
 const db = require('../config/database');
 const { formatDate } = require('../utils/dateUtils');
 
 /**
  * Get payout candidates (partners and organizations with earnings)
  * GET /api/admin/payouts/candidates
+ * 
+ * Filters:
+ * - Partners: Only those with theraptrack_controlled = TRUE
+ * - Organizations: Only those with theraptrack_controlled = FALSE
+ * - Both: Must have bank_account_verified = TRUE
  */
 const getPayoutCandidates = async (req, res) => {
   try {
@@ -23,6 +29,12 @@ const getPayoutCandidates = async (req, res) => {
         let email = '';
         let contact = '';
         let razorpay_contact_id = null;
+        let theraptrack_controlled = null;
+        let bank_account_verified = false;
+        let bank_account_holder_name = null;
+        let bank_account_number = null;
+        let bank_ifsc_code = null;
+        let bank_name = null;
 
         if (candidate.recipient_type === 'partner') {
           recipient = await Partner.findById(candidate.recipient_id);
@@ -31,6 +43,17 @@ const getPayoutCandidates = async (req, res) => {
             email = recipient.email || '';
             contact = recipient.contact || '';
             razorpay_contact_id = recipient.razorpay_contact_id || null;
+            bank_account_verified = recipient.bank_account_verified || false;
+            bank_account_holder_name = recipient.bank_account_holder_name;
+            bank_account_number = recipient.bank_account_number;
+            bank_ifsc_code = recipient.bank_ifsc_code;
+            bank_name = recipient.bank_name;
+            
+            // Get organization to check theraptrack_controlled
+            if (recipient.organization_id) {
+              const org = await Organization.findById(recipient.organization_id);
+              theraptrack_controlled = org ? org.theraptrack_controlled : null;
+            }
           }
         } else if (candidate.recipient_type === 'organization') {
           recipient = await Organization.findById(candidate.recipient_id);
@@ -39,8 +62,24 @@ const getPayoutCandidates = async (req, res) => {
             email = recipient.email || '';
             contact = recipient.contact || '';
             razorpay_contact_id = recipient.razorpay_contact_id || null;
+            theraptrack_controlled = recipient.theraptrack_controlled || false;
+            bank_account_verified = recipient.bank_account_verified || false;
+            bank_account_holder_name = recipient.bank_account_holder_name;
+            bank_account_number = recipient.bank_account_number;
+            bank_ifsc_code = recipient.bank_ifsc_code;
+            bank_name = recipient.bank_name;
           }
         }
+
+        const availableBalance = parseFloat(candidate.available_balance || 0);
+        
+        // Calculate fee breakdown
+        const feeBreakdown = calculatePayoutFee(availableBalance, 'IMPS');
+        
+        // Mask account number for security
+        const maskedAccountNumber = bank_account_number 
+          ? bank_account_number.replace(/\d(?=\d{4})/g, '*')
+          : null;
 
         return {
           id: candidate.recipient_id,
@@ -49,17 +88,42 @@ const getPayoutCandidates = async (req, res) => {
           email,
           contact,
           razorpay_contact_id,
-          available_balance: parseFloat(candidate.available_balance || 0),
+          available_balance: availableBalance,
           pending_earnings: parseFloat(candidate.pending_earnings || 0),
           withdrawn_amount: parseFloat(candidate.withdrawn_amount || 0),
           total_earnings: parseFloat(candidate.total_earnings || 0),
-          eligible_for_payout: parseFloat(candidate.available_balance || 0) > 0
+          theraptrack_controlled,
+          bank_account_verified,
+          bank_account_holder_name,
+          bank_account_number: maskedAccountNumber,
+          bank_ifsc_code,
+          bank_name,
+          fee_breakdown: feeBreakdown,
+          net_amount: feeBreakdown.netAmount,
+          eligible_for_payout: availableBalance > 0 && 
+            ((candidate.recipient_type === 'partner' && theraptrack_controlled === true) ||
+             (candidate.recipient_type === 'organization' && theraptrack_controlled === false)) &&
+            bank_account_verified === true
         };
       })
     );
 
-    // Filter out any candidates where recipient was not found
-    const validCandidates = candidates.filter(c => c.name !== 'Unknown');
+    // Filter candidates:
+    // 1. Remove unknown recipients
+    // 2. Partners: Only theraptrack_controlled = TRUE
+    // 3. Organizations: Only theraptrack_controlled = FALSE
+    // 4. Both: Must have verified bank account
+    const validCandidates = candidates.filter(c => {
+      if (c.name === 'Unknown') return false;
+      
+      if (c.type === 'partner') {
+        return c.theraptrack_controlled === true && c.bank_account_verified === true;
+      } else if (c.type === 'organization') {
+        return c.theraptrack_controlled === false && c.bank_account_verified === true;
+      }
+      
+      return false;
+    });
 
     res.json({
       success: true,
@@ -122,6 +186,51 @@ const createPayout = async (req, res) => {
         continue;
       }
 
+      // Validate theraptrack_controlled flag
+      if (recipientType === 'partner') {
+        const org = await Organization.findById(recipient.organization_id);
+        if (!org || !org.theraptrack_controlled) {
+          errors.push({
+            recipient_id: recipientId,
+            recipient_type: recipientType,
+            name: recipient.name,
+            error: 'Partner must belong to a theraptrack_controlled organization'
+          });
+          continue;
+        }
+      } else if (recipientType === 'organization') {
+        if (!recipient.theraptrack_controlled) {
+          errors.push({
+            recipient_id: recipientId,
+            recipient_type: recipientType,
+            name: recipient.name,
+            error: 'Organization must have theraptrack_controlled = false'
+          });
+          continue;
+        }
+      }
+
+      // Validate bank account exists and is verified
+      if (!recipient.bank_account_number || !recipient.bank_ifsc_code) {
+        errors.push({
+          recipient_id: recipientId,
+          recipient_type: recipientType,
+          name: recipient.name,
+          error: 'Bank account details not provided'
+        });
+        continue;
+      }
+
+      if (!recipient.bank_account_verified) {
+        errors.push({
+          recipient_id: recipientId,
+          recipient_type: recipientType,
+          name: recipient.name,
+          error: 'Bank account not verified'
+        });
+        continue;
+      }
+
       // Get available earnings
       const earningsSummary = await Earnings.getEarningsSummary(recipientId, recipientType);
       const availableBalance = parseFloat(earningsSummary.available_balance || 0);
@@ -136,14 +245,19 @@ const createPayout = async (req, res) => {
         continue;
       }
 
-      // Validate minimum payout amount (Razorpay minimum is typically 100 paise = 1 INR)
+      // Calculate transaction fees
+      const paymentMethod = 'IMPS';
+      const feeBreakdown = calculatePayoutFee(availableBalance, paymentMethod);
+      const netAmount = feeBreakdown.netAmount;
+
+      // Validate minimum payout amount after fees (Razorpay minimum is typically 100 paise = 1 INR)
       const minimumAmount = 1; // 1 INR minimum
-      if (availableBalance < minimumAmount) {
+      if (netAmount < minimumAmount) {
         errors.push({
           recipient_id: recipientId,
           recipient_type: recipientType,
           name: recipient.name,
-          error: `Amount below minimum payout (${minimumAmount} INR)`
+          error: `Net amount after fees (${netAmount.toFixed(2)} INR) below minimum payout (${minimumAmount} INR)`
         });
         continue;
       }
@@ -186,23 +300,30 @@ const createPayout = async (req, res) => {
         }
       }
 
-      // Convert amount to paise (multiply by 100)
-      const amountInPaise = Math.round(availableBalance * 100);
+      // Convert net amount to paise (multiply by 100)
+      const netAmountInPaise = Math.round(netAmount * 100);
 
-      // Create Razorpay payout
+      // Create Razorpay payout with net amount (after fees)
       let razorpayPayout = null;
       try {
         const payoutData = {
           contact_id: contactId,
-          amount: amountInPaise,
+          account_number: recipient.bank_account_number,
+          ifsc: recipient.bank_ifsc_code,
+          account_holder_name: recipient.bank_account_holder_name,
+          amount: netAmountInPaise,
           currency: 'INR',
-          mode: 'IMPS',
+          mode: paymentMethod,
           purpose: 'payout',
           notes: {
             recipient_type: recipientType,
             recipient_id: recipientId.toString(),
             recipient_name: recipient.name,
-            admin_notes: notes || ''
+            admin_notes: notes || '',
+            gross_amount: availableBalance.toFixed(2),
+            transaction_fee: feeBreakdown.baseFee.toFixed(2),
+            gst_on_fee: feeBreakdown.gstAmount.toFixed(2),
+            net_amount: netAmount.toFixed(2)
           }
         };
 
@@ -226,17 +347,22 @@ const createPayout = async (req, res) => {
         payoutRecord = await Payout.create({
           recipient_id: recipientId,
           recipient_type: recipientType,
-          amount: availableBalance,
+          amount: netAmount, // Store net amount as the main amount
           currency: 'INR',
           status: 'processing', // Will be updated by webhook
           payout_date: payoutDate,
-          payment_method: 'IMPS',
+          payment_method: paymentMethod,
           transaction_id: razorpayPayout.id,
           notes: notes || null,
+          transaction_fee: feeBreakdown.baseFee,
+          gst_on_fee: feeBreakdown.gstAmount,
+          net_amount: netAmount,
+          gross_amount: availableBalance,
           metadata: {
             razorpay_payout_id: razorpayPayout.id,
             razorpay_contact_id: contactId,
-            created_by_admin: req.user.id
+            created_by_admin: req.user.id,
+            fee_breakdown: feeBreakdown
           }
         });
       } catch (dbError) {
@@ -277,7 +403,11 @@ const createPayout = async (req, res) => {
         recipient_id: recipientId,
         recipient_type: recipientType,
         name: recipient.name,
-        amount: availableBalance,
+        gross_amount: availableBalance,
+        transaction_fee: feeBreakdown.baseFee,
+        gst_on_fee: feeBreakdown.gstAmount,
+        net_amount: netAmount,
+        amount: netAmount, // For backward compatibility
         payout_id: payoutRecord.id,
         razorpay_payout_id: razorpayPayout.id,
         status: 'processing'
@@ -359,7 +489,11 @@ const getPayoutHistory = async (req, res) => {
         return {
           ...payout,
           recipient_name: recipient ? recipient.name : 'Unknown',
-          recipient_email: recipient ? recipient.email : null
+          recipient_email: recipient ? recipient.email : null,
+          transaction_fee: parseFloat(payout.transaction_fee || 0),
+          gst_on_fee: parseFloat(payout.gst_on_fee || 0),
+          net_amount: parseFloat(payout.net_amount || payout.amount || 0),
+          gross_amount: parseFloat(payout.gross_amount || payout.amount || 0)
         };
       })
     );

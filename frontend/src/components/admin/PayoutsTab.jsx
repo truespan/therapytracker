@@ -196,6 +196,21 @@ const PayoutsTab = () => {
     return selected.reduce((sum, c) => sum + c.available_balance, 0);
   };
 
+  const getTotalNetAmount = () => {
+    const selected = getSelectedCandidatesData();
+    return selected.reduce((sum, c) => sum + (c.net_amount || c.fee_breakdown?.netAmount || 0), 0);
+  };
+
+  const getTotalFees = () => {
+    const selected = getSelectedCandidatesData();
+    return selected.reduce((sum, c) => {
+      if (c.fee_breakdown) {
+        return sum + c.fee_breakdown.totalFee;
+      }
+      return sum;
+    }, 0);
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400', label: 'Pending' },
@@ -325,13 +340,23 @@ const PayoutsTab = () => {
             {/* Selected Summary */}
             {getSelectedCandidatesData().length > 0 && (
               <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-primary-900 dark:text-primary-200">
-                    {getSelectedCandidatesData().length} candidate(s) selected
-                  </span>
-                  <span className="text-lg font-bold text-primary-900 dark:text-primary-200">
-                    Total: {formatCurrency(getTotalPayoutAmount())}
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-primary-900 dark:text-primary-200">
+                      {getSelectedCandidatesData().length} candidate(s) selected
+                    </span>
+                    <div className="text-right">
+                      <div className="text-xs text-primary-700 dark:text-primary-300">
+                        Gross Amount: {formatCurrency(getTotalPayoutAmount())}
+                      </div>
+                      <div className="text-xs text-primary-700 dark:text-primary-300">
+                        Fees: {formatCurrency(getTotalFees())}
+                      </div>
+                      <div className="text-lg font-bold text-primary-900 dark:text-primary-200">
+                        Net Payout: {formatCurrency(getTotalNetAmount())}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -370,6 +395,12 @@ const PayoutsTab = () => {
                       Available Balance
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Net Amount (After Fees)
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Bank Account Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Pending
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -379,9 +410,6 @@ const PayoutsTab = () => {
                       Total Earnings
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Razorpay Contact ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Contact
                     </th>
                   </tr>
@@ -389,7 +417,7 @@ const PayoutsTab = () => {
                 <tbody className="bg-white dark:bg-dark-bg-primary divide-y divide-gray-200 dark:divide-dark-border">
                   {filteredCandidates.length === 0 ? (
                     <tr>
-                      <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
                         No candidates found
                       </td>
                     </tr>
@@ -447,6 +475,33 @@ const PayoutsTab = () => {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
+                            {candidate.fee_breakdown ? (
+                              <div>
+                                <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                                  {formatCurrency(candidate.net_amount || candidate.fee_breakdown.netAmount)}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Fee: {formatCurrency(candidate.fee_breakdown.totalFee)}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-sm text-gray-400">-</div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {candidate.bank_account_verified ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Verified
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                Not Verified
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900 dark:text-dark-text-primary">
                               {formatCurrency(candidate.pending_earnings)}
                             </div>
@@ -459,13 +514,6 @@ const PayoutsTab = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">
                               {formatCurrency(candidate.total_earnings)}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-600 dark:text-gray-400 font-mono">
-                              {candidate.razorpay_contact_id || (
-                                <span className="text-gray-400 italic">Not set</span>
-                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -507,7 +555,13 @@ const PayoutsTab = () => {
                       Type
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Amount
+                      Gross Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Net Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Fees
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
@@ -520,7 +574,7 @@ const PayoutsTab = () => {
                 <tbody className="bg-white dark:bg-dark-bg-primary divide-y divide-gray-200 dark:divide-dark-border">
                   {payoutHistory.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                         No payout history found
                       </td>
                     </tr>
@@ -550,7 +604,18 @@ const PayoutsTab = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">
-                            {formatCurrency(parseFloat(payout.amount))}
+                            {formatCurrency(parseFloat(payout.gross_amount || payout.amount || 0))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                            {formatCurrency(parseFloat(payout.net_amount || payout.amount || 0))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            <div>Fee: {formatCurrency(parseFloat(payout.transaction_fee || 0))}</div>
+                            <div className="text-xs">GST: {formatCurrency(parseFloat(payout.gst_on_fee || 0))}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -594,10 +659,27 @@ const PayoutsTab = () => {
                     </ul>
                   </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">
-                    Total Amount: {formatCurrency(getTotalPayoutAmount())}
-                  </p>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Gross Amount:</span>
+                    <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                      {formatCurrency(getTotalPayoutAmount())}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Transaction Fees:</span>
+                    <span className="font-medium text-red-600 dark:text-red-400">
+                      -{formatCurrency(getTotalFees())}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-200 dark:border-dark-border pt-2 flex justify-between">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">
+                      Net Payout Amount:
+                    </span>
+                    <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
+                      {formatCurrency(getTotalNetAmount())}
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
