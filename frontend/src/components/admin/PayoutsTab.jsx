@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI } from '../../services/api';
+import { adminAPI, bankAccountAPI } from '../../services/api';
 import {
   DollarSign,
   CheckCircle,
@@ -12,7 +12,9 @@ import {
   User,
   Loader,
   Calendar,
-  CreditCard
+  CreditCard,
+  Eye,
+  Shield
 } from 'lucide-react';
 
 const PayoutsTab = () => {
@@ -30,6 +32,10 @@ const PayoutsTab = () => {
   const [activeSection, setActiveSection] = useState('candidates'); // candidates or history
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [payoutNotes, setPayoutNotes] = useState('');
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [selectedCandidateForVerification, setSelectedCandidateForVerification] = useState(null);
+  const [bankAccountDetails, setBankAccountDetails] = useState(null);
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     loadCandidates();
@@ -149,6 +155,55 @@ const PayoutsTab = () => {
     const selected = getSelectedCandidatesData();
     if (selected.length === 0) return;
     setShowConfirmModal(true);
+  };
+
+  const handleOpenVerificationModal = (candidate) => {
+    setSelectedCandidateForVerification(candidate);
+    setShowVerificationModal(true);
+    // Use candidate data which already has bank account info
+    setBankAccountDetails({
+      bank_account_holder_name: candidate.bank_account_holder_name,
+      bank_account_number: candidate.bank_account_number, // This is masked in the API response
+      bank_ifsc_code: candidate.bank_ifsc_code,
+      bank_name: candidate.bank_name,
+      bank_account_verified: candidate.bank_account_verified
+    });
+    setError('');
+  };
+
+  const handleCloseVerificationModal = () => {
+    setShowVerificationModal(false);
+    setSelectedCandidateForVerification(null);
+    setBankAccountDetails(null);
+    setError('');
+  };
+
+  const handleVerifyBankAccount = async () => {
+    if (!selectedCandidateForVerification) return;
+
+    try {
+      setVerifying(true);
+      setError('');
+      
+      const response = await bankAccountAPI.verifyBankAccount(
+        selectedCandidateForVerification.type,
+        selectedCandidateForVerification.id
+      );
+
+      if (response.data.success) {
+        setSuccess(`Bank account verified successfully for ${selectedCandidateForVerification.name}`);
+        handleCloseVerificationModal();
+        // Reload candidates to update verification status
+        await loadCandidates();
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (err) {
+      console.error('Failed to verify bank account:', err);
+      setError(err.response?.data?.error || 'Failed to verify bank account');
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const confirmPayout = async () => {
@@ -412,6 +467,9 @@ const PayoutsTab = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Contact
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-dark-bg-primary divide-y divide-gray-200 dark:divide-dark-border">
@@ -521,6 +579,18 @@ const PayoutsTab = () => {
                               <div>{candidate.email || '-'}</div>
                               <div className="text-xs">{candidate.contact || '-'}</div>
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {!candidate.bank_account_verified && candidate.bank_account_number && (
+                              <button
+                                onClick={() => handleOpenVerificationModal(candidate)}
+                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+                                title="View and verify bank account details"
+                              >
+                                <Shield className="h-3 w-3 mr-1" />
+                                Verify Account
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
@@ -722,6 +792,165 @@ const PayoutsTab = () => {
                     </>
                   )}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bank Account Verification Modal */}
+      {showVerificationModal && selectedCandidateForVerification && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary flex items-center">
+                  <Shield className="h-5 w-5 mr-2 text-primary-600" />
+                  Verify Bank Account
+                </h3>
+                <button
+                  onClick={handleCloseVerificationModal}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              </div>
+
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <div className="flex items-center space-x-2 text-red-600 dark:text-red-400">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm">{error}</span>
+                  </div>
+                </div>
+              )}
+
+              {success && (
+                <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm">{success}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div className="bg-gray-50 dark:bg-dark-bg-primary p-4 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Recipient Information
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Name:</span>
+                      <span className="ml-2 font-medium text-gray-900 dark:text-dark-text-primary">
+                        {selectedCandidateForVerification.name}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Type:</span>
+                      <span className="ml-2 font-medium text-gray-900 dark:text-dark-text-primary capitalize">
+                        {selectedCandidateForVerification.type}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Email:</span>
+                      <span className="ml-2 text-gray-900 dark:text-dark-text-primary">
+                        {selectedCandidateForVerification.email || '-'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Contact:</span>
+                      <span className="ml-2 text-gray-900 dark:text-dark-text-primary">
+                        {selectedCandidateForVerification.contact || '-'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {bankAccountDetails && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Bank Account Details
+                    </h4>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Account Holder Name:</span>
+                        <div className="text-sm font-medium text-gray-900 dark:text-dark-text-primary mt-1">
+                          {bankAccountDetails.bank_account_holder_name || '-'}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Account Number:</span>
+                        <div className="text-sm font-mono text-gray-900 dark:text-dark-text-primary mt-1">
+                          {bankAccountDetails.bank_account_number || '-'}
+                        </div>
+                        {bankAccountDetails.bank_account_number && bankAccountDetails.bank_account_number.includes('*') && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Note: Account number is masked for security. Full details are stored securely.
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">IFSC Code:</span>
+                        <div className="text-sm font-mono text-gray-900 dark:text-dark-text-primary mt-1">
+                          {bankAccountDetails.bank_ifsc_code || '-'}
+                        </div>
+                      </div>
+                      {bankAccountDetails.bank_name && (
+                        <div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Bank Name:</span>
+                          <div className="text-sm text-gray-900 dark:text-dark-text-primary mt-1">
+                            {bankAccountDetails.bank_name}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                    <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                      <p className="font-medium mb-1">Verification Guidelines:</p>
+                      <ul className="list-disc list-inside space-y-1 text-xs">
+                        <li>Verify that the account holder name matches the recipient name</li>
+                        <li>Confirm the IFSC code is valid and matches the bank name</li>
+                        <li>Ensure all required fields are present</li>
+                        <li>Once verified, the recipient will be eligible for payouts</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-dark-border">
+                  <button
+                    onClick={handleCloseVerificationModal}
+                    disabled={verifying}
+                    className="px-4 py-2 bg-gray-200 dark:bg-dark-bg-primary text-gray-700 dark:text-dark-text-primary rounded-lg hover:bg-gray-300 dark:hover:bg-dark-bg-secondary transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    <span>Cancel</span>
+                  </button>
+                  <button
+                    onClick={handleVerifyBankAccount}
+                    disabled={verifying || !bankAccountDetails}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    {verifying ? (
+                      <>
+                        <Loader className="h-4 w-4 animate-spin" />
+                        <span>Verifying...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Verify Bank Account</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
