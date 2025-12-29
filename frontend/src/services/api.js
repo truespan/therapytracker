@@ -468,6 +468,7 @@ export const bankAccountAPI = {
   getOrganization: () => api.get('/organization/bank-account'),
   verifyBankAccount: (recipientType, recipientId, verified = true) => 
     api.put(`/admin/bank-account/verify/${recipientType}/${recipientId}`, { verified }),
+  getAllBankAccounts: () => api.get('/admin/bank-accounts'),
 };
 
 export default api;

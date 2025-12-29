@@ -110,16 +110,17 @@ const getPayoutCandidates = async (req, res) => {
 
     // Filter candidates:
     // 1. Remove unknown recipients
-    // 2. Partners: Only theraptrack_controlled = TRUE
-    // 3. Organizations: Only theraptrack_controlled = FALSE
-    // 4. Both: Must have verified bank account
+    // 2. Partners: Only theraptrack_controlled = TRUE (show even if not verified)
+    // 3. Organizations: Only theraptrack_controlled = FALSE (show even if not verified)
+    // Note: bank_account_verified is used for eligibility, not filtering
+    // This allows admins to see unverified accounts so they can verify them
     const validCandidates = candidates.filter(c => {
       if (c.name === 'Unknown') return false;
       
       if (c.type === 'partner') {
-        return c.theraptrack_controlled === true && c.bank_account_verified === true;
+        return c.theraptrack_controlled === true;
       } else if (c.type === 'organization') {
-        return c.theraptrack_controlled === false && c.bank_account_verified === true;
+        return c.theraptrack_controlled === false;
       }
       
       return false;

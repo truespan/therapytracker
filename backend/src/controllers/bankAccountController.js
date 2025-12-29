@@ -1,5 +1,6 @@
 const Partner = require('../models/Partner');
 const Organization = require('../models/Organization');
+const db = require('../config/database');
 
 /**
  * Update bank account details for partner
@@ -251,11 +252,146 @@ const verifyBankAccount = async (req, res) => {
   }
 };
 
+/**
+ * Get all bank account details (Admin only)
+ * GET /api/admin/bank-accounts
+ */
+const getAllBankAccounts = async (req, res) => {
+  try {
+    // Get all partners with bank account details
+    const partnersQuery = `
+      SELECT 
+        p.id,
+        p.name,
+        p.email,
+        p.contact,
+        p.bank_account_holder_name,
+        p.bank_account_number,
+        p.bank_ifsc_code,
+        p.bank_name,
+        p.bank_account_verified,
+        p.organization_id,
+        o.name as organization_name,
+        o.theraptrack_controlled
+      FROM partners p
+      LEFT JOIN organizations o ON p.organization_id = o.id
+      WHERE p.bank_account_number IS NOT NULL
+      ORDER BY p.name
+    `;
+    const partnersResult = await db.query(partnersQuery);
+    
+    // Decrypt partner bank account fields
+    const partners = partnersResult.rows.map(partner => {
+      const decrypted = Partner.decryptBankAccountFields({
+        id: partner.id,
+        name: partner.name,
+        email: partner.email,
+        contact: partner.contact,
+        bank_account_holder_name: partner.bank_account_holder_name,
+        bank_account_number: partner.bank_account_number,
+        bank_ifsc_code: partner.bank_ifsc_code,
+        bank_name: partner.bank_name,
+        bank_account_verified: partner.bank_account_verified,
+        organization_id: partner.organization_id
+      });
+      
+      // Mask account number for security
+      const maskedAccountNumber = decrypted.bank_account_number 
+        ? decrypted.bank_account_number.replace(/\d(?=\d{4})/g, '*')
+        : null;
+      
+      return {
+        id: partner.id,
+        type: 'partner',
+        name: partner.name,
+        email: partner.email || '',
+        contact: partner.contact || '',
+        organization_id: partner.organization_id,
+        organization_name: partner.organization_name,
+        theraptrack_controlled: partner.theraptrack_controlled,
+        bank_account_holder_name: decrypted.bank_account_holder_name,
+        bank_account_number: maskedAccountNumber,
+        bank_ifsc_code: decrypted.bank_ifsc_code,
+        bank_name: decrypted.bank_name,
+        bank_account_verified: partner.bank_account_verified || false
+      };
+    });
+
+    // Get all organizations with bank account details
+    const organizationsQuery = `
+      SELECT 
+        id,
+        name,
+        email,
+        contact,
+        bank_account_holder_name,
+        bank_account_number,
+        bank_ifsc_code,
+        bank_name,
+        bank_account_verified,
+        theraptrack_controlled
+      FROM organizations
+      WHERE bank_account_number IS NOT NULL
+      ORDER BY name
+    `;
+    const organizationsResult = await db.query(organizationsQuery);
+    
+    // Decrypt organization bank account fields
+    const organizations = organizationsResult.rows.map(org => {
+      const decrypted = Organization.decryptBankAccountFields({
+        id: org.id,
+        name: org.name,
+        email: org.email,
+        contact: org.contact,
+        bank_account_holder_name: org.bank_account_holder_name,
+        bank_account_number: org.bank_account_number,
+        bank_ifsc_code: org.bank_ifsc_code,
+        bank_name: org.bank_name,
+        bank_account_verified: org.bank_account_verified,
+        theraptrack_controlled: org.theraptrack_controlled
+      });
+      
+      // Mask account number for security
+      const maskedAccountNumber = decrypted.bank_account_number 
+        ? decrypted.bank_account_number.replace(/\d(?=\d{4})/g, '*')
+        : null;
+      
+      return {
+        id: org.id,
+        type: 'organization',
+        name: org.name,
+        email: org.email || '',
+        contact: org.contact || '',
+        organization_id: null,
+        organization_name: null,
+        theraptrack_controlled: org.theraptrack_controlled,
+        bank_account_holder_name: decrypted.bank_account_holder_name,
+        bank_account_number: maskedAccountNumber,
+        bank_ifsc_code: decrypted.bank_ifsc_code,
+        bank_name: decrypted.bank_name,
+        bank_account_verified: org.bank_account_verified || false
+      };
+    });
+
+    // Combine and return
+    const allBankAccounts = [...partners, ...organizations];
+
+    res.json({
+      success: true,
+      data: allBankAccounts
+    });
+  } catch (error) {
+    console.error('Error fetching all bank accounts:', error);
+    res.status(500).json({ error: 'Failed to fetch bank accounts', details: error.message });
+  }
+};
+
 module.exports = {
   updatePartnerBankAccount,
   getPartnerBankAccount,
   updateOrganizationBankAccount,
   getOrganizationBankAccount,
-  verifyBankAccount
+  verifyBankAccount,
+  getAllBankAccounts
 };
 

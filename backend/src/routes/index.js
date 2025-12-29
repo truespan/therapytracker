@@ -307,7 +307,8 @@ router.get('/admin/payouts/candidates', authenticateToken, checkRole('admin'), p
 router.post('/admin/payouts/create', authenticateToken, checkRole('admin'), payoutController.createPayout);
 router.get('/admin/payouts', authenticateToken, checkRole('admin'), payoutController.getPayoutHistory);
 
-// Admin bank account verification
+// Admin bank account routes
+router.get('/admin/bank-accounts', authenticateToken, checkRole('admin'), bankAccountController.getAllBankAccounts);
 router.put('/admin/bank-account/verify/:recipientType/:recipientId', authenticateToken, checkRole('admin'), bankAccountController.verifyBankAccount);
 
 // ==================== GENERATED REPORTS ROUTES ====================

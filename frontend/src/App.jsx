@@ -21,6 +21,7 @@ import ReportTemplatesTab from './components/admin/ReportTemplatesTab';
 import SubscriptionPlansTab from './components/admin/SubscriptionPlansTab';
 import CreatePlansTab from './components/admin/CreatePlansTab';
 import PayoutsTab from './components/admin/PayoutsTab';
+import BankAccountDetailsTab from './components/admin/BankAccountDetailsTab';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 
@@ -80,6 +81,7 @@ function AppRoutes() {
                 <Route path="report-templates" element={<ReportTemplatesTab />} />
                 <Route path="subscription-plans" element={<SubscriptionPlansTab />} />
                 <Route path="create-plans" element={<CreatePlansTab />} />
+                <Route path="bank-accounts" element={<BankAccountDetailsTab />} />
                 <Route path="payouts" element={<PayoutsTab />} />
                 <Route path="*" element={<Navigate to="/admin" />} />
               </Routes>

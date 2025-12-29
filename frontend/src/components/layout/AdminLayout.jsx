@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, User, LayoutDashboard, FileText, CreditCard, PlusCircle } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, FileText, CreditCard, PlusCircle, Building2 } from 'lucide-react';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const AdminLayout = ({ children }) => {
@@ -19,6 +19,7 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/report-templates', label: 'Reports Template', icon: FileText },
     { path: '/admin/subscription-plans', label: 'Subscription Plans', icon: CreditCard },
     { path: '/admin/create-plans', label: 'Create Plans', icon: PlusCircle },
+    { path: '/admin/bank-accounts', label: 'Bank Account Details', icon: Building2 },
     { path: '/admin/payouts', label: 'Payouts', icon: CurrencyIcon },
   ];
 
