@@ -783,26 +783,39 @@ const verifyBookingPayment = async (req, res) => {
           const partner = await Partner.findByPartnerId(partnerIdFromMetadata);
           
           if (partner) {
-            // Create earnings record - 100% goes to partner
-            await Earnings.create({
-              recipient_id: partner.id,
-              recipient_type: 'partner',
-              razorpay_payment_id: payment.id,
-              amount: dbPayment.amount, // Full booking fee amount
-              currency: dbPayment.currency,
-              status: 'pending', // Waiting for Razorpay settlement
-              appointment_id: appointmentId,
-              payout_date: null // Will be set when settled
-            });
+            // Check if earnings already exist (might have been created via webhook)
+            const existingEarnings = await Earnings.findByPaymentId(payment.id);
+            if (existingEarnings) {
+              console.log(`[EARNINGS] Earnings record already exists for payment ${payment.id}, skipping creation in verifyBookingPayment`);
+            } else {
+              // Create earnings record - 100% goes to partner
+              await Earnings.create({
+                recipient_id: partner.id,
+                recipient_type: 'partner',
+                razorpay_payment_id: payment.id,
+                amount: dbPayment.amount, // Full booking fee amount
+                currency: dbPayment.currency,
+                status: 'pending', // Waiting for Razorpay settlement
+                appointment_id: appointmentId,
+                payout_date: null // Will be set when settled
+              });
 
-            console.log(`[EARNINGS] Created earnings record for partner ${partner.id} from booking payment ${payment.id}`);
+              console.log(`[EARNINGS] Created earnings record for partner ${partner.id} (${partner.name}) from booking payment ${payment.id} (amount: ${dbPayment.amount} ${dbPayment.currency}) via verifyBookingPayment`);
+            }
           } else {
-            console.warn(`[EARNINGS] Partner not found for partner_id: ${partnerIdFromMetadata}`);
+            console.error(`[EARNINGS] Partner not found for partner_id: ${partnerIdFromMetadata} (verifyBookingPayment)`);
+            console.error(`[EARNINGS] Order metadata:`, JSON.stringify(orderMetadata, null, 2));
           }
+        } else {
+          console.error(`[EARNINGS] No partner_id found in order metadata for payment ${payment.id} (verifyBookingPayment)`);
+          console.error(`[EARNINGS] Order metadata:`, JSON.stringify(orderMetadata, null, 2));
         }
       } catch (earningsError) {
         // Log error but don't fail the payment verification
-        console.error('[EARNINGS] Failed to create earnings record:', earningsError);
+        console.error('[EARNINGS] Failed to create earnings record in verifyBookingPayment:', earningsError);
+        console.error('[EARNINGS] Error stack:', earningsError.stack);
+        console.error('[EARNINGS] Payment ID:', payment.id);
+        console.error('[EARNINGS] Order ID:', razorpay_order_id);
       }
     }
 
