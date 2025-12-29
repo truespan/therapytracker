@@ -21,6 +21,7 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
   const [error, setError] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showFutureDateWarning, setShowFutureDateWarning] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [conflictData, setConflictData] = useState(null);
   const [sessionCreationData, setSessionCreationData] = useState(null);
@@ -127,10 +128,16 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       return;
     }
 
+    // Check if user has chosen to skip the confirmation dialog
+    const dontShowDialog = localStorage.getItem('dontShowConfirmSessionCreationDialog') === 'true';
+    
     // Check if session is in the future and more than 30 minutes away
     if (isFutureDateTimeMoreThan30Mins()) {
       // Show future date warning dialog first
       setShowFutureDateWarning(true);
+    } else if (dontShowDialog) {
+      // Skip confirmation dialog and proceed directly
+      await handleConfirmCreate();
     } else {
       // Show confirmation dialog directly
       setShowConfirmDialog(true);
@@ -138,6 +145,9 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
   };
 
   const handleConfirmCreate = async () => {
+    if (dontShowAgain) {
+      localStorage.setItem('dontShowConfirmSessionCreationDialog', 'true');
+    }
     setShowConfirmDialog(false);
     setLoading(true);
 
@@ -259,10 +269,17 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
     setLoading(false);
   };
 
-  const handleConfirmFutureDate = () => {
+  const handleConfirmFutureDate = async () => {
     setShowFutureDateWarning(false);
-    // Proceed to confirmation dialog
-    setShowConfirmDialog(true);
+    // Check if user has chosen to skip the confirmation dialog
+    const dontShowDialog = localStorage.getItem('dontShowConfirmSessionCreationDialog') === 'true';
+    if (dontShowDialog) {
+      // Skip confirmation dialog and proceed directly
+      await handleConfirmCreate();
+    } else {
+      // Proceed to confirmation dialog
+      setShowConfirmDialog(true);
+    }
   };
 
   const handleCancelFutureDate = () => {
@@ -551,6 +568,20 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
               <p className="text-xs text-yellow-800 dark:text-yellow-300">
                 <strong>Note:</strong> You can edit session notes later.
               </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                  className="w-4 h-4 text-primary-600 dark:text-dark-primary-500 border-gray-300 dark:border-dark-border rounded focus:ring-primary-500 dark:focus:ring-dark-primary-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                  Don't show this again
+                </span>
+              </label>
             </div>
 
             {/* Action Buttons */}

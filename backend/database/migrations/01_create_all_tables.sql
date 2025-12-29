@@ -279,7 +279,7 @@ CREATE INDEX IF NOT EXISTS idx_user_questionnaire_assignments_assigned_at ON use
 -- 14. Therapy Sessions Table
 CREATE TABLE IF NOT EXISTS therapy_sessions (
     id SERIAL PRIMARY KEY,
-    appointment_id INTEGER REFERENCES appointments(id) ON DELETE CASCADE,
+    appointment_id INTEGER REFERENCES appointments(id) ON DELETE SET NULL,
     partner_id INTEGER NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_title VARCHAR(255) NOT NULL,

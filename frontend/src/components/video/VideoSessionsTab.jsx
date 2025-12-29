@@ -151,6 +151,14 @@ const VideoSessionsTab = ({ partnerId, users }) => {
       return;
     }
 
+    // Check if user has chosen to skip this dialog
+    const dontShowDialog = localStorage.getItem('dontShowCompleteVideoSessionDialog') === 'true';
+    if (dontShowDialog) {
+      // Skip dialog and proceed directly
+      await createTherapySession(session);
+      return;
+    }
+
     // Show dialog for manual completion
     setDialogMode('manual');
     setSelectedVideoSessionForStart(session);

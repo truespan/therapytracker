@@ -12,6 +12,7 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,11 +31,22 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
       return;
     }
 
+    // Check if user has chosen to skip this dialog
+    const dontShowDialog = localStorage.getItem('dontShowConfirmSessionCreationDialog') === 'true';
+    if (dontShowDialog) {
+      // Skip dialog and proceed directly
+      await handleConfirmCreate();
+      return;
+    }
+
     // Show confirmation dialog first
     setShowConfirmDialog(true);
   };
 
   const handleConfirmCreate = async () => {
+    if (dontShowAgain) {
+      localStorage.setItem('dontShowConfirmSessionCreationDialog', 'true');
+    }
     setShowConfirmDialog(false);
     setLoading(true);
 
@@ -218,6 +230,20 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
               <p className="text-xs text-yellow-800 dark:text-yellow-300">
                 <strong>Note:</strong> You can edit session notes later.
               </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={dontShowAgain}
+                  onChange={(e) => setDontShowAgain(e.target.checked)}
+                  className="w-4 h-4 text-primary-600 dark:text-dark-primary-500 border-gray-300 dark:border-dark-border rounded focus:ring-primary-500 dark:focus:ring-dark-primary-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                  Don't show this again
+                </span>
+              </label>
             </div>
 
             {/* Action Buttons */}
