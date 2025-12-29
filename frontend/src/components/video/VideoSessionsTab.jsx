@@ -14,10 +14,33 @@ const VideoSessionsTab = ({ partnerId, users }) => {
   const [copied, setCopied] = useState(null);
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [selectedVideoSessionForStart, setSelectedVideoSessionForStart] = useState(null);
+  const [dialogMode, setDialogMode] = useState('manual'); // 'manual' or 'auto'
 
   useEffect(() => {
     loadSessions();
+    checkAutoCompleteSessions();
   }, [partnerId]);
+
+  const checkAutoCompleteSessions = async () => {
+    try {
+      // Check for sessions that need auto-completion (ended more than 24 hours ago)
+      const response = await therapySessionAPI.checkAutoComplete(partnerId);
+      const autoCompletedSessions = response.data.autoCompletedSessions || [];
+      
+      if (autoCompletedSessions.length > 0) {
+        // Show dialog for first auto-completed session
+        const firstSession = autoCompletedSessions[0];
+        setDialogMode('auto');
+        setSelectedVideoSessionForStart(firstSession);
+        setShowStartDialog(true);
+        
+        // Reload sessions to update UI
+        loadSessions();
+      }
+    } catch (err) {
+      console.error('Failed to check auto-complete sessions:', err);
+    }
+  };
 
   const loadSessions = async () => {
     try {
@@ -93,24 +116,60 @@ const VideoSessionsTab = ({ partnerId, users }) => {
       return;
     }
 
-    // Check if user has dismissed the warning
-    const warningDismissed = localStorage.getItem('videoSessionAutoCreateWarningDismissed') === 'true';
-
-    if (!warningDismissed) {
-      // Show warning dialog
-      setSelectedVideoSessionForStart(session);
-      setShowStartDialog(true);
-    } else {
-      // Auto-create session and open Meet
-      await createSessionAndOpenMeet(session);
+    // If therapy session already exists, just open Meet
+    if (session.has_therapy_session || session.therapy_session_id) {
+      openMeetLink(meetLink);
+      return;
     }
+
+    // Mark video session as 'in_progress' if not already
+    if (session.status !== 'in_progress') {
+      try {
+        await videoSessionAPI.updateStatus(session.id, 'in_progress');
+        // Reload to update UI
+        loadSessions();
+      } catch (err) {
+        console.error('Failed to update session status:', err);
+      }
+    }
+
+    // Open Google Meet
+    openMeetLink(meetLink);
+  };
+
+  const handleCompleteSession = async (session) => {
+    // Check if session already exists
+    if (session.has_therapy_session || session.therapy_session_id) {
+      // Just mark video session as completed
+      try {
+        await videoSessionAPI.updateStatus(session.id, 'completed');
+        loadSessions();
+      } catch (err) {
+        console.error('Failed to update session status:', err);
+        alert('Failed to update session status. Please try again.');
+      }
+      return;
+    }
+
+    // Show dialog for manual completion
+    setDialogMode('manual');
+    setSelectedVideoSessionForStart(session);
+    setShowStartDialog(true);
   };
 
   const handleDialogConfirm = async () => {
     setShowStartDialog(false);
     if (selectedVideoSessionForStart) {
-      await createSessionAndOpenMeet(selectedVideoSessionForStart);
-      setSelectedVideoSessionForStart(null);
+      if (dialogMode === 'auto') {
+        // For auto mode, just close - session already created
+        setSelectedVideoSessionForStart(null);
+        // Reload to show updated status
+        loadSessions();
+      } else {
+        // For manual mode, create the session
+        await createTherapySession(selectedVideoSessionForStart);
+        setSelectedVideoSessionForStart(null);
+      }
     }
   };
 
@@ -119,41 +178,28 @@ const VideoSessionsTab = ({ partnerId, users }) => {
     setSelectedVideoSessionForStart(null);
   };
 
-  const createSessionAndOpenMeet = async (session) => {
+  const createTherapySession = async (session) => {
     try {
-      // Check if session already exists (either created from video session or linked to therapy session)
-      if (session.has_therapy_session || session.therapy_session_id) {
-        // Just open Meet if session already exists
-        const meetLink = getMeetLink(session);
-        if (meetLink) {
-          openMeetLink(meetLink);
-        }
-        return;
-      }
-
       // Create therapy session from video session
       await therapySessionAPI.createFromVideoSession(session.id);
 
-      // Open Google Meet
-      const meetLink = getMeetLink(session);
-      if (meetLink) {
-        openMeetLink(meetLink);
-      }
+      // Mark video session as completed
+      await videoSessionAPI.updateStatus(session.id, 'completed');
 
       // Reload sessions to update UI
       loadSessions();
     } catch (err) {
-      console.error('Failed to create session or open Meet:', err);
+      console.error('Failed to create therapy session:', err);
       
       // Handle case where session already exists
       if (err.response?.status === 409) {
-        // Session already exists, just open the meet link
-        const meetLink = getMeetLink(session);
-        if (meetLink) {
-          openMeetLink(meetLink);
+        // Session already exists, just mark as completed
+        try {
+          await videoSessionAPI.updateStatus(session.id, 'completed');
+          loadSessions();
+        } catch (updateErr) {
+          console.error('Failed to update session status:', updateErr);
         }
-        // Reload to update UI
-        loadSessions();
       } else {
         const errorMessage = err.response?.data?.error || 'Failed to create session. Please try again.';
         alert(errorMessage);
@@ -314,6 +360,32 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             </button>
                           ) : (
                             <span className="text-xs text-gray-500">No Meet link</span>
+                          )}
+                          {/* Show Complete Session button for in_progress or past sessions without therapy session */}
+                          {!session.has_therapy_session && !session.therapy_session_id && 
+                           (session.status === 'in_progress' || new Date(session.end_date) < new Date()) && (
+                            <button
+                              onClick={() => handleCompleteSession(session)}
+                              className="btn bg-green-600 hover:bg-green-700 text-white text-sm flex items-center space-x-1"
+                              title="Complete session and create therapy session"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              <span>Complete Session</span>
+                            </button>
+                          )}
+                          {/* Show warning for past sessions without therapy session */}
+                          {!session.has_therapy_session && !session.therapy_session_id && 
+                           new Date(session.end_date) < new Date() && 
+                           session.status !== 'in_progress' && (
+                            <div className="flex items-center space-x-1 text-orange-600 dark:text-orange-400">
+                              <AlertCircle className="h-4 w-4" />
+                              <button
+                                onClick={() => handleCompleteSession(session)}
+                                className="text-sm font-medium underline"
+                              >
+                                Complete Required
+                              </button>
+                            </div>
                           )}
                           {session.has_therapy_session && (
                             <div className="flex items-center space-x-1 text-green-700 dark:text-green-400">
@@ -507,6 +579,17 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           ) : (
                             <span className="text-xs text-gray-500">No Meet link</span>
                           )}
+                          {/* Show Complete Session button for past sessions without therapy session */}
+                          {!session.has_therapy_session && !session.therapy_session_id && (
+                            <button
+                              onClick={() => handleCompleteSession(session)}
+                              className="btn bg-green-600 hover:bg-green-700 text-white text-sm flex items-center space-x-1"
+                              title="Complete session and create therapy session"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              <span>Complete Session</span>
+                            </button>
+                          )}
                           {session.has_therapy_session && (
                             <div className="flex items-center space-x-1 text-green-700 dark:text-green-400">
                               <CheckCircle className="h-4 w-4" />
@@ -583,6 +666,17 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           ) : (
                             <span className="text-xs text-gray-500 text-center">No Meet link</span>
                           )}
+                          {/* Show Complete Session button for past sessions without therapy session */}
+                          {!session.has_therapy_session && !session.therapy_session_id && (
+                            <button
+                              onClick={() => handleCompleteSession(session)}
+                              className="w-full py-1.5 px-3 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700 transition text-center flex items-center justify-center space-x-1"
+                              title="Complete session and create therapy session"
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                              <span>Complete Session</span>
+                            </button>
+                          )}
                           {session.has_therapy_session && (
                             <div className="flex items-center justify-center space-x-1 text-green-700 dark:text-green-400">
                               <CheckCircle className="h-3 w-3" />
@@ -638,6 +732,7 @@ const VideoSessionsTab = ({ partnerId, users }) => {
         <VideoSessionStartDialog
           onConfirm={handleDialogConfirm}
           onCancel={handleDialogCancel}
+          mode={dialogMode}
         />
       )}
     </div>

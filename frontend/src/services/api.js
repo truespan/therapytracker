@@ -299,6 +299,7 @@ export const therapySessionAPI = {
   create: (data) => api.post('/therapy-sessions', data),
   createStandalone: (data) => api.post('/therapy-sessions/standalone', data),
   createFromVideoSession: (videoSessionId) => api.post(`/therapy-sessions/from-video/${videoSessionId}`),
+  checkAutoComplete: (partnerId) => api.get(`/therapy-sessions/check-auto-complete/${partnerId}`),
   getById: (id) => api.get(`/therapy-sessions/${id}`),
   getByPartner: (partnerId, startDate, endDate) => {
     const params = {};
@@ -330,6 +331,7 @@ export const videoSessionAPI = {
   },
   getByUser: (userId) => api.get(`/users/${userId}/video-sessions`),
   update: (id, data) => api.put(`/video-sessions/${id}`, data),
+  updateStatus: (id, status) => api.put(`/video-sessions/${id}`, { status }),
   updateStatus: (id, status) => api.put(`/video-sessions/${id}`, { status }),
   delete: (id) => api.delete(`/video-sessions/${id}`),
   verifyPassword: (id, password) => api.post(`/video-sessions/${id}/verify-password`, { password }),

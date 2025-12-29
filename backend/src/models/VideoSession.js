@@ -151,7 +151,7 @@ class VideoSession {
       FROM video_sessions vs
       JOIN partners p ON vs.partner_id = p.id
       LEFT JOIN therapy_sessions ts ON vs.id = ts.video_session_id
-      WHERE vs.user_id = $1 AND vs.status IN ('scheduled', 'started', 'in_progress')
+      WHERE vs.user_id = $1 AND vs.status IN ('scheduled', 'in_progress')
       ORDER BY vs.session_date ASC
     `;
     const result = await db.query(query, [userId]);
@@ -253,7 +253,7 @@ class VideoSession {
       UPDATE video_sessions
       SET status = 'completed', updated_at = CURRENT_TIMESTAMP
       WHERE end_date < CURRENT_TIMESTAMP
-      AND status IN ('scheduled', 'started', 'in_progress')
+      AND status IN ('scheduled', 'in_progress')
       RETURNING id
     `;
     const result = await db.query(query);

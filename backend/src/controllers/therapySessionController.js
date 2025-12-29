@@ -353,8 +353,8 @@ const createSessionFromVideoSession = async (req, res) => {
       });
     }
 
-    // Update video session status to 'started'
-    await VideoSession.updateStatus(videoSessionId, 'started');
+    // Update video session status to 'in_progress'
+    await VideoSession.updateStatus(videoSessionId, 'in_progress');
 
     // Create therapy session with video session details
     const newSession = await TherapySession.createStandalone({
@@ -381,6 +381,78 @@ const createSessionFromVideoSession = async (req, res) => {
   }
 };
 
+// Check and auto-complete video sessions that ended more than 24 hours ago
+const checkAutoCompleteSessions = async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+    const VideoSession = require('../models/VideoSession');
+    const db = require('../config/database');
+    
+    // Find video sessions that:
+    // 1. Belong to this partner
+    // 2. Ended more than 2 hours ago
+    // 3. Don't have a therapy session
+    // 4. Are not cancelled
+    const query = `
+      SELECT vs.*
+      FROM video_sessions vs
+      LEFT JOIN therapy_sessions ts ON vs.id = ts.video_session_id
+      WHERE vs.partner_id = $1
+        AND ts.id IS NULL
+        AND vs.end_date < CURRENT_TIMESTAMP - INTERVAL '2 hours'
+        AND vs.status != 'cancelled'
+        AND vs.status IN ('scheduled', 'in_progress', 'completed')
+      ORDER BY vs.end_date DESC
+      LIMIT 10
+    `;
+    
+    const result = await db.query(query, [partnerId]);
+    const sessionsToComplete = result.rows;
+    const autoCompletedSessions = [];
+    
+    // Auto-complete each session
+    for (const videoSession of sessionsToComplete) {
+      try {
+        // Create therapy session with auto-completion note
+        const newSession = await TherapySession.createStandalone({
+          partner_id: videoSession.partner_id,
+          user_id: videoSession.user_id,
+          session_title: videoSession.title,
+          session_date: videoSession.session_date,
+          session_duration: videoSession.duration_minutes,
+          session_notes: 'Auto-completed: Therapist did not manually complete this session within 2 hours.',
+          payment_notes: null,
+          video_session_id: videoSession.id
+        });
+        
+        // Mark video session as completed
+        await VideoSession.updateStatus(videoSession.id, 'completed');
+        
+        autoCompletedSessions.push({
+          id: videoSession.id,
+          title: videoSession.title,
+          session_date: videoSession.session_date,
+          therapy_session_id: newSession.id
+        });
+      } catch (error) {
+        console.error(`Failed to auto-complete session ${videoSession.id}:`, error);
+        // Continue with other sessions even if one fails
+      }
+    }
+    
+    res.json({
+      message: `Auto-completed ${autoCompletedSessions.length} session(s)`,
+      autoCompletedSessions
+    });
+  } catch (error) {
+    console.error('Check auto-complete sessions error:', error);
+    res.status(500).json({
+      error: 'Failed to check auto-complete sessions',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   createTherapySession,
   createStandaloneSession,
@@ -393,5 +465,6 @@ module.exports = {
   deleteTherapySession,
   assignQuestionnaireToSession,
   getSessionQuestionnaires,
-  removeQuestionnaireFromSession
+  removeQuestionnaireFromSession,
+  checkAutoCompleteSessions
 };
