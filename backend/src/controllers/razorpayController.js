@@ -383,12 +383,23 @@ const handleWebhook = async (req, res) => {
 async function handlePaymentSuccess(event) {
   const payment = event.payload.payment.entity;
   
+  // Get order from database first (if order_id exists) to get customer info
+  let dbOrder = null;
+  if (payment.order_id) {
+    try {
+      dbOrder = await RazorpayOrder.findByOrderId(payment.order_id);
+    } catch (orderError) {
+      console.error('[WEBHOOK] Error fetching order:', orderError);
+    }
+  }
+  
   // Update payment status in database
   const existingPayment = await RazorpayPayment.findByPaymentId(payment.id);
   if (existingPayment) {
     await RazorpayPayment.updateStatus(payment.id, payment.status);
   } else {
     // Create new payment record if it doesn't exist
+    // Include customer info from order if available
     await RazorpayPayment.create({
       razorpay_payment_id: payment.id,
       razorpay_order_id: payment.order_id,
@@ -396,6 +407,11 @@ async function handlePaymentSuccess(event) {
       currency: payment.currency,
       status: payment.status,
       payment_method: payment.method,
+      description: payment.description || null,
+      customer_id: dbOrder ? dbOrder.customer_id : null,
+      customer_type: dbOrder ? dbOrder.customer_type : null,
+      subscription_plan_id: dbOrder ? dbOrder.subscription_plan_id : null,
+      billing_period: dbOrder ? dbOrder.billing_period : null,
       metadata: payment
     });
   }
@@ -406,70 +422,76 @@ async function handlePaymentSuccess(event) {
       // Check if earnings record already exists (might have been created in verifyBookingPayment)
       const existingEarnings = await Earnings.findByPaymentId(payment.id);
       
-      if (!existingEarnings && payment.order_id) {
-        // Get order from database to check metadata
-        const dbOrder = await RazorpayOrder.findByOrderId(payment.order_id);
-        
-        if (dbOrder) {
-          // Parse notes/metadata - PostgreSQL JSONB fields are returned as objects by node-postgres
-          // But handle both cases: when stored as JSONB (object) or string
-          let orderMetadata = {};
-          if (dbOrder.notes) {
-            orderMetadata = typeof dbOrder.notes === 'string' ? JSON.parse(dbOrder.notes) : dbOrder.notes;
-          } else if (dbOrder.metadata) {
-            // Fallback to metadata property (for compatibility, though notes is the actual column)
-            orderMetadata = typeof dbOrder.metadata === 'string' ? JSON.parse(dbOrder.metadata) : dbOrder.metadata;
-          }
-          
-          // Check if this is a booking payment
-          if (orderMetadata && orderMetadata.payment_type === 'booking_fee') {
-            const partnerIdFromMetadata = orderMetadata.partner_id;
-            
-            if (partnerIdFromMetadata) {
-              // Find partner by partner_id string (e.g., "AB12345") to get internal ID
-              const Partner = require('../models/Partner');
-              const partner = await Partner.findByPartnerId(partnerIdFromMetadata);
-              
-              if (partner) {
-                // Try to find appointment_id from slot_id if available
-                let appointmentId = null;
-                if (orderMetadata.slot_id) {
-                  const slotQuery = `SELECT appointment_id FROM availability_slots WHERE id = $1`;
-                  const slotResult = await db.query(slotQuery, [orderMetadata.slot_id]);
-                  if (slotResult.rows[0] && slotResult.rows[0].appointment_id) {
-                    appointmentId = slotResult.rows[0].appointment_id;
-                  }
-                }
-
-                // Get payment amount - use existing payment record amount or calculate from payment entity
-                let paymentAmount = payment.amount / 100; // Convert from paise to rupees
-                if (existingPayment) {
-                  paymentAmount = existingPayment.amount;
-                }
-
-                // Create earnings record - 100% goes to partner
-                await Earnings.create({
-                  recipient_id: partner.id,
-                  recipient_type: 'partner',
-                  razorpay_payment_id: payment.id,
-                  amount: paymentAmount,
-                  currency: payment.currency,
-                  status: 'pending', // Waiting for Razorpay settlement
-                  appointment_id: appointmentId,
-                  payout_date: null // Will be set when settled
-                });
-
-                console.log(`[EARNINGS] Created earnings record for partner ${partner.id} from booking payment ${payment.id} (via webhook)`);
-              } else {
-                console.warn(`[EARNINGS] Partner not found for partner_id: ${partnerIdFromMetadata} (webhook)`);
-              }
-            }
-          }
+      if (!existingEarnings && payment.order_id && dbOrder) {
+        // Parse notes/metadata - PostgreSQL JSONB fields are returned as objects by node-postgres
+        // But handle both cases: when stored as JSONB (object) or string
+        let orderMetadata = {};
+        if (dbOrder.notes) {
+          orderMetadata = typeof dbOrder.notes === 'string' ? JSON.parse(dbOrder.notes) : dbOrder.notes;
+        } else if (dbOrder.metadata) {
+          // Fallback to metadata property (for compatibility, though notes is the actual column)
+          orderMetadata = typeof dbOrder.metadata === 'string' ? JSON.parse(dbOrder.metadata) : dbOrder.metadata;
         }
+        
+        // Check if this is a booking payment
+        if (orderMetadata && orderMetadata.payment_type === 'booking_fee') {
+          const partnerIdFromMetadata = orderMetadata.partner_id;
+          
+          if (partnerIdFromMetadata) {
+            // Find partner by partner_id string (e.g., "AB12345") to get internal ID
+            const Partner = require('../models/Partner');
+            const partner = await Partner.findByPartnerId(partnerIdFromMetadata);
+            
+            if (partner) {
+              // Try to find appointment_id from slot_id if available
+              let appointmentId = null;
+              if (orderMetadata.slot_id) {
+                const slotQuery = `SELECT appointment_id FROM availability_slots WHERE id = $1`;
+                const slotResult = await db.query(slotQuery, [orderMetadata.slot_id]);
+                if (slotResult.rows[0] && slotResult.rows[0].appointment_id) {
+                  appointmentId = slotResult.rows[0].appointment_id;
+                }
+              }
+
+              // Get payment amount - use existing payment record amount or calculate from payment entity
+              let paymentAmount = payment.amount / 100; // Convert from paise to rupees
+              if (existingPayment) {
+                paymentAmount = existingPayment.amount;
+              }
+
+              // Create earnings record - 100% goes to partner
+              await Earnings.create({
+                recipient_id: partner.id,
+                recipient_type: 'partner',
+                razorpay_payment_id: payment.id,
+                amount: paymentAmount,
+                currency: payment.currency,
+                status: 'pending', // Waiting for Razorpay settlement
+                appointment_id: appointmentId,
+                payout_date: null // Will be set when settled
+              });
+
+              console.log(`[EARNINGS] Created earnings record for partner ${partner.id} (${partner.name}) from booking payment ${payment.id} (amount: ${paymentAmount} ${payment.currency}) via webhook`);
+            } else {
+              console.warn(`[EARNINGS] Partner not found for partner_id: ${partnerIdFromMetadata} (webhook)`);
+            }
+          } else {
+            console.warn(`[EARNINGS] No partner_id found in order metadata for payment ${payment.id} (webhook)`);
+          }
+        } else {
+          console.log(`[EARNINGS] Payment ${payment.id} is not a booking fee payment (payment_type: ${orderMetadata.payment_type || 'not set'}) - skipping earnings creation`);
+        }
+      } else if (existingEarnings) {
+        console.log(`[EARNINGS] Earnings record already exists for payment ${payment.id} (webhook)`);
+      } else if (!payment.order_id) {
+        console.warn(`[EARNINGS] Payment ${payment.id} has no order_id - cannot create earnings record (webhook)`);
+      } else if (!dbOrder) {
+        console.warn(`[EARNINGS] Order not found in database for payment ${payment.id}, order_id: ${payment.order_id} (webhook)`);
       }
     } catch (earningsError) {
       // Log error but don't fail the webhook processing
       console.error('[EARNINGS] Failed to create earnings record in webhook:', earningsError);
+      console.error('[EARNINGS] Error stack:', earningsError.stack);
     }
   }
 }

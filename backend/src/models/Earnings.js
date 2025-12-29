@@ -53,7 +53,7 @@ class Earnings {
       SELECT 
         COALESCE(SUM(CASE WHEN status = 'available' THEN amount ELSE 0 END), 0) as available_balance,
         COALESCE(SUM(CASE WHEN status = 'withdrawn' THEN amount ELSE 0 END), 0) as withdrawn_amount,
-        COALESCE(SUM(CASE WHEN status IN ('available', 'withdrawn') THEN amount ELSE 0 END), 0) as total_earnings,
+        COALESCE(SUM(CASE WHEN status IN ('available', 'withdrawn', 'pending') THEN amount ELSE 0 END), 0) as total_earnings,
         COALESCE(SUM(CASE WHEN status = 'available' THEN amount ELSE 0 END), 0) as upcoming_payout,
         COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pending_earnings
       FROM earnings
