@@ -52,6 +52,20 @@ const updateOrganization = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized to update this organization' });
     }
 
+    // Restrict query_resolver updates to admins only
+    if (updates.query_resolver !== undefined && req.user.userType !== 'admin') {
+      return res.status(403).json({ 
+        error: 'Only administrators can set the query_resolver flag' 
+      });
+    }
+
+    // If setting query_resolver = true, ensure organization is TheraPTrack controlled
+    if (updates.query_resolver === true && !organization.theraptrack_controlled) {
+      return res.status(400).json({ 
+        error: 'query_resolver can only be set for organizations with theraptrack_controlled = true' 
+      });
+    }
+
     console.log('Calling Organization.update with:', updates);
     const updatedOrganization = await Organization.update(id, updates);
     console.log('Updated organization:', updatedOrganization);

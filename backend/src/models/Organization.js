@@ -86,15 +86,17 @@ class Organization {
     const { 
       name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, 
       video_sessions_enabled, theraptrack_controlled, number_of_therapists, 
-      subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date 
+      subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date,
+      query_resolver
     } = orgData;
     const query = `
       INSERT INTO organizations (
         name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, 
         is_active, video_sessions_enabled, theraptrack_controlled, number_of_therapists,
-        subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date
+        subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date,
+        query_resolver
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *
     `;
     const values = [
@@ -113,7 +115,8 @@ class Organization {
       subscription_plan_id || null,
       subscription_billing_period || null,
       subscription_start_date || null,
-      subscription_end_date || null
+      subscription_end_date || null,
+      query_resolver !== undefined ? query_resolver : false
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
@@ -150,7 +153,8 @@ class Organization {
       theraptrack_controlled, number_of_therapists, subscription_plan_id, 
       subscription_billing_period, subscription_start_date, subscription_end_date,
       razorpay_subscription_id, razorpay_customer_id, payment_status,
-      bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified
+      bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified,
+      query_resolver
     } = orgData;
 
     console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
@@ -198,6 +202,10 @@ class Organization {
     if (theraptrack_controlled !== undefined) {
       updates.push(`theraptrack_controlled = $${paramIndex++}`);
       values.push(theraptrack_controlled);
+    }
+    if (query_resolver !== undefined) {
+      updates.push(`query_resolver = $${paramIndex++}`);
+      values.push(query_resolver);
     }
     if (number_of_therapists !== undefined) {
       // Convert empty string to null for integer field

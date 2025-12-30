@@ -5,7 +5,8 @@ import {
   Building2, Users, UserCheck, Activity, Plus, Edit, UserX,
   UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail,
   AlertCircle, Send, Trash2, Settings, Calendar as CalendarIcon,
-  Clock, Video as VideoIcon, User as UserIcon, ClipboardList, CreditCard, Link as LinkIcon, Copy
+  Clock, Video as VideoIcon, User as UserIcon, ClipboardList, CreditCard, Link as LinkIcon, Copy,
+  Headphones
 } from 'lucide-react';
 import CreatePartnerModal from '../organization/CreatePartnerModal';
 import EditPartnerModal from '../organization/EditPartnerModal';
@@ -18,6 +19,7 @@ import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
 import SubscriptionManagement from '../organization/SubscriptionManagement';
 import EarningsTab from '../earnings/EarningsTab';
+import SupportDashboard from '../support/SupportDashboard';
 import DarkModeToggle from '../common/DarkModeToggle';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 
@@ -563,6 +565,19 @@ const OrganizationDashboard = () => {
               Earnings
             </button>
           )}
+          {user?.query_resolver && (
+            <button
+              onClick={() => setActiveView('support-dashboard')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
+                activeView === 'support-dashboard'
+                  ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
+              }`}
+            >
+              <Headphones className="inline h-5 w-5 mr-2" />
+              Support
+            </button>
+          )}
           <button
             onClick={() => setActiveView('settings')}
             className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
@@ -1044,6 +1059,13 @@ const OrganizationDashboard = () => {
 
       {activeView === 'earnings' && !user.theraptrack_controlled && (
         <EarningsTab />
+      )}
+
+      {/* Support Dashboard View (only for query_resolver organizations) */}
+      {activeView === 'support-dashboard' && user?.query_resolver && (
+        <div className="h-[calc(100vh-200px)]">
+          <SupportDashboard />
+        </div>
       )}
 
       {activeView === 'settings' && (

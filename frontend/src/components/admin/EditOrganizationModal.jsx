@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, Users, Shield } from 'lucide-react';
+import { X, Building2, Mail, Phone, MapPin, FileText, Users, Shield, MessageCircle } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 
 const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organization }) => {
@@ -11,6 +11,7 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     gst_no: '',
     video_sessions_enabled: true,
     theraptrack_controlled: false,
+    query_resolver: false,
     number_of_therapists: '',
     photo_url: '',
   });
@@ -27,6 +28,7 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         gst_no: organization.gst_no || '',
         video_sessions_enabled: organization.video_sessions_enabled ?? true,
         theraptrack_controlled: organization.theraptrack_controlled ?? false,
+        query_resolver: organization.query_resolver ?? false,
         number_of_therapists: organization.number_of_therapists != null ? organization.number_of_therapists : '',
         photo_url: organization.photo_url || '',
       });
@@ -273,7 +275,13 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
                   type="checkbox"
                   name="theraptrack_controlled"
                   checked={formData.theraptrack_controlled}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    // If unchecking TheraPTrack Controlled, also uncheck query_resolver
+                    if (!e.target.checked) {
+                      setFormData(prev => ({ ...prev, query_resolver: false }));
+                    }
+                  }}
                   className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
                   disabled={isLoading}
                 />
@@ -292,6 +300,36 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
               </div>
             </label>
           </div>
+
+          {/* Query Resolver - Only shown if TheraPTrack Controlled is enabled */}
+          {formData.theraptrack_controlled && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <div className="flex items-center h-5">
+                  <input
+                    type="checkbox"
+                    name="query_resolver"
+                    checked={formData.query_resolver}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center">
+                    <MessageCircle className="h-4 w-4 text-primary-700 mr-2" />
+                    <span className="text-sm font-medium text-gray-900">
+                      Query Resolver (Support Team Member)
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Enable this organization to respond to support chat queries from users. 
+                    Only available for TheraPTrack controlled organizations.
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
 
           {/* Number of Therapists */}
           <div>

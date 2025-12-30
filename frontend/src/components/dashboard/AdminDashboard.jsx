@@ -14,6 +14,8 @@ import {
   Activity,
   ClipboardList,
   Settings,
+  Headphones,
+  User,
 } from 'lucide-react';
 import { adminAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -24,24 +26,32 @@ import QuestionnaireList from '../questionnaires/QuestionnaireList';
 import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
 import AdminSettings from '../admin/AdminSettings';
+import SupportDashboard from '../support/SupportDashboard';
 import DarkModeToggle from '../common/DarkModeToggle';
+import EditPartnerModal from '../admin/EditPartnerModal';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const [organizations, setOrganizations] = useState([]);
+  const [partners, setPartners] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [partnersLoading, setPartnersLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [partnerSearchTerm, setPartnerSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, inactive
   const [selectedOrg, setSelectedOrg] = useState(null);
+  const [selectedPartner, setSelectedPartner] = useState(null);
   const [metricsData, setMetricsData] = useState(null);
-  const [activeTab, setActiveTab] = useState('organizations'); // 'organizations', 'questionnaires'
+  const [activeTab, setActiveTab] = useState('organizations'); // 'organizations', 'questionnaires', 'partners'
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showEditPartnerModal, setShowEditPartnerModal] = useState(false);
   const [showMetricsModal, setShowMetricsModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  const [partnerModalLoading, setPartnerModalLoading] = useState(false);
   const [metricsLoading, setMetricsLoading] = useState(false);
 
   // Questionnaire states
@@ -66,6 +76,12 @@ const AdminDashboard = () => {
     loadDashboardData();
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'partners') {
+      loadPartners();
+    }
+  }, [activeTab]);
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -80,6 +96,19 @@ const AdminDashboard = () => {
       alert('Failed to load dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPartners = async () => {
+    try {
+      setPartnersLoading(true);
+      const response = await adminAPI.getAllPartners();
+      setPartners(response.data.partners || []);
+    } catch (error) {
+      console.error('Error loading partners:', error);
+      alert('Failed to load partners');
+    } finally {
+      setPartnersLoading(false);
     }
   };
 
@@ -268,6 +297,30 @@ const AdminDashboard = () => {
     setEditingQuestionnaireId(null);
   };
 
+  const handleUpdatePartner = async (formData) => {
+    try {
+      setPartnerModalLoading(true);
+      await adminAPI.updatePartner(selectedPartner.id, formData);
+      alert('Partner updated successfully!');
+      setShowEditPartnerModal(false);
+      setSelectedPartner(null);
+      loadPartners();
+    } catch (error) {
+      console.error('Error updating partner:', error);
+      alert(error.response?.data?.error || 'Failed to update partner');
+    } finally {
+      setPartnerModalLoading(false);
+    }
+  };
+
+  const filteredPartners = partners.filter((partner) => {
+    const matchesSearch = partner.name?.toLowerCase().includes(partnerSearchTerm.toLowerCase()) ||
+                         partner.email?.toLowerCase().includes(partnerSearchTerm.toLowerCase()) ||
+                         partner.partner_id?.toLowerCase().includes(partnerSearchTerm.toLowerCase()) ||
+                         partner.organization_name?.toLowerCase().includes(partnerSearchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -319,16 +372,38 @@ const AdminDashboard = () => {
               Questionnaires
             </button>
             <button
-              onClick={() => setActiveTab('settings')}
+              onClick={() => setActiveTab('partners')}
               className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'settings'
+                activeTab === 'partners'
                   ? 'border-primary-600 text-primary-700 dark:border-dark-primary-500 dark:text-dark-primary-500'
                   : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
               }`}
             >
-              <Settings className="h-5 w-5" />
-              Settings
+              <User className="h-5 w-5" />
+              Partners
             </button>
+            <button
+            onClick={() => setActiveTab('support')}
+            className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'support'
+                ? 'border-primary-600 text-primary-700 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
+            }`}
+          >
+            <Headphones className="h-5 w-5" />
+            Support
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'settings'
+                ? 'border-primary-600 text-primary-700 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-umbra-500 hover:text-umbra-700 hover:border-umbra-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
+            }`}
+          >
+            <Settings className="h-5 w-5" />
+            Settings
+          </button>
           </nav>
         </div>
       </div>
@@ -649,6 +724,135 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {activeTab === 'partners' && (
+        <>
+          {/* Search */}
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+              <input
+                type="text"
+                placeholder="Search partners by name, email, partner ID, or organization..."
+                value={partnerSearchTerm}
+                onChange={(e) => setPartnerSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-umbra-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+              />
+            </div>
+          </div>
+
+          {/* Partners Table */}
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+                <thead className="bg-gray-50 dark:bg-dark-bg-secondary">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
+                      Partner
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
+                      Organization
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
+                      Partner ID
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
+                      Clients
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
+                      Query Resolver
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-dark-bg-tertiary divide-y divide-gray-200 dark:divide-dark-border">
+                  {partnersLoading ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-12 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                      </td>
+                    </tr>
+                  ) : filteredPartners.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-12 text-center">
+                        <User className="h-12 w-12 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-3" />
+                        <p className="text-gray-600 dark:text-dark-text-secondary">
+                          {partnerSearchTerm ? 'No partners found matching your search' : 'No partners yet'}
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPartners.map((partner) => (
+                      <tr key={partner.id} className="hover:bg-gray-50 dark:hover:bg-dark-bg-secondary">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <User className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary mr-3" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">{partner.name}</div>
+                              {partner.email && (
+                                <div className="text-sm text-gray-500 dark:text-dark-text-secondary">{partner.email}</div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900 dark:text-dark-text-primary">{partner.organization_name || 'N/A'}</div>
+                          {partner.theraptrack_controlled && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 mt-1">
+                              TheraPTrack Controlled
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">{partner.partner_id || 'N/A'}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">{partner.total_clients || 0}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          {partner.query_resolver ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Yes
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              No
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setSelectedPartner(partner);
+                                setShowEditPartnerModal(true);
+                              }}
+                              className="text-primary-700 dark:text-dark-primary-400 hover:text-primary-900 dark:hover:text-dark-primary-300 p-1 rounded hover:bg-primary-50 dark:hover:bg-dark-bg-secondary"
+                              title="Edit"
+                            >
+                              <Edit2 className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'support' && (
+        <div className="h-[calc(100vh-200px)]">
+          <SupportDashboard />
+        </div>
+      )}
+
       {activeTab === 'settings' && (
         <AdminSettings />
       )}
@@ -696,6 +900,17 @@ const AdminDashboard = () => {
         }}
         metrics={metricsData}
         isLoading={metricsLoading}
+      />
+
+      <EditPartnerModal
+        isOpen={showEditPartnerModal}
+        onClose={() => {
+          setShowEditPartnerModal(false);
+          setSelectedPartner(null);
+        }}
+        onSubmit={handleUpdatePartner}
+        isLoading={partnerModalLoading}
+        partner={selectedPartner}
       />
     </div>
   );

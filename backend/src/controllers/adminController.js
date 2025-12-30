@@ -137,6 +137,13 @@ const updateOrganization = async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
+    // If setting query_resolver = true, ensure organization is TheraPTrack controlled
+    if (updateData.query_resolver === true && !org.theraptrack_controlled) {
+      return res.status(400).json({ 
+        error: 'query_resolver can only be set for organizations with theraptrack_controlled = true' 
+      });
+    }
+
     // If email is being updated, check if it's already in use
     if (updateData.email && updateData.email !== org.email) {
       const existingAuth = await Auth.findByEmail(updateData.email);
@@ -798,6 +805,102 @@ const backfillOrderNotes = async (req, res) => {
   }
 };
 
+/**
+ * Get all partners (admin only)
+ */
+const getAllPartners = async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        p.*,
+        o.name as organization_name,
+        o.email as organization_email,
+        o.theraptrack_controlled,
+        COUNT(DISTINCT upa.user_id) as total_clients
+      FROM partners p
+      LEFT JOIN organizations o ON p.organization_id = o.id
+      LEFT JOIN user_partner_assignments upa ON p.id = upa.partner_id
+      GROUP BY p.id, o.name, o.email, o.theraptrack_controlled
+      ORDER BY p.created_at DESC
+    `;
+    const result = await db.query(query);
+    res.json({
+      success: true,
+      partners: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching partners:', error);
+    res.status(500).json({
+      error: 'Failed to fetch partners',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Update partner details (admin only)
+ */
+const updatePartner = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Check if partner exists
+    const partner = await Partner.findById(id);
+    if (!partner) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+
+    // If setting query_resolver = true, check if organization is TheraPTrack controlled
+    if (updateData.query_resolver === true) {
+      const Organization = require('../models/Organization');
+      const organization = await Organization.findById(partner.organization_id);
+      if (organization && !organization.theraptrack_controlled) {
+        return res.status(400).json({
+          error: 'query_resolver can only be set for partners in TheraPTrack controlled organizations'
+        });
+      }
+    }
+
+    // Validate email format if provided
+    if (updateData.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(updateData.email)) {
+        return res.status(400).json({
+          error: 'Please provide a valid email address'
+        });
+      }
+    }
+
+    // Validate contact number format if provided
+    if (updateData.contact) {
+      const phoneRegex = /^\+\d{1,4}\d{7,15}$/;
+      if (!phoneRegex.test(updateData.contact)) {
+        return res.status(400).json({
+          error: `Please provide a valid contact number with country code (e.g., +919876543210). Received: ${updateData.contact}`
+        });
+      }
+    }
+
+    // Update partner
+    const updated = await Partner.update(id, updateData);
+
+    console.log(`[ADMIN] Partner updated: ${updated.name} (ID: ${id})`);
+
+    res.json({
+      success: true,
+      message: 'Partner updated successfully',
+      partner: updated
+    });
+  } catch (error) {
+    console.error('Error updating partner:', error);
+    res.status(500).json({
+      error: 'Failed to update partner',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   createOrganization,
@@ -808,6 +911,8 @@ module.exports = {
   getOrganizationMetrics,
   getDashboardStats,
   checkAndCreateEarnings,
-  backfillOrderNotes
+  backfillOrderNotes,
+  getAllPartners,
+  updatePartner
 };
 

@@ -21,7 +21,8 @@ import ClientReportsTab from '../reports/ClientReportsTab';
 import AvailabilityTab from '../availability/AvailabilityTab';
 import EarningsTab from '../earnings/EarningsTab';
 import BlogManagement from '../blogs/BlogManagement';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon, CalendarClock, Edit } from 'lucide-react';
+import SupportDashboard from '../support/SupportDashboard';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon, CalendarClock, Edit, Headphones } from 'lucide-react';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 import CreatePatientModal from '../partner/CreatePatientModal';
 import EditClientModal from '../partner/EditClientModal';
@@ -593,6 +594,19 @@ const PartnerDashboard = () => {
               <span className="text-xs">Earnings</span>
             </button>
           )}
+          {user?.query_resolver && (
+            <button
+              onClick={() => setActiveTab('support-dashboard')}
+              className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+                activeTab === 'support-dashboard'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
+              }`}
+            >
+              <Headphones className="h-5 w-5" />
+              <span className="text-xs">Support</span>
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('settings')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
@@ -716,6 +730,19 @@ const PartnerDashboard = () => {
             >
               <CurrencyIcon className="inline h-5 w-5 mr-2" />
               Earnings
+            </button>
+          )}
+          {user?.query_resolver && (
+            <button
+              onClick={() => setActiveTab('support-dashboard')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'support-dashboard'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
+              }`}
+            >
+              <Headphones className="inline h-5 w-5 mr-2" />
+              Support
             </button>
           )}
           <button
@@ -1212,6 +1239,13 @@ const PartnerDashboard = () => {
       {/* Earnings Tab */}
       {activeTab === 'earnings' && user?.organization?.theraptrack_controlled && (
         <EarningsTab />
+      )}
+
+      {/* Support Dashboard Tab (for query_resolver partners) */}
+      {activeTab === 'support-dashboard' && user?.query_resolver && (
+        <div className="h-[calc(100vh-200px)]">
+          <SupportDashboard />
+        </div>
       )}
 
       {/* Settings Tab */}

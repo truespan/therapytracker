@@ -64,6 +64,13 @@ const updatePartner = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized to update this partner' });
     }
 
+    // Restrict query_resolver updates to admins only
+    if (updates.query_resolver !== undefined && req.user.userType !== 'admin') {
+      return res.status(403).json({ 
+        error: 'Only administrators can set the query_resolver flag' 
+      });
+    }
+
     // Validate email format if provided
     if (updates.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

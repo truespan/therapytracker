@@ -131,21 +131,22 @@ class Partner {
   }
 
   static async create(partnerData, client = null) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled, query_resolver } = partnerData;
 
     // Generate unique Partner ID
     const partnerId = await this.generatePartnerId(organization_id);
 
     const query = `
-      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled, query_resolver)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
       RETURNING *
     `;
     const values = [
       partnerId, name, sex, age || null, email, contact, qualification, license_id || null, address, photo_url,
       work_experience || null, other_practice_details || null, organization_id, verification_token, verification_token_expires,
       fee_min || null, fee_max || null, fee_currency || 'INR', language_preferences || null,
-      video_sessions_enabled !== undefined ? video_sessions_enabled : true
+      video_sessions_enabled !== undefined ? video_sessions_enabled : true,
+      query_resolver !== undefined ? query_resolver : false
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
@@ -201,7 +202,7 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency, session_fee, booking_fee, video_sessions_enabled, bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency, session_fee, booking_fee, video_sessions_enabled, bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified, query_resolver } = partnerData;
     
     // Build dynamic update query
     const updates = [];
@@ -287,6 +288,10 @@ class Partner {
     if (video_sessions_enabled !== undefined) {
       updates.push(`video_sessions_enabled = $${paramIndex++}`);
       values.push(video_sessions_enabled);
+    }
+    if (query_resolver !== undefined) {
+      updates.push(`query_resolver = $${paramIndex++}`);
+      values.push(query_resolver);
     }
     
     // Bank account fields - encrypt before storing

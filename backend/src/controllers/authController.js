@@ -600,11 +600,20 @@ const therapistSignup = async (req, res) => {
     const dateUtils = require('../utils/dateUtils');
     const tokenExpiry = dateUtils.addHours(dateUtils.getCurrentUTC(), 1);
 
+    // Prevent query_resolver from being set during creation (only admins can set it via update)
+    if (partnerData.query_resolver !== undefined) {
+      return res.status(403).json({ 
+        error: 'query_resolver cannot be set during signup. Only administrators can set this flag via update.' 
+      });
+    }
+
     // Create partner and auth credentials in transaction
     const result = await db.transaction(async (client) => {
       // Create partner with verification token
+      // Explicitly exclude query_resolver to ensure it defaults to false
+      const { query_resolver, ...partnerDataWithoutQueryResolver } = partnerData;
       const partner = await Partner.create({
-        ...partnerData,
+        ...partnerDataWithoutQueryResolver,
         age: partnerData.age !== undefined && partnerData.age !== null && partnerData.age !== '' ? parseInt(partnerData.age) : null,
         organization_id: organization.id,
         verification_token: verificationToken,

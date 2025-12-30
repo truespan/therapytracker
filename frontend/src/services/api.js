@@ -167,6 +167,8 @@ export const adminAPI = {
   getDashboardStats: () => api.get('/admin/dashboard/stats'),
   checkAndCreateEarnings: (data) => api.post('/admin/earnings/check-and-create', data),
   backfillOrderNotes: () => api.post('/admin/earnings/backfill-order-notes'),
+  getAllPartners: () => api.get('/admin/partners'),
+  updatePartner: (id, data) => api.put(`/admin/partners/${id}`, data),
   // Report Templates
   getAllTemplates: () => api.get('/admin/report-templates'),
   getTemplateCount: () => api.get('/admin/report-templates/count'),
@@ -463,6 +465,24 @@ export const earningsAPI = {
 };
 
 // Bank Account APIs
+// Support Chat APIs
+export const supportAPI = {
+  // App user routes
+  getOrCreateConversation: () => api.post('/support/conversations'),
+  getConversations: (status) => {
+    const params = status ? { status } : {};
+    return api.get('/support/conversations', { params });
+  },
+  getConversationById: (id) => api.get(`/support/conversations/${id}`),
+  getConversationMessages: (id) => api.get(`/support/conversations/${id}/messages`),
+  sendMessage: (id, message) => api.post(`/support/conversations/${id}/messages`, { message }),
+  markMessagesAsRead: (id) => api.put(`/support/conversations/${id}/messages/read`),
+  getSupportTeamMembers: () => api.get('/support/team'),
+  
+  // Support team routes
+  closeConversation: (id) => api.put(`/support/conversations/${id}/close`),
+};
+
 export const bankAccountAPI = {
   updatePartner: (data) => api.put('/partner/bank-account', data),
   getPartner: () => api.get('/partner/bank-account'),

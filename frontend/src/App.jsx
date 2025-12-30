@@ -25,6 +25,7 @@ import BankAccountDetailsTab from './components/admin/BankAccountDetailsTab';
 import EarningsUtilityTab from './components/admin/EarningsUtilityTab';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import ChatWidget from './components/support/ChatWidget';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -60,6 +61,7 @@ function AppRoutes() {
   return (
     <>
       <InactivityLogout />
+      <ChatWidget />
       <Routes>
       {/* Public Routes */}
       <Route path="/" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <Home />} />

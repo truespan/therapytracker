@@ -278,6 +278,8 @@ router.get('/admin/organizations/:id/metrics', authenticateToken, checkRole('adm
 router.get('/admin/dashboard/stats', authenticateToken, checkRole('admin'), adminController.getDashboardStats);
 router.post('/admin/earnings/check-and-create', authenticateToken, checkRole('admin'), adminController.checkAndCreateEarnings);
 router.post('/admin/earnings/backfill-order-notes', authenticateToken, checkRole('admin'), adminController.backfillOrderNotes);
+router.get('/admin/partners', authenticateToken, checkRole('admin'), adminController.getAllPartners);
+router.put('/admin/partners/:id', authenticateToken, checkRole('admin'), adminController.updatePartner);
 
 // Report template management routes - admin only
 router.get('/admin/report-templates', authenticateToken, checkRole('admin'), reportTemplateController.getAllTemplates);
@@ -338,6 +340,22 @@ router.post('/contact', contactController.submitContact);
 // ==================== BLOG ROUTES ====================
 const blogRoutes = require('./blogRoutes');
 router.use('/blogs', blogRoutes);
+
+// ==================== SUPPORT CHAT ROUTES ====================
+const supportController = require('../controllers/supportController');
+const { checkAppUserAccess, checkSupportTeamAccess } = require('../middleware/supportAccess');
+
+// App user routes (Partners and non-TheraPTrack controlled Orgs)
+router.post('/support/conversations', authenticateToken, checkAppUserAccess, supportController.getOrCreateConversation);
+router.get('/support/conversations', authenticateToken, supportController.getConversations);
+router.get('/support/conversations/:id', authenticateToken, supportController.getConversationById);
+router.get('/support/conversations/:id/messages', authenticateToken, supportController.getConversationMessages);
+router.post('/support/conversations/:id/messages', authenticateToken, supportController.sendMessage);
+router.put('/support/conversations/:id/messages/read', authenticateToken, supportController.markMessagesAsRead);
+router.get('/support/team', authenticateToken, supportController.getSupportTeamMembers);
+
+// Support team routes (Admin, Partners/Orgs with query_resolver flag)
+router.put('/support/conversations/:id/close', authenticateToken, checkSupportTeamAccess, supportController.closeConversation);
 
 // Health check
 router.get('/health', (req, res) => {
