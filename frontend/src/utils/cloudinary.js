@@ -106,9 +106,11 @@ export const getResponsiveCloudinaryUrls = (publicId) => {
  * If your public IDs include .webp, they will be used as-is
  */
 export const BACKGROUND_IMAGES = {
+  backgroundImg1: 'backgroundImg1_vqucdt',
   backgroundImg2: 'backgroundImg2_wn4xks',
   backgroundImg3: 'backgroundImg3_s2ucj4',
   backgroundImg4: 'backgroundImg4_nl4y4h',
-  backgroundImg5: 'backgroundImg5_hoxpfb'
+  backgroundImg5: 'backgroundImg5_hoxpfb',
+  backgroundImg6: 'backgroundImg6_hqbagv'
 };
 

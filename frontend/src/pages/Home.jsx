@@ -116,14 +116,16 @@ const Home = () => {
 
       // Get responsive URLs for each background image
       const heroUrls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg2);
+      const img1Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg1);
       const img3Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg3);
       const img4Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg4);
       const img5Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg5);
+      const img6Urls = getResponsiveCloudinaryUrls(BACKGROUND_IMAGES.backgroundImg6);
 
       setBackgroundImages(prev => ({
         hero: imagesToLoad.hero ? heroUrls[size] : prev.hero,
         about: imagesToLoad.about ? img3Urls[size] : prev.about,
-        howItWorks: imagesToLoad.howItWorks ? img3Urls[size] : prev.howItWorks,
+        howItWorks: imagesToLoad.howItWorks ? img6Urls[size] : prev.howItWorks,
         blogs: imagesToLoad.blogs ? img4Urls[size] : prev.blogs,
         login: imagesToLoad.login ? img5Urls[size] : prev.login
       }));
@@ -675,17 +677,17 @@ const Home = () => {
       <section id="how-it-works" className="py-24 relative scroll-mt-28">
         {/* Subtle background image */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 dark:opacity-8"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 dark:opacity-30"
           style={{
             backgroundImage: imagesToLoad.howItWorks && backgroundImages.howItWorks 
               ? `url('${backgroundImages.howItWorks}')` 
               : imagesToLoad.howItWorks 
-                ? `url('/backgroundImg3.webp')` 
+                ? `url('/backgroundImg6.webp')` 
                 : 'none'
           }}
         ></div>
-        {/* Gradient overlay for smooth transition */}
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-50/90 via-white/95 to-white dark:from-dark-bg-secondary/90 dark:via-dark-bg-primary/95 dark:to-dark-bg-primary"></div>
+        {/* Light overlay to ensure readability */}
+        <div className="absolute inset-0 bg-white/10 dark:bg-dark-bg-primary/60"></div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -693,113 +695,153 @@ const Home = () => {
               How It Works
             </h2>
             <div className="w-24 h-1 bg-primary-600 dark:bg-dark-primary-600 mx-auto mb-6"></div>
-            <p className="text-lg text-gray-600 dark:text-dark-text-secondary max-w-2xl mx-auto">
-              Get started in four simple steps
-            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-            <div className="text-center bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
-                1
-              </div>
-              <h4 className="font-semibold mb-2 text-lg text-gray-900 dark:text-dark-text-primary">Sign Up</h4>
-              <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Create your account as a user, therapist, or organization</p>
+          {/* Main Features */}
+          <div className="grid md:grid-cols-2 gap-8 mb-16">
+            {/* Smart Scheduling and Availability */}
+            <div className="bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                Smart Scheduling and Availability
+              </h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                Streamline your practice with professionalism and clarity. Create your availability session slots for a week and publish for client view. This will allow clients to book sessions as per your schedule, which reduces manual back-and-forth communication.
+              </p>
             </div>
-            <div className="text-center bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
-                2
-              </div>
-              <h4 className="font-semibold mb-2 text-lg text-gray-900 dark:text-dark-text-primary">Initial Assessment</h4>
-              <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Complete your mind-body profile questionnaire</p>
-            </div>
-            <div className="text-center bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
-                3
-              </div>
-              <h4 className="font-semibold mb-2 text-lg text-gray-900 dark:text-dark-text-primary">Track Progress</h4>
-              <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Re-rate yourself after each therapy session</p>
-            </div>
-            <div className="text-center bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
-              <div className="bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
-                4
-              </div>
-              <h4 className="font-semibold mb-2 text-lg text-gray-900 dark:text-dark-text-primary">Visualize Growth</h4>
-              <p className="text-sm text-gray-600 dark:text-dark-text-secondary">See your progress on interactive charts</p>
-            </div>
-          </div>
 
-          {/* Key Features */}
-          <div className="mb-16">
-            <h3 className="text-3xl font-bold text-center mb-4 text-gray-900 dark:text-dark-text-primary">Key Features</h3>
-            <p className="text-center text-gray-600 dark:text-dark-text-secondary mb-12 text-lg">
-              Everything you need to manage your therapy practice effectively
-            </p>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => {
-                const IconComponent = feature.icon;
-                return (
-                  <div 
-                    key={index}
-                    className="card text-center p-8 hover:shadow-xl transition-shadow duration-300 border-2 border-transparent hover:border-primary-200 dark:hover:border-dark-border bg-white dark:bg-dark-bg-tertiary"
-                  >
-                    <div className={`${feature.color} mb-6 flex justify-center`}>
-                      <IconComponent className="h-16 w-16" />
-                    </div>
-                    <h3 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-dark-text-primary">{feature.title}</h3>
-                    <p className="text-gray-600 dark:text-dark-text-secondary mb-4 leading-relaxed">
-                      {feature.description}
-                    </p>
-                    {feature.hasVisual && (
-                      <div className="mt-6 bg-white dark:bg-dark-bg-secondary rounded-lg p-4 border border-gray-200 dark:border-dark-border">
-                        <ResponsiveContainer width="100%" height={250}>
-                          <RechartsRadar data={chartSampleData}>
-                            <PolarGrid stroke="#e5e7eb" className="dark:stroke-dark-border" />
-                            <PolarAngleAxis 
-                              dataKey="field" 
-                              tick={{ fill: '#374151', fontSize: 10 }}
-                              tickLine={false}
-                              className="dark:[&_text]:fill-dark-text-secondary"
-                            />
-                            <PolarRadiusAxis
-                              angle={90}
-                              domain={[0, 5]}
-                              tick={{ fill: '#6b7280', fontSize: 8 }}
-                              tickCount={6}
-                              className="dark:[&_text]:fill-dark-text-tertiary"
-                            />
-                            <Radar
-                              name="Progress"
-                              dataKey="value"
-                              stroke="#00897b"
-                              fill="#00897b"
-                              fillOpacity={0.3}
-                              strokeWidth={2}
-                            />
-                          </RechartsRadar>
-                        </ResponsiveContainer>
-                        <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-2">Example: Client Progress Visualization</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            {/* Appointments, Sessions, and Two-way Reminders */}
+            <div className="bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                Appointments, Sessions, and Two-way Reminders
+              </h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                Practice seamlessly with structured visualization of appointments and sessions inside the tool. Get session reminders synced through Google Calendar, and appointment reminders synced through WhatsApp notification - both for Therapists and clients. A two-way reminder system allows therapists to be more professional, organized, and timely, respecting professional boundaries and privacy.
+              </p>
+            </div>
+
+            {/* Automatically Generated Links for Online Session */}
+            <div className="bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                Automatically Generated Links for Online Session
+              </h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                To save the time of Therapists in admin work and avoid manual conversations, a Google Meet link will be automatically created and sent to both Therapists and Clients for online sessions.
+              </p>
+            </div>
+
+            {/* Record Session Notes */}
+            <div className="bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                Record Session Notes
+              </h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                Record and organize session notes (ex., CH and MSE for Psychologists) in one single platform during the session, no need to change tabs, and write in paper and pencil. It supports professional documentation practices of all of your clients in one place, respecting professional judgement, confidentiality, and HIPAA-aligned security.
+              </p>
+            </div>
+
+            {/* Secure Document Access */}
+            <div className="bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                Secure Document Access
+              </h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                Attach past reports, prescriptions, and referrals of the clients through a Google Drive link in a single platform. It helps to organize and keep the records without duplicating or misplacing the important, sensitive documents.
+              </p>
+            </div>
+
+            {/* Assessment and Automated Scoring */}
+            <div className="bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                Assessment and Automated Scoring
+              </h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                Administer questionnaires with automatic scoring support (both direct and reverse scoring) to your clients - designed to assist therapists in recording the data and scoring while leaving interpretation and professional judgements entirely with the therapists.
+              </p>
+            </div>
+
+            {/* Visual Progress Tracking */}
+            <div className="bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                Visual Progress Tracking
+              </h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                Visualize your clients' progress with comparison charts, line graphs, or bar graphs that bring assessment data from respective sessions over time.
+              </p>
+            </div>
+
+            {/* Report and Documentation */}
+            <div className="bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+                Report and Documentation
+              </h3>
+              <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                Develop reports or prescriptions with customized templates and share with the clients over a single platform.
+              </p>
             </div>
           </div>
 
-          {/* Benefits Section */}
-          <div>
-            <h3 className="text-3xl font-bold text-center mb-4 text-gray-900 dark:text-dark-text-primary">How This Helps You</h3>
-            <p className="text-center text-gray-600 dark:text-dark-text-secondary mb-12 text-lg">
-              Transform your therapy practice with powerful management tools
-            </p>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              {benefits.map((benefit, index) => (
-                <div key={index} className="flex items-start gap-3 bg-white dark:bg-dark-bg-tertiary p-6 rounded-lg shadow-sm">
-                  <CheckCircle className="h-6 w-6 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-1" />
-                  <p className="text-gray-700 dark:text-dark-text-secondary">{benefit.text}</p>
-                </div>
-              ))}
+          {/* Other Features */}
+          <div className="bg-white dark:bg-dark-bg-tertiary p-8 rounded-lg shadow-md">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-6">
+              Other Features
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-lg text-gray-900 dark:text-dark-text-primary mb-2">
+                  Payment Integration:
+                </h4>
+                <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                  Collect session fees directly through the TheraP Track platform. Accept advance payments (any percentage of the session fee) to reduce no-shows after appointments and to maintain clarity about the fees.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-lg text-gray-900 dark:text-dark-text-primary mb-2">
+                  Dark Theme:
+                </h4>
+                <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                  Dark theme is designed to reduce eye strain and help therapists continue extended clinical hours.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-lg text-gray-900 dark:text-dark-text-primary mb-2">
+                  All Device Friendly Platform:
+                </h4>
+                <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                  Use TheraP Track from any devices (Mobile, Laptop, PC, Tablet, Mac, iPhone) from anywhere as per your convenient.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-lg text-gray-900 dark:text-dark-text-primary mb-2">
+                  Custom Branding:
+                </h4>
+                <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                  The Custom Branding feature is included to add more professionalism to your therapy practice.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-lg text-gray-900 dark:text-dark-text-primary mb-2">
+                  Blogs and News:
+                </h4>
+                <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                  Write your daily blogs, insights, and news for your patients.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-lg text-gray-900 dark:text-dark-text-primary mb-2">
+                  Priority Chat Support:
+                </h4>
+                <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                  Get help from TheraP Track technical team within 24 hours
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-lg text-gray-900 dark:text-dark-text-primary mb-2">
+                  Privacy is the Key:
+                </h4>
+                <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
+                  TheraP Track aligns with HIPAA guidelines, provides a platform to record sensitive data respecting professional boundaries and ethics.
+                </p>
+              </div>
             </div>
           </div>
         </div>
