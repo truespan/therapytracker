@@ -653,6 +653,21 @@ const createBookingOrder = async (req, res) => {
       }
     });
 
+    // Prepare notes object - validate required fields
+    const orderNotes = {
+      slot_id,
+      partner_id,
+      payment_type: 'booking_fee'
+    };
+
+    // Validate that notes contain required fields
+    if (!orderNotes.partner_id) {
+      console.error('[CREATE_BOOKING_ORDER] Warning: partner_id is missing in notes', { slot_id, partner_id, userId });
+    }
+    if (!orderNotes.slot_id) {
+      console.error('[CREATE_BOOKING_ORDER] Warning: slot_id is missing in notes', { slot_id, partner_id, userId });
+    }
+
     // Save order to database
     const dbOrder = await RazorpayOrder.create({
       razorpay_order_id: razorpayOrder.id,
@@ -662,12 +677,19 @@ const createBookingOrder = async (req, res) => {
       status: razorpayOrder.status,
       customer_id: userId,
       customer_type: 'user',
-      notes: {
-        slot_id,
-        partner_id,
-        payment_type: 'booking_fee'
-      }
+      notes: orderNotes
     });
+
+    // Verify notes were saved correctly
+    if (!dbOrder.notes) {
+      console.error(`[CREATE_BOOKING_ORDER] ERROR: Notes were not saved to database for order ${razorpayOrder.id}`, {
+        order_id: razorpayOrder.id,
+        notes_sent: orderNotes,
+        db_order: dbOrder
+      });
+    } else {
+      console.log(`[CREATE_BOOKING_ORDER] Order ${razorpayOrder.id} created successfully with notes:`, JSON.stringify(dbOrder.notes));
+    }
 
     res.status(201).json({
       message: 'Booking order created successfully',

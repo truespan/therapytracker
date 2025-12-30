@@ -277,6 +277,7 @@ router.delete('/admin/organizations/:id', authenticateToken, checkRole('admin'),
 router.get('/admin/organizations/:id/metrics', authenticateToken, checkRole('admin'), adminController.getOrganizationMetrics);
 router.get('/admin/dashboard/stats', authenticateToken, checkRole('admin'), adminController.getDashboardStats);
 router.post('/admin/earnings/check-and-create', authenticateToken, checkRole('admin'), adminController.checkAndCreateEarnings);
+router.post('/admin/earnings/backfill-order-notes', authenticateToken, checkRole('admin'), adminController.backfillOrderNotes);
 
 // Report template management routes - admin only
 router.get('/admin/report-templates', authenticateToken, checkRole('admin'), reportTemplateController.getAllTemplates);

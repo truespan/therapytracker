@@ -166,6 +166,7 @@ export const adminAPI = {
   getOrganizationMetrics: (id) => api.get(`/admin/organizations/${id}/metrics`),
   getDashboardStats: () => api.get('/admin/dashboard/stats'),
   checkAndCreateEarnings: (data) => api.post('/admin/earnings/check-and-create', data),
+  backfillOrderNotes: () => api.post('/admin/earnings/backfill-order-notes'),
   // Report Templates
   getAllTemplates: () => api.get('/admin/report-templates'),
   getTemplateCount: () => api.get('/admin/report-templates/count'),

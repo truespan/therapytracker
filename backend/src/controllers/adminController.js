@@ -706,6 +706,98 @@ const checkAndCreateEarnings = async (req, res) => {
   }
 };
 
+/**
+ * Backfill missing order notes from Razorpay (Admin only)
+ * POST /api/admin/earnings/backfill-order-notes
+ */
+const backfillOrderNotes = async (req, res) => {
+  try {
+    const Razorpay = require('razorpay');
+    const razorpayInstance = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+
+    // Find all orders with missing or null notes
+    const query = `
+      SELECT razorpay_order_id, id, created_at
+      FROM razorpay_orders
+      WHERE notes IS NULL OR notes = 'null'::jsonb OR notes = '{}'::jsonb
+      ORDER BY created_at DESC
+      LIMIT 1000
+    `;
+    
+    const result = await db.query(query);
+    const ordersToBackfill = result.rows;
+
+    if (ordersToBackfill.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No orders with missing notes found',
+        processed: 0,
+        updated: 0,
+        failed: 0
+      });
+    }
+
+    let updated = 0;
+    let failed = 0;
+    const errors = [];
+
+    console.log(`[BACKFILL] Starting backfill for ${ordersToBackfill.length} orders with missing notes`);
+
+    for (const order of ordersToBackfill) {
+      try {
+        // Fetch order from Razorpay
+        const razorpayOrder = await razorpayInstance.orders.fetch(order.razorpay_order_id);
+        
+        if (razorpayOrder && razorpayOrder.notes && Object.keys(razorpayOrder.notes).length > 0) {
+          // Update database with notes from Razorpay
+          const updateQuery = `
+            UPDATE razorpay_orders 
+            SET notes = $1, updated_at = CURRENT_TIMESTAMP 
+            WHERE razorpay_order_id = $2
+            RETURNING razorpay_order_id
+          `;
+          await db.query(updateQuery, [JSON.stringify(razorpayOrder.notes), order.razorpay_order_id]);
+          updated++;
+          console.log(`[BACKFILL] Updated order ${order.razorpay_order_id} with notes from Razorpay`);
+        } else {
+          errors.push({
+            order_id: order.razorpay_order_id,
+            error: 'No notes found in Razorpay order'
+          });
+          failed++;
+        }
+      } catch (error) {
+        console.error(`[BACKFILL] Error processing order ${order.razorpay_order_id}:`, error.message);
+        errors.push({
+          order_id: order.razorpay_order_id,
+          error: error.message
+        });
+        failed++;
+      }
+    }
+
+    console.log(`[BACKFILL] Backfill completed: ${updated} updated, ${failed} failed`);
+
+    res.json({
+      success: true,
+      message: `Backfill completed: ${updated} orders updated, ${failed} failed`,
+      processed: ordersToBackfill.length,
+      updated,
+      failed,
+      errors: errors.length > 0 ? errors.slice(0, 10) : [] // Return first 10 errors if any
+    });
+  } catch (error) {
+    console.error('[BACKFILL] Error in backfill process:', error);
+    res.status(500).json({
+      error: 'Failed to backfill order notes',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   createOrganization,
@@ -715,6 +807,7 @@ module.exports = {
   deleteOrganization,
   getOrganizationMetrics,
   getDashboardStats,
-  checkAndCreateEarnings
+  checkAndCreateEarnings,
+  backfillOrderNotes
 };
 

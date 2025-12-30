@@ -17,6 +17,8 @@ const EarningsUtilityTab = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillResult, setBackfillResult] = useState(null);
 
   const handleCheck = async () => {
     if (!paymentId.trim()) {
@@ -47,6 +49,27 @@ const EarningsUtilityTab = () => {
     }
   };
 
+  const handleBackfill = async () => {
+    if (!window.confirm('This will fetch missing order notes from Razorpay for all orders that have empty notes in the database. This may take a few minutes. Continue?')) {
+      return;
+    }
+
+    try {
+      setBackfilling(true);
+      setBackfillResult(null);
+      setError('');
+
+      const response = await adminAPI.backfillOrderNotes();
+      setBackfillResult(response.data);
+    } catch (err) {
+      console.error('Error backfilling order notes:', err);
+      setError(err.response?.data?.error || 'Failed to backfill order notes');
+      setBackfillResult(null);
+    } finally {
+      setBackfilling(false);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -59,13 +82,32 @@ const EarningsUtilityTab = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">
-          Earnings Utility
-        </h1>
-        <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
-          Check and create missing earnings records for payments
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">
+            Earnings Utility
+          </h1>
+          <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
+            Check and create missing earnings records for payments
+          </p>
+        </div>
+        <button
+          onClick={handleBackfill}
+          disabled={backfilling}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+        >
+          {backfilling ? (
+            <>
+              <Loader className="h-4 w-4 animate-spin" />
+              <span>Backfilling...</span>
+            </>
+          ) : (
+            <>
+              <Search className="h-4 w-4" />
+              <span>Backfill Missing Notes</span>
+            </>
+          )}
+        </button>
       </div>
 
       {/* Search Form */}
@@ -234,6 +276,62 @@ const EarningsUtilityTab = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Backfill Result */}
+      {backfillResult && (
+        <div className="card p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4">
+            Backfill Results
+          </h3>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gray-50 dark:bg-dark-bg-primary p-4 rounded-lg">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Processed</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
+                  {backfillResult.processed || 0}
+                </div>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Successfully Updated</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {backfillResult.updated || 0}
+                </div>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Failed</div>
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                  {backfillResult.failed || 0}
+                </div>
+              </div>
+            </div>
+
+            {backfillResult.message && (
+              <div className={`p-4 rounded-lg ${
+                backfillResult.failed === 0
+                  ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                  : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+              }`}>
+                <p className={backfillResult.failed === 0 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}>
+                  {backfillResult.message}
+                </p>
+              </div>
+            )}
+
+            {backfillResult.errors && backfillResult.errors.length > 0 && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-lg">
+                <h4 className="font-medium text-red-600 dark:text-red-400 mb-2">Errors (showing first 10):</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-red-700 dark:text-red-300">
+                  {backfillResult.errors.map((err, idx) => (
+                    <li key={idx}>
+                      Order {err.order_id}: {err.error}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
