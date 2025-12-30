@@ -40,15 +40,55 @@ class Auth {
   }
 
   static async findByEmailOrPhone(identifier) {
-    // First try to find by email
-    const emailResult = await this.findByEmail(identifier);
+    const trimmedIdentifier = identifier.trim();
+    
+    // Check if identifier looks like an email (contains @)
+    const isEmail = trimmedIdentifier.includes('@');
+    
+    // First try to find by email in auth_credentials
+    const emailResult = await this.findByEmail(trimmedIdentifier);
     if (emailResult) {
       return emailResult;
     }
 
-    // If not found by email, try to find by phone number
+    // If identifier is an email but not found in auth_credentials,
+    // check if there's a user/partner/organization with this email
+    // (This handles the case where email was updated in user profile but not in auth_credentials)
+    if (isEmail) {
+      console.log(`[AUTH] Email not found in auth_credentials, checking user/partner/organization tables for: "${trimmedIdentifier}"`);
+      
+      const emailInProfileQuery = `
+        SELECT DISTINCT ac.* FROM auth_credentials ac
+        WHERE (
+          (ac.user_type = 'user' AND ac.reference_id IN (
+            SELECT id FROM users WHERE LOWER(email) = LOWER($1)
+          ))
+          OR
+          (ac.user_type = 'partner' AND ac.reference_id IN (
+            SELECT id FROM partners WHERE LOWER(email) = LOWER($1)
+          ))
+          OR
+          (ac.user_type = 'organization' AND ac.reference_id IN (
+            SELECT id FROM organizations WHERE LOWER(email) = LOWER($1)
+          ))
+        )
+        LIMIT 1
+      `;
+      
+      const emailInProfileResult = await db.query(emailInProfileQuery, [trimmedIdentifier]);
+      
+      if (emailInProfileResult.rows[0]) {
+        console.log(`[AUTH] Found user by email in profile - Type: ${emailInProfileResult.rows[0].user_type}, ID: ${emailInProfileResult.rows[0].reference_id}`);
+        return emailInProfileResult.rows[0];
+      }
+      
+      console.log(`[AUTH] No user found with email: "${trimmedIdentifier}"`);
+      return null;
+    }
+
+    // If not found by email and identifier doesn't look like email, try to find by phone number
     // Normalize phone number - if it doesn't start with +, assume it's an Indian number
-    let phoneNumber = identifier.trim();
+    let phoneNumber = trimmedIdentifier;
     
     // If the identifier is numeric and doesn't start with +, add +91 (India country code)
     if (/^\d+$/.test(phoneNumber)) {
@@ -76,7 +116,7 @@ class Auth {
       LIMIT 1
     `;
     
-    const phoneResult = await db.query(phoneQuery, [identifier, phoneNumber]);
+    const phoneResult = await db.query(phoneQuery, [trimmedIdentifier, phoneNumber]);
     
     if (phoneResult.rows[0]) {
       console.log(`[AUTH] Found user by phone - Type: ${phoneResult.rows[0].user_type}, ID: ${phoneResult.rows[0].reference_id}`);

@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Auth = require('../models/Auth');
 
 const getUserById = async (req, res) => {
   try {
@@ -44,6 +45,7 @@ const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    const db = require('../config/database');
 
     // Check if user exists
     const user = await User.findById(id);
@@ -58,7 +60,6 @@ const updateUser = async (req, res) => {
     
     // Check if the current user is a partner and the target user is their client
     if (req.user.userType === 'partner') {
-      const db = require('../config/database');
       const assignmentCheck = await db.query(
         'SELECT 1 FROM user_partner_assignments WHERE user_id = $1 AND partner_id = $2',
         [id, req.user.id]
@@ -88,6 +89,22 @@ const updateUser = async (req, res) => {
           error: 'Please provide a valid contact number with country code (e.g., +919876543210)'
         });
       }
+    }
+
+    // If email is being updated, also update auth_credentials
+    if (updates.email && updates.email !== user.email) {
+      // Check if the new email is already in use by another user
+      const existingAuth = await Auth.findByEmail(updates.email);
+      if (existingAuth && existingAuth.reference_id !== parseInt(id)) {
+        return res.status(409).json({ error: 'Email already in use by another account' });
+      }
+
+      // Update email in auth_credentials
+      await db.query(
+        'UPDATE auth_credentials SET email = $1 WHERE user_type = $2 AND reference_id = $3',
+        [updates.email, 'user', id]
+      );
+      console.log(`[USER UPDATE] Updated auth_credentials email for user ${id} to ${updates.email}`);
     }
 
     const updatedUser = await User.update(id, updates);
