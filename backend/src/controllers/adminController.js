@@ -420,7 +420,7 @@ const getDashboardStats = async (req, res) => {
  */
 const checkAndCreateEarnings = async (req, res) => {
   try {
-    const { razorpay_payment_id } = req.body;
+    const { razorpay_payment_id, partner_id_override } = req.body;
 
     if (!razorpay_payment_id) {
       return res.status(400).json({
@@ -482,12 +482,45 @@ const checkAndCreateEarnings = async (req, res) => {
       });
     }
 
-    // Parse order metadata
+    // Parse order metadata - first try database notes
     let orderMetadata = {};
     if (dbOrder.notes) {
       orderMetadata = typeof dbOrder.notes === 'string' ? JSON.parse(dbOrder.notes) : dbOrder.notes;
     } else if (dbOrder.metadata) {
       orderMetadata = typeof dbOrder.metadata === 'string' ? JSON.parse(dbOrder.metadata) : dbOrder.metadata;
+    }
+
+    // If notes are empty/null in database, fetch from Razorpay API
+    if (!orderMetadata || Object.keys(orderMetadata).length === 0 || !orderMetadata.partner_id) {
+      console.log(`[ADMIN] Notes missing or incomplete in database for order ${payment.razorpay_order_id}, fetching from Razorpay...`);
+      
+      try {
+        const Razorpay = require('razorpay');
+        const razorpayInstance = new Razorpay({
+          key_id: process.env.RAZORPAY_KEY_ID,
+          key_secret: process.env.RAZORPAY_KEY_SECRET
+        });
+        
+        // Fetch order from Razorpay
+        const razorpayOrder = await razorpayInstance.orders.fetch(payment.razorpay_order_id);
+        
+        if (razorpayOrder && razorpayOrder.notes) {
+          orderMetadata = razorpayOrder.notes;
+          console.log(`[ADMIN] Retrieved notes from Razorpay:`, JSON.stringify(orderMetadata));
+          
+          // Update database with notes from Razorpay for future use
+          if (orderMetadata && Object.keys(orderMetadata).length > 0) {
+            const updateQuery = `UPDATE razorpay_orders SET notes = $1, updated_at = CURRENT_TIMESTAMP WHERE razorpay_order_id = $2`;
+            await db.query(updateQuery, [JSON.stringify(orderMetadata), payment.razorpay_order_id]);
+            console.log(`[ADMIN] Updated database notes from Razorpay for order ${payment.razorpay_order_id}`);
+          }
+        } else {
+          console.warn(`[ADMIN] Razorpay order ${payment.razorpay_order_id} also has no notes`);
+        }
+      } catch (razorpayError) {
+        console.error(`[ADMIN] Failed to fetch order from Razorpay:`, razorpayError);
+        // Continue with existing metadata (might be empty) - will fall back to override or error
+      }
     }
 
     // Check payment type and determine recipient
@@ -515,7 +548,53 @@ const checkAndCreateEarnings = async (req, res) => {
           customer_type: dbOrder.customer_type
         });
       }
-    } 
+    }
+    // Strategy 1b: If partner_id is missing but slot_id exists, try to get partner from slot
+    else if (orderMetadata.slot_id) {
+      const slotQuery = `SELECT partner_id FROM availability_slots WHERE id = $1`;
+      const slotResult = await db.query(slotQuery, [orderMetadata.slot_id]);
+      if (slotResult.rows[0] && slotResult.rows[0].partner_id) {
+        const partner = await Partner.findById(slotResult.rows[0].partner_id);
+        if (partner) {
+          recipientId = partner.id;
+          recipientType = 'partner';
+          partnerInfo = {
+            name: partner.name,
+            partner_id: partner.partner_id
+          };
+          console.log(`[ADMIN] Found partner ${partner.id} (${partner.name}) from slot_id ${orderMetadata.slot_id} for payment ${razorpay_payment_id}`);
+        } else {
+          return res.status(404).json({
+            error: `Partner not found for partner_id from slot: ${slotResult.rows[0].partner_id}`,
+            slot_id: orderMetadata.slot_id,
+            order_metadata: orderMetadata
+          });
+        }
+      } else {
+        return res.status(404).json({
+          error: `Slot not found or has no partner_id: ${orderMetadata.slot_id}`,
+          order_metadata: orderMetadata
+        });
+      }
+    }
+    // Strategy 1c: Allow manual override if partner_id is provided (for cases where notes are missing)
+    else if (partner_id_override) {
+      const partner = await Partner.findByPartnerId(partner_id_override);
+      if (partner) {
+        recipientId = partner.id;
+        recipientType = 'partner';
+        partnerInfo = {
+          name: partner.name,
+          partner_id: partner.partner_id
+        };
+        console.log(`[ADMIN] Using override partner_id ${partner_id_override} to find partner ${partner.id} (${partner.name}) for payment ${razorpay_payment_id}`);
+      } else {
+        return res.status(404).json({
+          error: `Partner not found for override partner_id: ${partner_id_override}`,
+          order_metadata: orderMetadata
+        });
+      }
+    }
     // Strategy 2: Check if order has partner/organization as customer (subscription payment)
     else if (dbOrder.customer_type === 'partner' || dbOrder.customer_type === 'organization') {
       recipientId = dbOrder.customer_id;
@@ -538,20 +617,24 @@ const checkAndCreateEarnings = async (req, res) => {
         }
       }
     } 
-    // Strategy 3: If customer_type is 'user' but no partner_id in notes, this might be a booking payment
-    // but the notes weren't saved properly - we can't determine the recipient
+    // Strategy 3: If customer_type is 'user' but no partner_id in notes and no slot_id, 
+    // this might be a booking payment but the notes weren't saved properly - we can't determine the recipient
     else {
-      // Unknown payment type or missing info
+      // Unknown payment type or missing info - provide detailed error with actual order data
       return res.status(400).json({
-        error: 'Cannot determine recipient for earnings. Missing partner_id in order notes or invalid customer_type.',
+        error: 'Cannot determine recipient for earnings. Missing partner_id in order notes and slot_id.',
         payment_type: orderMetadata.payment_type || 'not set',
         customer_type: dbOrder.customer_type || 'not set',
         order_metadata: orderMetadata,
         debug_info: {
           has_partner_id_in_notes: !!orderMetadata.partner_id,
+          has_slot_id_in_notes: !!orderMetadata.slot_id,
           has_payment_type_in_notes: !!orderMetadata.payment_type,
           order_customer_id: dbOrder.customer_id,
-          order_customer_type: dbOrder.customer_type
+          order_customer_type: dbOrder.customer_type,
+          order_id: dbOrder.razorpay_order_id,
+          notes_raw: dbOrder.notes,
+          notes_type: typeof dbOrder.notes
         }
       });
     }

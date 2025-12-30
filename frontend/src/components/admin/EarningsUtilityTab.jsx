@@ -13,6 +13,7 @@ import {
 
 const EarningsUtilityTab = () => {
   const [paymentId, setPaymentId] = useState('');
+  const [partnerIdOverride, setPartnerIdOverride] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -28,9 +29,13 @@ const EarningsUtilityTab = () => {
       setError('');
       setResult(null);
 
-      const response = await adminAPI.checkAndCreateEarnings({
+      const requestData = {
         razorpay_payment_id: paymentId.trim()
-      });
+      };
+      if (partnerIdOverride.trim()) {
+        requestData.partner_id_override = partnerIdOverride.trim();
+      }
+      const response = await adminAPI.checkAndCreateEarnings(requestData);
 
       setResult(response.data);
     } catch (err) {
@@ -66,12 +71,12 @@ const EarningsUtilityTab = () => {
       {/* Search Form */}
       <div className="card p-6">
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Razorpay Payment ID
-            </label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Razorpay Payment ID <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
@@ -82,10 +87,28 @@ const EarningsUtilityTab = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Partner ID Override (Optional)
+                <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                  Use if partner_id is missing from order notes (e.g., TH78079)
+                </span>
+              </label>
+              <input
+                type="text"
+                placeholder="Enter partner ID if missing from order (e.g., TH78079)"
+                value={partnerIdOverride}
+                onChange={(e) => setPartnerIdOverride(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleCheck()}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+              />
+            </div>
+            <div>
               <button
                 onClick={handleCheck}
                 disabled={loading || !paymentId.trim()}
-                className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="w-full px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
                 {loading ? (
                   <>
