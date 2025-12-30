@@ -631,6 +631,25 @@ const createBookingOrder = async (req, res) => {
     const bookingFee = feeSettings.booking_fee || 0;
     const currency = feeSettings.fee_currency || 'INR';
 
+    // Check if we're in test mode
+    const isTestMode = RazorpayService.isTestMode();
+
+    // If test mode and booking fee exists, skip payment and return test mode flag
+    if (isTestMode && bookingFee > 0) {
+      console.log(`[CREATE_BOOKING_ORDER] Test mode detected - skipping payment for slot ${slot_id}`);
+      return res.status(201).json({
+        message: 'Test mode: Payment skipped',
+        test_mode: true,
+        skip_payment: true,
+        order: null,
+        feeDetails: {
+          session_fee: feeSettings.session_fee,
+          booking_fee: feeSettings.booking_fee,
+          currency: currency
+        }
+      });
+    }
+
     if (bookingFee <= 0) {
       return res.status(400).json({
         error: 'No booking fee configured for this therapist'
@@ -693,6 +712,8 @@ const createBookingOrder = async (req, res) => {
 
     res.status(201).json({
       message: 'Booking order created successfully',
+      test_mode: false,
+      skip_payment: false,
       order: {
         id: razorpayOrder.id,
         amount: razorpayOrder.amount,
@@ -711,6 +732,41 @@ const createBookingOrder = async (req, res) => {
     console.error('Create booking order error:', error);
     res.status(500).json({
       error: 'Failed to create booking order',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Verify booking payment in test mode (skip actual payment verification)
+ */
+const verifyBookingPaymentTestMode = async (req, res) => {
+  try {
+    const { slot_id } = req.body;
+
+    if (!slot_id) {
+      return res.status(400).json({
+        error: 'slot_id is required'
+      });
+    }
+
+    console.log(`[VERIFY_BOOKING_PAYMENT] Test mode - skipping payment verification for slot ${slot_id}`);
+
+    // In test mode, just return success without actual payment verification
+    res.json({
+      message: 'Test mode: Booking payment verified (skipped)',
+      payment: {
+        id: `test_payment_${Date.now()}`,
+        status: 'captured',
+        amount: 0
+      },
+      booking_confirmed: true,
+      test_mode: true
+    });
+  } catch (error) {
+    console.error('Verify booking payment test mode error:', error);
+    res.status(500).json({
+      error: 'Failed to verify booking payment',
       message: error.message
     });
   }
@@ -865,6 +921,7 @@ module.exports = {
   getPaymentHistory,
   handleWebhook,
   createBookingOrder,
-  verifyBookingPayment
+  verifyBookingPayment,
+  verifyBookingPaymentTestMode
 };
 

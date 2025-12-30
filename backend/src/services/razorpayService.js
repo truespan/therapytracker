@@ -26,6 +26,15 @@ function getRazorpayInstance() {
 
 class RazorpayService {
   /**
+   * Check if Razorpay is in test mode (using test keys)
+   * @returns {boolean} True if test keys are being used
+   */
+  static isTestMode() {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    return keyId && keyId.startsWith('rzp_test_');
+  }
+
+  /**
    * Create a Razorpay order for one-time payment
    * @param {Object} orderData - Order data
    * @param {number} orderData.amount - Amount in paise (smallest currency unit)

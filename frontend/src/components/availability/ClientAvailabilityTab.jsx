@@ -101,6 +101,43 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
         partner_id: selectedPartner.id
       });
 
+      // Check if test mode - skip payment flow
+      if (orderResponse.data.skip_payment || orderResponse.data.test_mode) {
+        // Test mode: Skip payment and directly verify
+        const verifyResponse = await razorpayAPI.verifyBookingPayment({
+          razorpay_order_id: null,
+          razorpay_payment_id: null,
+          razorpay_signature: null,
+          slot_id: selectedSlot.id
+        });
+
+        if (verifyResponse.data.booking_confirmed) {
+          // Payment skipped, now book the slot
+          const bookingResponse = await availabilityAPI.bookSlot(selectedSlot.id);
+
+          setShowBookingModal(false);
+          setBookingLoading(false);
+
+          // Check if there was a Google Calendar conflict
+          if (bookingResponse.data.google_conflict) {
+            alert(
+              'Booking confirmed! (Test Mode - Payment Skipped)\n\n' +
+              'Note: There was a conflict with Google Calendar, so the appointment was not added to the calendar. ' +
+              'However, your booking has been confirmed in the system.'
+            );
+          } else {
+            alert('Booking confirmed! (Test Mode - Payment Skipped) The appointment has been added to your calendar.');
+          }
+
+          // Reload slots to show updated availability
+          loadAvailableSlots(selectedPartner.id);
+        } else {
+          throw new Error('Booking verification failed');
+        }
+        return;
+      }
+
+      // Normal flow: Proceed with Razorpay payment
       const order = orderResponse.data.order;
 
       // Get user details for prefill
