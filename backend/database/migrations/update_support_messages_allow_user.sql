@@ -16,3 +16,4 @@ CHECK (sender_type IN ('partner', 'organization', 'admin', 'user'));
 
 COMMENT ON COLUMN support_messages.sender_type IS 'Type of sender: partner, organization, admin, or user';
 
+

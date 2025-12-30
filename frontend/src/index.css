@@ -339,3 +339,26 @@ code {
 .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   opacity: 0.8;
 }
+
+/* Mobile chat input keyboard handling */
+@media (max-width: 768px) {
+  /* Ensure chat input container stays visible above keyboard */
+  .chat-input-container {
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Prevent body scroll when keyboard is open on mobile */
+  body.keyboard-open {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* Support for safe area insets on iOS */
+  @supports (padding: max(0px)) {
+    .pb-safe {
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+  }
+}

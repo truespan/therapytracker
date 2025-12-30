@@ -27,9 +27,31 @@ const SupportChat = () => {
   const [error, setError] = useState('');
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
+  const inputContainerRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Scroll input into view when focused on mobile
+  const scrollInputIntoView = () => {
+    if (messageInputRef.current && window.innerWidth < 768) {
+      // Small delay to ensure keyboard is shown
+      setTimeout(() => {
+        messageInputRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'end',
+          inline: 'nearest'
+        });
+        // Also scroll the container if it exists
+        if (inputContainerRef.current) {
+          inputContainerRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'end' 
+          });
+        }
+      }, 300);
+    }
   };
 
   useEffect(() => {
@@ -51,6 +73,30 @@ const SupportChat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Handle mobile keyboard visibility
+  useEffect(() => {
+    const handleResize = () => {
+      // On mobile, when keyboard appears, viewport height changes
+      // Scroll input into view if it's focused
+      if (messageInputRef.current && document.activeElement === messageInputRef.current) {
+        scrollInputIntoView();
+      }
+    };
+
+    // Use visualViewport API if available (better for mobile keyboards)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      };
+    } else {
+      window.addEventListener('resize', handleResize);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, []);
 
   const loadConversation = async () => {
     try {
@@ -178,7 +224,7 @@ const SupportChat = () => {
   return (
     <div className="flex flex-col h-full min-h-0 bg-white dark:bg-dark-bg-secondary">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-dark-border flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <MessageCircle className="h-6 w-6 text-primary-600 dark:text-dark-primary-500" />
@@ -200,7 +246,7 @@ const SupportChat = () => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0 overscroll-contain">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <MessageCircle className="h-12 w-12 text-gray-400 dark:text-dark-text-tertiary mb-4" />
@@ -263,7 +309,13 @@ const SupportChat = () => {
 
       {/* Message input */}
       {conversation?.status === 'open' && (
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-dark-border">
+        <div 
+          ref={inputContainerRef}
+          className="chat-input-container px-6 py-4 border-t border-gray-200 dark:border-dark-border bg-white dark:bg-dark-bg-secondary flex-shrink-0 pb-safe"
+          style={{
+            paddingBottom: 'max(1rem, env(safe-area-inset-bottom))'
+          }}
+        >
           {error && (
             <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-800 dark:text-red-200">
               {error}
@@ -275,6 +327,7 @@ const SupportChat = () => {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
+              onFocus={scrollInputIntoView}
               placeholder="Type your message..."
               className="flex-1 px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 bg-white dark:bg-dark-bg-tertiary dark:text-dark-text-primary placeholder-gray-400 dark:placeholder-dark-text-tertiary"
               disabled={sending}

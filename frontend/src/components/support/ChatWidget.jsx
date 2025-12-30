@@ -177,9 +177,17 @@ const ChatWidget = () => {
       {isOpen && (
         <div className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-2xl border border-gray-200 dark:border-dark-border overflow-hidden animate-in slide-in-from-bottom-5 duration-300 md:animate-in md:slide-in-from-bottom-0 md:duration-300">
           {/* Mobile: Full screen */}
-          <div className="md:hidden fixed inset-0 bg-white dark:bg-dark-bg-secondary z-[1001] flex flex-col">
+          <div 
+            className="md:hidden fixed inset-0 bg-white dark:bg-dark-bg-secondary z-[1001] flex flex-col"
+            style={{
+              height: '100vh',
+              height: '100dvh', // Dynamic viewport height for mobile
+              maxHeight: '100vh',
+              maxHeight: '100dvh'
+            }}
+          >
             {/* Header with minimize button */}
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-dark-border flex items-center justify-between bg-primary-600 dark:bg-dark-primary-900">
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-dark-border flex items-center justify-between bg-primary-600 dark:bg-dark-primary-900 flex-shrink-0">
               <h3 className="text-lg font-semibold text-white">
                 Technical Support
               </h3>
@@ -192,7 +200,7 @@ const ChatWidget = () => {
               </button>
             </div>
             {/* Chat content */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden min-h-0">
               <SupportChat />
             </div>
           </div>
