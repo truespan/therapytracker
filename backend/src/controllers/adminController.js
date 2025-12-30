@@ -532,8 +532,18 @@ const checkAndCreateEarnings = async (req, res) => {
 
     // Strategy 1: Check if it's a booking fee payment (has partner_id in notes)
     if (orderMetadata.partner_id) {
-      // Try to find partner by partner_id string (booking fee payment)
-      const partner = await Partner.findByPartnerId(orderMetadata.partner_id);
+      let partner = null;
+      
+      // Check if partner_id is a number (internal ID) or string (partner_id like "TH78079")
+      if (typeof orderMetadata.partner_id === 'number' || 
+          (typeof orderMetadata.partner_id === 'string' && /^\d+$/.test(orderMetadata.partner_id))) {
+        // It's a numeric ID, use findById
+        partner = await Partner.findById(parseInt(orderMetadata.partner_id));
+      } else {
+        // It's a string partner_id, use findByPartnerId
+        partner = await Partner.findByPartnerId(orderMetadata.partner_id);
+      }
+      
       if (partner) {
         recipientId = partner.id;
         recipientType = 'partner';
