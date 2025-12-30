@@ -323,7 +323,7 @@ const OrganizationSettings = () => {
                   className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                     isEditing 
                       ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                      : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                      : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                   }`}
                 />
               </div>
@@ -348,7 +348,7 @@ const OrganizationSettings = () => {
                 className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent outline-none dark:placeholder-dark-text-tertiary resize-y ${
                   isEditing 
                     ? 'bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary' 
-                    : 'bg-gray-50 dark:bg-dark-bg-primary cursor-not-allowed opacity-75'
+                    : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                 }`}
               />
             </div>
