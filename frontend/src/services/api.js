@@ -304,6 +304,7 @@ export const therapySessionAPI = {
   createStandalone: (data) => api.post('/therapy-sessions/standalone', data),
   createFromVideoSession: (videoSessionId) => api.post(`/therapy-sessions/from-video/${videoSessionId}`),
   checkAutoComplete: (partnerId) => api.get(`/therapy-sessions/check-auto-complete/${partnerId}`),
+  getSessionUsage: (partnerId) => api.get(`/partners/${partnerId}/session-usage`),
   getById: (id) => api.get(`/therapy-sessions/${id}`),
   getByPartner: (partnerId, startDate, endDate) => {
     const params = {};

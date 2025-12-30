@@ -1,5 +1,144 @@
 const TherapySession = require('../models/TherapySession');
 const Appointment = require('../models/Appointment');
+const PartnerSubscription = require('../models/PartnerSubscription');
+
+/**
+ * Calculate billing period date range based on billing period type and subscription dates
+ * @param {string} billingPeriod - 'monthly', 'quarterly', or 'yearly'
+ * @param {Date|null} subscriptionStartDate - Subscription start date
+ * @param {Date|null} subscriptionEndDate - Subscription end date
+ * @returns {Object} { startDate, endDate } - Date range for current billing period
+ */
+function calculateBillingPeriodRange(billingPeriod, subscriptionStartDate, subscriptionEndDate) {
+  const now = new Date();
+  let startDate = null;
+  let endDate = subscriptionEndDate ? new Date(subscriptionEndDate) : null;
+
+  // If subscription has explicit start/end dates, use them
+  if (subscriptionStartDate) {
+    const start = new Date(subscriptionStartDate);
+    
+    if (billingPeriod === 'monthly') {
+      // Calculate current month start based on subscription start
+      const monthsSinceStart = (now.getFullYear() - start.getFullYear()) * 12 + 
+                               (now.getMonth() - start.getMonth());
+      startDate = new Date(start.getFullYear(), start.getMonth() + monthsSinceStart, start.getDate());
+      
+      // End date is start of next month
+      endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 1);
+    } else if (billingPeriod === 'quarterly') {
+      // Calculate current quarter start
+      const quartersSinceStart = Math.floor(
+        ((now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())) / 3
+      );
+      startDate = new Date(start.getFullYear(), start.getMonth() + quartersSinceStart * 3, start.getDate());
+      
+      // End date is start of next quarter
+      endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 3);
+    } else if (billingPeriod === 'yearly') {
+      // Calculate current year start based on subscription start
+      const yearsSinceStart = now.getFullYear() - start.getFullYear();
+      startDate = new Date(start.getFullYear() + yearsSinceStart, start.getMonth(), start.getDate());
+      
+      // End date is start of next year
+      endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    }
+  } else {
+    // No subscription start date, use calendar periods
+    if (billingPeriod === 'monthly') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    } else if (billingPeriod === 'quarterly') {
+      const quarter = Math.floor(now.getMonth() / 3);
+      startDate = new Date(now.getFullYear(), quarter * 3, 1);
+      endDate = new Date(now.getFullYear(), (quarter + 1) * 3, 1);
+    } else if (billingPeriod === 'yearly') {
+      startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = new Date(now.getFullYear() + 1, 0, 1);
+    }
+  }
+
+  // Ensure end date doesn't exceed subscription end date
+  if (subscriptionEndDate) {
+    const subEndDate = new Date(subscriptionEndDate);
+    if (endDate && endDate > subEndDate) {
+      endDate = subEndDate;
+    }
+  }
+
+  return { startDate, endDate };
+}
+
+/**
+ * Check if partner has reached session limit
+ * @param {number} partnerId - Partner ID
+ * @returns {Promise<Object>} { canCreate: boolean, currentCount: number, maxSessions: number|null, message: string }
+ */
+async function checkSessionLimit(partnerId) {
+  try {
+    // Get partner's active subscription
+    const subscription = await PartnerSubscription.getActiveSubscription(partnerId);
+    
+    // If no subscription, allow creation (will get Free Plan on next check)
+    if (!subscription) {
+      return {
+        canCreate: true,
+        currentCount: 0,
+        maxSessions: null,
+        message: null
+      };
+    }
+
+    // If max_sessions is NULL, it means unlimited
+    if (subscription.max_sessions === null || subscription.max_sessions >= 999999) {
+      return {
+        canCreate: true,
+        currentCount: 0,
+        maxSessions: null,
+        message: null
+      };
+    }
+
+    // Calculate billing period date range
+    const { startDate, endDate } = calculateBillingPeriodRange(
+      subscription.billing_period || 'monthly',
+      subscription.subscription_start_date || subscription.assigned_at,
+      subscription.subscription_end_date
+    );
+
+    // Count sessions within billing period
+    const currentCount = await TherapySession.countSessionsByDateRange(
+      partnerId,
+      startDate,
+      endDate
+    );
+
+    // Check if limit is reached
+    const canCreate = currentCount < subscription.max_sessions;
+
+    return {
+      canCreate,
+      currentCount,
+      maxSessions: subscription.max_sessions,
+      planName: subscription.plan_name,
+      message: canCreate 
+        ? null 
+        : `You have reached your session limit of ${subscription.max_sessions} sessions for your ${subscription.plan_name}. Please upgrade your plan to create more sessions.`
+    };
+  } catch (error) {
+    console.error('Error checking session limit:', error);
+    // On error, allow creation to avoid blocking users
+    return {
+      canCreate: true,
+      currentCount: 0,
+      maxSessions: null,
+      message: null
+    };
+  }
+}
 
 // Create a therapy session from an appointment
 const createTherapySession = async (req, res) => {
@@ -40,6 +179,19 @@ const createTherapySession = async (req, res) => {
     if (existingSession) {
       return res.status(409).json({
         error: 'A session has already been created for this appointment'
+      });
+    }
+
+    // Check session limit before creating
+    const limitCheck = await checkSessionLimit(partner_id);
+    if (!limitCheck.canCreate) {
+      return res.status(403).json({
+        error: limitCheck.message,
+        sessionLimit: {
+          currentCount: limitCheck.currentCount,
+          maxSessions: limitCheck.maxSessions,
+          planName: limitCheck.planName
+        }
       });
     }
 
@@ -206,6 +358,19 @@ const createStandaloneSession = async (req, res) => {
       });
     }
 
+    // Check session limit before creating
+    const limitCheck = await checkSessionLimit(partner_id);
+    if (!limitCheck.canCreate) {
+      return res.status(403).json({
+        error: limitCheck.message,
+        sessionLimit: {
+          currentCount: limitCheck.currentCount,
+          maxSessions: limitCheck.maxSessions,
+          planName: limitCheck.planName
+        }
+      });
+    }
+
     const newSession = await TherapySession.createStandalone({
       partner_id,
       user_id,
@@ -336,6 +501,19 @@ const createSessionFromVideoSession = async (req, res) => {
       });
     }
 
+    // Check session limit before creating
+    const limitCheck = await checkSessionLimit(videoSession.partner_id);
+    if (!limitCheck.canCreate) {
+      return res.status(403).json({
+        error: limitCheck.message,
+        sessionLimit: {
+          currentCount: limitCheck.currentCount,
+          maxSessions: limitCheck.maxSessions,
+          planName: limitCheck.planName
+        }
+      });
+    }
+
     // Update video session status to 'in_progress'
     await VideoSession.updateStatus(videoSessionId, 'in_progress');
 
@@ -359,6 +537,35 @@ const createSessionFromVideoSession = async (req, res) => {
     console.error('Create session from video session error:', error);
     res.status(500).json({
       error: 'Failed to create therapy session from video session',
+      details: error.message
+    });
+  }
+};
+
+// Get session usage information for a partner
+const getSessionUsage = async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+    
+    if (!partnerId) {
+      return res.status(400).json({
+        error: 'partnerId is required'
+      });
+    }
+
+    const limitCheck = await checkSessionLimit(parseInt(partnerId));
+    
+    res.json({
+      currentCount: limitCheck.currentCount,
+      maxSessions: limitCheck.maxSessions,
+      planName: limitCheck.planName,
+      canCreate: limitCheck.canCreate,
+      message: limitCheck.message
+    });
+  } catch (error) {
+    console.error('Get session usage error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch session usage',
       details: error.message
     });
   }
@@ -449,5 +656,6 @@ module.exports = {
   assignQuestionnaireToSession,
   getSessionQuestionnaires,
   removeQuestionnaireFromSession,
-  checkAutoCompleteSessions
+  checkAutoCompleteSessions,
+  getSessionUsage
 };

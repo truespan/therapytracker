@@ -27,10 +27,13 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
   const [sessionCreationData, setSessionCreationData] = useState(null);
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
   const [checkingGoogleCalendar, setCheckingGoogleCalendar] = useState(true);
+  const [sessionUsage, setSessionUsage] = useState(null);
+  const [loadingUsage, setLoadingUsage] = useState(true);
 
   useEffect(() => {
     checkGoogleCalendarConnection();
-  }, []);
+    loadSessionUsage();
+  }, [partnerId]);
 
   const checkGoogleCalendarConnection = async () => {
     try {
@@ -40,6 +43,22 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       console.error('Error checking Google Calendar status:', err);
     } finally {
       setCheckingGoogleCalendar(false);
+    }
+  };
+
+  const loadSessionUsage = async () => {
+    if (!partnerId) return;
+    
+    try {
+      setLoadingUsage(true);
+      const response = await therapySessionAPI.getSessionUsage(partnerId);
+      setSessionUsage(response.data);
+    } catch (err) {
+      console.error('Error loading session usage:', err);
+      // Don't block UI if this fails
+      setSessionUsage(null);
+    } finally {
+      setLoadingUsage(false);
     }
   };
 
@@ -107,6 +126,12 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Check session limit first
+    if (sessionUsage && !sessionUsage.canCreate) {
+      setError(sessionUsage.message || 'You have reached your session limit. Please upgrade your plan to create more sessions.');
+      return;
+    }
 
     if (!formData.user_id) {
       setError('Please select a client');
@@ -201,7 +226,15 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       }
     } catch (error) {
       console.error('Session creation error:', error);
-      setError(error.response?.data?.error || 'Failed to create session');
+      // Check if error is due to session limit
+      if (error.response?.status === 403 && error.response?.data?.sessionLimit) {
+        const limitInfo = error.response.data.sessionLimit;
+        setError(error.response.data.error || `You have reached your session limit of ${limitInfo.maxSessions} sessions. Please upgrade your plan.`);
+        // Reload session usage to update UI
+        loadSessionUsage();
+      } else {
+        setError(error.response?.data?.error || 'Failed to create session');
+      }
       setLoading(false);
     }
   };
@@ -221,6 +254,9 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
         session_duration: parseInt(formData.session_duration),
         payment_notes: formData.payment_notes || null
       });
+
+      // Reload session usage after successful creation
+      await loadSessionUsage();
 
       // Create appointment only if requested
       if (createAppointment) {
@@ -247,7 +283,15 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
       onClose();
     } catch (err) {
       console.error('Create session error:', err);
-      setError(err.response?.data?.error || 'Failed to create session');
+      // Check if error is due to session limit
+      if (err.response?.status === 403 && err.response?.data?.sessionLimit) {
+        const limitInfo = err.response.data.sessionLimit;
+        setError(err.response.data.error || `You have reached your session limit of ${limitInfo.maxSessions} sessions. Please upgrade your plan.`);
+        // Reload session usage to update UI
+        loadSessionUsage();
+      } else {
+        setError(err.response?.data?.error || 'Failed to create session');
+      }
       setLoading(false);
     }
   };
@@ -339,6 +383,81 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
                       I'll connect later
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Session Usage Warning */}
+          {sessionUsage && sessionUsage.maxSessions !== null && (
+            <div className={`mb-4 p-4 rounded-lg border ${
+              !sessionUsage.canCreate 
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
+                : sessionUsage.currentCount >= sessionUsage.maxSessions * 0.8
+                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+            }`}>
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className={`h-5 w-5 ${
+                    !sessionUsage.canCreate 
+                      ? 'text-red-600 dark:text-red-400' 
+                      : sessionUsage.currentCount >= sessionUsage.maxSessions * 0.8
+                      ? 'text-yellow-600 dark:text-yellow-400'
+                      : 'text-blue-600 dark:text-blue-400'
+                  }`} />
+                </div>
+                <div className="flex-1">
+                  <h3 className={`text-sm font-semibold mb-1 ${
+                    !sessionUsage.canCreate 
+                      ? 'text-red-800 dark:text-red-300' 
+                      : sessionUsage.currentCount >= sessionUsage.maxSessions * 0.8
+                      ? 'text-yellow-800 dark:text-yellow-300'
+                      : 'text-blue-800 dark:text-blue-300'
+                  }`}>
+                    {!sessionUsage.canCreate 
+                      ? 'Session Limit Reached' 
+                      : sessionUsage.currentCount >= sessionUsage.maxSessions * 0.8
+                      ? 'Approaching Session Limit'
+                      : 'Session Usage'}
+                  </h3>
+                  <p className={`text-sm mb-2 ${
+                    !sessionUsage.canCreate 
+                      ? 'text-red-700 dark:text-red-300' 
+                      : sessionUsage.currentCount >= sessionUsage.maxSessions * 0.8
+                      ? 'text-yellow-700 dark:text-yellow-300'
+                      : 'text-blue-700 dark:text-blue-300'
+                  }`}>
+                    {!sessionUsage.canCreate 
+                      ? sessionUsage.message || `You have used all ${sessionUsage.maxSessions} sessions in your ${sessionUsage.planName || 'current plan'}. Please upgrade to continue creating sessions.`
+                      : `You have used ${sessionUsage.currentCount} of ${sessionUsage.maxSessions} sessions in your ${sessionUsage.planName || 'current plan'}.`
+                    }
+                  </p>
+                  {/* Progress bar */}
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all ${
+                        !sessionUsage.canCreate 
+                          ? 'bg-red-600 dark:bg-red-500' 
+                          : sessionUsage.currentCount >= sessionUsage.maxSessions * 0.8
+                          ? 'bg-yellow-600 dark:bg-yellow-500'
+                          : 'bg-blue-600 dark:bg-blue-500'
+                      }`}
+                      style={{ 
+                        width: `${Math.min((sessionUsage.currentCount / sessionUsage.maxSessions) * 100, 100)}%` 
+                      }}
+                    />
+                  </div>
+                  {!sessionUsage.canCreate && (
+                    <div className="mt-2">
+                      <a 
+                        href="/settings" 
+                        className="text-sm text-red-700 dark:text-red-300 underline hover:text-red-800 dark:hover:text-red-200"
+                      >
+                        Upgrade your plan →
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -474,9 +593,9 @@ const CreateSessionModal = ({ partnerId, selectedUser, clients, onClose, onSucce
               <button
                 type="submit"
                 className="px-6 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
+                disabled={loading || (sessionUsage && !sessionUsage.canCreate)}
               >
-                {loading ? 'Creating Session...' : 'Create Session'}
+                {loading ? 'Creating Session...' : (sessionUsage && !sessionUsage.canCreate) ? 'Limit Reached' : 'Create Session'}
               </button>
             </div>
           </form>

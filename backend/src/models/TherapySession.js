@@ -435,6 +435,38 @@ class TherapySession {
     const result = await db.query(query);
     return result.rows.length;
   }
+
+  /**
+   * Count sessions for a partner within a date range
+   * @param {number} partnerId - Partner ID
+   * @param {Date|null} startDate - Start date (inclusive), null for no start limit
+   * @param {Date|null} endDate - End date (inclusive), null for no end limit
+   * @returns {Promise<number>} Count of sessions
+   */
+  static async countSessionsByDateRange(partnerId, startDate = null, endDate = null) {
+    let query = `
+      SELECT COUNT(*) as session_count
+      FROM therapy_sessions
+      WHERE partner_id = $1
+    `;
+    const values = [partnerId];
+    let paramIndex = 2;
+
+    if (startDate) {
+      query += ` AND session_date >= $${paramIndex}`;
+      values.push(startDate);
+      paramIndex++;
+    }
+
+    if (endDate) {
+      query += ` AND session_date <= $${paramIndex}`;
+      values.push(endDate);
+      paramIndex++;
+    }
+
+    const result = await db.query(query, values);
+    return parseInt(result.rows[0].session_count, 10);
+  }
 }
 
 module.exports = TherapySession;

@@ -72,7 +72,13 @@ const StartSessionModal = ({ appointment, partnerId, onClose, onSuccess }) => {
       onClose();
     } catch (err) {
       console.error('Create session error:', err);
-      setError(err.response?.data?.error || 'Failed to create session');
+      // Check if error is due to session limit
+      if (err.response?.status === 403 && err.response?.data?.sessionLimit) {
+        const limitInfo = err.response.data.sessionLimit;
+        setError(err.response.data.error || `You have reached your session limit of ${limitInfo.maxSessions} sessions in your ${limitInfo.planName || 'current plan'}. Please upgrade to continue creating sessions.`);
+      } else {
+        setError(err.response?.data?.error || 'Failed to create session');
+      }
       setLoading(false);
     }
   };
