@@ -90,6 +90,19 @@ const handleExistingUser = async (authRecord, res) => {
             message: 'Please verify your email address before logging in.'
           });
         }
+        // Fetch organization settings for the partner (same as regular login)
+        if (userDetails && userDetails.organization_id) {
+          const Organization = require('../models/Organization');
+          const org = await Organization.findById(userDetails.organization_id);
+          userDetails.organization_video_sessions_enabled = org?.video_sessions_enabled ?? true;
+          // Include organization object with theraptrack_controlled
+          userDetails.organization = {
+            id: org.id,
+            name: org.name,
+            theraptrack_controlled: org.theraptrack_controlled ?? false,
+            video_sessions_enabled: org.video_sessions_enabled ?? true
+          };
+        }
         break;
       case 'organization':
         userDetails = await Organization.findById(authRecord.reference_id);

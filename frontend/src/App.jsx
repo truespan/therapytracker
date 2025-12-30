@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -48,24 +48,26 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 function AppRoutes() {
   const { user } = useAuth();
 
-  // Helper to get redirect path based on user type
-  const getRedirectPath = () => {
+  // Memoize redirect path to prevent re-render loops
+  // Use a stable key based on user ID and type to prevent unnecessary recalculations
+  const userKey = user ? `${user.id}-${user.userType}` : null;
+  const redirectPath = useMemo(() => {
     if (!user) return '/';
     if (user.userType === 'admin') return '/admin';
     return `/${user.userType}/dashboard`;
-  };
+  }, [userKey]); // Only depend on userKey (id + type), not the entire user object
 
   return (
     <>
       <InactivityLogout />
       <Routes>
       {/* Public Routes */}
-      <Route path="/" element={user ? <Navigate to={getRedirectPath()} /> : <Home />} />
-      <Route path="/login" element={user ? <Navigate to={getRedirectPath()} /> : <Login />} />
-      <Route path="/signup" element={user ? <Navigate to={getRedirectPath()} /> : <Signup />} />
-      <Route path="/therapist-signup/:token" element={user ? <Navigate to={getRedirectPath()} /> : <TherapistSignup />} />
-      <Route path="/forgot-password" element={user ? <Navigate to={getRedirectPath()} /> : <ForgotPassword />} />
-      <Route path="/reset-password" element={user ? <Navigate to={getRedirectPath()} /> : <ResetPassword />} />
+      <Route path="/" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <Home />} />
+      <Route path="/login" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <Login />} />
+      <Route path="/signup" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <Signup />} />
+      <Route path="/therapist-signup/:token" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <TherapistSignup />} />
+      <Route path="/forgot-password" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <ForgotPassword />} />
+      <Route path="/reset-password" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/google/callback" element={<GoogleCalendarCallback />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -138,7 +140,7 @@ function AppRoutes() {
 
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <ThemeProvider>
           <AppRoutes />

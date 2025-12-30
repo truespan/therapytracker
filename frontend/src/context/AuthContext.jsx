@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, userAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -152,16 +152,48 @@ export const AuthProvider = ({ children }) => {
 
   const googleLogin = async (token) => {
     try {
+      console.log('[AuthContext] Starting Google login...');
       const response = await authAPI.googleAuth(token);
       const { token: jwtToken, user: userData } = response.data;
+      console.log('[AuthContext] Google auth response received:', { userType: userData.userType, id: userData.id });
       
       localStorage.setItem('token', jwtToken);
-      localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('lastActivityTimestamp', Date.now().toString());
-      setUser(userData);
       
-      return { success: true, user: userData };
+      // Fetch complete user data BEFORE setting state (to avoid double state update)
+      let finalUserData = userData;
+      try {
+        console.log('[AuthContext] Fetching additional user data...');
+        // For users, use getUserById to get videoSessionsEnabled; for others use getCurrentUser
+        if (userData.userType === 'user') {
+          const refreshResponse = await userAPI.getById(userData.id);
+          finalUserData = { 
+            ...userData, // Keep all original data
+            ...refreshResponse.data.user, // Merge with refreshed data
+            videoSessionsEnabled: refreshResponse.data.videoSessionsEnabled,
+            userType: userData.userType, // Ensure userType is preserved
+            id: userData.id // Ensure id is preserved
+          };
+          console.log('[AuthContext] User data refreshed with videoSessionsEnabled:', finalUserData.videoSessionsEnabled);
+        } else {
+          const refreshResponse = await authAPI.getCurrentUser();
+          finalUserData = { ...userData, ...refreshResponse.data.user };
+          console.log('[AuthContext] User data refreshed for partner/org');
+        }
+      } catch (refreshError) {
+        console.error('[AuthContext] Failed to refresh user data after Google login:', refreshError);
+        // If refresh fails, use initial user data
+        finalUserData = userData;
+      }
+      
+      // Set user state ONCE with complete data
+      localStorage.setItem('user', JSON.stringify(finalUserData));
+      setUser(finalUserData);
+      console.log('[AuthContext] User state set with complete data');
+      
+      return { success: true, user: finalUserData };
     } catch (error) {
+      console.error('[AuthContext] Google login error:', error);
       return {
         success: false,
         error: error.response?.data?.error || 'Google login failed',

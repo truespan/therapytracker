@@ -123,3 +123,4 @@ await organizationAPI.revokeBlogPermission(organizationId, partnerId);
 - Revoking permission does not delete existing blog posts, but prevents new posts
 
 
+

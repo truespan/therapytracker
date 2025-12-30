@@ -32,3 +32,4 @@ COMMENT ON COLUMN partners.can_post_blogs IS 'Permission flag to allow therapist
 COMMENT ON TABLE blogs IS 'Blog posts and news articles created by therapists with blog posting permission';
 
 
+

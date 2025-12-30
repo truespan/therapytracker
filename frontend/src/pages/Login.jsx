@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
@@ -13,9 +13,10 @@ const Login = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login, googleLogin } = useAuth();
+  const { login, googleLogin, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const hasNavigatedRef = useRef(false);
 
   // Check for success message from email verification
   useEffect(() => {
@@ -33,6 +34,19 @@ const Login = () => {
     }
   }, [location, navigate]);
 
+  // Force navigation when user is set (fallback if Navigate component doesn't trigger)
+  useEffect(() => {
+    if (user && location.pathname === '/login' && !hasNavigatedRef.current) {
+      console.log('[Login] User detected, forcing navigation to dashboard');
+      hasNavigatedRef.current = true; // Prevent multiple navigations
+      const timer = setTimeout(() => {
+        const redirectPath = user.userType === 'admin' ? '/admin' : `/${user.userType}/dashboard`;
+        navigate(redirectPath, { replace: true });
+      }, 100); // Small delay to ensure state is fully propagated
+      return () => clearTimeout(timer);
+    }
+  }, [user, navigate, location.pathname]);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -45,6 +59,7 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    hasNavigatedRef.current = false; // Reset flag for new login attempt
 
     // Trim email/phone before sending
     const trimmedData = {
@@ -55,51 +70,49 @@ const Login = () => {
     const result = await login(trimmedData);
 
     if (result.success) {
-      // Route based on user type
-      if (result.user.userType === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate(`/${result.user.userType}/dashboard`);
-      }
+      // Don't manually navigate - App.jsx will handle redirect via Navigate component
+      // Keep loading state true to show loading until redirect happens
     } else {
       setError(result.error);
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
+    console.log('[Login] Google Sign-In initiated');
     setError('');
     setLoading(true);
+    hasNavigatedRef.current = false; // Reset flag for new login attempt
 
     try {
       const result = await googleLogin(credentialResponse.credential);
+      console.log('[Login] Google login result:', { success: result.success, userType: result.user?.userType });
 
       if (result.success) {
-        // Route based on user type
-        if (result.user.userType === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate(`/${result.user.userType}/dashboard`);
-        }
+        console.log('[Login] Google login successful, waiting for navigation...');
+        // Navigation will happen via useEffect when user state is detected
+        // Keep loading state true to show loading until redirect happens
       } else {
         // Handle different error cases
         if (result.details?.error === 'Additional information required') {
+          console.log('[Login] Additional info required, redirecting to signup');
           // Redirect to signup with Google user data
           navigate('/signup', {
             state: {
               googleUser: result.details.googleUser,
               message: 'Please complete the signup form to create your account'
-            }
+            },
+            replace: true
           });
         } else {
+          console.error('[Login] Google login failed:', result.error);
           setError(result.error || 'Google login failed');
+          setLoading(false);
         }
       }
     } catch (err) {
       setError('An unexpected error occurred during Google login');
-      console.error('Google login error:', err);
-    } finally {
+      console.error('[Login] Google login error:', err);
       setLoading(false);
     }
   };
