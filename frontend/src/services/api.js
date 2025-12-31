@@ -494,5 +494,15 @@ export const bankAccountAPI = {
   getAllBankAccounts: () => api.get('/admin/bank-accounts'),
 };
 
+// WhatsApp APIs
+export const whatsappAPI = {
+  getStatus: () => api.get('/whatsapp/status'),
+  testIntegration: (phoneNumber) => api.post('/whatsapp/test', { phoneNumber }),
+  getLogs: (params) => api.get('/whatsapp/logs', { params }),
+  getLogById: (id) => api.get(`/whatsapp/logs/${id}`),
+  resendNotification: (id) => api.post(`/whatsapp/logs/${id}/resend`),
+  getStatistics: (days = 30) => api.get('/whatsapp/statistics', { params: { days } }),
+};
+
 export default api;
 

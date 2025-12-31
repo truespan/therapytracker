@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, User, LayoutDashboard, FileText, CreditCard, PlusCircle, Building2, Wrench } from 'lucide-react';
+import { LogOut, User, LayoutDashboard, FileText, CreditCard, PlusCircle, Building2, Wrench, MessageSquare } from 'lucide-react';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const AdminLayout = ({ children }) => {
@@ -22,6 +22,7 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/bank-accounts', label: 'Bank Account Details', icon: Building2 },
     { path: '/admin/payouts', label: 'Payouts', icon: CurrencyIcon },
     { path: '/admin/earnings-utility', label: 'Earnings Utility', icon: Wrench },
+    { path: '/admin/whatsapp-settings', label: 'WhatsApp Settings', icon: MessageSquare },
   ];
 
   const isActive = (path) => {

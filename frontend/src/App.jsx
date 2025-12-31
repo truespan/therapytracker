@@ -23,6 +23,7 @@ import CreatePlansTab from './components/admin/CreatePlansTab';
 import PayoutsTab from './components/admin/PayoutsTab';
 import BankAccountDetailsTab from './components/admin/BankAccountDetailsTab';
 import EarningsUtilityTab from './components/admin/EarningsUtilityTab';
+import WhatsAppSettingsTab from './components/admin/WhatsAppSettingsTab';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import ChatWidget from './components/support/ChatWidget';
@@ -89,6 +90,7 @@ function AppRoutes() {
                 <Route path="bank-accounts" element={<BankAccountDetailsTab />} />
                 <Route path="payouts" element={<PayoutsTab />} />
                 <Route path="earnings-utility" element={<EarningsUtilityTab />} />
+                <Route path="whatsapp-settings" element={<WhatsAppSettingsTab />} />
                 <Route path="*" element={<Navigate to="/admin" />} />
               </Routes>
             </AdminLayout>
