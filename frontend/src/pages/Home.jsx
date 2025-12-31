@@ -66,11 +66,31 @@ const Home = () => {
   const scrollToTop = () => {
     isScrollingRef.current = true;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Reset the flag after scroll animation completes
+    // Reset the flag and update FAB visibility after scroll animation completes
     setTimeout(() => {
       isScrollingRef.current = false;
+      // Force update FAB visibility after scroll completes
+      const scrollPosition = window.scrollY;
+      const viewportHeight = window.innerHeight;
+      setShowScrollToTop(scrollPosition > viewportHeight * 1.5);
     }, 1000);
   };
+
+  // Update FAB visibility based on scroll position (always runs, even during programmatic scrolling)
+  useEffect(() => {
+    const handleScrollForFAB = () => {
+      const scrollPosition = window.scrollY;
+      const viewportHeight = window.innerHeight;
+      // Show scroll-to-top button after scrolling ~1-2 viewport heights
+      setShowScrollToTop(scrollPosition > viewportHeight * 1.5);
+    };
+
+    // Set initial state
+    handleScrollForFAB();
+
+    window.addEventListener('scroll', handleScrollForFAB, { passive: true });
+    return () => window.removeEventListener('scroll', handleScrollForFAB);
+  }, []);
 
   // Detect active section based on scroll position
   useEffect(() => {
@@ -82,10 +102,6 @@ const Home = () => {
 
       const scrollPosition = window.scrollY;
       const offset = 250; // Offset for navbar and sticky header (60px banner + 80px nav + padding)
-      
-      // Show scroll-to-top button after scrolling ~1-2 viewport heights
-      const viewportHeight = window.innerHeight;
-      setShowScrollToTop(scrollPosition > viewportHeight * 1.5);
       
       // Find the section that's currently in view
       let currentSection = '';
