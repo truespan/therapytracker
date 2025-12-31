@@ -721,6 +721,37 @@ Please prepare for the session and contact the client if needed.
       };
     }
 
+    // Validate credentials before making API call
+    if (!this.apiKey || !this.apiSecret) {
+      return {
+        success: false,
+        error: 'Vonage API credentials are missing',
+        details: {
+          type: 'configuration_error',
+          title: 'Missing Credentials',
+          detail: 'VONAGE_API_KEY and/or VONAGE_API_SECRET are not set in your environment variables. Please check your .env file.',
+          missingFields: {
+            apiKey: !this.apiKey,
+            apiSecret: !this.apiSecret
+          }
+        },
+        status: 401
+      };
+    }
+
+    if (!this.fromNumber) {
+      return {
+        success: false,
+        error: 'Vonage WhatsApp number is missing',
+        details: {
+          type: 'configuration_error',
+          title: 'Missing WhatsApp Number',
+          detail: 'VONAGE_WHATSAPP_NUMBER is not set in your environment variables. Please check your .env file.'
+        },
+        status: 400
+      };
+    }
+
     const formattedPhone = this.formatPhoneNumber(testPhoneNumber);
     if (!formattedPhone) {
       return {
@@ -769,6 +800,40 @@ Please prepare for the session and contact the client if needed.
         baseUrl: this.baseUrl
       });
       
+      // Handle 401 Unauthorized errors specifically
+      if (errorDetails.status === 401 || errorDetails.statusCode === 401) {
+        console.error('[WhatsApp Service] AUTHENTICATION ERROR: Invalid Vonage API credentials');
+        console.error('[WhatsApp Service] Please verify:');
+        console.error('  1. VONAGE_API_KEY is correct in your .env file');
+        console.error('  2. VONAGE_API_SECRET is correct in your .env file');
+        console.error('  3. Your Vonage account has WhatsApp messaging enabled');
+        console.error('  4. Your credentials have not expired or been revoked');
+        console.error('  5. You have restarted the server after updating .env file');
+        
+        return {
+          success: false,
+          error: 'Authentication failed: Invalid Vonage API credentials',
+          details: {
+            ...errorDetails.details,
+            troubleshooting: {
+              type: 'authentication_error',
+              title: 'Invalid Credentials',
+              detail: 'The Vonage API credentials (VONAGE_API_KEY and VONAGE_API_SECRET) are incorrect or invalid.',
+              steps: [
+                'Verify VONAGE_API_KEY is correct in your .env file',
+                'Verify VONAGE_API_SECRET is correct in your .env file',
+                'Check your Vonage Dashboard to ensure credentials are active',
+                'Ensure your Vonage account has WhatsApp messaging enabled',
+                'Restart your server after updating .env file (environment variables are loaded at startup)'
+              ],
+              dashboardUrl: 'https://dashboard.nexmo.com/'
+            }
+          },
+          isSandboxError: false,
+          status: 401
+        };
+      }
+      
       if (this.isSandboxRegistrationError(error)) {
         console.error('[WhatsApp Service] SANDBOX ISSUE: Test number not registered in Vonage WhatsApp sandbox');
       } else if (errorDetails.status === 422) {
@@ -785,7 +850,7 @@ Please prepare for the session and contact the client if needed.
         error: error.message,
         details: errorDetails.details,
         isSandboxError: this.isSandboxRegistrationError(error),
-        status: errorDetails.status
+        status: errorDetails.status || errorDetails.statusCode
       };
     }
   }
@@ -1116,10 +1181,13 @@ Please prepare for the session and contact the client if needed.
    * @returns {Object} Parsed error details
    */
   extractErrorDetails(error) {
+    // For axios errors, status code is in error.response.status
+    const statusCode = error.response?.status || error.status || error.statusCode;
+    
     const details = {
       message: error.message,
-      status: error.status,
-      statusCode: error.statusCode,
+      status: statusCode,
+      statusCode: statusCode,
       details: null
     };
 

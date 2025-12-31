@@ -353,6 +353,57 @@ const WhatsAppSettingsTab = () => {
                   ) : (
                     <div className="mt-2">
                       <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-2">{testResult.error}</p>
+                      {testResult.statusCode === 401 && (
+                        <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                          <p className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">
+                            🔐 Authentication Error (401)
+                          </p>
+                          <p className="text-xs text-red-700 dark:text-red-400 mb-2">
+                            The Vonage API credentials are incorrect or invalid. Please verify your configuration.
+                          </p>
+                          {testResult.details?.troubleshooting ? (
+                            <>
+                              <p className="text-xs font-semibold text-red-800 dark:text-red-300 mt-3 mb-2">
+                                Troubleshooting Steps:
+                              </p>
+                              <ol className="text-xs text-red-700 dark:text-red-400 list-decimal list-inside space-y-1 mb-2">
+                                {testResult.details.troubleshooting.steps.map((step, index) => (
+                                  <li key={index}>{step}</li>
+                                ))}
+                              </ol>
+                              <div className="mt-2 p-2 bg-white dark:bg-dark-bg-secondary rounded border border-red-300 dark:border-red-700">
+                                <p className="text-xs text-gray-700 dark:text-dark-text-secondary">
+                                  <strong>Environment Variables Required:</strong>
+                                </p>
+                                <ul className="text-xs text-gray-600 dark:text-dark-text-secondary mt-1 list-disc list-inside space-y-1">
+                                  <li><code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">VONAGE_API_KEY</code> - Your Vonage API Key</li>
+                                  <li><code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">VONAGE_API_SECRET</code> - Your Vonage API Secret</li>
+                                  <li><code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">VONAGE_WHATSAPP_NUMBER</code> - Your WhatsApp Business Number (E.164 format, e.g., +919655846492)</li>
+                                  <li><code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">WHATSAPP_ENABLED</code> - Set to <code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">true</code></li>
+                                </ul>
+                                <p className="text-xs text-gray-600 dark:text-dark-text-secondary mt-2">
+                                  <strong>Important:</strong> After updating your <code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">.env</code> file, you must restart your backend server for changes to take effect.
+                                </p>
+                              </div>
+                              <p className="text-xs text-red-700 dark:text-red-400 mt-2">
+                                Access your <a href="https://dashboard.nexmo.com/" target="_blank" rel="noopener noreferrer" className="underline font-medium">Vonage Dashboard</a> to verify your API credentials.
+                              </p>
+                            </>
+                          ) : (
+                            <p className="text-xs text-red-700 dark:text-red-400">
+                              Please check your backend <code className="bg-red-100 dark:bg-red-900/30 px-1 rounded">.env</code> file and ensure VONAGE_API_KEY and VONAGE_API_SECRET are correctly set.
+                            </p>
+                          )}
+                          {testResult.details && (
+                            <details className="mt-2">
+                              <summary className="text-xs text-red-700 dark:text-red-400 cursor-pointer">View Error Details</summary>
+                              <pre className="mt-2 p-2 bg-white dark:bg-dark-bg-secondary rounded text-xs overflow-auto">
+                                {typeof testResult.details === 'string' ? testResult.details : JSON.stringify(testResult.details, null, 2)}
+                              </pre>
+                            </details>
+                          )}
+                        </div>
+                      )}
                       {testResult.statusCode === 422 && (
                         <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
                           {testResult.isSandboxError ? (
