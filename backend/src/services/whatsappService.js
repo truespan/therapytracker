@@ -26,6 +26,14 @@ class WhatsAppService {
     this.maxRetries = 3;
     this.retryDelay = 5000; // 5 seconds initial retry delay
     
+    // WhatsApp Template Names (set via environment variables)
+    this.templateNames = {
+      appointmentConfirmation: null,
+      appointmentReminder: null,
+      appointmentCancellation: null
+    };
+    this.useTemplates = false; // Will be true if at least one template is configured
+    
     this.initialize();
   }
 
@@ -55,11 +63,20 @@ class WhatsAppService {
         console.log('[WhatsApp Service] Raw key contains actual newlines:', rawPrivateKey.includes('\n'));
         console.log('[WhatsApp Service] Raw key first 50 chars:', rawPrivateKey.substring(0, 50));
         
+        // Remove surrounding quotes if present (from environment variable)
+        rawPrivateKey = rawPrivateKey.trim();
+        if ((rawPrivateKey.startsWith('"') && rawPrivateKey.endsWith('"')) ||
+            (rawPrivateKey.startsWith("'") && rawPrivateKey.endsWith("'"))) {
+          console.log('[WhatsApp Service] Removing surrounding quotes from private key');
+          rawPrivateKey = rawPrivateKey.slice(1, -1);
+        }
+        
         // Replace literal \n with actual newlines if they exist
         rawPrivateKey = rawPrivateKey.replace(/\\n/g, '\n');
         
-        console.log('[WhatsApp Service] After replacement - contains newlines:', rawPrivateKey.includes('\n'));
-        console.log('[WhatsApp Service] After replacement - line count:', rawPrivateKey.split('\n').length);
+        console.log('[WhatsApp Service] After processing - contains newlines:', rawPrivateKey.includes('\n'));
+        console.log('[WhatsApp Service] After processing - line count:', rawPrivateKey.split('\n').length);
+        console.log('[WhatsApp Service] After processing - first 50 chars:', rawPrivateKey.substring(0, 50));
         
         // Trim only leading/trailing whitespace, preserve internal formatting
         this.privateKey = rawPrivateKey.trim();
@@ -87,9 +104,26 @@ class WhatsAppService {
       this.enabled = process.env.WHATSAPP_ENABLED === 'true';
       this.isSandbox = process.env.VONAGE_SANDBOX === 'true';
       
+      // Load template names from environment variables
+      this.templateNames.appointmentConfirmation = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CONFIRMATION?.trim() || null;
+      this.templateNames.appointmentReminder = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_REMINDER?.trim() || null;
+      this.templateNames.appointmentCancellation = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLATION?.trim() || null;
+      
+      // Check if templates are configured
+      this.useTemplates = !!(this.templateNames.appointmentConfirmation || 
+                            this.templateNames.appointmentReminder || 
+                            this.templateNames.appointmentCancellation);
+      
       console.log('[WhatsApp Service] Enabled:', this.enabled);
       console.log('[WhatsApp Service] From Number:', this.fromNumber || 'NOT SET');
       console.log('[WhatsApp Service] Sandbox Mode:', this.isSandbox);
+      console.log('[WhatsApp Service] Template Support:', this.useTemplates ? 'ENABLED' : 'DISABLED');
+      if (this.useTemplates) {
+        console.log('[WhatsApp Service] Templates configured:');
+        console.log('  - Appointment Confirmation:', this.templateNames.appointmentConfirmation || 'NOT SET');
+        console.log('  - Appointment Reminder:', this.templateNames.appointmentReminder || 'NOT SET');
+        console.log('  - Appointment Cancellation:', this.templateNames.appointmentCancellation || 'NOT SET');
+      }
       
       // Set base URL based on sandbox mode
       this.baseUrl = this.isSandbox
@@ -321,6 +355,69 @@ class WhatsAppService {
   }
 
   /**
+   * Prepare template parameters for appointment confirmation
+   * @param {Object} appointmentData - Appointment details
+   * @returns {Array} Template parameters array
+   */
+  prepareAppointmentConfirmationTemplateParams(appointmentData) {
+    const {
+      userName,
+      therapistName,
+      appointmentDate,
+      appointmentTime,
+      timezone,
+      appointmentType,
+      duration
+    } = appointmentData;
+
+    // Format date and time
+    let displayTime = appointmentTime;
+    let displayDate = appointmentDate;
+    
+    if (!appointmentTime && appointmentDate) {
+      const dateObj = new Date(appointmentDate);
+      const localTimezone = timezone || 'Asia/Kolkata';
+      
+      displayTime = dateObj.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: localTimezone
+      });
+      
+      displayDate = dateObj.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: localTimezone
+      });
+    } else if (appointmentDate) {
+      const dateObj = new Date(appointmentDate);
+      const localTimezone = timezone || 'Asia/Kolkata';
+      
+      displayDate = dateObj.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: localTimezone
+      });
+    }
+
+    // Return parameters in order (adjust based on your template structure)
+    // Common template structure: {{1}} = User Name, {{2}} = Date, {{3}} = Time, {{4}} = Therapist Name
+    return [
+      userName || 'there',
+      displayDate || appointmentDate,
+      displayTime || appointmentTime,
+      therapistName || 'Your therapist',
+      appointmentType || 'Therapy Session',
+      `${duration || 60} minutes`
+    ];
+  }
+
+  /**
    * Create WhatsApp appointment confirmation message
    * @param {Object} appointmentData - Appointment details
    * @returns {string} Formatted message
@@ -517,6 +614,62 @@ Please prepare for the session and contact the client if needed.
   }
 
   /**
+   * Send WhatsApp message using template
+   * @param {string} toPhoneNumber - Recipient's phone number
+   * @param {string} templateName - Template name
+   * @param {Array} templateParams - Template parameters
+   * @param {string} languageCode - Language code (default: 'en')
+   * @returns {Promise<Object>} Result with message ID or error
+   */
+  async sendTemplateMessage(toPhoneNumber, templateName, templateParams, languageCode = 'en') {
+    const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
+    const toNumber = toPhoneNumber.replace('+', '');
+    
+    if (this.vonageClient) {
+      // Use Vonage SDK with JWT authentication
+      const result = await this.vonageClient.messages.send({
+        message_type: 'template',
+        channel: 'whatsapp',
+        to: toNumber,
+        from: fromNumber,
+        template: {
+          name: templateName,
+          parameters: templateParams.map(param => ({ type: 'text', text: String(param) }))
+        },
+        whatsapp: {
+          policy: 'deterministic',
+          locale: languageCode
+        }
+      });
+      return { success: true, messageId: result.message_uuid };
+    } else {
+      // Fallback to Basic Auth with direct API call
+      const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+      
+      const response = await axios.post(this.baseUrl, {
+        from: fromNumber,
+        to: toNumber,
+        channel: 'whatsapp',
+        message_type: 'template',
+        template: {
+          name: templateName,
+          parameters: templateParams.map(param => ({ type: 'text', text: String(param) }))
+        },
+        whatsapp: {
+          policy: 'deterministic',
+          locale: languageCode
+        }
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${auth}`
+        }
+      });
+      return { success: true, messageId: response.data.message_uuid };
+    }
+  }
+
+  /**
    * Send WhatsApp appointment confirmation directly (internal use)
    * @param {string} toPhoneNumber - Recipient's phone number
    * @param {Object} appointmentData - Appointment details
@@ -526,42 +679,65 @@ Please prepare for the session and contact the client if needed.
    */
   async sendAppointmentConfirmationDirect(toPhoneNumber, appointmentData, appointmentId, userId) {
     try {
-      // Create message content
-      const messageBody = this.createAppointmentMessage(appointmentData);
-
-      // Send message using appropriate authentication method
       const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
       const toNumber = toPhoneNumber.replace('+', '');
       
       let messageId;
+      let usedTemplate = false;
       
-      if (this.vonageClient) {
-        // Use Vonage SDK with JWT authentication
-        const result = await this.vonageClient.messages.send({
-          message_type: 'text',
-          channel: 'whatsapp',
-          to: toNumber,
-          from: fromNumber,
-          text: messageBody
-        });
-        messageId = result.message_uuid;
-      } else {
-        // Fallback to Basic Auth
-        const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+      // Try template first if configured
+      if (this.useTemplates && this.templateNames.appointmentConfirmation) {
+        try {
+          console.log('[WhatsApp Service] Attempting to send appointment confirmation via template:', this.templateNames.appointmentConfirmation);
+          const templateParams = this.prepareAppointmentConfirmationTemplateParams(appointmentData);
+          const templateResult = await this.sendTemplateMessage(
+            toPhoneNumber,
+            this.templateNames.appointmentConfirmation,
+            templateParams,
+            'en'
+          );
+          messageId = templateResult.messageId;
+          usedTemplate = true;
+          console.log('[WhatsApp Service] Template message sent successfully:', messageId);
+        } catch (templateError) {
+          console.warn('[WhatsApp Service] Template message failed, falling back to text:', templateError.message);
+          // Fall through to text message
+        }
+      }
+      
+      // Fallback to text message if template not used or failed
+      if (!usedTemplate) {
+        console.log('[WhatsApp Service] Sending appointment confirmation as text message');
+        const messageBody = this.createAppointmentMessage(appointmentData);
         
-        const response = await axios.post(this.baseUrl, {
-          from: fromNumber,
-          to: toNumber,
-          channel: 'whatsapp',
-          message_type: 'text',
-          text: messageBody
-        }, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Basic ${auth}`
-          }
-        });
-        messageId = response.data.message_uuid;
+        if (this.vonageClient) {
+          // Use Vonage SDK with JWT authentication
+          const result = await this.vonageClient.messages.send({
+            message_type: 'text',
+            channel: 'whatsapp',
+            to: toNumber,
+            from: fromNumber,
+            text: messageBody
+          });
+          messageId = result.message_uuid;
+        } else {
+          // Fallback to Basic Auth
+          const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+          
+          const response = await axios.post(this.baseUrl, {
+            from: fromNumber,
+            to: toNumber,
+            channel: 'whatsapp',
+            message_type: 'text',
+            text: messageBody
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Basic ${auth}`
+            }
+          });
+          messageId = response.data.message_uuid;
+        }
       }
 
       // Log successful notification
@@ -574,7 +750,7 @@ Please prepare for the session and contact the client if needed.
         null
       );
 
-      console.log(`[WhatsApp Service] Message sent successfully: ${messageId}`);
+      console.log(`[WhatsApp Service] Message sent successfully: ${messageId} (${usedTemplate ? 'Template' : 'Text'})`);
 
       return {
         success: true,

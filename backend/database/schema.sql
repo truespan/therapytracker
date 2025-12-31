@@ -47,7 +47,7 @@ CREATE TABLE users (
     sex VARCHAR(20) NOT NULL CHECK (sex IN ('Male', 'Female', 'Others')),
     age INTEGER NOT NULL CHECK (age > 0),
     email VARCHAR(255),
-    contact VARCHAR(50) NOT NULL,
+    contact VARCHAR(50) NOT NULL UNIQUE,
     address TEXT,
     photo_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

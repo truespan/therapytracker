@@ -39,7 +39,43 @@ Vonage Messages API v1 supports two authentication methods:
 4. Under **Messages**, select your application from the dropdown
 5. Click **Save**
 
-### 3. Configure Environment Variables
+### 3. Create WhatsApp Message Templates (Recommended)
+
+**Why Templates?** WhatsApp Business API has a 24-hour messaging window. You can only send free-form messages to users who have messaged you first. **Message templates can be sent anytime**, even if the user hasn't messaged you.
+
+1. Go to [Vonage Dashboard](https://dashboard.nexmo.com/) → **Messages and Dispatch** → **Templates**
+2. Click **Create Template**
+3. Create templates for:
+   - **Appointment Confirmation** (UTILITY category)
+   - **Appointment Reminder** (UTILITY category) - optional
+   - **Appointment Cancellation** (UTILITY category) - optional
+
+**Example Template Structure:**
+```
+Template Name: appointment_confirmation
+Category: UTILITY
+Language: en
+Content:
+Your appointment with {{1}} is confirmed for {{2}} at {{3}}.
+Therapist: {{4}}
+Type: {{5}}
+Duration: {{6}}
+
+Please arrive 5 minutes early.
+```
+
+**Template Parameters:**
+- `{{1}}` = User Name
+- `{{2}}` = Date
+- `{{3}}` = Time
+- `{{4}}` = Therapist Name
+- `{{5}}` = Appointment Type
+- `{{6}}` = Duration
+
+4. Submit templates for WhatsApp approval (usually 24-48 hours)
+5. Once approved, note the exact template names (they must match exactly)
+
+### 4. Configure Environment Variables
 
 Add the following to your backend `.env` file:
 
@@ -59,9 +95,18 @@ Your private key content here
 # VONAGE_API_KEY=your_api_key_here
 # VONAGE_API_SECRET=your_api_secret_here
 
+# WhatsApp Message Templates (Optional but Recommended)
+# These allow sending messages outside the 24-hour window
+# Template names must match exactly as created in Vonage Dashboard
+WHATSAPP_TEMPLATE_APPOINTMENT_CONFIRMATION=appointment_confirmation
+WHATSAPP_TEMPLATE_APPOINTMENT_REMINDER=appointment_reminder  # Optional
+WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLATION=appointment_cancellation  # Optional
+
 # Optional: Sandbox mode (for testing)
 # VONAGE_SANDBOX=true
 ```
+
+**Note:** If templates are not configured, the system will use free-form text messages (subject to 24-hour window restrictions).
 
 #### How to Set the Private Key
 
@@ -106,7 +151,7 @@ Store the private key in a separate file and reference it:
 - ❌ Corrupted key content (copy the entire file, don't edit it)
 - ❌ Using the wrong key file (make sure it's the one Vonage generated)
 
-### 4. Restart Your Server
+### 5. Restart Your Server
 
 After updating the `.env` file, restart your backend server:
 
@@ -115,7 +160,14 @@ cd backend
 npm start
 ```
 
-### 5. Test the Integration
+**Check the logs** - you should see:
+```
+[WhatsApp Service] Template Support: ENABLED
+[WhatsApp Service] Templates configured:
+  - Appointment Confirmation: appointment_confirmation
+```
+
+### 6. Test the Integration
 
 1. Log in to your admin panel
 2. Navigate to **Settings** → **WhatsApp**
@@ -187,10 +239,16 @@ This means your authentication credentials are incorrect. Check:
 - Go to: Dashboard → Messages and Dispatch → Sandbox → WhatsApp
 - Add the recipient number (without the + sign)
 
-**In Production Mode:**
+**In Production Mode (Free-form Text Messages):**
 - The recipient must initiate a conversation first (24-hour messaging window)
 - Ask the recipient to send a WhatsApp message to your business number
 - After they message you, you have 24 hours to send them messages
+
+**Solution: Use Message Templates**
+- Templates can be sent anytime, even if the user hasn't messaged you
+- Create and approve templates in Vonage Dashboard
+- Configure template names in your `.env` file
+- The system will automatically use templates when available, fallback to text if not
 
 ### Error: Invalid phone number format
 
@@ -219,7 +277,12 @@ Check:
 | `VONAGE_PRIVATE_KEY` | JWT only | Your application's private key | `-----BEGIN PRIVATE KEY-----\n...` |
 | `VONAGE_API_KEY` | Basic only | Your Vonage API key | `abc12345` |
 | `VONAGE_API_SECRET` | Basic only | Your Vonage API secret | `AbCdEfGhIjKlMnOp` |
+| `WHATSAPP_TEMPLATE_APPOINTMENT_CONFIRMATION` | Optional | Template name for appointment confirmations | `appointment_confirmation` |
+| `WHATSAPP_TEMPLATE_APPOINTMENT_REMINDER` | Optional | Template name for appointment reminders | `appointment_reminder` |
+| `WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLATION` | Optional | Template name for appointment cancellations | `appointment_cancellation` |
 | `VONAGE_SANDBOX` | Optional | Use sandbox mode for testing | `true` or `false` |
+
+**Note on Templates:** Template names must match exactly as created in Vonage Dashboard. If templates are not configured, the system will use free-form text messages (subject to 24-hour window restrictions).
 
 ## Which Authentication Method Should I Use?
 

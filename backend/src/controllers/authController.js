@@ -137,8 +137,17 @@ const signup = async (req, res) => {
       }
 
       // Create user
-      newRecord = await User.create({ ...userData, email }, client);
-      referenceId = newRecord.id;
+      try {
+        newRecord = await User.create({ ...userData, email }, client);
+        referenceId = newRecord.id;
+      } catch (createError) {
+        // Handle unique constraint violation for contact field
+        if (createError.code === '23505' && createError.constraint === 'users_contact_unique') {
+          throw new Error('Phone number already registered');
+        }
+        // Re-throw other errors
+        throw createError;
+      }
 
       console.log(`[SIGNUP] Created user with ID: ${referenceId}`);
 
@@ -199,6 +208,14 @@ const signup = async (req, res) => {
   } catch (error) {
     console.error('[SIGNUP ERROR] Signup failed:', error);
     console.error('[SIGNUP ERROR] Stack trace:', error.stack);
+    
+    // Handle specific error messages
+    if (error.message === 'Phone number already registered') {
+      return res.status(409).json({ 
+        error: 'Phone number already registered' 
+      });
+    }
+    
     res.status(500).json({ 
       error: 'Failed to create account', 
       details: error.message 

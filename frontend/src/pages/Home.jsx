@@ -562,7 +562,7 @@ const Home = () => {
         <div className="absolute inset-0 bg-black/60"></div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          {/* HIPAA Security Badge */}
+          {/* HIPAA Security Badge - Desktop */}
           <div className="absolute top-6 right-6 hidden lg:block">
             <div className="group relative inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20 hover:bg-white/20 transition-all duration-300 cursor-help">
               <Shield className="h-5 w-5 text-yellow-300" />
@@ -573,6 +573,14 @@ const Home = () => {
                 </div>
                 Designed using HIPAA-aligned security and privacy practices to help protect sensitive health information. Access is restricted to authorized users only.
               </div>
+            </div>
+          </div>
+
+          {/* HIPAA Security Badge - Mobile */}
+          <div className="lg:hidden absolute top-4 left-1/2 transform -translate-x-1/2 w-full px-4">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-2 border border-white/20">
+              <Shield className="h-4 w-4 text-yellow-300 flex-shrink-0" />
+              <span className="text-xs font-medium text-white">HIPAA-Aligned Security & Privacy</span>
             </div>
           </div>
 
@@ -636,10 +644,7 @@ const Home = () => {
             {/* Main Description */}
             <div className="space-y-4">
               <p className="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed">
-                TheraP Track is exclusively designed for therapists to manage appointments, sessions, assessments with automatic scoring, and visual tracking of client progress. The idea originated when an IT professional met a therapist, and together they identified the challenges therapists face with administrative tasks and fragmented tools during sessions.
-              </p>
-              <p className="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed">
-                TheraP Track provides technical support to therapists without replacing them. The platform is built solely for therapists, with a deep understanding of clinical practice, respect for professional judgment, and adherence to ethical boundaries.
+                TheraP Track is exclusively designed for therapists to manage appointments, sessions, assessments with automatic scoring, and visual tracking of client progress. TheraP Track provides technical support to therapists without replacing them. The platform is built solely for therapists, with a deep understanding of clinical practice, respect for professional judgment, and adherence to ethical boundaries.
               </p>
               <p className="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed">
                 After a successful one-month Beta phase, TheraP Track was further developed by integrating feedback, insights, and ethically approved features from practicing therapists, creating a platform that streamlines clinical practice responsibly and effectively.

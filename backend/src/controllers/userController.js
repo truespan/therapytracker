@@ -89,6 +89,14 @@ const updateUser = async (req, res) => {
           error: 'Please provide a valid contact number with country code (e.g., +919876543210)'
         });
       }
+      
+      // Check if the new contact number is already in use by another user
+      if (updates.contact !== user.contact) {
+        const existingUserByContact = await User.findByContact(updates.contact);
+        if (existingUserByContact && existingUserByContact.id !== parseInt(id)) {
+          return res.status(409).json({ error: 'Phone number already in use by another account' });
+        }
+      }
     }
 
     // If email is being updated, also update auth_credentials
@@ -107,7 +115,19 @@ const updateUser = async (req, res) => {
       console.log(`[USER UPDATE] Updated auth_credentials email for user ${id} to ${updates.email}`);
     }
 
-    const updatedUser = await User.update(id, updates);
+    let updatedUser;
+    try {
+      updatedUser = await User.update(id, updates);
+    } catch (updateError) {
+      // Handle unique constraint violation for contact field
+      if (updateError.code === '23505' && updateError.constraint === 'users_contact_unique') {
+        return res.status(409).json({ 
+          error: 'Phone number already in use by another account' 
+        });
+      }
+      // Re-throw other errors
+      throw updateError;
+    }
     res.json({
       message: 'User updated successfully',
       user: updatedUser

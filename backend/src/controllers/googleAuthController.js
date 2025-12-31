@@ -248,7 +248,17 @@ const completeClientSignup = async (req, res) => {
         address: address || null
       };
       
-      const newUser = await User.create(userData, client);
+      let newUser;
+      try {
+        newUser = await User.create(userData, client);
+      } catch (createError) {
+        // Handle unique constraint violation for contact field
+        if (createError.code === '23505' && createError.constraint === 'users_contact_unique') {
+          throw new Error('Phone number already registered');
+        }
+        // Re-throw other errors
+        throw createError;
+      }
       
       // Assign to partner
       await User.assignToPartner(newUser.id, partner.id, client);
@@ -290,6 +300,14 @@ const completeClientSignup = async (req, res) => {
     
   } catch (error) {
     console.error('[GOOGLE SIGNUP ERROR] Failed to complete signup:', error);
+    
+    // Handle specific error messages
+    if (error.message === 'Phone number already registered') {
+      return res.status(409).json({ 
+        error: 'Phone number already registered' 
+      });
+    }
+    
     res.status(500).json({
       error: 'Failed to complete signup',
       details: error.message
