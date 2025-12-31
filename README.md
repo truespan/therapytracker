@@ -368,39 +368,48 @@ REACT_APP_API_URL=https://your-api-domain.com/api
 
 The system includes automated WhatsApp notifications for appointment confirmations. When appointments are created or slots are booked, clients receive WhatsApp messages with appointment details.
 
-### Setup Instructions
+### Quick Setup
 
-1. **Install Dependencies**:
-```bash
-cd backend
-npm install twilio
-```
+The system uses **Vonage (Nexmo) API** for WhatsApp messaging. Dependencies are already installed.
 
-2. **Configure Environment Variables**:
-Add to your `.env.production` file:
+**Important**: Vonage requires JWT authentication if your WhatsApp number is linked to an application (most common setup).
+
+1. **Configure Environment Variables**:
+
+Add to your backend `.env` file:
+
 ```env
-TWILIO_ACCOUNT_SID=your_twilio_account_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
+# WhatsApp Configuration
 WHATSAPP_ENABLED=true
+VONAGE_WHATSAPP_NUMBER=+919655846492
+
+# JWT Authentication (Recommended - if number is linked to application)
+VONAGE_APPLICATION_ID=your_application_id
+VONAGE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+Your private key here
+-----END PRIVATE KEY-----"
+
+# OR Basic Auth (Only if number is NOT linked to application)
+# VONAGE_API_KEY=your_api_key
+# VONAGE_API_SECRET=your_api_secret
 ```
 
-3. **Run Database Migration**:
-```bash
-psql -U postgres -d therapy_tracker -f backend/database/migrations/001_add_whatsapp_notifications.sql
-```
+2. **Restart the server** after updating `.env`
 
-4. **Test the Integration**:
-```bash
-# Get service status
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:5000/api/whatsapp/status
+3. **Test from Admin Panel**:
+   - Log in as admin
+   - Go to Settings → WhatsApp
+   - Send a test message
 
-# Send test message
-curl -X POST http://localhost:5000/api/whatsapp/test \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"phoneNumber": "+919876543210"}'
-```
+### Detailed Setup Guide
+
+For complete setup instructions including:
+- Creating a Vonage application
+- Linking your WhatsApp number
+- Configuring JWT authentication
+- Troubleshooting 401 errors
+
+**See: [WHATSAPP_SETUP_GUIDE.md](WHATSAPP_SETUP_GUIDE.md)**
 
 ### Features
 

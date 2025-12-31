@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { Vonage } = require('@vonage/server-sdk');
 const db = require('../config/database');
 const Partner = require('../models/Partner');
 
@@ -13,6 +14,9 @@ class WhatsAppService {
     this.fromNumber = null;
     this.apiKey = null;
     this.apiSecret = null;
+    this.applicationId = null;
+    this.privateKey = null;
+    this.vonageClient = null;
     this.isSandbox = false;
     this.baseUrl = null;
     this.messageQueue = [];
@@ -30,9 +34,12 @@ class WhatsAppService {
    */
   initialize() {
     try {
-      this.apiKey = process.env.VONAGE_API_KEY;
-      this.apiSecret = process.env.VONAGE_API_SECRET;
-      this.fromNumber = process.env.VONAGE_WHATSAPP_NUMBER;
+      // Trim credentials to remove any accidental whitespace
+      this.apiKey = process.env.VONAGE_API_KEY?.trim();
+      this.apiSecret = process.env.VONAGE_API_SECRET?.trim();
+      this.applicationId = process.env.VONAGE_APPLICATION_ID?.trim();
+      this.privateKey = process.env.VONAGE_PRIVATE_KEY?.trim();
+      this.fromNumber = process.env.VONAGE_WHATSAPP_NUMBER?.trim();
       this.enabled = process.env.WHATSAPP_ENABLED === 'true';
       this.isSandbox = process.env.VONAGE_SANDBOX === 'true';
       
@@ -41,11 +48,31 @@ class WhatsAppService {
         ? 'https://messages-sandbox.nexmo.com/v1/messages'
         : 'https://api.nexmo.com/v1/messages';
 
-      if (this.enabled && this.apiKey && this.apiSecret && this.fromNumber) {
-        console.log(`[WhatsApp Service] Initialized successfully${this.isSandbox ? ' (SANDBOX MODE)' : ''}`);
+      // Initialize Vonage client with JWT authentication if application ID and private key are provided
+      if (this.enabled && this.applicationId && this.privateKey) {
+        try {
+          this.vonageClient = new Vonage({
+            apiKey: this.apiKey,
+            apiSecret: this.apiSecret,
+            applicationId: this.applicationId,
+            privateKey: this.privateKey
+          });
+          console.log(`[WhatsApp Service] Initialized with JWT authentication${this.isSandbox ? ' (SANDBOX MODE)' : ''}`);
+          console.log(`[WhatsApp Service] Using endpoint: ${this.baseUrl}`);
+        } catch (clientError) {
+          console.error('[WhatsApp Service] Failed to initialize Vonage client:', clientError.message);
+          this.enabled = false;
+        }
+      } else if (this.enabled && this.apiKey && this.apiSecret && this.fromNumber) {
+        // Fallback to Basic Auth if no application ID/private key
+        console.log(`[WhatsApp Service] Initialized with Basic Auth${this.isSandbox ? ' (SANDBOX MODE)' : ''}`);
         console.log(`[WhatsApp Service] Using endpoint: ${this.baseUrl}`);
+        console.warn('[WhatsApp Service] NOTE: If your WhatsApp number is linked to an application, you need JWT authentication.');
+        console.warn('[WhatsApp Service] Please set VONAGE_APPLICATION_ID and VONAGE_PRIVATE_KEY for JWT authentication.');
       } else if (this.enabled) {
-        console.warn('[WhatsApp Service] Enabled but missing configuration. Please set VONAGE_API_KEY, VONAGE_API_SECRET, and VONAGE_WHATSAPP_NUMBER');
+        console.warn('[WhatsApp Service] Enabled but missing configuration.');
+        console.warn('[WhatsApp Service] For JWT auth (recommended): Set VONAGE_APPLICATION_ID, VONAGE_PRIVATE_KEY, VONAGE_WHATSAPP_NUMBER');
+        console.warn('[WhatsApp Service] For Basic auth: Set VONAGE_API_KEY, VONAGE_API_SECRET, VONAGE_WHATSAPP_NUMBER');
         this.enabled = false;
       } else {
         console.log('[WhatsApp Service] Disabled (WHATSAPP_ENABLED=false)');
@@ -434,27 +461,40 @@ Please prepare for the session and contact the client if needed.
       // Create message content
       const messageBody = this.createAppointmentMessage(appointmentData);
 
-      // Send message via direct HTTP call using v1 API format
+      // Send message using appropriate authentication method
       const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
       const toNumber = toPhoneNumber.replace('+', '');
       
-      const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+      let messageId;
       
-      const response = await axios.post(this.baseUrl, {
-        from: fromNumber,
-        to: toNumber,
-        channel: 'whatsapp',
-        message_type: 'text',
-        text: messageBody
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`
-        }
-      });
-
-      // Extract message ID from response
-      const messageId = response.data.message_uuid;
+      if (this.vonageClient) {
+        // Use Vonage SDK with JWT authentication
+        const result = await this.vonageClient.messages.send({
+          message_type: 'text',
+          channel: 'whatsapp',
+          to: toNumber,
+          from: fromNumber,
+          text: messageBody
+        });
+        messageId = result.message_uuid;
+      } else {
+        // Fallback to Basic Auth
+        const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+        
+        const response = await axios.post(this.baseUrl, {
+          from: fromNumber,
+          to: toNumber,
+          channel: 'whatsapp',
+          message_type: 'text',
+          text: messageBody
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${auth}`
+          }
+        });
+        messageId = response.data.message_uuid;
+      }
 
       // Log successful notification
       await this.logNotification(
@@ -572,27 +612,40 @@ Please prepare for the session and contact the client if needed.
       // Create message content
       const messageBody = this.createTherapistAppointmentMessage(appointmentData);
 
-      // Send message via direct HTTP call using v1 API format
+      // Send message using appropriate authentication method
       const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
       const toNumber = toPhoneNumber.replace('+', '');
       
-      const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+      let messageId;
       
-      const response = await axios.post(this.baseUrl, {
-        from: fromNumber,
-        to: toNumber,
-        channel: 'whatsapp',
-        message_type: 'text',
-        text: messageBody
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`
-        }
-      });
-
-      // Extract message ID from response
-      const messageId = response.data.message_uuid;
+      if (this.vonageClient) {
+        // Use Vonage SDK with JWT authentication
+        const result = await this.vonageClient.messages.send({
+          message_type: 'text',
+          channel: 'whatsapp',
+          to: toNumber,
+          from: fromNumber,
+          text: messageBody
+        });
+        messageId = result.message_uuid;
+      } else {
+        // Fallback to Basic Auth
+        const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+        
+        const response = await axios.post(this.baseUrl, {
+          from: fromNumber,
+          to: toNumber,
+          channel: 'whatsapp',
+          message_type: 'text',
+          text: messageBody
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${auth}`
+          }
+        });
+        messageId = response.data.message_uuid;
+      }
 
       // Log successful notification
       await this.logNotification(
@@ -722,17 +775,27 @@ Please prepare for the session and contact the client if needed.
     }
 
     // Validate credentials before making API call
-    if (!this.apiKey || !this.apiSecret) {
+    // Check if we have JWT credentials (preferred) or Basic Auth credentials
+    const hasJWTAuth = this.applicationId && this.privateKey;
+    const hasBasicAuth = this.apiKey && this.apiSecret;
+    
+    if (!hasJWTAuth && !hasBasicAuth) {
       return {
         success: false,
         error: 'Vonage API credentials are missing',
         details: {
           type: 'configuration_error',
           title: 'Missing Credentials',
-          detail: 'VONAGE_API_KEY and/or VONAGE_API_SECRET are not set in your environment variables. Please check your .env file.',
+          detail: 'You need either JWT authentication (VONAGE_APPLICATION_ID + VONAGE_PRIVATE_KEY) or Basic Auth (VONAGE_API_KEY + VONAGE_API_SECRET). JWT is recommended if your WhatsApp number is linked to an application.',
           missingFields: {
-            apiKey: !this.apiKey,
-            apiSecret: !this.apiSecret
+            jwtAuth: {
+              applicationId: !this.applicationId,
+              privateKey: !this.privateKey
+            },
+            basicAuth: {
+              apiKey: !this.apiKey,
+              apiSecret: !this.apiSecret
+            }
           }
         },
         status: 401
@@ -765,20 +828,58 @@ Please prepare for the session and contact the client if needed.
       const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
       const toNumber = formattedPhone.replace('+', '');
       
-      const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+      // Debug logging (mask credentials for security)
+      console.log('[WhatsApp Service] Test Integration Debug:');
+      console.log('  - Has Vonage Client (JWT):', !!this.vonageClient);
+      console.log('  - Has Application ID:', !!this.applicationId);
+      console.log('  - Has Private Key:', !!this.privateKey);
+      console.log('  - API Key length:', this.apiKey ? this.apiKey.length : 0);
+      console.log('  - API Secret length:', this.apiSecret ? this.apiSecret.length : 0);
+      console.log('  - API Key first 4 chars:', this.apiKey ? this.apiKey.substring(0, 4) + '...' : 'N/A');
+      console.log('  - From Number:', fromNumber);
+      console.log('  - To Number:', toNumber);
+      console.log('  - Base URL:', this.baseUrl);
+      console.log('  - Sandbox Mode:', this.isSandbox);
       
-      const response = await axios.post(this.baseUrl, {
-        from: fromNumber,
-        to: toNumber,
-        channel: 'whatsapp',
-        message_type: 'text',
-        text: '🧪 *TheraP Track WhatsApp Test*\n\nThis is a test message from your TheraP Track system. If you received this, your WhatsApp integration is working correctly! ✅'
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`
+      let response;
+      
+      // Use JWT authentication if Vonage client is available
+      if (this.vonageClient) {
+        console.log('[WhatsApp Service] Using JWT authentication via Vonage SDK');
+        
+        // Use Vonage SDK to send message (it handles JWT automatically)
+        try {
+          const result = await this.vonageClient.messages.send({
+            message_type: 'text',
+            channel: 'whatsapp',
+            to: toNumber,
+            from: fromNumber,
+            text: '🧪 *TheraP Track WhatsApp Test*\n\nThis is a test message from your TheraP Track system. If you received this, your WhatsApp integration is working correctly! ✅'
+          });
+          
+          response = { data: { message_uuid: result.message_uuid } };
+        } catch (sdkError) {
+          // If SDK fails, throw error with details
+          throw sdkError;
         }
-      });
+      } else {
+        // Fallback to Basic Auth
+        console.log('[WhatsApp Service] Using Basic Auth');
+        const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+        
+        response = await axios.post(this.baseUrl, {
+          from: fromNumber,
+          to: toNumber,
+          channel: 'whatsapp',
+          message_type: 'text',
+          text: '🧪 *TheraP Track WhatsApp Test*\n\nThis is a test message from your TheraP Track system. If you received this, your WhatsApp integration is working correctly! ✅'
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${auth}`
+          }
+        });
+      }
 
       const messageId = response.data.message_uuid;
 
@@ -804,28 +905,54 @@ Please prepare for the session and contact the client if needed.
       if (errorDetails.status === 401 || errorDetails.statusCode === 401) {
         console.error('[WhatsApp Service] AUTHENTICATION ERROR: Invalid Vonage API credentials');
         console.error('[WhatsApp Service] Please verify:');
-        console.error('  1. VONAGE_API_KEY is correct in your .env file');
-        console.error('  2. VONAGE_API_SECRET is correct in your .env file');
-        console.error('  3. Your Vonage account has WhatsApp messaging enabled');
-        console.error('  4. Your credentials have not expired or been revoked');
-        console.error('  5. You have restarted the server after updating .env file');
+        
+        if (this.vonageClient) {
+          console.error('  [JWT Authentication Mode]');
+          console.error('  1. VONAGE_APPLICATION_ID is correct in your .env file');
+          console.error('  2. VONAGE_PRIVATE_KEY is correct and properly formatted');
+          console.error('  3. Your WhatsApp number is linked to the correct application');
+          console.error('  4. Your application credentials have not expired or been revoked');
+        } else {
+          console.error('  [Basic Authentication Mode]');
+          console.error('  1. VONAGE_API_KEY is correct in your .env file');
+          console.error('  2. VONAGE_API_SECRET is correct in your .env file');
+          console.error('  3. If your WhatsApp number is linked to an application, you MUST use JWT authentication');
+          console.error('     Set VONAGE_APPLICATION_ID and VONAGE_PRIVATE_KEY instead');
+        }
+        console.error('  - Your Vonage account has WhatsApp messaging enabled');
+        console.error('  - You have restarted the server after updating .env file');
+        
+        const authMode = this.vonageClient ? 'JWT' : 'Basic Auth';
+        const steps = this.vonageClient ? [
+          'Verify VONAGE_APPLICATION_ID is correct in your .env file',
+          'Verify VONAGE_PRIVATE_KEY is correct and properly formatted (should be the full private key text)',
+          'Check your Vonage Dashboard → Applications to ensure the application exists',
+          'Verify your WhatsApp number is linked to this application',
+          'Ensure your application has not been deleted or credentials revoked',
+          'Restart your server after updating .env file (environment variables are loaded at startup)'
+        ] : [
+          'Check if your WhatsApp number is linked to a Vonage application',
+          'If linked: You MUST use JWT authentication. Set VONAGE_APPLICATION_ID and VONAGE_PRIVATE_KEY',
+          'If not linked: Verify VONAGE_API_KEY is correct in your .env file',
+          'If not linked: Verify VONAGE_API_SECRET is correct in your .env file',
+          'Check your Vonage Dashboard to ensure credentials are active',
+          'Ensure your Vonage account has WhatsApp messaging enabled',
+          'Restart your server after updating .env file (environment variables are loaded at startup)'
+        ];
         
         return {
           success: false,
-          error: 'Authentication failed: Invalid Vonage API credentials',
+          error: `Authentication failed: Invalid Vonage credentials (${authMode})`,
           details: {
             ...errorDetails.details,
             troubleshooting: {
               type: 'authentication_error',
-              title: 'Invalid Credentials',
-              detail: 'The Vonage API credentials (VONAGE_API_KEY and VONAGE_API_SECRET) are incorrect or invalid.',
-              steps: [
-                'Verify VONAGE_API_KEY is correct in your .env file',
-                'Verify VONAGE_API_SECRET is correct in your .env file',
-                'Check your Vonage Dashboard to ensure credentials are active',
-                'Ensure your Vonage account has WhatsApp messaging enabled',
-                'Restart your server after updating .env file (environment variables are loaded at startup)'
-              ],
+              title: `Invalid Credentials (${authMode})`,
+              detail: this.vonageClient 
+                ? 'JWT authentication failed. The VONAGE_APPLICATION_ID or VONAGE_PRIVATE_KEY is incorrect or invalid.'
+                : 'Basic authentication failed. If your WhatsApp number is linked to an application, you must use JWT authentication instead.',
+              authMode: authMode,
+              steps: steps,
               dashboardUrl: 'https://dashboard.nexmo.com/'
             }
           },
@@ -943,27 +1070,40 @@ Please prepare for the session and contact the client if needed.
       // Create message content
       const messageBody = this.createCustomMessage(messageData);
 
-      // Send message via direct HTTP call
+      // Send message using appropriate authentication method
       const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
       const toNumber = toPhoneNumber.replace('+', '');
       
-      const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+      let messageId;
       
-      const response = await axios.post(this.baseUrl, {
-        from: fromNumber,
-        to: toNumber,
-        channel: 'whatsapp',
-        message_type: 'text',
-        text: messageBody
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`
-        }
-      });
-
-      // Extract message ID from response
-      const messageId = response.data.message_uuid;
+      if (this.vonageClient) {
+        // Use Vonage SDK with JWT authentication
+        const result = await this.vonageClient.messages.send({
+          message_type: 'text',
+          channel: 'whatsapp',
+          to: toNumber,
+          from: fromNumber,
+          text: messageBody
+        });
+        messageId = result.message_uuid;
+      } else {
+        // Fallback to Basic Auth
+        const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+        
+        const response = await axios.post(this.baseUrl, {
+          from: fromNumber,
+          to: toNumber,
+          channel: 'whatsapp',
+          message_type: 'text',
+          text: messageBody
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${auth}`
+          }
+        });
+        messageId = response.data.message_uuid;
+      }
 
       // Log successful notification
       await this.logCustomNotification(
