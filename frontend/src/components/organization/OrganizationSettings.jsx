@@ -328,7 +328,9 @@ const OrganizationSettings = () => {
                 />
               </div>
             </div>
-            <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">Enter phone number without country code</p>
+            <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">
+              Use your WhatsApp number so we can send updates and reminders
+            </p>
           </div>
 
           {/* Address - Editable */}

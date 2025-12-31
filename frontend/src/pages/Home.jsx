@@ -1012,9 +1012,6 @@ const Home = () => {
                   placeholder="email@example.com or 9876543210"
                   required
                 />
-                <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
-                  Enter phone number without country code (e.g., 9876543210)
-                </p>
               </div>
 
               <div>

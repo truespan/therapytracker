@@ -4,7 +4,54 @@ const googleCalendarService = require('../services/googleCalendarService');
 const whatsappService = require('../services/whatsappService');
 const User = require('../models/User');
 const Partner = require('../models/Partner');
+const PartnerSubscription = require('../models/PartnerSubscription');
+const Organization = require('../models/Organization');
+const SubscriptionPlan = require('../models/SubscriptionPlan');
 const db = require('../config/database');
+
+/**
+ * Check if WhatsApp is enabled for a partner based on their subscription plan
+ * @param {number} partnerId - Partner ID
+ * @returns {Promise<boolean>} True if WhatsApp is enabled
+ */
+const checkPartnerWhatsAppAccess = async (partnerId) => {
+  try {
+    const subscription = await PartnerSubscription.getActiveSubscription(partnerId);
+    if (!subscription) {
+      // No active subscription, default to false
+      return false;
+    }
+    
+    // Get the plan details to check has_whatsapp
+    const plan = await SubscriptionPlan.findById(subscription.subscription_plan_id);
+    return plan && plan.has_whatsapp === true;
+  } catch (error) {
+    console.error(`[WhatsApp] Error checking partner WhatsApp access for partner ${partnerId}:`, error.message);
+    return false;
+  }
+};
+
+/**
+ * Check if WhatsApp is enabled for an organization based on their subscription plan
+ * @param {number} organizationId - Organization ID
+ * @returns {Promise<boolean>} True if WhatsApp is enabled
+ */
+const checkOrganizationWhatsAppAccess = async (organizationId) => {
+  try {
+    const subscription = await Organization.getActiveSubscription(organizationId);
+    if (!subscription || !subscription.subscription_plan_id) {
+      // No active subscription, default to false
+      return false;
+    }
+    
+    // Get the plan details to check has_whatsapp
+    const plan = await SubscriptionPlan.findById(subscription.subscription_plan_id);
+    return plan && plan.has_whatsapp === true;
+  } catch (error) {
+    console.error(`[WhatsApp] Error checking organization WhatsApp access for org ${organizationId}:`, error.message);
+    return false;
+  }
+};
 
 /**
  * Create a new availability slot
@@ -465,69 +512,89 @@ const bookSlot = async (req, res) => {
         const user = await User.findById(userId);
         const partner = await Partner.findById(slot.partner_id);
         
-        // Send notification to client
-        if (user && user.contact) {
-          const clientAppointmentData = {
-            userName: user.name,
-            therapistName: partner ? partner.name : 'Your therapist',
-            appointmentDate: slot.start_datetime,
-            appointmentTime: new Date(slot.start_datetime).toLocaleTimeString('en-IN', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true,
-              timeZone: 'Asia/Kolkata'
-            }),
-            timezone: 'UTC',
-            appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
-            duration: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / (1000 * 60))
-          };
-
-          const clientResult = await whatsappService.sendAppointmentConfirmation(
-            user.contact,
-            clientAppointmentData,
-            appointmentId,
-            userId
-          );
-
-          if (clientResult.success) {
-            console.log(`[WhatsApp] Client notification sent successfully for booked slot ${id}`);
-          } else {
-            console.error(`[WhatsApp] Failed to send client notification for booked slot ${id}:`, clientResult.error);
+        // Check if partner has WhatsApp access
+        const partnerHasWhatsApp = await checkPartnerWhatsAppAccess(slot.partner_id);
+        if (!partnerHasWhatsApp) {
+          console.log(`[WhatsApp] WhatsApp not enabled for partner ${slot.partner_id} (Free Plan or Starter Plan)`);
+          // Skip WhatsApp notifications but continue with booking
+        } else {
+          // Check organization access if applicable
+          let organizationHasWhatsApp = true; // Default to true if no organization
+          if (partner && partner.organization_id) {
+            organizationHasWhatsApp = await checkOrganizationWhatsAppAccess(partner.organization_id);
+            if (!organizationHasWhatsApp) {
+              console.log(`[WhatsApp] WhatsApp not enabled for organization ${partner.organization_id} (Free Plan or Starter Plan)`);
+              // Skip WhatsApp notifications but continue with booking
+            }
           }
-        }
 
-        // Send notification to therapist
-        if (partner && partner.contact) {
-          const therapistAppointmentData = {
-            therapistName: partner.name,
-            clientName: user ? user.name : 'Client',
-            appointmentDate: slot.start_datetime,
-            appointmentTime: new Date(slot.start_datetime).toLocaleTimeString('en-IN', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true,
-              timeZone: 'Asia/Kolkata'
-            }),
-            timezone: 'UTC',
-            appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
-            duration: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / (1000 * 60)),
-            clientPhone: user ? user.contact : 'Not provided',
-            clientEmail: user ? user.email : 'Not provided'
-          };
+          // Only send notifications if both partner and organization (if applicable) have WhatsApp access
+          if (partnerHasWhatsApp && organizationHasWhatsApp) {
+            // Send notification to client
+            if (user && user.contact) {
+              const clientAppointmentData = {
+                userName: user.name,
+                therapistName: partner ? partner.name : 'Your therapist',
+                appointmentDate: slot.start_datetime,
+                appointmentTime: new Date(slot.start_datetime).toLocaleTimeString('en-IN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                  timeZone: 'Asia/Kolkata'
+                }),
+                timezone: 'UTC',
+                appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
+                duration: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / (1000 * 60))
+              };
 
-          const therapistResult = await whatsappService.sendTherapistAppointmentNotification(
-            partner.contact,
-            therapistAppointmentData,
-            appointmentId,
-            slot.partner_id
-          );
+              const clientResult = await whatsappService.sendAppointmentConfirmation(
+                user.contact,
+                clientAppointmentData,
+                appointmentId,
+                userId
+              );
 
-          if (therapistResult.success) {
-            console.log(`[WhatsApp] Therapist notification sent successfully for booked slot ${id}`);
-          } else {
-            console.error(`[WhatsApp] Failed to send therapist notification for booked slot ${id}:`, therapistResult.error);
-          }
-        }
+              if (clientResult.success) {
+                console.log(`[WhatsApp] Client notification sent successfully for booked slot ${id}`);
+              } else {
+                console.error(`[WhatsApp] Failed to send client notification for booked slot ${id}:`, clientResult.error);
+              }
+            }
+
+            // Send notification to therapist
+            if (partner && partner.contact) {
+              const therapistAppointmentData = {
+                therapistName: partner.name,
+                clientName: user ? user.name : 'Client',
+                appointmentDate: slot.start_datetime,
+                appointmentTime: new Date(slot.start_datetime).toLocaleTimeString('en-IN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                  timeZone: 'Asia/Kolkata'
+                }),
+                timezone: 'UTC',
+                appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
+                duration: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / (1000 * 60)),
+                clientPhone: user ? user.contact : 'Not provided',
+                clientEmail: user ? user.email : 'Not provided'
+              };
+
+              const therapistResult = await whatsappService.sendTherapistAppointmentNotification(
+                partner.contact,
+                therapistAppointmentData,
+                appointmentId,
+                slot.partner_id
+              );
+
+              if (therapistResult.success) {
+                console.log(`[WhatsApp] Therapist notification sent successfully for booked slot ${id}`);
+              } else {
+                console.error(`[WhatsApp] Failed to send therapist notification for booked slot ${id}:`, therapistResult.error);
+              }
+            }
+          } // End of if (partnerHasWhatsApp && organizationHasWhatsApp)
+        } // End of else (partnerHasWhatsApp check)
       } catch (notificationError) {
         console.error(`[WhatsApp] Error sending notifications for booked slot ${id}:`, notificationError.message);
       }

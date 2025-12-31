@@ -3,6 +3,9 @@ const googleCalendarService = require('../services/googleCalendarService');
 const whatsappService = require('../services/whatsappService');
 const User = require('../models/User');
 const Partner = require('../models/Partner');
+const PartnerSubscription = require('../models/PartnerSubscription');
+const Organization = require('../models/Organization');
+const SubscriptionPlan = require('../models/SubscriptionPlan');
 
 const createAppointment = async (req, res) => {
   try {
@@ -56,6 +59,50 @@ const createAppointment = async (req, res) => {
 };
 
 /**
+ * Check if WhatsApp is enabled for a partner based on their subscription plan
+ * @param {number} partnerId - Partner ID
+ * @returns {Promise<boolean>} True if WhatsApp is enabled
+ */
+const checkPartnerWhatsAppAccess = async (partnerId) => {
+  try {
+    const subscription = await PartnerSubscription.getActiveSubscription(partnerId);
+    if (!subscription) {
+      // No active subscription, default to false
+      return false;
+    }
+    
+    // Get the plan details to check has_whatsapp
+    const plan = await SubscriptionPlan.findById(subscription.subscription_plan_id);
+    return plan && plan.has_whatsapp === true;
+  } catch (error) {
+    console.error(`[WhatsApp] Error checking partner WhatsApp access for partner ${partnerId}:`, error.message);
+    return false;
+  }
+};
+
+/**
+ * Check if WhatsApp is enabled for an organization based on their subscription plan
+ * @param {number} organizationId - Organization ID
+ * @returns {Promise<boolean>} True if WhatsApp is enabled
+ */
+const checkOrganizationWhatsAppAccess = async (organizationId) => {
+  try {
+    const subscription = await Organization.getActiveSubscription(organizationId);
+    if (!subscription || !subscription.subscription_plan_id) {
+      // No active subscription, default to false
+      return false;
+    }
+    
+    // Get the plan details to check has_whatsapp
+    const plan = await SubscriptionPlan.findById(subscription.subscription_plan_id);
+    return plan && plan.has_whatsapp === true;
+  } catch (error) {
+    console.error(`[WhatsApp] Error checking organization WhatsApp access for org ${organizationId}:`, error.message);
+    return false;
+  }
+};
+
+/**
  * Send WhatsApp notifications for appointment (both client and therapist)
  * @param {number} appointmentId - Appointment ID
  * @param {number} userId - User ID
@@ -80,6 +127,23 @@ const sendWhatsAppNotifications = async (appointmentId, userId, partnerId, title
     if (!partner) {
       console.log(`[WhatsApp] Partner not found for partnerId ${partnerId}`);
       return;
+    }
+
+    // Check if partner has WhatsApp access
+    const partnerHasWhatsApp = await checkPartnerWhatsAppAccess(partnerId);
+    if (!partnerHasWhatsApp) {
+      console.log(`[WhatsApp] WhatsApp not enabled for partner ${partnerId} (Free Plan or Starter Plan)`);
+      return;
+    }
+
+    // Check if organization has WhatsApp access (if partner belongs to an organization)
+    let organizationHasWhatsApp = true; // Default to true if no organization
+    if (partner.organization_id) {
+      organizationHasWhatsApp = await checkOrganizationWhatsAppAccess(partner.organization_id);
+      if (!organizationHasWhatsApp) {
+        console.log(`[WhatsApp] WhatsApp not enabled for organization ${partner.organization_id} (Free Plan or Starter Plan)`);
+        return;
+      }
     }
 
     // Send notification to client

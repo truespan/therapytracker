@@ -289,7 +289,9 @@ const CreatePatientModal = ({ isOpen, onClose, partnerId, onSuccess }) => {
               </div>
             </div>
             {errors.contact && <p className="mt-1 text-sm text-red-500">{errors.contact}</p>}
-            <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">Enter phone number without country code</p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
+              Use your WhatsApp number so we can send updates and reminders
+            </p>
           </div>
 
           {/* Address */}
