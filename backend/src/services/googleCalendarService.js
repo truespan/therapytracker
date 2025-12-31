@@ -59,7 +59,7 @@ async function handleOAuthCallback(code, state) {
 
     // Validate state timestamp (prevent replay attacks)
     const stateAge = Date.now() - timestamp;
-    const MAX_STATE_AGE = 10 * 60 * 1000; // 10 minutes
+    const MAX_STATE_AGE = 30 * 60 * 1000; // 30 minutes (increased for production where users may take longer)
     if (stateAge > MAX_STATE_AGE) {
       throw new Error('OAuth state expired. Please try connecting again.');
     }
