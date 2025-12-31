@@ -42,8 +42,16 @@ class WhatsAppService {
       // Process private key - handle both single-line and multi-line formats
       let rawPrivateKey = process.env.VONAGE_PRIVATE_KEY;
       if (rawPrivateKey) {
+        console.log('[WhatsApp Service] Raw private key length:', rawPrivateKey.length);
+        console.log('[WhatsApp Service] Raw key contains literal \\n:', rawPrivateKey.includes('\\n'));
+        console.log('[WhatsApp Service] Raw key contains actual newlines:', rawPrivateKey.includes('\n'));
+        
         // Replace literal \n with actual newlines if they exist
         rawPrivateKey = rawPrivateKey.replace(/\\n/g, '\n');
+        
+        console.log('[WhatsApp Service] After replacement - contains newlines:', rawPrivateKey.includes('\n'));
+        console.log('[WhatsApp Service] After replacement - line count:', rawPrivateKey.split('\n').length);
+        
         // Trim only leading/trailing whitespace, preserve internal formatting
         this.privateKey = rawPrivateKey.trim();
         
@@ -52,6 +60,8 @@ class WhatsAppService {
           console.error('[WhatsApp Service] VONAGE_PRIVATE_KEY appears to be invalid - missing BEGIN/END markers');
           console.error('[WhatsApp Service] Private key should start with "-----BEGIN PRIVATE KEY-----"');
           this.privateKey = null;
+        } else {
+          console.log('[WhatsApp Service] Private key validation passed');
         }
       }
       
@@ -71,7 +81,11 @@ class WhatsAppService {
           console.log('[WhatsApp Service] Application ID:', this.applicationId.substring(0, 8) + '...');
           console.log('[WhatsApp Service] Private key length:', this.privateKey.length);
           console.log('[WhatsApp Service] Private key starts with:', this.privateKey.substring(0, 30) + '...');
+          console.log('[WhatsApp Service] Private key ends with:', '...' + this.privateKey.substring(this.privateKey.length - 30));
+          console.log('[WhatsApp Service] Private key has newlines:', this.privateKey.includes('\n'));
+          console.log('[WhatsApp Service] Private key line count:', this.privateKey.split('\n').length);
           
+          // For Vonage SDK v3, pass private key as string
           this.vonageClient = new Vonage({
             apiKey: this.apiKey,
             apiSecret: this.apiSecret,
@@ -83,6 +97,7 @@ class WhatsAppService {
         } catch (clientError) {
           console.error('[WhatsApp Service] Failed to initialize Vonage client:', clientError.message);
           console.error('[WhatsApp Service] Error details:', clientError);
+          console.error('[WhatsApp Service] Stack:', clientError.stack);
           console.error('[WhatsApp Service] This usually means:');
           console.error('  1. VONAGE_PRIVATE_KEY is not properly formatted');
           console.error('  2. The private key needs to include -----BEGIN PRIVATE KEY----- and -----END PRIVATE KEY-----');
