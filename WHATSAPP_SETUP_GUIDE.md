@@ -65,18 +65,46 @@ Your private key content here
 
 #### How to Set the Private Key
 
-**Option 1: Multi-line string (Recommended)**
+The private key must be properly formatted for the Vonage SDK to work. Here are the correct ways to set it:
+
+**Option 1: Multi-line string in .env (Recommended for local development)**
+
+Open your `.env` file and paste the private key exactly as it appears in the downloaded file:
+
 ```env
 VONAGE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...
-(rest of your private key)
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC
+7xQWZqFZ8z9mJ5xK8dR2YvN3pL4wX5yH9jK2mN8pQ6rS7tU9vW
+(multiple lines of the actual key content)
+xYzA1bC2dD3eE4fF5gG6hH7iI8jJ9kK0lL1mM2nN3oO4pP5qQ
 -----END PRIVATE KEY-----"
 ```
 
-**Option 2: Single line with \n**
+**Important**: Keep the actual newlines - don't replace them with `\n`.
+
+**Option 2: Single line with literal \n (For production/environment variables)**
+
+If your hosting platform doesn't support multi-line environment variables, use this format:
+
 ```env
-VONAGE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...\n-----END PRIVATE KEY-----"
+VONAGE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7xQWZqFZ8z9mJ5xK8dR2YvN3pL4wX5yH9jK2mN8pQ6rS7tU9vW...(all on one line)...\n-----END PRIVATE KEY-----"
 ```
+
+Replace actual newlines with `\n` (the two characters: backslash + n).
+
+**Option 3: Load from file (Most secure for production)**
+
+Store the private key in a separate file and reference it:
+
+1. Save your private key to a file: `vonage_private.key`
+2. In your code, read it: `VONAGE_PRIVATE_KEY=$(cat /path/to/vonage_private.key)`
+
+**Common Mistakes to Avoid:**
+- ❌ Missing the `-----BEGIN PRIVATE KEY-----` header
+- ❌ Missing the `-----END PRIVATE KEY-----` footer  
+- ❌ Extra spaces or characters before/after the key
+- ❌ Corrupted key content (copy the entire file, don't edit it)
+- ❌ Using the wrong key file (make sure it's the one Vonage generated)
 
 ### 4. Restart Your Server
 
@@ -95,6 +123,43 @@ npm start
 4. Click **Send Test Message**
 
 ## Troubleshooting
+
+### Error: secretOrPrivateKey must be an asymmetric key when using RS256
+
+This error means the private key format is incorrect. The Vonage SDK cannot parse it.
+
+**Solutions:**
+
+1. **Check the private key format in your `.env` file:**
+   ```env
+   # ✅ CORRECT - Multi-line format
+   VONAGE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+   MIIEvQIBADANBgkqhkiG9w0BAQEFAASC...
+   -----END PRIVATE KEY-----"
+   
+   # ✅ CORRECT - Single line with \n
+   VONAGE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC...\n-----END PRIVATE KEY-----"
+   
+   # ❌ WRONG - Missing quotes
+   VONAGE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----
+   ...
+   
+   # ❌ WRONG - Missing BEGIN/END markers
+   VONAGE_PRIVATE_KEY="MIIEvQIBADANBgkqhkiG9w0BAQEFAASC..."
+   ```
+
+2. **Re-download the private key from Vonage:**
+   - Go to Vonage Dashboard → Applications
+   - If you lost the original key, you'll need to generate a new application
+   - Download the `.key` file
+   - Copy the ENTIRE content (including BEGIN/END lines)
+
+3. **Verify the key in your production environment:**
+   - Check that environment variables are properly set
+   - Some platforms (Heroku, Vercel, etc.) may need special formatting
+   - Try the single-line format with `\n` if multi-line doesn't work
+
+4. **Restart your server** after fixing the key format
 
 ### Error: 401 Unauthorized
 

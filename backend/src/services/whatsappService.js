@@ -38,7 +38,23 @@ class WhatsAppService {
       this.apiKey = process.env.VONAGE_API_KEY?.trim();
       this.apiSecret = process.env.VONAGE_API_SECRET?.trim();
       this.applicationId = process.env.VONAGE_APPLICATION_ID?.trim();
-      this.privateKey = process.env.VONAGE_PRIVATE_KEY?.trim();
+      
+      // Process private key - handle both single-line and multi-line formats
+      let rawPrivateKey = process.env.VONAGE_PRIVATE_KEY;
+      if (rawPrivateKey) {
+        // Replace literal \n with actual newlines if they exist
+        rawPrivateKey = rawPrivateKey.replace(/\\n/g, '\n');
+        // Trim only leading/trailing whitespace, preserve internal formatting
+        this.privateKey = rawPrivateKey.trim();
+        
+        // Validate private key format
+        if (!this.privateKey.includes('BEGIN PRIVATE KEY') || !this.privateKey.includes('END PRIVATE KEY')) {
+          console.error('[WhatsApp Service] VONAGE_PRIVATE_KEY appears to be invalid - missing BEGIN/END markers');
+          console.error('[WhatsApp Service] Private key should start with "-----BEGIN PRIVATE KEY-----"');
+          this.privateKey = null;
+        }
+      }
+      
       this.fromNumber = process.env.VONAGE_WHATSAPP_NUMBER?.trim();
       this.enabled = process.env.WHATSAPP_ENABLED === 'true';
       this.isSandbox = process.env.VONAGE_SANDBOX === 'true';
@@ -51,16 +67,26 @@ class WhatsAppService {
       // Initialize Vonage client with JWT authentication if application ID and private key are provided
       if (this.enabled && this.applicationId && this.privateKey) {
         try {
+          console.log('[WhatsApp Service] Attempting to initialize Vonage client with JWT...');
+          console.log('[WhatsApp Service] Application ID:', this.applicationId.substring(0, 8) + '...');
+          console.log('[WhatsApp Service] Private key length:', this.privateKey.length);
+          console.log('[WhatsApp Service] Private key starts with:', this.privateKey.substring(0, 30) + '...');
+          
           this.vonageClient = new Vonage({
             apiKey: this.apiKey,
             apiSecret: this.apiSecret,
             applicationId: this.applicationId,
             privateKey: this.privateKey
           });
-          console.log(`[WhatsApp Service] Initialized with JWT authentication${this.isSandbox ? ' (SANDBOX MODE)' : ''}`);
+          console.log(`[WhatsApp Service] ✓ Initialized with JWT authentication${this.isSandbox ? ' (SANDBOX MODE)' : ''}`);
           console.log(`[WhatsApp Service] Using endpoint: ${this.baseUrl}`);
         } catch (clientError) {
           console.error('[WhatsApp Service] Failed to initialize Vonage client:', clientError.message);
+          console.error('[WhatsApp Service] Error details:', clientError);
+          console.error('[WhatsApp Service] This usually means:');
+          console.error('  1. VONAGE_PRIVATE_KEY is not properly formatted');
+          console.error('  2. The private key needs to include -----BEGIN PRIVATE KEY----- and -----END PRIVATE KEY-----');
+          console.error('  3. Newlines in the key should be actual newlines, not \\n strings');
           this.enabled = false;
         }
       } else if (this.enabled && this.apiKey && this.apiSecret && this.fromNumber) {
