@@ -34,17 +34,26 @@ class WhatsAppService {
    */
   initialize() {
     try {
+      console.log('[WhatsApp Service] Initializing...');
+      console.log('[WhatsApp Service] WHATSAPP_ENABLED:', process.env.WHATSAPP_ENABLED);
+      
       // Trim credentials to remove any accidental whitespace
       this.apiKey = process.env.VONAGE_API_KEY?.trim();
       this.apiSecret = process.env.VONAGE_API_SECRET?.trim();
       this.applicationId = process.env.VONAGE_APPLICATION_ID?.trim();
       
+      console.log('[WhatsApp Service] Has API Key:', !!this.apiKey);
+      console.log('[WhatsApp Service] Has API Secret:', !!this.apiSecret);
+      console.log('[WhatsApp Service] Has Application ID:', !!this.applicationId);
+      
       // Process private key - handle both single-line and multi-line formats
       let rawPrivateKey = process.env.VONAGE_PRIVATE_KEY;
+      console.log('[WhatsApp Service] VONAGE_PRIVATE_KEY exists:', !!rawPrivateKey);
       if (rawPrivateKey) {
         console.log('[WhatsApp Service] Raw private key length:', rawPrivateKey.length);
         console.log('[WhatsApp Service] Raw key contains literal \\n:', rawPrivateKey.includes('\\n'));
         console.log('[WhatsApp Service] Raw key contains actual newlines:', rawPrivateKey.includes('\n'));
+        console.log('[WhatsApp Service] Raw key first 50 chars:', rawPrivateKey.substring(0, 50));
         
         // Replace literal \n with actual newlines if they exist
         rawPrivateKey = rawPrivateKey.replace(/\\n/g, '\n');
@@ -55,19 +64,32 @@ class WhatsAppService {
         // Trim only leading/trailing whitespace, preserve internal formatting
         this.privateKey = rawPrivateKey.trim();
         
-        // Validate private key format
-        if (!this.privateKey.includes('BEGIN PRIVATE KEY') || !this.privateKey.includes('END PRIVATE KEY')) {
+        // Validate private key format - check for both with and without dashes
+        const hasBeginMarker = this.privateKey.includes('BEGIN PRIVATE KEY') || this.privateKey.includes('-----BEGIN PRIVATE KEY-----');
+        const hasEndMarker = this.privateKey.includes('END PRIVATE KEY') || this.privateKey.includes('-----END PRIVATE KEY-----');
+        
+        if (!hasBeginMarker || !hasEndMarker) {
           console.error('[WhatsApp Service] VONAGE_PRIVATE_KEY appears to be invalid - missing BEGIN/END markers');
-          console.error('[WhatsApp Service] Private key should start with "-----BEGIN PRIVATE KEY-----"');
+          console.error('[WhatsApp Service] Private key should include "-----BEGIN PRIVATE KEY-----" and "-----END PRIVATE KEY-----"');
+          console.error('[WhatsApp Service] Private key first 100 chars:', this.privateKey.substring(0, 100));
+          console.error('[WhatsApp Service] Private key last 100 chars:', this.privateKey.substring(Math.max(0, this.privateKey.length - 100)));
           this.privateKey = null;
         } else {
           console.log('[WhatsApp Service] Private key validation passed');
+          console.log('[WhatsApp Service] Private key is set:', !!this.privateKey);
         }
+      } else {
+        console.log('[WhatsApp Service] VONAGE_PRIVATE_KEY is not set in environment');
+        this.privateKey = null;
       }
       
       this.fromNumber = process.env.VONAGE_WHATSAPP_NUMBER?.trim();
       this.enabled = process.env.WHATSAPP_ENABLED === 'true';
       this.isSandbox = process.env.VONAGE_SANDBOX === 'true';
+      
+      console.log('[WhatsApp Service] Enabled:', this.enabled);
+      console.log('[WhatsApp Service] From Number:', this.fromNumber || 'NOT SET');
+      console.log('[WhatsApp Service] Sandbox Mode:', this.isSandbox);
       
       // Set base URL based on sandbox mode
       this.baseUrl = this.isSandbox
@@ -95,6 +117,10 @@ class WhatsAppService {
             console.log('[WhatsApp Service] Auth credentials created successfully');
           } catch (authError) {
             console.error('[WhatsApp Service] Auth credential creation failed:', authError.message);
+            console.error('[WhatsApp Service] This means the private key format is invalid');
+            console.error('[WhatsApp Service] Service will remain enabled but will fail when sending messages');
+            console.error('[WhatsApp Service] Please fix VONAGE_PRIVATE_KEY format and restart server');
+            // Don't throw - keep service enabled so user can see the error
             throw new Error(`Private key validation failed: ${authError.message}`);
           }
           
@@ -110,12 +136,16 @@ class WhatsAppService {
         } catch (clientError) {
           console.error('[WhatsApp Service] Failed to initialize Vonage client:', clientError.message);
           console.error('[WhatsApp Service] Error details:', clientError);
-          console.error('[WhatsApp Service] Stack:', clientError.stack);
+          if (clientError.stack) {
+            console.error('[WhatsApp Service] Stack:', clientError.stack);
+          }
           console.error('[WhatsApp Service] This usually means:');
           console.error('  1. VONAGE_PRIVATE_KEY is not properly formatted');
           console.error('  2. The private key needs to include -----BEGIN PRIVATE KEY----- and -----END PRIVATE KEY-----');
           console.error('  3. Newlines in the key should be actual newlines, not \\n strings');
-          this.enabled = false;
+          console.error('[WhatsApp Service] Service is enabled but not fully configured - fix credentials and restart');
+          // Don't disable the service - let the user see the status and error
+          // this.enabled = false; // Removed - keep enabled so status shows properly
         }
       } else if (this.enabled && this.apiKey && this.apiSecret && this.fromNumber) {
         // Fallback to Basic Auth if no application ID/private key
@@ -808,10 +838,37 @@ Please prepare for the session and contact the client if needed.
    * @returns {Object} Service status
    */
   getStatus() {
+    // Check if service is configured (has either JWT or Basic Auth credentials)
+    const hasJWTAuth = !!(this.applicationId && this.privateKey);
+    const hasBasicAuth = !!(this.apiKey && this.apiSecret);
+    const isConfigured = (hasJWTAuth || hasBasicAuth) && !!this.fromNumber;
+    
+    // Debug logging for status check
+    console.log('[WhatsApp Service] Status check:');
+    console.log('  - Enabled:', this.enabled);
+    console.log('  - Has Application ID:', !!this.applicationId);
+    console.log('  - Has Private Key:', !!this.privateKey);
+    console.log('  - Has API Key:', !!this.apiKey);
+    console.log('  - Has API Secret:', !!this.apiSecret);
+    console.log('  - Has From Number:', !!this.fromNumber);
+    console.log('  - Has JWT Auth:', hasJWTAuth);
+    console.log('  - Has Basic Auth:', hasBasicAuth);
+    console.log('  - Is Configured:', isConfigured);
+    
     return {
       enabled: this.enabled,
-      configured: !!(this.vonage && this.fromNumber),
-      fromNumber: this.fromNumber
+      configured: isConfigured,
+      fromNumber: this.fromNumber,
+      authMethod: hasJWTAuth ? 'JWT' : (hasBasicAuth ? 'Basic' : 'None'),
+      hasVonageClient: !!this.vonageClient,
+      // Debug info (can be removed later)
+      debug: {
+        hasApplicationId: !!this.applicationId,
+        hasPrivateKey: !!this.privateKey,
+        hasApiKey: !!this.apiKey,
+        hasApiSecret: !!this.apiSecret,
+        hasFromNumber: !!this.fromNumber
+      }
     };
   }
 
