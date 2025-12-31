@@ -760,15 +760,32 @@ Please prepare for the session and contact the client if needed.
     } catch (error) {
       const errorDetails = this.extractErrorDetails(error);
       
+      // Log detailed error information
+      console.error('[WhatsApp Service] Test failed:', {
+        error: error.message,
+        status: errorDetails.status,
+        details: errorDetails.details,
+        isSandbox: this.isSandbox,
+        baseUrl: this.baseUrl
+      });
+      
       if (this.isSandboxRegistrationError(error)) {
         console.error('[WhatsApp Service] SANDBOX ISSUE: Test number not registered in Vonage WhatsApp sandbox');
+      } else if (errorDetails.status === 422) {
+        console.error('[WhatsApp Service] PRODUCTION ERROR: 422 status - Check Vonage dashboard for details');
+        console.error('[WhatsApp Service] Common causes:');
+        console.error('  - Recipient number not verified/approved for WhatsApp Business messages');
+        console.error('  - Message template not approved (if using templates)');
+        console.error('  - Invalid message format');
+        console.error('  - Rate limiting or account restrictions');
       }
       
       return {
         success: false,
         error: error.message,
         details: errorDetails.details,
-        isSandboxError: this.isSandboxRegistrationError(error)
+        isSandboxError: this.isSandboxRegistrationError(error),
+        status: errorDetails.status
       };
     }
   }
@@ -1132,6 +1149,11 @@ Please prepare for the session and contact the client if needed.
    * @returns {boolean} True if it's a sandbox registration error
    */
   isSandboxRegistrationError(error) {
+    // Only check for sandbox errors if we're actually in sandbox mode
+    if (!this.isSandbox) {
+      return false;
+    }
+    
     const errorDetails = this.extractErrorDetails(error);
     const errorString = JSON.stringify(errorDetails.details || '').toLowerCase();
     

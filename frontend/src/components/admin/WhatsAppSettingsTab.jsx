@@ -115,16 +115,16 @@ const WhatsAppSettingsTab = () => {
     } catch (error) {
       console.error('Error testing WhatsApp:', error);
       const errorData = error.response?.data;
-      const isSandboxError = errorData?.isSandboxError || 
-                            errorData?.error?.toLowerCase().includes('sandbox') ||
-                            errorData?.error?.toLowerCase().includes('registration') ||
-                            errorData?.error?.toLowerCase().includes('invalid message type');
+      const statusCode = error.response?.status || errorData?.status;
+      const isSandboxError = errorData?.isSandboxError || false;
       
       setTestResult({
         success: false,
         error: errorData?.error || 'Failed to send test message',
         isSandboxError: isSandboxError,
-        phoneNumber: formattedPhone
+        phoneNumber: formattedPhone,
+        statusCode: statusCode,
+        details: errorData?.details
       });
     } finally {
       setTesting(false);
@@ -353,35 +353,72 @@ const WhatsAppSettingsTab = () => {
                   ) : (
                     <div className="mt-2">
                       <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-2">{testResult.error}</p>
-                      {testResult.isSandboxError && (
-                        <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                          <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
-                            📱 Sandbox Registration Required
-                          </p>
-                          <p className="text-xs text-yellow-700 dark:text-yellow-400 mb-2">
-                            This phone number needs to be registered in your Vonage WhatsApp sandbox before you can send messages.
-                          </p>
-                          <ol className="text-xs text-yellow-700 dark:text-yellow-400 list-decimal list-inside space-y-1">
-                            <li>Go to <a href="https://dashboard.nexmo.com/" target="_blank" rel="noopener noreferrer" className="underline font-medium">Vonage Dashboard</a></li>
-                            <li>Navigate to: <strong>Messages and Dispatch</strong> → <strong>Sandbox</strong> → <strong>WhatsApp</strong></li>
-                            <li>Find the <strong>"Sandbox Recipients"</strong> section</li>
-                            <li>Click <strong>"Add Number"</strong></li>
-                            <li>Enter the phone number in E.164 format <strong>WITHOUT</strong> the + sign:</li>
-                          </ol>
-                          <div className="mt-2 p-2 bg-white dark:bg-dark-bg-secondary rounded border border-yellow-300 dark:border-yellow-700">
-                            <p className="text-xs font-mono text-gray-900 dark:text-dark-text-primary">
-                              {testResult.phoneNumber ? testResult.phoneNumber.replace('+', '') : '919876543210'}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-dark-text-secondary mt-1">
-                              ✅ Correct format: <code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">919876543210</code>
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-dark-text-secondary">
-                              ❌ Wrong format: <code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">+919876543210</code>
-                            </p>
-                          </div>
-                          <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-2">
-                            After registering, wait a few seconds and try sending the test message again.
-                          </p>
+                      {testResult.statusCode === 422 && (
+                        <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                          {testResult.isSandboxError ? (
+                            <>
+                              <p className="text-sm font-semibold text-orange-800 dark:text-orange-300 mb-2">
+                                📱 Sandbox Registration Required
+                              </p>
+                              <p className="text-xs text-orange-700 dark:text-orange-400 mb-2">
+                                This phone number needs to be registered in your Vonage WhatsApp sandbox before you can send messages.
+                              </p>
+                              <ol className="text-xs text-orange-700 dark:text-orange-400 list-decimal list-inside space-y-1">
+                                <li>Go to <a href="https://dashboard.nexmo.com/" target="_blank" rel="noopener noreferrer" className="underline font-medium">Vonage Dashboard</a></li>
+                                <li>Navigate to: <strong>Messages and Dispatch</strong> → <strong>Sandbox</strong> → <strong>WhatsApp</strong></li>
+                                <li>Find the <strong>"Sandbox Recipients"</strong> section</li>
+                                <li>Click <strong>"Add Number"</strong></li>
+                                <li>Enter the phone number in E.164 format <strong>WITHOUT</strong> the + sign:</li>
+                              </ol>
+                              <div className="mt-2 p-2 bg-white dark:bg-dark-bg-secondary rounded border border-orange-300 dark:border-orange-700">
+                                <p className="text-xs font-mono text-gray-900 dark:text-dark-text-primary">
+                                  {testResult.phoneNumber ? testResult.phoneNumber.replace('+', '') : '919876543210'}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-dark-text-secondary mt-1">
+                                  ✅ Correct format: <code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">919876543210</code>
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-dark-text-secondary">
+                                  ❌ Wrong format: <code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">+919876543210</code>
+                                </p>
+                              </div>
+                              <p className="text-xs text-orange-700 dark:text-orange-400 mt-2">
+                                After registering, wait a few seconds and try sending the test message again.
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm font-semibold text-orange-800 dark:text-orange-300 mb-2">
+                                ⚠️ Production Mode Error (422)
+                              </p>
+                              <p className="text-xs text-orange-700 dark:text-orange-400 mb-2">
+                                This error typically occurs in production mode when:
+                              </p>
+                              <ul className="text-xs text-orange-700 dark:text-orange-400 list-disc list-inside space-y-1 mb-2">
+                                <li>The recipient number hasn't initiated a conversation with your WhatsApp Business number</li>
+                                <li>The recipient needs to send you a message first (24-hour window rule)</li>
+                                <li>Your WhatsApp Business account has restrictions</li>
+                                <li>Message template approval is required (if using templates)</li>
+                              </ul>
+                              <div className="mt-2 p-2 bg-white dark:bg-dark-bg-secondary rounded border border-orange-300 dark:border-orange-700">
+                                <p className="text-xs font-semibold text-gray-900 dark:text-dark-text-primary mb-1">Solution:</p>
+                                <p className="text-xs text-gray-700 dark:text-dark-text-secondary">
+                                  Ask the recipient (<strong>{testResult.phoneNumber}</strong>) to send a WhatsApp message to your business number (<strong>+919655846492</strong>) first. 
+                                  After they message you, you'll have a 24-hour window to send them messages.
+                                </p>
+                              </div>
+                              <p className="text-xs text-orange-700 dark:text-orange-400 mt-2">
+                                Check your <a href="https://dashboard.nexmo.com/" target="_blank" rel="noopener noreferrer" className="underline font-medium">Vonage Dashboard</a> → Messages and Dispatch → Activity for detailed error information.
+                              </p>
+                              {testResult.details && (
+                                <details className="mt-2">
+                                  <summary className="text-xs text-orange-700 dark:text-orange-400 cursor-pointer">View Error Details</summary>
+                                  <pre className="mt-2 p-2 bg-white dark:bg-dark-bg-secondary rounded text-xs overflow-auto">
+                                    {typeof testResult.details === 'string' ? testResult.details : JSON.stringify(testResult.details, null, 2)}
+                                  </pre>
+                                </details>
+                              )}
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
