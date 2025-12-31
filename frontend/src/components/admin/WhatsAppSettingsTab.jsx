@@ -86,17 +86,17 @@ const WhatsAppSettingsTab = () => {
       return;
     }
 
+    // Format phone number (add + if missing and it's a 10-digit Indian number)
+    let formattedPhone = cleanedPhone;
+    if (cleanedPhone.length === 10 && !cleanedPhone.startsWith('+')) {
+      formattedPhone = `+91${cleanedPhone}`;
+    } else if (!formattedPhone.startsWith('+')) {
+      formattedPhone = `+${formattedPhone}`;
+    }
+
     try {
       setTesting(true);
       setTestResult(null);
-      
-      // Format phone number (add + if missing and it's a 10-digit Indian number)
-      let formattedPhone = cleanedPhone;
-      if (cleanedPhone.length === 10 && !cleanedPhone.startsWith('+')) {
-        formattedPhone = `+91${cleanedPhone}`;
-      } else if (!formattedPhone.startsWith('+')) {
-        formattedPhone = `+${formattedPhone}`;
-      }
 
       const response = await whatsappAPI.testIntegration(formattedPhone);
       setTestResult({
@@ -114,9 +114,17 @@ const WhatsAppSettingsTab = () => {
       }, 1000);
     } catch (error) {
       console.error('Error testing WhatsApp:', error);
+      const errorData = error.response?.data;
+      const isSandboxError = errorData?.isSandboxError || 
+                            errorData?.error?.toLowerCase().includes('sandbox') ||
+                            errorData?.error?.toLowerCase().includes('registration') ||
+                            errorData?.error?.toLowerCase().includes('invalid message type');
+      
       setTestResult({
         success: false,
-        error: error.response?.data?.error || 'Failed to send test message'
+        error: errorData?.error || 'Failed to send test message',
+        isSandboxError: isSandboxError,
+        phoneNumber: formattedPhone
       });
     } finally {
       setTesting(false);
@@ -343,7 +351,40 @@ const WhatsAppSettingsTab = () => {
                       <p>Phone: {testResult.phoneNumber}</p>
                     </div>
                   ) : (
-                    <p className="mt-2 text-sm text-red-700 dark:text-red-400">{testResult.error}</p>
+                    <div className="mt-2">
+                      <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-2">{testResult.error}</p>
+                      {testResult.isSandboxError && (
+                        <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                          <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
+                            📱 Sandbox Registration Required
+                          </p>
+                          <p className="text-xs text-yellow-700 dark:text-yellow-400 mb-2">
+                            This phone number needs to be registered in your Vonage WhatsApp sandbox before you can send messages.
+                          </p>
+                          <ol className="text-xs text-yellow-700 dark:text-yellow-400 list-decimal list-inside space-y-1">
+                            <li>Go to <a href="https://dashboard.nexmo.com/" target="_blank" rel="noopener noreferrer" className="underline font-medium">Vonage Dashboard</a></li>
+                            <li>Navigate to: <strong>Messages and Dispatch</strong> → <strong>Sandbox</strong> → <strong>WhatsApp</strong></li>
+                            <li>Find the <strong>"Sandbox Recipients"</strong> section</li>
+                            <li>Click <strong>"Add Number"</strong></li>
+                            <li>Enter the phone number in E.164 format <strong>WITHOUT</strong> the + sign:</li>
+                          </ol>
+                          <div className="mt-2 p-2 bg-white dark:bg-dark-bg-secondary rounded border border-yellow-300 dark:border-yellow-700">
+                            <p className="text-xs font-mono text-gray-900 dark:text-dark-text-primary">
+                              {testResult.phoneNumber ? testResult.phoneNumber.replace('+', '') : '919876543210'}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-dark-text-secondary mt-1">
+                              ✅ Correct format: <code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">919876543210</code>
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-dark-text-secondary">
+                              ❌ Wrong format: <code className="bg-gray-100 dark:bg-dark-bg-tertiary px-1 rounded">+919876543210</code>
+                            </p>
+                          </div>
+                          <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-2">
+                            After registering, wait a few seconds and try sending the test message again.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

@@ -72,7 +72,9 @@ const testWhatsAppIntegration = async (req, res) => {
     } else {
       res.status(400).json({
         success: false,
-        error: result.error
+        error: result.error,
+        isSandboxError: result.isSandboxError || false,
+        details: result.details
       });
     }
   } catch (error) {
