@@ -27,6 +27,7 @@ const subscriptionPlanController = require('../controllers/subscriptionPlanContr
 const partnerSubscriptionController = require('../controllers/partnerSubscriptionController');
 const availabilitySlotController = require('../controllers/availabilitySlotController');
 const whatsappController = require('../controllers/whatsappController');
+const vonageWebhookController = require('../controllers/vonageWebhookController');
 
 // Debug routes (for timezone diagnostics)
 const debugRoutes = require('./debug');
@@ -180,6 +181,11 @@ router.put('/availability-slots/:id', authenticateToken, checkRole('partner'), a
 router.delete('/availability-slots/:id', authenticateToken, checkRole('partner'), availabilitySlotController.deleteSlot);
 router.post('/partners/:partnerId/availability-slots/publish', authenticateToken, checkRole('partner'), availabilitySlotController.publishSlots);
 router.post('/availability-slots/:id/book', authenticateToken, checkRole('user'), availabilitySlotController.bookSlot);
+
+// ==================== VONAGE WEBHOOK ROUTES ====================
+// Public webhook endpoints (no authentication required - Vonage calls these directly)
+router.post('/vonage_webhook/inbound', vonageWebhookController.handleInboundMessage);
+router.post('/vonage_webhook/status', vonageWebhookController.handleStatusUpdate);
 
 // ==================== WHATSAPP NOTIFICATION ROUTES ====================
 // Admin and Organization routes
