@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { Vonage, Auth } = require('@vonage/server-sdk');
+const { Vonage } = require('@vonage/server-sdk');
 const db = require('../config/database');
 const Partner = require('../models/Partner');
 
@@ -107,24 +107,8 @@ class WhatsAppService {
           console.log('[WhatsApp Service] Private key has newlines:', this.privateKey.includes('\n'));
           console.log('[WhatsApp Service] Private key line count:', this.privateKey.split('\n').length);
           
-          // Try to create Auth credentials first to validate the private key
-          try {
-            console.log('[WhatsApp Service] Testing Auth credential creation...');
-            const testAuth = new Auth({
-              applicationId: this.applicationId,
-              privateKey: this.privateKey
-            });
-            console.log('[WhatsApp Service] Auth credentials created successfully');
-          } catch (authError) {
-            console.error('[WhatsApp Service] Auth credential creation failed:', authError.message);
-            console.error('[WhatsApp Service] This means the private key format is invalid');
-            console.error('[WhatsApp Service] Service will remain enabled but will fail when sending messages');
-            console.error('[WhatsApp Service] Please fix VONAGE_PRIVATE_KEY format and restart server');
-            // Don't throw - keep service enabled so user can see the error
-            throw new Error(`Private key validation failed: ${authError.message}`);
-          }
-          
-          // For Vonage SDK v3, pass private key as string
+          // Initialize Vonage client with JWT credentials
+          console.log('[WhatsApp Service] Initializing Vonage client with JWT credentials...');
           this.vonageClient = new Vonage({
             apiKey: this.apiKey,
             apiSecret: this.apiSecret,
