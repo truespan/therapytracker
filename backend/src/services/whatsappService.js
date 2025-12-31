@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { Vonage } = require('@vonage/server-sdk');
+const { Vonage, Auth } = require('@vonage/server-sdk');
 const db = require('../config/database');
 const Partner = require('../models/Partner');
 
@@ -84,6 +84,19 @@ class WhatsAppService {
           console.log('[WhatsApp Service] Private key ends with:', '...' + this.privateKey.substring(this.privateKey.length - 30));
           console.log('[WhatsApp Service] Private key has newlines:', this.privateKey.includes('\n'));
           console.log('[WhatsApp Service] Private key line count:', this.privateKey.split('\n').length);
+          
+          // Try to create Auth credentials first to validate the private key
+          try {
+            console.log('[WhatsApp Service] Testing Auth credential creation...');
+            const testAuth = new Auth({
+              applicationId: this.applicationId,
+              privateKey: this.privateKey
+            });
+            console.log('[WhatsApp Service] Auth credentials created successfully');
+          } catch (authError) {
+            console.error('[WhatsApp Service] Auth credential creation failed:', authError.message);
+            throw new Error(`Private key validation failed: ${authError.message}`);
+          }
           
           // For Vonage SDK v3, pass private key as string
           this.vonageClient = new Vonage({
@@ -887,6 +900,12 @@ Please prepare for the session and contact the client if needed.
       // Use JWT authentication if Vonage client is available
       if (this.vonageClient) {
         console.log('[WhatsApp Service] Using JWT authentication via Vonage SDK');
+        console.log('[WhatsApp Service] Sending message with params:', {
+          message_type: 'text',
+          channel: 'whatsapp',
+          to: toNumber,
+          from: fromNumber
+        });
         
         // Use Vonage SDK to send message (it handles JWT automatically)
         try {
@@ -898,9 +917,14 @@ Please prepare for the session and contact the client if needed.
             text: '🧪 *TheraP Track WhatsApp Test*\n\nThis is a test message from your TheraP Track system. If you received this, your WhatsApp integration is working correctly! ✅'
           });
           
+          console.log('[WhatsApp Service] SDK send result:', result);
           response = { data: { message_uuid: result.message_uuid } };
         } catch (sdkError) {
-          // If SDK fails, throw error with details
+          // If SDK fails, log detailed error and throw
+          console.error('[WhatsApp Service] SDK send error:', sdkError);
+          console.error('[WhatsApp Service] SDK error message:', sdkError.message);
+          console.error('[WhatsApp Service] SDK error response:', sdkError.response?.data);
+          console.error('[WhatsApp Service] SDK error body:', sdkError.body);
           throw sdkError;
         }
       } else {
