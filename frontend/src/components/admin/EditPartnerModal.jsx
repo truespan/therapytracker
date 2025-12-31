@@ -268,3 +268,4 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, isLoading, partner }) => 
 export default EditPartnerModal;
 
 
+

@@ -6,7 +6,7 @@ import {
   TrendingUp, Users, BarChart3, Database, Smartphone, FileText, 
   Calendar, Video, StickyNote, Send, MessageCircle, Mail, Phone,
   CheckCircle, ArrowRight, Sparkles, Shield, Menu, X, Lock, Eye, EyeOff,
-  AlertCircle, BookOpen, Newspaper, ChevronRight
+  AlertCircle, BookOpen, Newspaper, ChevronRight, ArrowUp
 } from 'lucide-react';
 import { Radar, RadarChart as RechartsRadar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { contactAPI } from '../services/api';
@@ -19,6 +19,7 @@ const Home = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   const isScrollingRef = useRef(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
   
   // Login form state
   const [loginFormData, setLoginFormData] = useState({
@@ -62,6 +63,15 @@ const Home = () => {
     }
   };
 
+  const scrollToTop = () => {
+    isScrollingRef.current = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Reset the flag after scroll animation completes
+    setTimeout(() => {
+      isScrollingRef.current = false;
+    }, 1000);
+  };
+
   // Detect active section based on scroll position
   useEffect(() => {
     const sections = ['about-us', 'how-it-works', 'blogs-news', 'login', 'lets-talk'];
@@ -72,6 +82,10 @@ const Home = () => {
 
       const scrollPosition = window.scrollY;
       const offset = 250; // Offset for navbar and sticky header (60px banner + 80px nav + padding)
+      
+      // Show scroll-to-top button after scrolling ~1-2 viewport heights
+      const viewportHeight = window.innerHeight;
+      setShowScrollToTop(scrollPosition > viewportHeight * 1.5);
       
       // Find the section that's currently in view
       let currentSection = '';
@@ -1229,6 +1243,17 @@ const Home = () => {
           </div>
         </div>
       </footer>
+
+      {/* Scroll to Top FAB */}
+      {showScrollToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-24 right-4 z-[999] w-12 h-12 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="h-5 w-5 transition-transform duration-300 group-hover:-translate-y-1" />
+        </button>
+      )}
     </div>
   );
 };

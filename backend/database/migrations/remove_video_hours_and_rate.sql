@@ -19,3 +19,4 @@ COMMENT ON COLUMN subscription_plans.has_video IS 'Whether this plan includes vi
 
 
 
+
