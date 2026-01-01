@@ -647,7 +647,7 @@ const PartnerSettings = () => {
               </div>
             </div>
             <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">
-            Use your WhatsApp number so you can receive client appointments, updates and reminders.
+            Use your WhatsApp number so you can receive client bookings, appointments, updates and reminders.
             </p>
 
             {/* Qualification - Editable */}
