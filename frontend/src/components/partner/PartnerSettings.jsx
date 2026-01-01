@@ -1121,12 +1121,9 @@ const PartnerSettings = () => {
                   <span>
                     {loadingPlans 
                       ? 'Loading Plans...' 
-                      : getPlanSelectionButtonText(
-                          partnerSubscription,
-                          availablePlans,
-                          partnerSubscription?.billing_period || 'monthly',
-                          'individual'
-                        ) || 'Select Plan'
+                      : (partnerSubscription && partnerSubscription.plan_name)
+                        ? 'Upgrade Plan'
+                        : 'Select Plan'
                     }
                   </span>
                 </button>

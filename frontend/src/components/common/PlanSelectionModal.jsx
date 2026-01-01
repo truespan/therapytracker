@@ -159,7 +159,7 @@ const PlanSelectionModal = ({
           {!plans || plans.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
               <CreditCard className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-tertiary" />
-              <p>No plans available for your organization size</p>
+              <p>No plans available{userType === 'organization' ? ' for your organization size' : ''}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
