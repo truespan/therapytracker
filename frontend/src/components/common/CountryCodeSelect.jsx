@@ -30,7 +30,7 @@ const CountryCodeSelect = ({ value, onChange, name = 'countryCode', className = 
       value={value}
       onChange={onChange}
       disabled={disabled}
-      className={`input w-24 text-sm px-2 ${className} ${disabled ? 'opacity-75 cursor-not-allowed' : ''}`}
+      className={`input w-24 text-sm px-2 bg-white dark:bg-dark-bg-secondary border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text-primary ${className} ${disabled ? 'opacity-75 cursor-not-allowed' : ''}`}
     >
       {countryCodes.map(({ code, flag }) => (
         <option key={code} value={code}>

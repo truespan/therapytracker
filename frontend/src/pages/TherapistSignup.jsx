@@ -166,10 +166,10 @@ const TherapistSignup = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying signup link...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-dark-primary-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-dark-text-secondary">Verifying signup link...</p>
         </div>
       </div>
     );
@@ -177,16 +177,16 @@ const TherapistSignup = () => {
 
   if (!tokenValid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
-          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Signup Link</h2>
-          <p className="text-gray-600 mb-6">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">Invalid Signup Link</h2>
+          <p className="text-gray-600 dark:text-dark-text-secondary mb-6">
             This signup link is invalid or has expired. Please contact your organization to get a new signup link.
           </p>
           <Link
             to="/"
-            className="inline-block px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="inline-block px-6 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors"
           >
             Go to Home
           </Link>
@@ -197,16 +197,16 @@ const TherapistSignup = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Created Successfully!</h2>
-          <p className="text-gray-600 mb-6">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+          <CheckCircle className="h-16 w-16 text-green-500 dark:text-green-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">Account Created Successfully!</h2>
+          <p className="text-gray-600 dark:text-dark-text-secondary mb-6">
             Please check your email to verify your account. You will be redirected to the login page shortly.
           </p>
           <Link
             to="/login"
-            className="inline-block px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="inline-block px-6 py-2 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors"
           >
             Go to Login
           </Link>
@@ -216,20 +216,20 @@ const TherapistSignup = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary py-8 px-4">
       <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+        <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="bg-primary-600 text-white px-6 py-8 text-center">
+          <div className="bg-primary-600 dark:bg-dark-primary-600 text-white px-6 py-8 text-center">
             <Building2 className="h-12 w-12 mx-auto mb-3" />
             <h1 className="text-3xl font-bold mb-2">Join as a Therapist</h1>
-            <p className="text-primary-100">Create your therapist account</p>
+            <p className="text-primary-100 dark:text-primary-200">Create your therapist account</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-2 text-red-700 dark:text-red-300">
                 <AlertCircle className="h-5 w-5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -237,38 +237,38 @@ const TherapistSignup = () => {
 
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
+                Full Name <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                    errors.name ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary ${
+                    errors.name ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-dark-border'
                   }`}
                   placeholder="Enter your full name"
                   disabled={submitting}
                 />
               </div>
-              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+              {errors.name && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.name}</p>}
             </div>
 
             {/* Sex and Age */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Sex <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
+                  Sex <span className="text-red-500 dark:text-red-400">*</span>
                 </label>
                 <select
                   name="sex"
                   value={formData.sex}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                    errors.sex ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary ${
+                    errors.sex ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-dark-border'
                   }`}
                   disabled={submitting}
                 >
@@ -276,22 +276,22 @@ const TherapistSignup = () => {
                   <option value="Female">Female</option>
                   <option value="Others">Others</option>
                 </select>
-                {errors.sex && <p className="mt-1 text-sm text-red-500">{errors.sex}</p>}
+                {errors.sex && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.sex}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
                   Age (Optional)
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                   <input
                     type="number"
                     name="age"
                     value={formData.age}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                      errors.age ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary ${
+                      errors.age ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-dark-border'
                     }`}
                     placeholder="Age"
                     min="18"
@@ -299,36 +299,36 @@ const TherapistSignup = () => {
                     disabled={submitting}
                   />
                 </div>
-                {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
+                {errors.age && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.age}</p>}
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
+                Email <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary ${
+                    errors.email ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-dark-border'
                   }`}
                   placeholder="your.email@example.com"
                   disabled={submitting}
                 />
               </div>
-              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+              {errors.email && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.email}</p>}
             </div>
 
             {/* Contact Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Contact Number <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
+                Contact Number <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <div className="flex space-x-2">
                 <CountryCodeSelect
@@ -337,62 +337,61 @@ const TherapistSignup = () => {
                   name="countryCode"
                 />
                 <div className="relative flex-1">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                   <input
                     type="tel"
                     name="contact"
                     value={formData.contact}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                      errors.contact ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary ${
+                      errors.contact ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-dark-border'
                     }`}
                     placeholder="1234567890"
                     disabled={submitting}
                   />
                 </div>
               </div>
-              {errors.contact && <p className="mt-1 text-sm text-red-500">{errors.contact}</p>}
-              <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
+              {errors.contact && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.contact}</p>}
+              <p className="mt-1 text-xs text-primary-600 dark:text-primary-400 font-medium">
                 Use your WhatsApp number so we can send updates and reminders
               </p>
-              {errors.contact && <p className="mt-1 text-sm text-red-500">{errors.contact}</p>}
             </div>
 
             {/* Qualification */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Qualification <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
+                Qualification <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <div className="relative">
-                <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="text"
                   name="qualification"
                   value={formData.qualification}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                    errors.qualification ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary ${
+                    errors.qualification ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-dark-border'
                   }`}
                   placeholder="e.g., M.D. Psychiatry, Clinical Psychologist"
                   disabled={submitting}
                 />
               </div>
-              {errors.qualification && <p className="mt-1 text-sm text-red-500">{errors.qualification}</p>}
+              {errors.qualification && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.qualification}</p>}
             </div>
 
             {/* License ID */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
                 Practitioner License ID (Optional)
               </label>
               <div className="relative">
-                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="text"
                   name="license_id"
                   value={formData.license_id}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                   placeholder="e.g., PSY-12345, MED-67890"
                   disabled={submitting}
                 />
@@ -401,17 +400,17 @@ const TherapistSignup = () => {
 
             {/* Address */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
                 Address (Optional)
               </label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <textarea
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
                   rows="3"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                   placeholder="Enter full address"
                   disabled={submitting}
                 />
@@ -420,17 +419,17 @@ const TherapistSignup = () => {
 
             {/* Work Experience */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
                 Work Experience (Optional)
               </label>
               <div className="relative">
-                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <textarea
                   name="work_experience"
                   value={formData.work_experience}
                   onChange={handleChange}
                   rows="3"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                   placeholder="Enter work experience details"
                   disabled={submitting}
                 />
@@ -439,17 +438,17 @@ const TherapistSignup = () => {
 
             {/* Other Practice Details */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
                 Other Practice Details (Optional)
               </label>
               <div className="relative">
-                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <textarea
                   name="other_practice_details"
                   value={formData.other_practice_details}
                   onChange={handleChange}
                   rows="3"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                   placeholder="Enter other significant work related details"
                   disabled={submitting}
                 />
@@ -458,18 +457,18 @@ const TherapistSignup = () => {
 
             {/* Fee Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
                 Fee Range (Optional)
               </label>
               <div className="flex items-start gap-3">
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Min</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Min</label>
                   <input
                     type="number"
                     name="fee_min"
                     value={formData.fee_min}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                     placeholder="0.00"
                     min="0"
                     step="0.01"
@@ -477,13 +476,13 @@ const TherapistSignup = () => {
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Max</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Max</label>
                   <input
                     type="number"
                     name="fee_max"
                     value={formData.fee_max}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                     placeholder="0.00"
                     min="0"
                     step="0.01"
@@ -491,12 +490,12 @@ const TherapistSignup = () => {
                   />
                 </div>
                 <div className="w-32">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1">Currency</label>
                   <select
                     name="fee_currency"
                     value={formData.fee_currency}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary"
                     disabled={submitting}
                   >
                     <option value="USD">USD ($)</option>
@@ -510,47 +509,47 @@ const TherapistSignup = () => {
                   </select>
                 </div>
               </div>
-              <p className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
+              <p className="mt-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
                 <strong>Note:</strong> This data will be displayed to your clients as part of your profile in client's dashboard.
               </p>
             </div>
 
             {/* Language Preferences */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
                 Language Preferences (Optional)
               </label>
               <div className="relative">
-                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type="text"
                   name="language_preferences"
                   value={formData.language_preferences}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                   placeholder="e.g., English, Hindi, Tamil"
                   disabled={submitting}
                 />
               </div>
-              <p className="mt-2 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
+              <p className="mt-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
                 <strong>Note:</strong> This data will be displayed to your clients as part of your profile in client's dashboard.
               </p>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
+                Password <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary ${
+                    errors.password ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-dark-border'
                   }`}
                   placeholder="Enter password"
                   disabled={submitting}
@@ -558,29 +557,29 @@ const TherapistSignup = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary hover:text-gray-700 dark:hover:text-dark-text-secondary"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
-              <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
+              {errors.password && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.password}</p>}
+              <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">Must be at least 6 characters</p>
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Confirm Password <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
+                Confirm Password <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary ${
+                    errors.confirmPassword ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-dark-border'
                   }`}
                   placeholder="Confirm password"
                   disabled={submitting}
@@ -588,28 +587,28 @@ const TherapistSignup = () => {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary hover:text-gray-700 dark:hover:text-dark-text-secondary"
                 >
                   {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              {errors.confirmPassword && <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.confirmPassword}</p>}
             </div>
 
             {/* Submit Button */}
             <div className="pt-4">
               <button
                 type="submit"
-                className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-3 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-dark-primary-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={submitting}
               >
                 {submitting ? 'Creating Account...' : 'Create Account'}
               </button>
             </div>
 
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-gray-600 dark:text-dark-text-secondary">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/login" className="text-primary-600 dark:text-dark-primary-500 hover:text-primary-700 dark:hover:text-dark-primary-400 font-medium">
                 Login here
               </Link>
             </div>
