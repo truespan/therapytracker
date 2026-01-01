@@ -157,7 +157,7 @@ const getPartnerSlots = async (req, res) => {
     const { partnerId } = req.params;
     const { start_date, end_date } = req.query;
 
-    // Default to next 7 days if not specified
+    // Default to next 4 weeks (28 days) if not specified
     let startDate = start_date;
     let endDate = end_date;
 
@@ -166,8 +166,8 @@ const getPartnerSlots = async (req, res) => {
       const today = dateUtils.getCurrentUTC();
       startDate = dateUtils.formatDate(today);
 
-      const sevenDaysLater = dateUtils.addDays(today, 6);
-      endDate = dateUtils.formatDate(sevenDaysLater);
+      const fourWeeksLater = dateUtils.addDays(today, 27);
+      endDate = dateUtils.formatDate(fourWeeksLater);
     }
 
     const slots = await AvailabilitySlot.findByPartner(partnerId, startDate, endDate);
@@ -196,13 +196,13 @@ const getClientSlots = async (req, res) => {
     // TODO: Verify client has relationship with partner
     // For now, allow any authenticated user to view
 
-    // Get next 7 days using dateUtils
+    // Get next 4 weeks (28 days) using dateUtils
     const dateUtils = require('../utils/dateUtils');
     const today = dateUtils.getCurrentUTC();
     const startDate = dateUtils.formatDate(today);
 
-    const sevenDaysLater = dateUtils.addDays(today, 6);
-    const endDate = dateUtils.formatDate(sevenDaysLater);
+    const fourWeeksLater = dateUtils.addDays(today, 27);
+    const endDate = dateUtils.formatDate(fourWeeksLater);
 
     const slots = await AvailabilitySlot.findPublishedByPartner(partnerId, startDate, endDate);
 

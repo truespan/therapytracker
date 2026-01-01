@@ -4,12 +4,12 @@ import { format, addDays, startOfDay } from 'date-fns';
 import { formatTime } from '../../utils/dateUtils';
 
 const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'partner' }) => {
-  // Generate array of next 7 days starting from today
-  const getNext7Days = () => {
+  // Generate array of next 4 weeks (28 days) starting from today
+  const getNext4Weeks = () => {
     const days = [];
     const today = startOfDay(new Date());
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 28; i++) {
       days.push(addDays(today, i));
     }
     return days;
@@ -17,10 +17,10 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
 
   // Group slots by date
   const groupSlotsByDate = () => {
-    const days = getNext7Days();
+    const days = getNext4Weeks();
     const grouped = {};
 
-    // Create entries for the next 7 days
+    // Create entries for the next 4 weeks (28 days)
     days.forEach(day => {
       const dateKey = format(day, 'yyyy-MM-dd');
       grouped[dateKey] = {
@@ -41,7 +41,7 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
         dateKey = format(slot.slot_date, 'yyyy-MM-dd');
       }
 
-      // If the slot's date isn't in our 7-day window, create an entry for it
+      // If the slot's date isn't in our 4-week window, create an entry for it
       if (dateKey && !grouped[dateKey]) {
         const slotDate = new Date(dateKey + 'T00:00:00');
         grouped[dateKey] = {
@@ -97,13 +97,13 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
           </h3>
         </div>
         <div className="text-xs sm:text-sm text-gray-600 dark:text-dark-text-secondary">
-          Next 7 Days
+          Next 4 Weeks
         </div>
       </div>
 
-      {/* Weekly Grid - Horizontal scroll on mobile, grid on desktop */}
+      {/* Calendar Grid - Horizontal scroll for all screen sizes */}
       <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-thin scroll-smooth">
-        <div className="flex gap-4 sm:grid sm:grid-cols-7 sm:gap-2">
+        <div className="flex gap-4 sm:gap-2">
           {Object.keys(groupedSlots).sort().map(dateKey => {
             const dayData = groupedSlots[dateKey];
             // Use local date for "today" comparison

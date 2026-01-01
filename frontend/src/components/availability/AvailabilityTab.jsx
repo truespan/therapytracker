@@ -26,7 +26,7 @@ const AvailabilityTab = ({ partnerId }) => {
   }, [partnerId]);
 
   /**
-   * Load availability slots for next 7 days
+   * Load availability slots for next 4 weeks (28 days)
    * Use local timezone for date formatting
    */
   const loadSlots = async () => {
@@ -40,9 +40,9 @@ const AvailabilityTab = ({ partnerId }) => {
       const startDay = String(today.getDate()).padStart(2, '0');
       const startDate = `${startYear}-${startMonth}-${startDay}`;
 
-      // Calculate end date (6 days from today)
+      // Calculate end date (27 days from today = 28 days total including today)
       const endDateObj = new Date(today);
-      endDateObj.setDate(endDateObj.getDate() + 6);
+      endDateObj.setDate(endDateObj.getDate() + 27);
       const endYear = endDateObj.getFullYear();
       const endMonth = String(endDateObj.getMonth() + 1).padStart(2, '0');
       const endDay = String(endDateObj.getDate()).padStart(2, '0');
@@ -223,7 +223,7 @@ const AvailabilityTab = ({ partnerId }) => {
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">Manage Availability</h2>
         <p className="text-gray-600 dark:text-dark-text-secondary">
-          Create availability slots for the next 7 days. Clients can view and book published slots.
+          Create availability slots for the upcoming 4 weeks. Clients can view and book published slots.
         </p>
       </div>
 

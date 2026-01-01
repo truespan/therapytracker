@@ -3,12 +3,12 @@ import { Calendar } from 'lucide-react';
 
 const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
   /**
-   * Generate next 7 days including today
+   * Generate next 4 weeks (28 days) including today
    * Format date in local timezone to avoid timezone conversion issues
    */
-  const getNext7Days = () => {
+  const getNext4Weeks = () => {
     const days = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 28; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
 
@@ -74,7 +74,7 @@ const AvailabilitySlotForm = ({ formData, onChange, onSubmit, loading }) => {
               required
             >
               <option value="">Select Date</option>
-              {getNext7Days().map(day => (
+              {getNext4Weeks().map(day => (
                 <option key={day.value} value={day.value}>
                   {day.label}
                 </option>

@@ -742,7 +742,7 @@ const Home = () => {
                 Smart Scheduling and Availability
               </h3>
               <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
-                Streamline your practice with professionalism and clarity. Create your availability session slots for a week and publish for client view. This will allow clients to book sessions as per your schedule, which reduces manual back-and-forth communication.
+                Streamline your practice with professionalism and clarity. Create your availability session slots for the upcoming 4 weeks and publish for client view. This will allow clients to book sessions as per your schedule, which reduces manual back-and-forth communication.
               </p>
             </div>
 
