@@ -546,7 +546,7 @@ const Home = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center pt-24 overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center pt-8 overflow-hidden">
         {/* Modern Gradient Background with Pattern */}
 
           <div 
@@ -563,7 +563,7 @@ const Home = () => {
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/60"></div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
           {/* HIPAA Security Badge - Desktop */}
           <div className="absolute top-6 right-6 hidden lg:block">
             <div className="group relative inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20 hover:bg-white/20 transition-all duration-300 cursor-help">
