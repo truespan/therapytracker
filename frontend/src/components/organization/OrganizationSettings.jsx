@@ -12,6 +12,8 @@ import BankAccountForm from '../common/BankAccountForm';
 import PlanSelectionModal from '../common/PlanSelectionModal';
 import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 import SubscriptionStatusBadge from '../common/SubscriptionStatusBadge';
+import CancellationConfirmDialog from '../common/CancellationConfirmDialog';
+import { canCancelSubscription } from '../../utils/subscriptionHelper';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -32,6 +34,8 @@ const OrganizationSettings = () => {
   const [availablePlans, setAvailablePlans] = useState([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [savingSubscription, setSavingSubscription] = useState(false);
+  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   // Initialize form fields when user data is available
   useEffect(() => {
@@ -127,6 +131,33 @@ const OrganizationSettings = () => {
       setErrorMessage(err.response?.data?.error || 'Failed to load subscription plans');
     } finally {
       setLoadingPlans(false);
+    }
+  };
+
+  // Handle subscription cancellation
+  const handleCancelSubscription = async () => {
+    try {
+      setCancelling(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      await organizationAPI.cancelSubscription();
+
+      setSuccessMessage('Subscription cancelled successfully. You will retain access until the end of your billing period.');
+      setShowCancellationDialog(false);
+
+      // Refresh subscription data
+      await loadSubscriptionDetails();
+      await refreshUser();
+
+      setTimeout(() => setSuccessMessage(''), 8000);
+    } catch (err) {
+      console.error('Failed to cancel subscription:', err);
+      setErrorMessage(err.response?.data?.error || 'Failed to cancel subscription. Please try again.');
+      setShowCancellationDialog(false);
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -648,8 +679,8 @@ const OrganizationSettings = () => {
               </div>
             )}
 
-            {/* Select Plan Button */}
-            <div className="mt-4">
+            {/* Select Plan and Cancel Subscription Buttons */}
+            <div className="mt-4 flex items-center space-x-3">
               <button
                 onClick={() => {
                   loadOrganizationPlans();
@@ -668,6 +699,18 @@ const OrganizationSettings = () => {
                   }
                 </span>
               </button>
+              
+              {/* Cancel Subscription Button */}
+              {canCancelSubscription(subscriptionDetails) && (
+                <button
+                  onClick={() => setShowCancellationDialog(true)}
+                  disabled={savingSubscription || cancelling}
+                  className="btn btn-secondary flex items-center space-x-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
+                >
+                  <XCircle className="h-4 w-4" />
+                  <span>Cancel Subscription</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -721,6 +764,17 @@ const OrganizationSettings = () => {
           userType="organization"
           onClose={() => setShowPlanModal(false)}
           onSelectPlan={handleOrganizationPlanSelection}
+        />
+      )}
+
+      {/* Cancellation Confirmation Dialog */}
+      {showCancellationDialog && (
+        <CancellationConfirmDialog
+          subscriptionEndDate={subscriptionDetails?.subscription_end_date}
+          planName={subscriptionDetails?.plan_name}
+          onConfirm={handleCancelSubscription}
+          onCancel={() => setShowCancellationDialog(false)}
+          isProcessing={cancelling}
         />
       )}
     </div>
