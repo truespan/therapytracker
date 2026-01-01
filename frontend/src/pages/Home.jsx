@@ -546,7 +546,7 @@ const Home = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center pt-8 overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center pt-2 overflow-hidden">
         {/* Modern Gradient Background with Pattern */}
 
           <div 
@@ -563,9 +563,9 @@ const Home = () => {
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/60"></div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           {/* HIPAA Security Badge - Desktop */}
-          <div className="absolute top-6 right-6 hidden lg:block">
+          <div className="absolute -top-[75px] right-6 hidden lg:block">
             <div className="group relative inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20 hover:bg-white/20 transition-all duration-300 cursor-help">
               <Shield className="h-5 w-5 text-yellow-300" />
               <span className="text-sm font-medium text-white">HIPAA-Aligned Security & Privacy</span>
@@ -579,7 +579,7 @@ const Home = () => {
           </div>
 
           {/* HIPAA Security Badge - Mobile */}
-          <div className="lg:hidden absolute top-4 left-1/2 transform -translate-x-1/2 w-full px-4">
+          <div className="lg:hidden absolute -top-[75px] left-1/2 transform -translate-x-1/2 w-full px-4">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-2 border border-white/20">
               <Shield className="h-4 w-4 text-yellow-300 flex-shrink-0" />
               <span className="text-xs font-medium text-white">HIPAA-Aligned Security & Privacy</span>
