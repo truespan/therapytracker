@@ -273,7 +273,7 @@ const login = async (req, res) => {
         if (!userDetails.email_verified) {
           return res.status(403).json({
             error: 'Email not verified',
-            message: 'Please verify your email address before logging in. Check your inbox for the verification link.'
+            message: 'Check your email for the verification link, and log in after verifying.'
           });
         }
 
