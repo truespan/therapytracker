@@ -410,7 +410,7 @@ const Home = () => {
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             <span className="font-semibold text-sm sm:text-base">
-              TheraP Track phase 1 is live now. Sign up now to get early access features.
+              TheraP Track phase 1 is live now. Sign up now to get early access features. Feature Therapists to generate new leads, Manual Onboarding over WhatsApp/Call and Priority Support.
             </span>
           </div>
           <button
@@ -1105,7 +1105,7 @@ const Home = () => {
               <Mail className="h-8 w-8 text-primary-600 dark:text-dark-primary-500" />
               <Phone className="h-8 w-8 text-primary-600 dark:text-dark-primary-500" />
             </div>
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-dark-text-primary">Get in touch to begin your free trial</h2>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-dark-text-primary">Get in touch</h2>
             <p className="text-lg text-gray-600 dark:text-dark-text-secondary">
               We will get back to you within 24 hrs.
             </p>
