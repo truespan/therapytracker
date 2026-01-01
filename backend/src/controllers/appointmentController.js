@@ -218,6 +218,177 @@ const sendWhatsAppNotifications = async (appointmentId, userId, partnerId, title
   }
 };
 
+/**
+ * Send WhatsApp cancellation notification
+ * @param {number} appointmentId - Appointment ID
+ * @param {number} userId - User ID
+ * @param {number} partnerId - Partner ID
+ * @param {string} title - Appointment title
+ * @param {string} appointmentDate - Appointment date
+ * @param {string} endDate - End date
+ * @param {number} durationMinutes - Duration in minutes
+ * @param {string} timezone - Timezone
+ */
+const sendWhatsAppCancellationNotification = async (appointmentId, userId, partnerId, title, appointmentDate, endDate, durationMinutes, timezone) => {
+  try {
+    // Get user details for phone number
+    const user = await User.findById(userId);
+    const partner = await Partner.findById(partnerId);
+    
+    if (!user) {
+      console.log(`[WhatsApp] User not found for userId ${userId}`);
+      return;
+    }
+    
+    if (!partner) {
+      console.log(`[WhatsApp] Partner not found for partnerId ${partnerId}`);
+      return;
+    }
+
+    // Check if partner has WhatsApp access
+    const partnerHasWhatsApp = await checkPartnerWhatsAppAccess(partnerId);
+    if (!partnerHasWhatsApp) {
+      console.log(`[WhatsApp] WhatsApp not enabled for partner ${partnerId} (Free Plan or Starter Plan)`);
+      return;
+    }
+
+    // Check if organization has WhatsApp access (if partner belongs to an organization)
+    let organizationHasWhatsApp = true; // Default to true if no organization
+    if (partner.organization_id) {
+      organizationHasWhatsApp = await checkOrganizationWhatsAppAccess(partner.organization_id);
+      if (!organizationHasWhatsApp) {
+        console.log(`[WhatsApp] WhatsApp not enabled for organization ${partner.organization_id} (Free Plan or Starter Plan)`);
+        return;
+      }
+    }
+
+    // Send notification to client
+    if (user.contact) {
+      const clientAppointmentData = {
+        userName: user.name,
+        therapistName: partner.name,
+        appointmentDate: appointmentDate,
+        appointmentTime: new Date(appointmentDate).toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'Asia/Kolkata'
+        }),
+        timezone: timezone || 'IST',
+        appointmentType: title,
+        duration: durationMinutes || 60
+      };
+
+      const clientResult = await whatsappService.sendAppointmentCancellation(
+        user.contact,
+        clientAppointmentData,
+        appointmentId,
+        userId
+      );
+
+      if (clientResult.success) {
+        console.log(`[WhatsApp] Cancellation notification sent successfully for appointment ${appointmentId}`);
+      } else {
+        console.error(`[WhatsApp] Failed to send cancellation notification for appointment ${appointmentId}:`, clientResult.error);
+      }
+    } else {
+      console.log(`[WhatsApp] No phone number found for user ${userId}`);
+    }
+  } catch (error) {
+    console.error(`[WhatsApp] Error sending cancellation notification for appointment ${appointmentId}:`, error.message);
+  }
+};
+
+/**
+ * Send WhatsApp rescheduling notification
+ * @param {number} appointmentId - Appointment ID
+ * @param {number} userId - User ID
+ * @param {number} partnerId - Partner ID
+ * @param {string} title - Appointment title
+ * @param {string} newAppointmentDate - New appointment date
+ * @param {string} newEndDate - New end date
+ * @param {string} oldAppointmentDate - Old appointment date
+ * @param {string} oldEndDate - Old end date
+ * @param {number} durationMinutes - Duration in minutes
+ * @param {string} timezone - Timezone
+ */
+const sendWhatsAppReschedulingNotification = async (appointmentId, userId, partnerId, title, newAppointmentDate, newEndDate, oldAppointmentDate, oldEndDate, durationMinutes, timezone) => {
+  try {
+    // Get user details for phone number
+    const user = await User.findById(userId);
+    const partner = await Partner.findById(partnerId);
+    
+    if (!user) {
+      console.log(`[WhatsApp] User not found for userId ${userId}`);
+      return;
+    }
+    
+    if (!partner) {
+      console.log(`[WhatsApp] Partner not found for partnerId ${partnerId}`);
+      return;
+    }
+
+    // Check if partner has WhatsApp access
+    const partnerHasWhatsApp = await checkPartnerWhatsAppAccess(partnerId);
+    if (!partnerHasWhatsApp) {
+      console.log(`[WhatsApp] WhatsApp not enabled for partner ${partnerId} (Free Plan or Starter Plan)`);
+      return;
+    }
+
+    // Check if organization has WhatsApp access (if partner belongs to an organization)
+    let organizationHasWhatsApp = true; // Default to true if no organization
+    if (partner.organization_id) {
+      organizationHasWhatsApp = await checkOrganizationWhatsAppAccess(partner.organization_id);
+      if (!organizationHasWhatsApp) {
+        console.log(`[WhatsApp] WhatsApp not enabled for organization ${partner.organization_id} (Free Plan or Starter Plan)`);
+        return;
+      }
+    }
+
+    // Send notification to client
+    if (user.contact) {
+      const clientAppointmentData = {
+        userName: user.name,
+        therapistName: partner.name,
+        appointmentDate: newAppointmentDate,
+        appointmentTime: new Date(newAppointmentDate).toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'Asia/Kolkata'
+        }),
+        oldDate: oldAppointmentDate,
+        oldTime: oldAppointmentDate ? new Date(oldAppointmentDate).toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'Asia/Kolkata'
+        }) : null,
+        timezone: timezone || 'IST',
+        appointmentType: title,
+        duration: durationMinutes || 60
+      };
+
+      const clientResult = await whatsappService.sendAppointmentRescheduled(
+        user.contact,
+        clientAppointmentData,
+        appointmentId,
+        userId
+      );
+
+      if (clientResult.success) {
+        console.log(`[WhatsApp] Rescheduling notification sent successfully for appointment ${appointmentId}`);
+      } else {
+        console.error(`[WhatsApp] Failed to send rescheduling notification for appointment ${appointmentId}:`, clientResult.error);
+      }
+    } else {
+      console.log(`[WhatsApp] No phone number found for user ${userId}`);
+    }
+  } catch (error) {
+    console.error(`[WhatsApp] Error sending rescheduling notification for appointment ${appointmentId}:`, error.message);
+  }
+};
+
 const getAppointmentById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -268,6 +439,15 @@ const updateAppointment = async (req, res) => {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
+    // Track if appointment is being rescheduled (date/time changed)
+    const isRescheduling = (appointment_date && appointment_date !== appointment.appointment_date) ||
+                           (end_date && end_date !== appointment.end_date);
+    const oldDate = appointment.appointment_date;
+    const oldEndDate = appointment.end_date;
+
+    // Track if appointment is being cancelled
+    const isCancelling = status === 'cancelled' && appointment.status !== 'cancelled';
+
     // Check for conflicts if dates are being updated
     if (appointment_date && end_date && partner_id) {
       const hasConflict = await Appointment.checkConflict(
@@ -299,6 +479,40 @@ const updateAppointment = async (req, res) => {
       // Don't fail the appointment update if sync fails
     }
 
+    // Send WhatsApp notifications (non-blocking)
+    try {
+      if (isCancelling) {
+        // Send cancellation notification
+        await sendWhatsAppCancellationNotification(
+          id,
+          appointment.user_id,
+          appointment.partner_id,
+          title || appointment.title,
+          appointment.appointment_date,
+          appointment.end_date,
+          appointment.duration_minutes || 60,
+          appointment.timezone || 'UTC'
+        );
+      } else if (isRescheduling) {
+        // Send rescheduling notification
+        await sendWhatsAppReschedulingNotification(
+          id,
+          appointment.user_id,
+          appointment.partner_id,
+          title || appointment.title,
+          appointment_date || appointment.appointment_date,
+          end_date || appointment.end_date,
+          oldDate,
+          oldEndDate,
+          duration_minutes || appointment.duration_minutes || 60,
+          timezone || appointment.timezone || 'UTC'
+        );
+      }
+    } catch (error) {
+      console.error('WhatsApp notification failed:', error.message);
+      // Don't fail the appointment update if WhatsApp fails
+    }
+
     res.json({
       message: 'Appointment updated successfully',
       appointment: updatedAppointment
@@ -316,6 +530,25 @@ const deleteAppointment = async (req, res) => {
     const appointment = await Appointment.findById(id);
     if (!appointment) {
       return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    // Send cancellation notification before deleting (non-blocking)
+    try {
+      if (appointment.status !== 'cancelled') {
+        await sendWhatsAppCancellationNotification(
+          id,
+          appointment.user_id,
+          appointment.partner_id,
+          appointment.title,
+          appointment.appointment_date,
+          appointment.end_date,
+          appointment.duration_minutes || 60,
+          appointment.timezone || 'UTC'
+        );
+      }
+    } catch (error) {
+      console.error('WhatsApp cancellation notification failed:', error.message);
+      // Continue with deletion even if WhatsApp fails
     }
 
     // Delete from Google Calendar first (non-blocking)

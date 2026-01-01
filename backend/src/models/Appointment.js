@@ -234,6 +234,35 @@ class Appointment {
     const result = await db.query(query, [partnerId]);
     return result.rows;
   }
+
+  /**
+   * Find appointments that need reminders (4 hours before appointment time)
+   * Returns appointments scheduled between 4 hours and 4 hours 10 minutes from now
+   * This gives a 10-minute window to send reminders
+   * @returns {Promise<Array>} Array of appointments needing reminders
+   */
+  static async findAppointmentsNeedingReminders() {
+    const query = `
+      SELECT a.*, u.name as user_name, u.contact as user_contact, u.email as user_email,
+             p.name as partner_name, p.contact as partner_contact, p.id as partner_id
+      FROM appointments a
+      JOIN users u ON a.user_id = u.id
+      JOIN partners p ON a.partner_id = p.id
+      WHERE a.status = 'scheduled'
+        AND a.appointment_date > NOW()
+        AND a.appointment_date <= NOW() + INTERVAL '4 hours 10 minutes'
+        AND a.appointment_date >= NOW() + INTERVAL '4 hours'
+        AND NOT EXISTS (
+          SELECT 1 FROM whatsapp_notifications wn
+          WHERE wn.appointment_id = a.id
+            AND wn.message_type = 'appointment_reminder'
+            AND wn.status = 'sent'
+        )
+      ORDER BY a.appointment_date ASC
+    `;
+    const result = await db.query(query);
+    return result.rows;
+  }
 }
 
 module.exports = Appointment;

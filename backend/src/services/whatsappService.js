@@ -28,9 +28,10 @@ class WhatsAppService {
     
     // WhatsApp Template Names (set via environment variables)
     this.templateNames = {
-      appointmentConfirmation: null,
-      appointmentReminder: null,
-      appointmentCancellation: null
+      appointmentConfirmation: null, // theraptrack_appointment_is_booked
+      appointmentReminder: null, // theraptrack_appointment_reminder
+      appointmentCancellation: null, // theraptrack_appointment_cancelled
+      appointmentRescheduled: null // theraptrack_appointment_rescheduled
     };
     this.useTemplates = false; // Will be true if at least one template is configured
     
@@ -105,14 +106,22 @@ class WhatsAppService {
       this.isSandbox = process.env.VONAGE_SANDBOX === 'true';
       
       // Load template names from environment variables
-      this.templateNames.appointmentConfirmation = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CONFIRMATION?.trim() || null;
-      this.templateNames.appointmentReminder = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_REMINDER?.trim() || null;
-      this.templateNames.appointmentCancellation = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLATION?.trim() || null;
+      // Support both old and new template name formats
+      this.templateNames.appointmentConfirmation = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CONFIRMATION?.trim() || 
+                                                   process.env.WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED?.trim() || 
+                                                   'theraptrack_appointment_is_booked';
+      this.templateNames.appointmentReminder = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_REMINDER?.trim() || 
+                                               'theraptrack_appointment_reminder';
+      this.templateNames.appointmentCancellation = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLATION?.trim() || 
+                                                   'theraptrack_appointment_cancelled';
+      this.templateNames.appointmentRescheduled = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_RESCHEDULED?.trim() || 
+                                                  'theraptrack_appointment_rescheduled';
       
       // Check if templates are configured
       this.useTemplates = !!(this.templateNames.appointmentConfirmation || 
                             this.templateNames.appointmentReminder || 
-                            this.templateNames.appointmentCancellation);
+                            this.templateNames.appointmentCancellation ||
+                            this.templateNames.appointmentRescheduled);
       
       console.log('[WhatsApp Service] Enabled:', this.enabled);
       console.log('[WhatsApp Service] From Number:', this.fromNumber || 'NOT SET');
@@ -120,9 +129,10 @@ class WhatsAppService {
       console.log('[WhatsApp Service] Template Support:', this.useTemplates ? 'ENABLED' : 'DISABLED');
       if (this.useTemplates) {
         console.log('[WhatsApp Service] Templates configured:');
-        console.log('  - Appointment Confirmation:', this.templateNames.appointmentConfirmation || 'NOT SET');
+        console.log('  - Appointment Booked:', this.templateNames.appointmentConfirmation || 'NOT SET');
         console.log('  - Appointment Reminder:', this.templateNames.appointmentReminder || 'NOT SET');
         console.log('  - Appointment Cancellation:', this.templateNames.appointmentCancellation || 'NOT SET');
+        console.log('  - Appointment Rescheduled:', this.templateNames.appointmentRescheduled || 'NOT SET');
       }
       
       // Set base URL based on sandbox mode
@@ -251,6 +261,30 @@ class WhatsAppService {
               message.partnerId,
               message.userId,
               message.messageType
+            );
+            break;
+          case 'appointment_cancellation':
+            result = await this.sendAppointmentCancellationDirect(
+              message.toPhoneNumber,
+              message.appointmentData,
+              message.appointmentId,
+              message.userId
+            );
+            break;
+          case 'appointment_rescheduled':
+            result = await this.sendAppointmentRescheduledDirect(
+              message.toPhoneNumber,
+              message.appointmentData,
+              message.appointmentId,
+              message.userId
+            );
+            break;
+          case 'appointment_reminder':
+            result = await this.sendAppointmentReminderDirect(
+              message.toPhoneNumber,
+              message.appointmentData,
+              message.appointmentId,
+              message.userId
             );
             break;
         }
@@ -685,7 +719,7 @@ Please prepare for the session and contact the client if needed.
       let messageId;
       let usedTemplate = false;
       
-      // Try template first if configured
+      // Try template first if configured (use theraptrack_appointment_is_booked)
       if (this.useTemplates && this.templateNames.appointmentConfirmation) {
         try {
           console.log('[WhatsApp Service] Attempting to send appointment confirmation via template:', this.templateNames.appointmentConfirmation);
@@ -951,6 +985,714 @@ Please prepare for the session and contact the client if needed.
   }
 
   /**
+   * Send WhatsApp appointment cancellation notification (adds to queue for rate limiting)
+   * @param {string} toPhoneNumber - Recipient's phone number
+   * @param {Object} appointmentData - Appointment details
+   * @param {number} appointmentId - Appointment ID for logging
+   * @param {number} userId - User ID for logging
+   * @returns {Promise<Object>} Result with status and message ID
+   */
+  async sendAppointmentCancellation(toPhoneNumber, appointmentData, appointmentId, userId) {
+    // Check if service is enabled
+    if (!this.enabled) {
+      return {
+        success: false,
+        error: 'WhatsApp service is disabled'
+      };
+    }
+
+    // Validate phone number
+    const formattedPhone = this.formatPhoneNumber(toPhoneNumber);
+    if (!formattedPhone) {
+      const error = `Invalid phone number format: ${toPhoneNumber}`;
+      await this.logNotification(appointmentId, userId, toPhoneNumber, 'failed', null, error, 'appointment_cancellation');
+      return {
+        success: false,
+        error: error
+      };
+    }
+
+    // Add to queue instead of sending directly
+    this.addToQueue({
+      type: 'appointment_cancellation',
+      toPhoneNumber: formattedPhone,
+      appointmentData,
+      appointmentId,
+      userId
+    });
+
+    return {
+      success: true,
+      status: 'queued',
+      message: 'Message added to queue for rate-limited sending'
+    };
+  }
+
+  /**
+   * Send WhatsApp appointment cancellation directly (internal use)
+   * @param {string} toPhoneNumber - Recipient's phone number
+   * @param {Object} appointmentData - Appointment details
+   * @param {number} appointmentId - Appointment ID for logging
+   * @param {number} userId - User ID for logging
+   * @returns {Promise<Object>} Result with status and message ID
+   */
+  async sendAppointmentCancellationDirect(toPhoneNumber, appointmentData, appointmentId, userId) {
+    try {
+      const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
+      const toNumber = toPhoneNumber.replace('+', '');
+      
+      let messageId;
+      let usedTemplate = false;
+      
+      // Try template first if configured
+      if (this.useTemplates && this.templateNames.appointmentCancellation) {
+        try {
+          console.log('[WhatsApp Service] Attempting to send appointment cancellation via template:', this.templateNames.appointmentCancellation);
+          const templateParams = this.prepareAppointmentConfirmationTemplateParams(appointmentData);
+          const templateResult = await this.sendTemplateMessage(
+            toPhoneNumber,
+            this.templateNames.appointmentCancellation,
+            templateParams,
+            'en'
+          );
+          messageId = templateResult.messageId;
+          usedTemplate = true;
+          console.log('[WhatsApp Service] Template message sent successfully:', messageId);
+        } catch (templateError) {
+          console.warn('[WhatsApp Service] Template message failed, falling back to text:', templateError.message);
+          // Fall through to text message
+        }
+      }
+      
+      // Fallback to text message if template not used or failed
+      if (!usedTemplate) {
+        console.log('[WhatsApp Service] Sending appointment cancellation as text message');
+        const messageBody = this.createAppointmentCancellationMessage(appointmentData);
+        
+        if (this.vonageClient) {
+          const result = await this.vonageClient.messages.send({
+            message_type: 'text',
+            channel: 'whatsapp',
+            to: toNumber,
+            from: fromNumber,
+            text: messageBody
+          });
+          messageId = result.message_uuid;
+        } else {
+          const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+          
+          const response = await axios.post(this.baseUrl, {
+            from: fromNumber,
+            to: toNumber,
+            channel: 'whatsapp',
+            message_type: 'text',
+            text: messageBody
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Basic ${auth}`
+            }
+          });
+          messageId = response.data.message_uuid;
+        }
+      }
+
+      // Log successful notification
+      await this.logNotification(
+        appointmentId,
+        userId,
+        toPhoneNumber,
+        'sent',
+        messageId,
+        null,
+        'appointment_cancellation'
+      );
+
+      console.log(`[WhatsApp Service] Cancellation message sent successfully: ${messageId} (${usedTemplate ? 'Template' : 'Text'})`);
+
+      return {
+        success: true,
+        messageId: messageId,
+        status: 'sent'
+      };
+    } catch (error) {
+      const errorDetails = this.extractErrorDetails(error);
+      
+      console.error('[WhatsApp Service] Failed to send cancellation message:', error.message);
+      
+      await this.logNotification(
+        appointmentId,
+        userId,
+        toPhoneNumber,
+        'failed',
+        null,
+        typeof errorDetails.details === 'string' ? errorDetails.details : JSON.stringify(errorDetails.details),
+        'appointment_cancellation'
+      );
+
+      return {
+        success: false,
+        error: error.message,
+        details: errorDetails.details,
+        isSandboxError: this.isSandboxRegistrationError(error)
+      };
+    }
+  }
+
+  /**
+   * Send WhatsApp appointment rescheduling notification (adds to queue for rate limiting)
+   * @param {string} toPhoneNumber - Recipient's phone number
+   * @param {Object} appointmentData - Appointment details (should include oldDate and newDate)
+   * @param {number} appointmentId - Appointment ID for logging
+   * @param {number} userId - User ID for logging
+   * @returns {Promise<Object>} Result with status and message ID
+   */
+  async sendAppointmentRescheduled(toPhoneNumber, appointmentData, appointmentId, userId) {
+    // Check if service is enabled
+    if (!this.enabled) {
+      return {
+        success: false,
+        error: 'WhatsApp service is disabled'
+      };
+    }
+
+    // Validate phone number
+    const formattedPhone = this.formatPhoneNumber(toPhoneNumber);
+    if (!formattedPhone) {
+      const error = `Invalid phone number format: ${toPhoneNumber}`;
+      await this.logNotification(appointmentId, userId, toPhoneNumber, 'failed', null, error, 'appointment_rescheduled');
+      return {
+        success: false,
+        error: error
+      };
+    }
+
+    // Add to queue instead of sending directly
+    this.addToQueue({
+      type: 'appointment_rescheduled',
+      toPhoneNumber: formattedPhone,
+      appointmentData,
+      appointmentId,
+      userId
+    });
+
+    return {
+      success: true,
+      status: 'queued',
+      message: 'Message added to queue for rate-limited sending'
+    };
+  }
+
+  /**
+   * Send WhatsApp appointment rescheduling directly (internal use)
+   * @param {string} toPhoneNumber - Recipient's phone number
+   * @param {Object} appointmentData - Appointment details
+   * @param {number} appointmentId - Appointment ID for logging
+   * @param {number} userId - User ID for logging
+   * @returns {Promise<Object>} Result with status and message ID
+   */
+  async sendAppointmentRescheduledDirect(toPhoneNumber, appointmentData, appointmentId, userId) {
+    try {
+      const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
+      const toNumber = toPhoneNumber.replace('+', '');
+      
+      let messageId;
+      let usedTemplate = false;
+      
+      // Try template first if configured
+      if (this.useTemplates && this.templateNames.appointmentRescheduled) {
+        try {
+          console.log('[WhatsApp Service] Attempting to send appointment rescheduled via template:', this.templateNames.appointmentRescheduled);
+          const templateParams = this.prepareAppointmentConfirmationTemplateParams(appointmentData);
+          const templateResult = await this.sendTemplateMessage(
+            toPhoneNumber,
+            this.templateNames.appointmentRescheduled,
+            templateParams,
+            'en'
+          );
+          messageId = templateResult.messageId;
+          usedTemplate = true;
+          console.log('[WhatsApp Service] Template message sent successfully:', messageId);
+        } catch (templateError) {
+          console.warn('[WhatsApp Service] Template message failed, falling back to text:', templateError.message);
+          // Fall through to text message
+        }
+      }
+      
+      // Fallback to text message if template not used or failed
+      if (!usedTemplate) {
+        console.log('[WhatsApp Service] Sending appointment rescheduled as text message');
+        const messageBody = this.createAppointmentRescheduledMessage(appointmentData);
+        
+        if (this.vonageClient) {
+          const result = await this.vonageClient.messages.send({
+            message_type: 'text',
+            channel: 'whatsapp',
+            to: toNumber,
+            from: fromNumber,
+            text: messageBody
+          });
+          messageId = result.message_uuid;
+        } else {
+          const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+          
+          const response = await axios.post(this.baseUrl, {
+            from: fromNumber,
+            to: toNumber,
+            channel: 'whatsapp',
+            message_type: 'text',
+            text: messageBody
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Basic ${auth}`
+            }
+          });
+          messageId = response.data.message_uuid;
+        }
+      }
+
+      // Log successful notification
+      await this.logNotification(
+        appointmentId,
+        userId,
+        toPhoneNumber,
+        'sent',
+        messageId,
+        null,
+        'appointment_rescheduled'
+      );
+
+      console.log(`[WhatsApp Service] Rescheduled message sent successfully: ${messageId} (${usedTemplate ? 'Template' : 'Text'})`);
+
+      return {
+        success: true,
+        messageId: messageId,
+        status: 'sent'
+      };
+    } catch (error) {
+      const errorDetails = this.extractErrorDetails(error);
+      
+      console.error('[WhatsApp Service] Failed to send rescheduled message:', error.message);
+      
+      await this.logNotification(
+        appointmentId,
+        userId,
+        toPhoneNumber,
+        'failed',
+        null,
+        typeof errorDetails.details === 'string' ? errorDetails.details : JSON.stringify(errorDetails.details),
+        'appointment_rescheduled'
+      );
+
+      return {
+        success: false,
+        error: error.message,
+        details: errorDetails.details,
+        isSandboxError: this.isSandboxRegistrationError(error)
+      };
+    }
+  }
+
+  /**
+   * Send WhatsApp appointment reminder notification (adds to queue for rate limiting)
+   * @param {string} toPhoneNumber - Recipient's phone number
+   * @param {Object} appointmentData - Appointment details
+   * @param {number} appointmentId - Appointment ID for logging
+   * @param {number} userId - User ID for logging
+   * @returns {Promise<Object>} Result with status and message ID
+   */
+  async sendAppointmentReminder(toPhoneNumber, appointmentData, appointmentId, userId) {
+    // Check if service is enabled
+    if (!this.enabled) {
+      return {
+        success: false,
+        error: 'WhatsApp service is disabled'
+      };
+    }
+
+    // Validate phone number
+    const formattedPhone = this.formatPhoneNumber(toPhoneNumber);
+    if (!formattedPhone) {
+      const error = `Invalid phone number format: ${toPhoneNumber}`;
+      await this.logNotification(appointmentId, userId, toPhoneNumber, 'failed', null, error, 'appointment_reminder');
+      return {
+        success: false,
+        error: error
+      };
+    }
+
+    // Add to queue instead of sending directly
+    this.addToQueue({
+      type: 'appointment_reminder',
+      toPhoneNumber: formattedPhone,
+      appointmentData,
+      appointmentId,
+      userId
+    });
+
+    return {
+      success: true,
+      status: 'queued',
+      message: 'Message added to queue for rate-limited sending'
+    };
+  }
+
+  /**
+   * Send WhatsApp appointment reminder directly (internal use)
+   * @param {string} toPhoneNumber - Recipient's phone number
+   * @param {Object} appointmentData - Appointment details
+   * @param {number} appointmentId - Appointment ID for logging
+   * @param {number} userId - User ID for logging
+   * @returns {Promise<Object>} Result with status and message ID
+   */
+  async sendAppointmentReminderDirect(toPhoneNumber, appointmentData, appointmentId, userId) {
+    try {
+      const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
+      const toNumber = toPhoneNumber.replace('+', '');
+      
+      let messageId;
+      let usedTemplate = false;
+      
+      // Try template first if configured
+      if (this.useTemplates && this.templateNames.appointmentReminder) {
+        try {
+          console.log('[WhatsApp Service] Attempting to send appointment reminder via template:', this.templateNames.appointmentReminder);
+          const templateParams = this.prepareAppointmentConfirmationTemplateParams(appointmentData);
+          const templateResult = await this.sendTemplateMessage(
+            toPhoneNumber,
+            this.templateNames.appointmentReminder,
+            templateParams,
+            'en'
+          );
+          messageId = templateResult.messageId;
+          usedTemplate = true;
+          console.log('[WhatsApp Service] Template message sent successfully:', messageId);
+        } catch (templateError) {
+          console.warn('[WhatsApp Service] Template message failed, falling back to text:', templateError.message);
+          // Fall through to text message
+        }
+      }
+      
+      // Fallback to text message if template not used or failed
+      if (!usedTemplate) {
+        console.log('[WhatsApp Service] Sending appointment reminder as text message');
+        const messageBody = this.createAppointmentReminderMessage(appointmentData);
+        
+        if (this.vonageClient) {
+          const result = await this.vonageClient.messages.send({
+            message_type: 'text',
+            channel: 'whatsapp',
+            to: toNumber,
+            from: fromNumber,
+            text: messageBody
+          });
+          messageId = result.message_uuid;
+        } else {
+          const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+          
+          const response = await axios.post(this.baseUrl, {
+            from: fromNumber,
+            to: toNumber,
+            channel: 'whatsapp',
+            message_type: 'text',
+            text: messageBody
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Basic ${auth}`
+            }
+          });
+          messageId = response.data.message_uuid;
+        }
+      }
+
+      // Log successful notification
+      await this.logNotification(
+        appointmentId,
+        userId,
+        toPhoneNumber,
+        'sent',
+        messageId,
+        null,
+        'appointment_reminder'
+      );
+
+      console.log(`[WhatsApp Service] Reminder message sent successfully: ${messageId} (${usedTemplate ? 'Template' : 'Text'})`);
+
+      return {
+        success: true,
+        messageId: messageId,
+        status: 'sent'
+      };
+    } catch (error) {
+      const errorDetails = this.extractErrorDetails(error);
+      
+      console.error('[WhatsApp Service] Failed to send reminder message:', error.message);
+      
+      await this.logNotification(
+        appointmentId,
+        userId,
+        toPhoneNumber,
+        'failed',
+        null,
+        typeof errorDetails.details === 'string' ? errorDetails.details : JSON.stringify(errorDetails.details),
+        'appointment_reminder'
+      );
+
+      return {
+        success: false,
+        error: error.message,
+        details: errorDetails.details,
+        isSandboxError: this.isSandboxRegistrationError(error)
+      };
+    }
+  }
+
+  /**
+   * Create WhatsApp appointment cancellation message
+   * @param {Object} appointmentData - Appointment details
+   * @returns {string} Formatted message
+   */
+  createAppointmentCancellationMessage(appointmentData) {
+    const {
+      userName,
+      therapistName,
+      appointmentDate,
+      appointmentTime,
+      timezone,
+      appointmentType
+    } = appointmentData;
+
+    let displayTime = appointmentTime;
+    let displayDate = appointmentDate;
+    
+    if (!appointmentTime && appointmentDate) {
+      const dateObj = new Date(appointmentDate);
+      const localTimezone = timezone || 'Asia/Kolkata';
+      
+      displayTime = dateObj.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: localTimezone
+      });
+      
+      displayDate = dateObj.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: localTimezone
+      });
+    } else if (appointmentDate) {
+      const dateObj = new Date(appointmentDate);
+      const localTimezone = timezone || 'Asia/Kolkata';
+      
+      displayDate = dateObj.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: localTimezone
+      });
+    }
+
+    return `❌ *Appointment Cancelled* ❌
+
+Hi ${userName || 'there'},
+
+Your appointment has been cancelled:
+
+📅 *Date:* ${displayDate}
+🕐 *Time:* ${displayTime}
+👨‍⚕️ *Therapist:* ${therapistName || 'Your therapist'}
+🏥 *Type:* ${appointmentType || 'Therapy Session'}
+
+If you need to reschedule, please contact your therapist.
+
+— *TheraP Track Team*`;
+  }
+
+  /**
+   * Create WhatsApp appointment rescheduled message
+   * @param {Object} appointmentData - Appointment details
+   * @returns {string} Formatted message
+   */
+  createAppointmentRescheduledMessage(appointmentData) {
+    const {
+      userName,
+      therapistName,
+      appointmentDate,
+      appointmentTime,
+      oldDate,
+      oldTime,
+      timezone,
+      appointmentType,
+      duration
+    } = appointmentData;
+
+    let displayTime = appointmentTime;
+    let displayDate = appointmentDate;
+    let oldDisplayTime = oldTime;
+    let oldDisplayDate = oldDate;
+    
+    if (!appointmentTime && appointmentDate) {
+      const dateObj = new Date(appointmentDate);
+      const localTimezone = timezone || 'Asia/Kolkata';
+      
+      displayTime = dateObj.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: localTimezone
+      });
+      
+      displayDate = dateObj.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: localTimezone
+      });
+    } else if (appointmentDate) {
+      const dateObj = new Date(appointmentDate);
+      const localTimezone = timezone || 'Asia/Kolkata';
+      
+      displayDate = dateObj.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: localTimezone
+      });
+    }
+
+    if (oldDate) {
+      if (!oldTime) {
+        const oldDateObj = new Date(oldDate);
+        const localTimezone = timezone || 'Asia/Kolkata';
+        
+        oldDisplayTime = oldDateObj.toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: localTimezone
+        });
+        
+        oldDisplayDate = oldDateObj.toLocaleDateString('en-IN', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          timeZone: localTimezone
+        });
+      } else {
+        const oldDateObj = new Date(oldDate);
+        const localTimezone = timezone || 'Asia/Kolkata';
+        
+        oldDisplayDate = oldDateObj.toLocaleDateString('en-IN', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          timeZone: localTimezone
+        });
+      }
+    }
+
+    return `🔄 *Appointment Rescheduled* 🔄
+
+Hi ${userName || 'there'},
+
+Your appointment has been rescheduled:
+
+❌ *Previous:*
+📅 ${oldDisplayDate || 'N/A'}
+🕐 ${oldDisplayTime || 'N/A'}
+
+✅ *New:*
+📅 ${displayDate}
+🕐 ${displayTime}
+👨‍⚕️ *Therapist:* ${therapistName || 'Your therapist'}
+🏥 *Type:* ${appointmentType || 'Therapy Session'}
+⏱️ *Duration:* ${duration || 60} minutes
+
+Please update your calendar.
+
+— *TheraP Track Team*`;
+  }
+
+  /**
+   * Create WhatsApp appointment reminder message
+   * @param {Object} appointmentData - Appointment details
+   * @returns {string} Formatted message
+   */
+  createAppointmentReminderMessage(appointmentData) {
+    const {
+      userName,
+      therapistName,
+      appointmentDate,
+      appointmentTime,
+      timezone,
+      appointmentType,
+      duration
+    } = appointmentData;
+
+    let displayTime = appointmentTime;
+    let displayDate = appointmentDate;
+    
+    if (!appointmentTime && appointmentDate) {
+      const dateObj = new Date(appointmentDate);
+      const localTimezone = timezone || 'Asia/Kolkata';
+      
+      displayTime = dateObj.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: localTimezone
+      });
+      
+      displayDate = dateObj.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: localTimezone
+      });
+    } else if (appointmentDate) {
+      const dateObj = new Date(appointmentDate);
+      const localTimezone = timezone || 'Asia/Kolkata';
+      
+      displayDate = dateObj.toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: localTimezone
+      });
+    }
+
+    return `⏰ *Appointment Reminder* ⏰
+
+Hi ${userName || 'there'},
+
+This is a reminder about your upcoming appointment:
+
+📅 *Date:* ${displayDate}
+🕐 *Time:* ${displayTime} (${timezone || 'IST'})
+👨‍⚕️ *Therapist:* ${therapistName || 'Your therapist'}
+🏥 *Type:* ${appointmentType || 'Therapy Session'}
+⏱️ *Duration:* ${duration || 60} minutes
+
+Your appointment is in 4 hours. Please arrive 5 minutes early.
+
+See you soon! 😊
+
+— *TheraP Track Team*`;
+  }
+
+  /**
    * Log WhatsApp notification to database
    * @param {number} appointmentId - Appointment ID
    * @param {number} userId - User ID
@@ -958,8 +1700,9 @@ Please prepare for the session and contact the client if needed.
    * @param {string} status - Notification status
    * @param {string} messageId - Vonage message ID
    * @param {string} errorMessage - Error message if failed
+   * @param {string} messageType - Type of message (default: 'appointment_confirmation')
    */
-  async logNotification(appointmentId, userId, phoneNumber, status, messageId = null, errorMessage = null) {
+  async logNotification(appointmentId, userId, phoneNumber, status, messageId = null, errorMessage = null, messageType = 'appointment_confirmation') {
     try {
       const query = `
         INSERT INTO whatsapp_notifications
@@ -971,7 +1714,7 @@ Please prepare for the session and contact the client if needed.
         appointmentId,
         userId,
         phoneNumber,
-        'appointment_confirmation',
+        messageType,
         status,
         messageId,
         errorMessage,
