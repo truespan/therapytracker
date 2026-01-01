@@ -84,6 +84,11 @@ function AppRoutes() {
     setShowSubscriptionModal(false);
   };
 
+  const handleSubscriptionClose = () => {
+    // Allow closing the modal when no plans are available
+    setShowSubscriptionModal(false);
+  };
+
   // Memoize redirect path to prevent re-render loops
   // Use a stable key based on user ID and type to prevent unnecessary recalculations
   const userKey = user ? `${user.id}-${user.userType}` : null;
@@ -110,6 +115,7 @@ function AppRoutes() {
         isOpen={showSubscriptionModal}
         user={user}
         onSubscriptionComplete={handleSubscriptionComplete}
+        onClose={handleSubscriptionClose}
       />
       
       <Routes>

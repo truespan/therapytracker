@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Check, CreditCard, AlertCircle, Video, Calendar } from 'lucide-react';
+import { Check, CreditCard, AlertCircle, Video, Calendar, X } from 'lucide-react';
 import api from '../../services/api';
 
-const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete }) => {
+const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }) => {
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -110,21 +110,44 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete }) => {
 
   if (!isOpen) return null;
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const handleBackdropClick = (e) => {
+    // Only close if clicking the backdrop itself, not the modal content
+    if (e.target === e.currentTarget && subscriptionPlans.length === 0 && !loading) {
+      handleClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={handleBackdropClick}>
       {/* Backdrop with blur - dashboard partially visible */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
 
       {/* Modal Content */}
       <div className="relative bg-white dark:bg-dark-bg-secondary rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-6 py-6 text-white">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-6 py-6 text-white relative">
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-2">Select Your Subscription Plan</h2>
             <p className="text-primary-100 dark:text-primary-200">
               Choose the plan that best fits your practice needs
             </p>
           </div>
+          {/* Close button - only show when no plans are available */}
+          {!loading && !error && subscriptionPlans.length === 0 && onClose && (
+            <button
+              onClick={handleClose}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
+              aria-label="Close modal"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          )}
         </div>
 
         {/* Billing Period Selector */}
@@ -265,9 +288,17 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete }) => {
           {!loading && !error && subscriptionPlans.length === 0 && (
             <div className="text-center py-12">
               <AlertCircle className="h-12 w-12 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-dark-text-secondary">
+              <p className="text-gray-600 dark:text-dark-text-secondary mb-6">
                 No subscription plans available at the moment.
               </p>
+              {onClose && (
+                <button
+                  onClick={handleClose}
+                  className="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Close
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -285,29 +316,43 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete }) => {
             <p className="text-sm text-gray-600 dark:text-dark-text-tertiary">
               {selectedPlan
                 ? `Selected: ${selectedPlan.plan_name}`
+                : subscriptionPlans.length === 0
+                ? 'No plans available'
                 : 'Please select a plan to continue'}
             </p>
-            <button
-              onClick={handleSelectPlan}
-              disabled={!selectedPlan || processing}
-              className={`px-8 py-3 rounded-lg font-semibold text-white transition-all flex items-center space-x-2 ${
-                selectedPlan && !processing
-                  ? 'bg-primary-600 hover:bg-primary-700 dark:bg-dark-primary-600 dark:hover:bg-dark-primary-700 shadow-lg hover:shadow-xl'
-                  : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
-              }`}
-            >
-              {processing ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Processing...</span>
-                </>
-              ) : (
-                <>
-                  <CreditCard className="h-5 w-5" />
-                  <span>Select & Pay</span>
-                </>
+            <div className="flex items-center space-x-3">
+              {subscriptionPlans.length === 0 && onClose && (
+                <button
+                  onClick={handleClose}
+                  className="px-6 py-3 rounded-lg font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
               )}
-            </button>
+              {subscriptionPlans.length > 0 && (
+                <button
+                  onClick={handleSelectPlan}
+                  disabled={!selectedPlan || processing}
+                  className={`px-8 py-3 rounded-lg font-semibold text-white transition-all flex items-center space-x-2 ${
+                    selectedPlan && !processing
+                      ? 'bg-primary-600 hover:bg-primary-700 dark:bg-dark-primary-600 dark:hover:bg-dark-primary-700 shadow-lg hover:shadow-xl'
+                      : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  {processing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-5 w-5" />
+                      <span>Select & Pay</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
