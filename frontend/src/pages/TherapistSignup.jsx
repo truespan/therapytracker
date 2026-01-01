@@ -353,7 +353,7 @@ const TherapistSignup = () => {
               </div>
               {errors.contact && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{errors.contact}</p>}
               <p className="mt-1 text-xs text-primary-600 dark:text-primary-400 font-medium">
-                Use your WhatsApp number so we can send updates and reminders
+              Use your WhatsApp number so you can receive client appointments, updates and reminders.
               </p>
             </div>
 

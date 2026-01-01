@@ -383,7 +383,7 @@ const Signup = () => {
                   />
                 </div>
                 {errors.contact && <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.contact}</p>}
-                <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">Use your WhatsApp number so we can send updates and reminders</p>
+                <p className="text-gray-500 dark:text-dark-text-tertiary text-xs mt-1">Use your WhatsApp number so you can receive client appointments, updates and reminders.</p>
               </div>
 
               {/* Partner ID */}
