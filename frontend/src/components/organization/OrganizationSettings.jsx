@@ -3,13 +3,15 @@ import { useAuth } from '../../context/AuthContext';
 import { Building2, Mail, Phone, MapPin, FileText, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Save, CreditCard, Users, Calculator, Sun, Video, Edit, X } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
-import { googleCalendarAPI, organizationAPI, subscriptionPlanAPI } from '../../services/api';
+import { googleCalendarAPI, organizationAPI, subscriptionPlanAPI, razorpayAPI } from '../../services/api';
 import ChangePasswordSection from '../common/ChangePasswordSection';
-import NonControlledSubscriptionManagement from './NonControlledSubscriptionManagement';
 import DarkModeToggle from '../common/DarkModeToggle';
 import TherapistVideoSettings from './TherapistVideoSettings';
 import TherapistBlogPermissions from './TherapistBlogPermissions';
 import BankAccountForm from '../common/BankAccountForm';
+import PlanSelectionModal from '../common/PlanSelectionModal';
+import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
+import SubscriptionStatusBadge from '../common/SubscriptionStatusBadge';
 
 const OrganizationSettings = () => {
   const { user, refreshUser } = useAuth();
@@ -26,6 +28,10 @@ const OrganizationSettings = () => {
   
   // Subscription state
   const [subscriptionDetails, setSubscriptionDetails] = useState(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [availablePlans, setAvailablePlans] = useState([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [savingSubscription, setSavingSubscription] = useState(false);
 
   // Initialize form fields when user data is available
   useEffect(() => {
@@ -104,6 +110,126 @@ const OrganizationSettings = () => {
       setSubscriptionDetails(response.data.subscription);
     } catch (err) {
       console.error('Failed to load subscription details:', err);
+    }
+  };
+
+  // Load organization plans for selection (for theraptrack_controlled=true orgs)
+  const loadOrganizationPlans = async () => {
+    if (!user?.id || !subscriptionDetails?.theraptrack_controlled) return;
+    
+    try {
+      setLoadingPlans(true);
+      const therapistCount = user.number_of_therapists || 1;
+      const response = await subscriptionPlanAPI.getOrganizationPlansForSelection(therapistCount);
+      setAvailablePlans(response.data.plans || []);
+    } catch (err) {
+      console.error('Failed to load organization plans:', err);
+      setErrorMessage(err.response?.data?.error || 'Failed to load subscription plans');
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
+
+  // Handle organization subscription plan selection
+  const handleOrganizationPlanSelection = async (planId, billingPeriod) => {
+    if (!user?.id) return;
+
+    try {
+      setSavingSubscription(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      // Find the selected plan to check if it's Free Plan
+      const selectedPlan = availablePlans.find(plan => plan.id === planId);
+      const isFreePlan = selectedPlan && (
+        selectedPlan.plan_name.toLowerCase() === 'free plan' ||
+        (selectedPlan.organization_monthly_price === 0 && billingPeriod === 'monthly')
+      );
+
+      // If Free Plan, skip payment and directly update subscription
+      if (isFreePlan) {
+        await organizationAPI.updateSubscription(user.id, {
+          subscription_plan_id: planId,
+          subscription_billing_period: billingPeriod
+        });
+
+        setSuccessMessage('Free Plan activated successfully!');
+        setShowPlanModal(false);
+        await loadSubscriptionDetails();
+        await refreshUser();
+        setTimeout(() => setSuccessMessage(''), 5000);
+        return;
+      }
+
+      // For paid plans, proceed with Razorpay payment flow
+      // Step 1: Create Razorpay order
+      const orderResponse = await razorpayAPI.createOrder({
+        subscription_plan_id: planId,
+        billing_period: billingPeriod,
+        number_of_therapists: user.number_of_therapists || 1
+      });
+
+      const order = orderResponse.data.order;
+
+      // Step 2: Initialize Razorpay checkout
+      let paymentDetails;
+      try {
+        paymentDetails = await initializeRazorpayCheckout(order, {
+          name: 'Therapy Tracker',
+          description: `Organization Subscription Plan - ${billingPeriod}`,
+          prefill: {
+            name: user?.name || '',
+            email: user?.email || '',
+            contact: user?.contact || '',
+          },
+        });
+      } catch (paymentError) {
+        // User cancelled or payment failed
+        if (paymentError.message.includes('cancelled')) {
+          setSuccessMessage('Payment was cancelled. Please try again when ready.');
+        } else {
+          setErrorMessage(paymentError.message || 'Payment initialization failed. Please try again.');
+        }
+        setShowPlanModal(false);
+        setTimeout(() => {
+          setSuccessMessage('');
+          setErrorMessage('');
+        }, 5000);
+        return;
+      }
+
+      // Step 3: Verify payment with backend
+      try {
+        await razorpayAPI.verifyPayment({
+          razorpay_order_id: paymentDetails.razorpay_order_id,
+          razorpay_payment_id: paymentDetails.razorpay_payment_id,
+          razorpay_signature: paymentDetails.razorpay_signature,
+        });
+
+        // Payment verified successfully, update subscription
+        await organizationAPI.updateSubscription(user.id, {
+          subscription_plan_id: planId,
+          subscription_billing_period: billingPeriod
+        });
+
+        setSuccessMessage('Payment successful! Subscription plan updated successfully!');
+        setShowPlanModal(false);
+        await loadSubscriptionDetails();
+        await refreshUser();
+        setTimeout(() => setSuccessMessage(''), 5000);
+      } catch (verifyError) {
+        console.error('Payment verification failed:', verifyError);
+        setErrorMessage(verifyError.response?.data?.error || 'Payment verification failed. Please contact support if payment was deducted.');
+        setShowPlanModal(false);
+        setTimeout(() => setErrorMessage(''), 5000);
+      }
+    } catch (err) {
+      console.error('Failed to process payment:', err);
+      setErrorMessage(err.response?.data?.error || err.message || 'Failed to process payment. Please try again.');
+      setShowPlanModal(false);
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setSavingSubscription(false);
     }
   };
 
@@ -460,20 +586,25 @@ const OrganizationSettings = () => {
             </div>
           )}
 
-          {/* Subscription Section - Only show for non-TheraPTrack controlled organizations */}
-          {!subscriptionDetails?.theraptrack_controlled && (
+          {/* Subscription Management moved to dedicated tab in dashboard for non-TheraPTrack controlled organizations */}
+
+        {/* Organization Subscription Plan Selection - Only for TheraPTrack controlled organizations */}
+        {subscriptionDetails?.theraptrack_controlled && (
           <div className="border-t border-gray-200 dark:border-dark-border pt-6">
             <div className="flex items-center mb-4">
               <CreditCard className="h-6 w-6 mr-2 text-indigo-600 dark:text-dark-primary-500" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Subscription Management</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Organization Subscription Plan</h3>
             </div>
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
+              Select a subscription plan for your organization
+            </p>
 
             {/* Current Subscription Plan */}
             {subscriptionDetails?.plan_name && (
               <div className="bg-indigo-50 dark:bg-dark-primary-600/20 border border-indigo-200 dark:border-dark-primary-600 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Current Organization Plan: </span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Current Plan: </span>
                     <span className="text-lg font-bold text-indigo-600 dark:text-dark-primary-500">
                       {subscriptionDetails.plan_name}
                     </span>
@@ -504,15 +635,39 @@ const OrganizationSettings = () => {
                     End Date: {new Date(subscriptionDetails.subscription_end_date).toLocaleDateString()}
                   </div>
                 )}
+                <div className="mt-3">
+                  <SubscriptionStatusBadge subscription={subscriptionDetails} showEndDate={true} />
+                </div>
               </div>
             )}
 
-            {/* Therapist Subscription Management */}
-            <div className="mt-6">
-              <NonControlledSubscriptionManagement
-                organizationId={user.id}
-                organizationName={user.name}
-              />
+            {/* No subscription message */}
+            {!subscriptionDetails?.plan_name && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 dark:bg-dark-bg-secondary dark:border-dark-border">
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">You don't have a subscription plan yet. Select a plan below to get started.</p>
+              </div>
+            )}
+
+            {/* Select Plan Button */}
+            <div className="mt-4">
+              <button
+                onClick={() => {
+                  loadOrganizationPlans();
+                  setShowPlanModal(true);
+                }}
+                disabled={loadingPlans || savingSubscription}
+                className="btn btn-primary flex items-center space-x-2"
+              >
+                <CreditCard className="h-4 w-4" />
+                <span>
+                  {loadingPlans 
+                    ? 'Loading Plans...' 
+                    : subscriptionDetails?.plan_name 
+                      ? 'Change Plan' 
+                      : 'Select Plan'
+                  }
+                </span>
+              </button>
             </div>
           </div>
         )}
@@ -557,6 +712,17 @@ const OrganizationSettings = () => {
           </div>
         )}
       </div>
+
+      {/* Plan Selection Modal */}
+      {showPlanModal && (
+        <PlanSelectionModal
+          currentPlanId={subscriptionDetails?.subscription_plan_id}
+          plans={availablePlans}
+          userType="organization"
+          onClose={() => setShowPlanModal(false)}
+          onSelectPlan={handleOrganizationPlanSelection}
+        />
+      )}
     </div>
   </div>
 );

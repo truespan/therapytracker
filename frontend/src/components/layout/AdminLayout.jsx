@@ -14,6 +14,13 @@ const AdminLayout = ({ children }) => {
     navigate('/login');
   };
 
+  // Get username (email or mobile) used for authentication
+  const getUsername = () => {
+    if (!user) return '';
+    // user.email is the email or phone used as username (from auth_credentials)
+    return user.email || '';
+  };
+
   const navItems = [
     { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/admin/report-templates', label: 'Reports Template', icon: FileText },
@@ -58,8 +65,7 @@ const AdminLayout = ({ children }) => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2 text-white">
                   <User className="h-5 w-5" />
-                  <span className="font-medium">{user.name}</span>
-                  <span className="text-sm text-primary-100">(Admin)</span>
+                  <span className="font-medium">{getUsername()}</span>
                 </div>
                 <button
                   onClick={handleLogout}

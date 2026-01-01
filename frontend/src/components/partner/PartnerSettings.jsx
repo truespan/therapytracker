@@ -282,7 +282,17 @@ const PartnerSettings = () => {
   };
 
   // Load individual plans for selection
+  // Only available for TheraPTrack controlled organizations
   const loadIndividualPlans = async () => {
+    // Security check: Only allow loading plans for TheraPTrack controlled organizations
+    if (!organizationSubscription?.theraptrack_controlled) {
+      setSaveMessage({
+        type: 'error',
+        text: 'Subscription plan selection is not available for your organization. Your organization administrator will assign subscription plans to therapists.'
+      });
+      return;
+    }
+
     try {
       setLoadingPlans(true);
       const response = await subscriptionPlanAPI.getIndividualPlansForSelection();
@@ -336,6 +346,19 @@ const PartnerSettings = () => {
     try {
       setSaving(true);
       setSaveMessage({ type: '', text: '' });
+
+      // Security check: Only allow plan selection for TheraPTrack controlled organizations
+      // This is a frontend guard - backend also enforces this check
+      if (!organizationSubscription?.theraptrack_controlled) {
+        setSaveMessage({
+          type: 'error',
+          text: 'Subscription plan selection is not available for your organization. Your organization administrator will assign subscription plans to therapists.'
+        });
+        setShowPlanModal(false);
+        setSaving(false);
+        setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
+        return;
+      }
 
       // Find the selected plan to check if it's Free Plan
       const selectedPlan = availablePlans.find(plan => plan.id === planId);
@@ -1017,12 +1040,12 @@ const PartnerSettings = () => {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Subscription Details</h3>
             </div>
 
-            {/* For TheraPTrack Controlled Organizations: Always show partner's individual subscription (Free Plan if not explicitly assigned) */}
+            {/* For TheraPTrack Controlled Organizations: Show partner's individual subscription if exists */}
             {organizationSubscription.theraptrack_controlled && partnerSubscription && partnerSubscription.plan_name && (
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4 dark:bg-indigo-900/20 dark:border-indigo-800">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Assigned Plan: </span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Your Plan: </span>
                     <span className="text-lg font-bold text-indigo-600 dark:text-dark-primary-500">
                       {partnerSubscription.plan_name}
                     </span>
@@ -1068,46 +1091,59 @@ const PartnerSettings = () => {
               </div>
             )}
 
-            {/* Select Plan / Upgrade Button for TheraPTrack Controlled Organizations */}
-            {organizationSubscription.theraptrack_controlled && (() => {
-              const buttonText = getPlanSelectionButtonText(
-                partnerSubscription,
-                availablePlans,
-                partnerSubscription?.billing_period || 'monthly',
-                'individual'
-              );
-              
-              // If buttonText is null, don't show the button
-              if (!buttonText) return null;
-              
-              return (
-                <div className="mt-4 flex items-center space-x-3">
+            {/* No subscription message for TheraPTrack controlled orgs */}
+            {organizationSubscription.theraptrack_controlled && (!partnerSubscription || !partnerSubscription.plan_name) && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 dark:bg-dark-bg-secondary dark:border-dark-border">
+                <p className="text-sm text-gray-600 dark:text-dark-text-secondary">You don't have a subscription plan yet. Select a plan below to get started.</p>
+              </div>
+            )}
+
+            {/* Select Plan / Upgrade Button for TheraPTrack Controlled Organizations - Always show button */}
+            {organizationSubscription.theraptrack_controlled && (
+              <div className="mt-4 flex items-center space-x-3">
+                <button
+                  onClick={() => {
+                    // Double-check organization status before opening modal (defense in depth)
+                    if (!organizationSubscription?.theraptrack_controlled) {
+                      setSaveMessage({
+                        type: 'error',
+                        text: 'Subscription plan selection is not available for your organization.'
+                      });
+                      return;
+                    }
+                    loadIndividualPlans();
+                    setShowPlanModal(true);
+                  }}
+                  disabled={loadingPlans || saving || !organizationSubscription?.theraptrack_controlled}
+                  className="btn btn-primary flex items-center space-x-2"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>
+                    {loadingPlans 
+                      ? 'Loading Plans...' 
+                      : getPlanSelectionButtonText(
+                          partnerSubscription,
+                          availablePlans,
+                          partnerSubscription?.billing_period || 'monthly',
+                          'individual'
+                        ) || 'Select Plan'
+                    }
+                  </span>
+                </button>
+                
+                {/* Cancel Subscription Button */}
+                {canCancelSubscription(partnerSubscription) && (
                   <button
-                    onClick={() => {
-                      loadIndividualPlans();
-                      setShowPlanModal(true);
-                    }}
-                    disabled={loadingPlans || saving}
-                    className="btn btn-primary flex items-center space-x-2"
+                    onClick={() => setShowCancellationDialog(true)}
+                    disabled={saving || cancelling}
+                    className="btn btn-secondary flex items-center space-x-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
                   >
-                    <CreditCard className="h-4 w-4" />
-                    <span>{loadingPlans ? 'Loading Plans...' : buttonText}</span>
+                    <XCircle className="h-4 w-4" />
+                    <span>Cancel Subscription</span>
                   </button>
-                  
-                  {/* Cancel Subscription Button */}
-                  {canCancelSubscription(partnerSubscription) && (
-                    <button
-                      onClick={() => setShowCancellationDialog(true)}
-                      disabled={saving || cancelling}
-                      className="btn btn-secondary flex items-center space-x-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      <span>Cancel Subscription</span>
-                    </button>
-                  )}
-                </div>
-              );
-            })()}
+                )}
+              </div>
+            )}
 
             {/* For Non-TheraPTrack Controlled Organizations: Show partner's assigned subscription */}
             {!organizationSubscription.theraptrack_controlled && partnerSubscription?.plan_name && (

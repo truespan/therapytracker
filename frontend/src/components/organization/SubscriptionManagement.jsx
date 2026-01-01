@@ -1,25 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { organizationAPI, subscriptionPlanAPI } from '../../services/api';
+import { organizationAPI } from '../../services/api';
 import {
   CreditCard, Users, CheckCircle, XCircle, AlertCircle,
-  Save, Trash2, Edit, Plus, Calendar, Loader
+  Loader
 } from 'lucide-react';
-import PlanSelectionModal from '../common/PlanSelectionModal';
 
 const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => {
   const [partners, setPartners] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
-  // Plan selection modal state
-  const [showPlanModal, setShowPlanModal] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState(null);
-  const [organizationPlans, setOrganizationPlans] = useState([]);
-  const [organizationTherapistCount, setOrganizationTherapistCount] = useState(0);
-  const [loadingPlans, setLoadingPlans] = useState(false);
 
   useEffect(() => {
     if (isTheraPTrackControlled && organizationId) {
@@ -47,81 +38,8 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     }
   };
 
-  const openPlanModalForPartner = async (partner) => {
-    try {
-      setLoadingPlans(true);
-      setSelectedPartner(partner);
-
-      // Fetch organization details to get therapist count
-      const orgResponse = await organizationAPI.getById(organizationId);
-      const therapistCount = orgResponse.data.organization.number_of_therapists || partners.length;
-      setOrganizationTherapistCount(therapistCount);
-
-      // Fetch filtered organization plans based on therapist count
-      const plansResponse = await subscriptionPlanAPI.getOrganizationPlansForSelection(therapistCount);
-      setOrganizationPlans(plansResponse.data.plans || []);
-
-      setShowPlanModal(true);
-    } catch (err) {
-      console.error('Failed to load organization plans:', err);
-      setError(err.response?.data?.error || 'Failed to load subscription plans');
-    } finally {
-      setLoadingPlans(false);
-    }
-  };
-
-  const handleOrgPlanSelection = async (planId, billingPeriod) => {
-    if (!selectedPartner) return;
-
-    try {
-      setSaving(true);
-      setError('');
-      setSuccessMessage('');
-
-      await organizationAPI.assignPartnerSubscriptions(organizationId, {
-        partner_ids: [selectedPartner.id],
-        subscription_plan_id: planId,
-        billing_period: billingPeriod
-      });
-
-      setSuccessMessage(`Subscription plan assigned to ${selectedPartner.name} successfully`);
-      setShowPlanModal(false);
-      setSelectedPartner(null);
-      await loadData();
-      setTimeout(() => setSuccessMessage(''), 5000);
-    } catch (err) {
-      console.error('Failed to assign plan:', err);
-      setError(err.response?.data?.error || 'Failed to assign subscription plan');
-      setShowPlanModal(false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleRemoveSubscriptions = async (subscriptionIds) => {
-    if (!window.confirm('Are you sure you want to remove this subscription assignment?')) {
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError('');
-      setSuccessMessage('');
-
-      await organizationAPI.removePartnerSubscriptions(organizationId, {
-        subscription_ids: subscriptionIds
-      });
-
-      setSuccessMessage('Subscription removed successfully');
-      await loadData();
-      setTimeout(() => setSuccessMessage(''), 5000);
-    } catch (err) {
-      console.error('Failed to remove subscriptions:', err);
-      setError(err.response?.data?.error || 'Failed to remove subscriptions');
-    } finally {
-      setSaving(false);
-    }
-  };
+  // Note: For TheraPTrack controlled orgs, organizations can only view therapist subscriptions
+  // Therapists select their own plans, so no assignment/removal functions needed here
 
   const getBillingPeriodLabel = (period) => {
     const labels = {
@@ -155,7 +73,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
             Therapist Subscription Management
           </h2>
           <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
-            Assign subscription plans to therapists in your organization
+            View subscription plans assigned to therapists in your organization. Therapists select their own subscription plans.
           </p>
         </div>
       </div>
@@ -244,26 +162,8 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                         <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">No plan assigned</p>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <button
-                        onClick={() => openPlanModalForPartner(partner)}
-                        disabled={loadingPlans || saving}
-                        className="btn btn-primary flex items-center space-x-2"
-                      >
-                        <CreditCard className="h-4 w-4" />
-                        <span>{subscription ? 'Change Plan' : 'Select Plan'}</span>
-                      </button>
-                      {subscription && (
-                        <button
-                          onClick={() => handleRemoveSubscriptions([subscription.id])}
-                          disabled={saving}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Remove subscription"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
+                    {/* For TheraPTrack controlled orgs: View only, no change/remove buttons */}
+                    {/* Organizations can only view therapist plans, therapists select their own plans */}
                   </div>
                 </div>
               );
@@ -272,19 +172,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
         )}
       </div>
 
-      {/* Plan Selection Modal */}
-      {showPlanModal && selectedPartner && (
-        <PlanSelectionModal
-          currentPlanId={subscriptions.find(s => s.partner_id === selectedPartner.id)?.subscription_plan_id}
-          plans={organizationPlans}
-          userType="organization"
-          onClose={() => {
-            setShowPlanModal(false);
-            setSelectedPartner(null);
-          }}
-          onSelectPlan={handleOrgPlanSelection}
-        />
-      )}
+      {/* No plan selection modal for TheraPTrack controlled orgs - view only */}
     </div>
   );
 };

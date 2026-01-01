@@ -350,6 +350,10 @@ const assignToAllPartners = async (req, res) => {
 /**
  * Allow a partner to select their own subscription plan
  * Only allowed for partners in TheraPTrack controlled organizations
+ * 
+ * SECURITY: This endpoint enforces that only therapists in organizations with
+ * theraptrack_controlled = true can select their own subscription plans.
+ * Therapists in non-controlled organizations must have plans assigned by their organization.
  */
 const selectOwnSubscription = async (req, res) => {
   try {
@@ -369,16 +373,19 @@ const selectOwnSubscription = async (req, res) => {
       });
     }
 
-    // Get organization details
+    // Get organization details - fetch fresh data to ensure status is current
     const organization = await Organization.findById(partner.organization_id);
     if (!organization) {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    // Only allow for TheraPTrack controlled organizations
+    // CRITICAL SECURITY CHECK: Only allow for TheraPTrack controlled organizations
+    // This check must happen before any subscription operations
+    // Therapists in non-controlled orgs cannot select their own plans - org must assign them
     if (!organization.theraptrack_controlled) {
+      console.log(`[SECURITY] Blocked subscription selection attempt by partner ${partnerId} in non-controlled org ${organization.id}`);
       return res.status(403).json({ 
-        error: 'You can only select a plan if your organization is TheraPTrack controlled' 
+        error: 'Subscription plan selection is not available for your organization. Your organization administrator will assign subscription plans to therapists.' 
       });
     }
 

@@ -57,7 +57,7 @@ const PlanSelectionModal = ({
 
   // Get session limit text
   const getSessionLimit = (plan) => {
-    if (plan.max_sessions >= 999999) {
+    if (plan.max_sessions === null || plan.max_sessions === undefined || plan.max_sessions >= 999999) {
       return 'Unlimited Sessions';
     }
     if (plan.min_sessions === 0 && plan.max_sessions > 0) {
@@ -74,6 +74,24 @@ const PlanSelectionModal = ({
       yearly: 'Yearly'
     };
     return labels[period] || period;
+  };
+
+  // Get original price for plans with discounts (only for monthly billing)
+  const getOriginalPrice = (plan) => {
+    // Only show original price for monthly billing period
+    if (selectedBillingPeriod !== 'monthly') return null;
+    
+    const planName = plan.plan_name?.toLowerCase() || '';
+    
+    if (planName.includes('starter plan')) {
+      return 499;
+    } else if (planName.includes('pro plan premium')) {
+      return 1299;
+    } else if (planName.includes('pro plan') && !planName.includes('premium')) {
+      return 899;
+    }
+    
+    return null;
   };
 
   // Handle plan selection
@@ -167,17 +185,31 @@ const PlanSelectionModal = ({
 
                     {/* Pricing */}
                     <div className="mb-6">
-                      <div className="flex items-baseline">
-                        <span className="text-3xl font-bold text-gray-900">
-                          {formatPrice(price)}
-                        </span>
-                        <span className="ml-2 text-gray-600">
-                          /{selectedBillingPeriod === 'yearly' ? 'year' : selectedBillingPeriod === 'quarterly' ? 'quarter' : 'month'}
-                        </span>
-                      </div>
-                      {userType === 'organization' && (
-                        <p className="text-sm text-gray-500 mt-1">per therapist</p>
-                      )}
+                      {(() => {
+                        const originalPrice = getOriginalPrice(plan);
+                        return (
+                          <>
+                            {originalPrice && (
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="text-lg text-red-600 line-through font-medium">
+                                  {formatPrice(originalPrice)}/ month
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-baseline">
+                              <span className="text-3xl font-bold text-gray-900">
+                                {formatPrice(price)}
+                              </span>
+                              <span className="ml-2 text-gray-600">
+                                /{selectedBillingPeriod === 'yearly' ? 'year' : selectedBillingPeriod === 'quarterly' ? 'quarter' : 'month'}
+                              </span>
+                            </div>
+                            {userType === 'organization' && (
+                              <p className="text-sm text-gray-500 mt-1">per therapist</p>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
 
                     {/* Features */}

@@ -420,7 +420,9 @@ const SubscriptionPlansTab = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-center">
                       <div className="text-sm text-gray-900">
-                        {plan.min_sessions} - {plan.max_sessions >= 999999 ? '∞' : plan.max_sessions}
+                        {plan.max_sessions === null || plan.max_sessions === undefined || plan.max_sessions >= 999999 
+                          ? 'Unlimited Sessions' 
+                          : `${plan.min_sessions} - ${plan.max_sessions} sessions`}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-center">

@@ -36,6 +36,22 @@ const Navbar = () => {
     }
   };
 
+  // Get username (email or mobile) used for authentication
+  const getUsername = () => {
+    if (!user) return '';
+    // user.email is the email or phone used as username (from auth_credentials)
+    return user.email || '';
+  };
+
+  // Get role display text based on user type
+  const getRoleText = () => {
+    if (!user) return '';
+    if (user.userType === 'partner') {
+      return 'Therapist';
+    }
+    return null; // No role for user, organization
+  };
+
   return (
     <nav className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -60,8 +76,10 @@ const Navbar = () => {
               <div className="hidden md:flex items-center space-x-4">
                 <div className="flex items-center space-x-2 text-gray-700">
                   <User className="h-5 w-5" />
-                  <span className="font-medium">{user.name}</span>
-                  <span className="text-sm text-gray-500">({user.userType})</span>
+                  <span className="font-medium">{getUsername()}</span>
+                  {getRoleText() && (
+                    <span className="text-sm text-gray-500">({getRoleText()})</span>
+                  )}
                 </div>
                 <button
                   onClick={handleLogout}
@@ -91,8 +109,10 @@ const Navbar = () => {
               <div className="flex items-center space-x-2 text-gray-700">
                 <User className="h-5 w-5" />
                 <div>
-                  <p className="font-medium">{user.name}</p>
-                  <p className="text-sm text-gray-500">{user.userType}</p>
+                  <p className="font-medium">{getUsername()}</p>
+                  {getRoleText() && (
+                    <p className="text-sm text-gray-500">{getRoleText()}</p>
+                  )}
                 </div>
               </div>
             </div>

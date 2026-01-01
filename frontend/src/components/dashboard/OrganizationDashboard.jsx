@@ -18,6 +18,7 @@ import QuestionnaireList from '../questionnaires/QuestionnaireList';
 import QuestionnaireBuilder from '../questionnaires/QuestionnaireBuilder';
 import ShareQuestionnaireModal from '../questionnaires/ShareQuestionnaireModal';
 import SubscriptionManagement from '../organization/SubscriptionManagement';
+import NonControlledSubscriptionManagement from '../organization/NonControlledSubscriptionManagement';
 import EarningsTab from '../earnings/EarningsTab';
 import SupportDashboard from '../support/SupportDashboard';
 import DarkModeToggle from '../common/DarkModeToggle';
@@ -528,19 +529,17 @@ const OrganizationDashboard = () => {
             <Users className="inline h-5 w-5 mr-2" />
             Therapists Management
           </button>
-          {user.theraptrack_controlled && (
-            <button
-              onClick={() => setActiveView('subscriptions')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
-                activeView === 'subscriptions'
-                  ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
-              }`}
-            >
-              <CreditCard className="inline h-5 w-5 mr-2" />
-              Subscription Management
-            </button>
-          )}
+          <button
+            onClick={() => setActiveView('subscriptions')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
+              activeView === 'subscriptions'
+                ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
+            }`}
+          >
+            <CreditCard className="inline h-5 w-5 mr-2" />
+            Subscription Management
+          </button>
           <button
             onClick={() => setActiveView('questionnaires')}
             className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
@@ -1050,10 +1049,17 @@ const OrganizationDashboard = () => {
         </div>
       )}
 
-      {activeView === 'subscriptions' && (
+      {activeView === 'subscriptions' && user.theraptrack_controlled && (
         <SubscriptionManagement 
           organizationId={user.id} 
           isTheraPTrackControlled={user.theraptrack_controlled}
+        />
+      )}
+
+      {activeView === 'subscriptions' && !user.theraptrack_controlled && (
+        <NonControlledSubscriptionManagement
+          organizationId={user.id}
+          organizationName={user.name}
         />
       )}
 

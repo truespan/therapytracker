@@ -43,6 +43,21 @@ const TherapistSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Get original price for plans with discounts
+  const getOriginalPrice = (plan) => {
+    const planName = plan.plan_name?.toLowerCase() || '';
+    
+    if (planName.includes('starter plan')) {
+      return 499;
+    } else if (planName.includes('pro plan premium')) {
+      return 1299;
+    } else if (planName.includes('pro plan') && !planName.includes('premium')) {
+      return 899;
+    }
+    
+    return null;
+  };
+
   // Verify token on mount and fetch subscription plans
   useEffect(() => {
     const verifyToken = async () => {
@@ -582,11 +597,17 @@ const TherapistSignup = () => {
                   disabled={submitting || loadingPlans}
                 >
                   <option value="">-- Select a plan --</option>
-                  {subscriptionPlans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.plan_name} - ₹{plan.individual_monthly_price}/month ({plan.min_sessions}-{plan.max_sessions} sessions, {plan.has_video ? 'Video enabled' : 'No video'})
-                    </option>
-                  ))}
+                  {subscriptionPlans.map((plan) => {
+                    const originalPrice = getOriginalPrice(plan);
+                    const priceText = originalPrice 
+                      ? `₹${originalPrice}/ month → ₹${plan.individual_monthly_price}`
+                      : `₹${plan.individual_monthly_price}`;
+                    return (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.plan_name} - {priceText}/month ({plan.max_sessions === null || plan.max_sessions === undefined || plan.max_sessions >= 999999 ? 'Unlimited' : `${plan.min_sessions}-${plan.max_sessions}`} sessions, {plan.has_video ? 'Video enabled' : 'No video'})
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               {errors.subscription_plan_id && <p className="mt-1 text-sm text-red-500">{errors.subscription_plan_id}</p>}
