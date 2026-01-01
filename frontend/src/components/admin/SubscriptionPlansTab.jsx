@@ -621,7 +621,7 @@ const SubscriptionPlansTab = () => {
                     { key: 'has_custom_branding', label: 'Custom Branding' },
                     { key: 'has_advanced_analytics', label: 'Advanced Analytics' },
                     { key: 'has_priority_support', label: 'Priority Support' },
-                    { key: 'has_email_support', label: 'Email Support' }
+                    { key: 'has_email_support', label: 'Chat and Email Support' }
                   ].map((feature) => (
                     <div key={feature.key} className="flex items-center space-x-2">
                       {formData[feature.key] ? (
@@ -719,7 +719,7 @@ const SubscriptionPlansTab = () => {
                       onChange={handleChange}
                       className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Email Support</span>
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Chat and Email Support</span>
                   </label>
                 </div>
               </div>

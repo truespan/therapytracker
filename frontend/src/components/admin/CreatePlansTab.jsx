@@ -284,7 +284,7 @@ const CreatePlansTab = () => {
     if (formData.has_custom_branding) features.push('Custom Branding');
     if (formData.has_advanced_analytics) features.push('Advanced Analytics');
     if (formData.has_priority_support) features.push('Priority Support');
-    if (formData.has_email_support) features.push('Email Support');
+    if (formData.has_email_support) features.push('Chat and Email Support');
     return features.length > 0 ? features : ['None'];
   };
 
@@ -524,7 +524,7 @@ const CreatePlansTab = () => {
                 onChange={handleChange}
                 className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Email Support</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Chat and Email Support</span>
             </label>
           </div>
         </div>

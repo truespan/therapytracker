@@ -55,6 +55,13 @@ const PlanSelectionModal = ({
     }).format(price);
   };
 
+  // Helper function to check boolean values (handles both boolean and string types)
+  const isFeatureEnabled = (value) => {
+    if (value === true || value === 'true') return true;
+    if (value === false || value === 'false') return false;
+    return !!value; // Convert to boolean for truthy/falsy checks
+  };
+
   // Get session limit text
   const getSessionLimit = (plan) => {
     if (plan.max_sessions === null || plan.max_sessions === undefined || plan.max_sessions >= 999999) {
@@ -108,7 +115,7 @@ const PlanSelectionModal = ({
         <div className="p-6 border-b border-gray-200 dark:border-dark-border flex items-center justify-between sticky top-0 bg-white dark:bg-dark-bg-tertiary z-10">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
-              <CreditCard className="h-6 w-6 mr-2 text-indigo-600" />
+              <CreditCard className="h-6 w-6 mr-2 text-indigo-600 dark:text-dark-primary-500" />
               {isBulkMode ? `Select Plan for All Therapists` : `Select Your Subscription Plan`}
             </h2>
             <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
@@ -119,25 +126,25 @@ const PlanSelectionModal = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-dark-bg-secondary rounded-lg transition-colors"
             aria-label="Close modal"
           >
-            <X className="h-6 w-6 text-gray-500" />
+            <X className="h-6 w-6 text-gray-500 dark:text-dark-text-tertiary" />
           </button>
         </div>
 
         {/* Billing Period Tabs */}
         {availablePeriods.length > 1 && (
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex space-x-2 bg-gray-100 rounded-lg p-1">
+          <div className="p-6 border-b border-gray-200 dark:border-dark-border">
+            <div className="flex space-x-2 bg-gray-100 dark:bg-dark-bg-secondary rounded-lg p-1">
               {availablePeriods.map((period) => (
                 <button
                   key={period}
                   onClick={() => setSelectedBillingPeriod(period)}
                   className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
                     selectedBillingPeriod === period
-                      ? 'bg-white text-indigo-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white dark:bg-dark-bg-primary text-indigo-600 dark:text-dark-primary-500 shadow-sm'
+                      : 'text-gray-600 dark:text-dark-text-secondary hover:text-gray-900 dark:hover:text-dark-text-primary'
                   }`}
                 >
                   {getBillingPeriodLabel(period)}
@@ -150,8 +157,8 @@ const PlanSelectionModal = ({
         {/* Plans Grid */}
         <div className="p-6">
           {!plans || plans.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <CreditCard className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
+              <CreditCard className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-tertiary" />
               <p>No plans available for your organization size</p>
             </div>
           ) : (
@@ -165,20 +172,20 @@ const PlanSelectionModal = ({
                     key={plan.id}
                     className={`relative border rounded-lg p-6 flex flex-col transition-all ${
                       isCurrentPlan
-                        ? 'border-indigo-500 ring-2 ring-indigo-500 shadow-lg'
-                        : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'
+                        ? 'border-indigo-500 dark:border-dark-primary-500 ring-2 ring-indigo-500 dark:ring-dark-primary-500 shadow-lg'
+                        : 'border-gray-200 dark:border-dark-border hover:border-indigo-300 dark:hover:border-dark-primary-500 hover:shadow-md'
                     }`}
                   >
                     {/* Current Plan Badge */}
                     {isCurrentPlan && (
-                      <div className="absolute top-0 right-0 bg-indigo-500 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-xs font-medium">
+                      <div className="absolute top-0 right-0 bg-indigo-500 dark:bg-dark-primary-500 text-white px-3 py-1 rounded-bl-lg rounded-tr-lg text-xs font-medium">
                         Current Plan
                       </div>
                     )}
 
                     {/* Plan Name */}
                     <div className="mb-4">
-                      <h3 className="text-lg font-bold text-gray-900 pr-8">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-dark-text-primary pr-8">
                         {plan.plan_name}
                       </h3>
                     </div>
@@ -191,21 +198,21 @@ const PlanSelectionModal = ({
                           <>
                             {originalPrice && (
                               <div className="flex items-center space-x-2 mb-1">
-                                <span className="text-lg text-red-600 line-through font-medium">
+                                <span className="text-lg text-red-600 dark:text-red-400 line-through font-medium">
                                   {formatPrice(originalPrice)}/ month
                                 </span>
                               </div>
                             )}
                             <div className="flex items-baseline">
-                              <span className="text-3xl font-bold text-gray-900">
+                              <span className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">
                                 {formatPrice(price)}
                               </span>
-                              <span className="ml-2 text-gray-600">
+                              <span className="ml-2 text-gray-600 dark:text-dark-text-secondary">
                                 /{selectedBillingPeriod === 'yearly' ? 'year' : selectedBillingPeriod === 'quarterly' ? 'quarter' : 'month'}
                               </span>
                             </div>
                             {userType === 'organization' && (
-                              <p className="text-sm text-gray-500 mt-1">per therapist</p>
+                              <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-1">per therapist</p>
                             )}
                           </>
                         );
@@ -214,25 +221,27 @@ const PlanSelectionModal = ({
 
                     {/* Features */}
                     <ul className="space-y-3 mb-6 flex-grow">
-                      {/* Session Limit */}
+                      {/* Session Limit - Always shown */}
                       <li className="flex items-start">
-                        <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700">{getSessionLimit(plan)}</span>
+                        <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700 dark:text-dark-text-secondary">{getSessionLimit(plan)}</span>
                       </li>
 
                       {/* Video Features */}
-                      {plan.has_video && plan.video_hours && (
+                      {plan.has_video && (
                         <>
-                          <li className="flex items-start">
-                            <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                            <span className="text-sm text-gray-700">
-                              {plan.video_hours} hrs video/month
-                            </span>
-                          </li>
+                          {plan.video_hours && (
+                            <li className="flex items-start">
+                              <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                              <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                                {plan.video_hours} hrs video/month
+                              </span>
+                            </li>
+                          )}
                           {plan.extra_video_rate && (
                             <li className="flex items-start">
-                              <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                              <span className="text-sm text-gray-700">
+                              <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                              <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
                                 ₹{plan.extra_video_rate}/extra min
                               </span>
                             </li>
@@ -240,33 +249,78 @@ const PlanSelectionModal = ({
                         </>
                       )}
 
-                      {/* Standard Features */}
-                      <li className="flex items-start">
-                        <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700">
-                          Advanced assessments & questionnaires
-                        </span>
-                      </li>
-
-                      {plan.max_sessions >= 999999 && (
+                      {/* WhatsApp Messaging */}
+                      {plan.has_whatsapp && (
                         <li className="flex items-start">
-                          <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-700">Report generation</span>
+                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                            WhatsApp messaging & notifications
+                          </span>
                         </li>
                       )}
 
-                      <li className="flex items-start">
-                        <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700">
-                          {plan.max_sessions < 999999 ? 'Email support' : 'Priority support'}
-                        </span>
-                      </li>
+                      {/* Advanced Assessments */}
+                      {plan.has_advanced_assessments && (
+                        <li className="flex items-start">
+                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                            Advanced assessments & questionnaires
+                          </span>
+                        </li>
+                      )}
+
+                      {/* Report Generation */}
+                      {plan.has_report_generation && (
+                        <li className="flex items-start">
+                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                            Report generation
+                          </span>
+                        </li>
+                      )}
+
+                      {/* Custom Branding */}
+                      {plan.has_custom_branding && (
+                        <li className="flex items-start">
+                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                            Custom branding
+                          </span>
+                        </li>
+                      )}
+
+                      {/* Advanced Analytics */}
+                      {plan.has_advanced_analytics && (
+                        <li className="flex items-start">
+                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                            Advanced analytics
+                          </span>
+                        </li>
+                      )}
+
+                      {/* Support Features */}
+                      {isFeatureEnabled(plan.has_priority_support) ? (
+                        <li className="flex items-start">
+                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                            Priority support
+                          </span>
+                        </li>
+                      ) : isFeatureEnabled(plan.has_email_support) ? (
+                        <li className="flex items-start">
+                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                            Chat and Email support
+                          </span>
+                        </li>
+                      ) : null}
 
                       {/* Therapist Range for Organization Plans */}
                       {plan.min_therapists && plan.max_therapists && (
                         <li className="flex items-start">
-                          <Check className="h-5 w-5 text-indigo-500 mr-2 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-indigo-700 font-medium">
+                          <Check className="h-5 w-5 text-indigo-500 dark:text-dark-primary-500 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-indigo-700 dark:text-dark-primary-400 font-medium">
                             For {plan.min_therapists}-{plan.max_therapists} therapists
                           </span>
                         </li>
@@ -279,10 +333,10 @@ const PlanSelectionModal = ({
                       disabled={isCurrentPlan || selectedPlanForAction === plan.id}
                       className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
                         isCurrentPlan
-                          ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                          ? 'bg-gray-100 dark:bg-dark-bg-secondary text-gray-600 dark:text-dark-text-tertiary cursor-not-allowed'
                           : selectedPlanForAction === plan.id
-                          ? 'bg-indigo-400 text-white cursor-wait'
-                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                          ? 'bg-indigo-400 dark:bg-dark-primary-600 text-white cursor-wait'
+                          : 'bg-indigo-600 dark:bg-dark-primary-500 text-white hover:bg-indigo-700 dark:hover:bg-dark-primary-600'
                       }`}
                     >
                       {isCurrentPlan
@@ -299,8 +353,8 @@ const PlanSelectionModal = ({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
-          <p className="text-sm text-gray-600 text-center">
+        <div className="p-6 border-t border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg-secondary">
+          <p className="text-sm text-gray-600 dark:text-dark-text-secondary text-center">
             All plans include basic appointment scheduling and simple case notes
           </p>
         </div>
