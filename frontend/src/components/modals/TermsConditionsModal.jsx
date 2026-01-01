@@ -89,13 +89,13 @@ const TermsConditionsModal = ({ isOpen, user, onAccept }) => {
               </p>
 
               <p className="text-gray-800 dark:text-dark-text-primary">
-                We implement technical and organizational safeguards intended to protect user data as per HIPAA guidelines; however, 
-                TheraP Track does not represent or warrant HIPAA certification.
+                While we make every reasonable effort to provide secure, reliable, and continuous service, 
+                the platform may be affected by unforeseen events, outages, or third-party failures.
               </p>
 
               <p className="text-gray-800 dark:text-dark-text-primary">
-                While we make every reasonable effort to provide secure, reliable, and continuous service, 
-                the platform may be affected by unforeseen events, outages, or third-party failures.
+                We implement technical and organizational safeguards intended to protect user data as per HIPAA guidelines; however, 
+                TheraP Track does not represent or warrant HIPAA certification.
               </p>
 
               <p className="text-gray-800 dark:text-dark-text-primary">

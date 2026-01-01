@@ -200,8 +200,8 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={handleBackdropClick}>
-      {/* Backdrop with blur - dashboard partially visible */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
+      {/* Backdrop - dashboard visible */}
+      <div className="absolute inset-0 bg-black/40"></div>
 
       {/* Modal Content */}
       <div className="relative bg-white dark:bg-dark-bg-secondary rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
