@@ -410,17 +410,17 @@ const Home = () => {
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             <span className="font-semibold text-sm sm:text-base">
-              🧪 Beta Access — TherapTrack is currently in beta. Complimentary access for therapists until 31 Dec 2025. Phase 1 launch on 01 Jan 2026.
+              TheraP Track phase 1 is live now. Sign up now to get early access features.
             </span>
           </div>
           <button
-            onClick={() => scrollToSection('lets-talk')}
+            onClick={() => setShowTherapistSignupModal(true)}
             className="px-4 py-2 rounded-lg font-semibold transition text-sm sm:text-base flex items-center gap-2"
             style={{ backgroundColor: '#007a6d', color: 'white' }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#006157'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007a6d'}
           >
-            Start Free Trial
+            Join Us
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
