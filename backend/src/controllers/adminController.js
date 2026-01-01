@@ -95,7 +95,22 @@ const createOrganization = async (req, res) => {
         password_hash: passwordHash
       }, client);
 
-      return newOrg;
+      // Assign Free Plan by default
+      const freePlanResult = await client.query(
+        `SELECT id FROM subscription_plans WHERE plan_name = 'Free Plan' AND is_active = TRUE LIMIT 1`
+      );
+      
+      if (freePlanResult.rows.length > 0) {
+        const freePlanId = freePlanResult.rows[0].id;
+        const updatedOrg = await Organization.update(newOrg.id, {
+          subscription_plan_id: freePlanId,
+          subscription_billing_period: 'monthly'
+        }, client);
+        return updatedOrg;
+      } else {
+        console.warn('Free Plan not found - organization created without subscription plan');
+        return newOrg;
+      }
     });
 
     console.log(`[ADMIN] Organization created: ${result.name} (ID: ${result.id})`);

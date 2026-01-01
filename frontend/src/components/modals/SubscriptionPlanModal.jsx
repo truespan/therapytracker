@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Check, CreditCard, AlertCircle, Video, Calendar, X } from 'lucide-react';
 import api from '../../services/api';
+import { razorpayAPI } from '../../services/api';
+import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 
 const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }) => {
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
@@ -88,22 +90,92 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
       setProcessing(true);
       setError('');
 
-      // Mock payment - In production, this would integrate with a payment gateway
-      const response = await api.post('/partner-subscriptions/select-plan', {
-        plan_id: selectedPlan.id,
+      // Get the price for the selected billing period
+      const price = getPriceForPeriod(selectedPlan, selectedBillingPeriod);
+      
+      // Check if this is a free plan (price is 0)
+      const isFreePlan = price === 0 || selectedPlan.plan_name.toLowerCase().includes('free');
+
+      if (isFreePlan) {
+        // For free plans, directly assign without payment
+        const response = await api.post('/partner-subscriptions/select-plan', {
+          plan_id: selectedPlan.id,
+          billing_period: selectedBillingPeriod
+        });
+
+        if (response.data.success) {
+          // Call the callback with updated user data
+          onSubscriptionComplete(response.data.user);
+        } else {
+          setError('Failed to activate subscription. Please try again.');
+        }
+        return;
+      }
+
+      // For paid plans, proceed with Razorpay payment flow
+      // Step 1: Create Razorpay order
+      const orderResponse = await razorpayAPI.createOrder({
+        subscription_plan_id: selectedPlan.id,
         billing_period: selectedBillingPeriod
       });
 
-      if (response.data.success) {
-        // Call the callback with updated user data
-        onSubscriptionComplete(response.data.user);
-      } else {
-        setError('Failed to activate subscription. Please try again.');
+      const order = orderResponse.data.order;
+
+      // Step 2: Initialize Razorpay checkout
+      let paymentDetails;
+      try {
+        paymentDetails = await initializeRazorpayCheckout(order, {
+          name: 'TheraP Track',
+          description: `Subscription Plan - ${selectedPlan.plan_name} (${selectedBillingPeriod})`,
+          prefill: {
+            name: user?.name || '',
+            email: user?.email || '',
+            contact: user?.contact || '',
+          },
+        });
+      } catch (paymentError) {
+        // User cancelled or payment failed
+        if (paymentError.message.includes('cancelled')) {
+          setError('Payment was cancelled. Please select a plan and try again when ready.');
+        } else {
+          setError(paymentError.message || 'Payment initialization failed. Please try again.');
+        }
+        setProcessing(false);
+        return;
+      }
+
+      // Step 3: Verify payment with backend
+      try {
+        await razorpayAPI.verifyPayment({
+          razorpay_order_id: paymentDetails.razorpay_order_id,
+          razorpay_payment_id: paymentDetails.razorpay_payment_id,
+          razorpay_signature: paymentDetails.razorpay_signature,
+        });
+
+        // Payment verified successfully - now assign the subscription
+        const response = await api.post('/partner-subscriptions/select-plan', {
+          plan_id: selectedPlan.id,
+          billing_period: selectedBillingPeriod
+        });
+
+        if (response.data.success) {
+          // Call the callback with updated user data
+          onSubscriptionComplete(response.data.user);
+        } else {
+          setError('Payment successful but subscription activation failed. Please contact support.');
+        }
+      } catch (verifyError) {
+        // Payment verification failed
+        console.error('Payment verification failed:', verifyError);
+        setError(
+          verifyError.response?.data?.error || 
+          'Payment verification failed. Please contact support if payment was deducted.'
+        );
+        setProcessing(false);
       }
     } catch (err) {
       console.error('Error selecting subscription:', err);
-      setError(err.response?.data?.error || 'Failed to activate subscription. Please try again.');
-    } finally {
+      setError(err.response?.data?.error || 'Failed to process subscription. Please try again.');
       setProcessing(false);
     }
   };
@@ -111,14 +183,17 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
   if (!isOpen) return null;
 
   const handleClose = () => {
-    if (onClose) {
+    // Only allow closing if there are no paid plans available
+    // This prevents users from bypassing payment
+    if (onClose && subscriptionPlans.length === 0 && !loading) {
       onClose();
     }
   };
 
   const handleBackdropClick = (e) => {
     // Only close if clicking the backdrop itself, not the modal content
-    if (e.target === e.currentTarget && subscriptionPlans.length === 0 && !loading) {
+    // AND only if there are no paid plans available (prevents bypassing payment)
+    if (e.target === e.currentTarget && subscriptionPlans.length === 0 && !loading && !processing) {
       handleClose();
     }
   };
@@ -138,8 +213,8 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
               Choose the plan that best fits your practice needs
             </p>
           </div>
-          {/* Close button - only show when no plans are available */}
-          {!loading && !error && subscriptionPlans.length === 0 && onClose && (
+          {/* Close button - only show when no paid plans are available (admin deactivated all plans) */}
+          {!loading && !error && subscriptionPlans.length === 0 && onClose && !processing && (
             <button
               onClick={handleClose}
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
@@ -321,12 +396,12 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                 : 'Please select a plan to continue'}
             </p>
             <div className="flex items-center space-x-3">
-              {subscriptionPlans.length === 0 && onClose && (
+              {subscriptionPlans.length === 0 && onClose && !processing && (
                 <button
                   onClick={handleClose}
                   className="px-6 py-3 rounded-lg font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
-                  Cancel
+                  Close
                 </button>
               )}
               {subscriptionPlans.length > 0 && (
