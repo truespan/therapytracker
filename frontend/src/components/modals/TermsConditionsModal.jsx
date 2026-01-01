@@ -89,8 +89,8 @@ const TermsConditionsModal = ({ isOpen, user, onAccept }) => {
               </p>
 
               <p className="text-gray-800 dark:text-dark-text-primary">
-                We implement technical and organizational safeguards intended to protect user data; however, 
-                <strong> TheraP Track does not represent or warrant HIPAA certification or compliance</strong>.
+                We implement technical and organizational safeguards intended to protect user data as per HIPAA guidelines; however, 
+                TheraP Track does not represent or warrant HIPAA certification.
               </p>
 
               <p className="text-gray-800 dark:text-dark-text-primary">
@@ -101,7 +101,7 @@ const TermsConditionsModal = ({ isOpen, user, onAccept }) => {
               <p className="text-gray-800 dark:text-dark-text-primary">
                 We will take all reasonable and industry-standard technical and organizational measures to 
                 safeguard data and to maintain secure and reliable service. However, you understand that 
-                <strong> no system is completely free from risk or interruption</strong>. Accordingly, the 
+                no system is completely free from risk or interruption. Accordingly, the 
                 organization will not be liable for service interruptions, data loss, or for any indirect, 
                 incidental, or consequential damages arising from the use or inability to use the platform, 
                 except to the extent required by applicable law.
