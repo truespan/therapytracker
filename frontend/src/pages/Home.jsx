@@ -11,6 +11,7 @@ import {
 import { Radar, RadarChart as RechartsRadar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { contactAPI } from '../services/api';
 import { getResponsiveCloudinaryUrls, BACKGROUND_IMAGES } from '../utils/cloudinary';
+import TherapistSignupModal from '../components/modals/TherapistSignupModal';
 
 const Home = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -20,6 +21,7 @@ const Home = () => {
   const [activeSection, setActiveSection] = useState('');
   const isScrollingRef = useRef(false);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [showTherapistSignupModal, setShowTherapistSignupModal] = useState(false);
   
   // Login form state
   const [loginFormData, setLoginFormData] = useState({
@@ -601,10 +603,10 @@ const Home = () => {
           
           <div className="flex justify-center flex-wrap gap-4">
             <button
-              onClick={() => scrollToSection('how-it-works')}
+              onClick={() => setShowTherapistSignupModal(true)}
               className="bg-primary-700 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-primary-600 transition border-2 border-white/20 shadow-lg hover:shadow-xl"
             >
-              Learn More
+              Join Us
             </button>
           </div>
         </div>
@@ -1272,6 +1274,12 @@ const Home = () => {
           <ArrowUp className="h-5 w-5 transition-transform duration-300 group-hover:-translate-y-1" />
         </button>
       )}
+
+      {/* Therapist Signup Modal */}
+      <TherapistSignupModal 
+        isOpen={showTherapistSignupModal} 
+        onClose={() => setShowTherapistSignupModal(false)} 
+      />
     </div>
   );
 };

@@ -83,6 +83,7 @@ export const authAPI = {
   resetPassword: (token, newPassword) => api.post('/auth/reset-password', { token, newPassword }),
   changePassword: (currentPassword, newPassword) => api.post('/auth/change-password', { currentPassword, newPassword }),
   verifyEmail: (token, type) => api.get('/auth/verify-email', { params: { token, type } }),
+  acceptTerms: () => api.post('/auth/accept-terms'),
 };
 
 // User APIs
@@ -169,6 +170,7 @@ export const adminAPI = {
   backfillOrderNotes: () => api.post('/admin/earnings/backfill-order-notes'),
   getAllPartners: () => api.get('/admin/partners'),
   updatePartner: (id, data) => api.put(`/admin/partners/${id}`, data),
+  setForNewTherapists: (id, value) => api.put(`/admin/organizations/${id}/for-new-therapists`, { value }),
   // Report Templates
   getAllTemplates: () => api.get('/admin/report-templates'),
   getTemplateCount: () => api.get('/admin/report-templates/count'),

@@ -288,6 +288,13 @@ const login = async (req, res) => {
             theraptrack_controlled: org.theraptrack_controlled ?? false,
             video_sessions_enabled: org.video_sessions_enabled ?? true
           };
+          
+          console.log(`[LOGIN] Partner ${userDetails.id} (${userDetails.email}) organization:`, {
+            org_id: org.id,
+            org_name: org.name,
+            theraptrack_controlled: org.theraptrack_controlled,
+            partner_terms_accepted: userDetails.terms_accepted
+          });
         }
         break;
       case 'organization':
@@ -698,6 +705,87 @@ const therapistSignup = async (req, res) => {
   }
 };
 
+const acceptTerms = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userType = req.user.userType;
+
+    console.log(`[ACCEPT TERMS] User ${userId} (${userType}) accepting terms`);
+
+    let updatedUser;
+
+    if (userType === 'partner') {
+      // Update partner terms acceptance
+      const result = await db.query(
+        `UPDATE partners 
+         SET terms_accepted = true, terms_accepted_at = CURRENT_TIMESTAMP 
+         WHERE id = $1 
+         RETURNING *`,
+        [userId]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Partner not found' });
+      }
+
+      updatedUser = result.rows[0];
+      
+      // Fetch full partner data with organization
+      const partnerData = await Partner.findById(userId);
+      updatedUser = partnerData;
+
+    } else if (userType === 'organization') {
+      // Update organization terms acceptance
+      const result = await db.query(
+        `UPDATE organizations 
+         SET terms_accepted = true, terms_accepted_at = CURRENT_TIMESTAMP 
+         WHERE id = $1 
+         RETURNING *`,
+        [userId]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Organization not found' });
+      }
+
+      updatedUser = result.rows[0];
+      
+      // Fetch full organization data
+      const orgData = await Organization.findById(userId);
+      updatedUser = orgData;
+
+    } else {
+      return res.status(400).json({ 
+        error: 'Terms acceptance is only required for partners and organizations' 
+      });
+    }
+
+    // Update user object in localStorage
+    const userObject = {
+      id: updatedUser.id,
+      userType: userType,
+      ...updatedUser
+    };
+
+    console.log(`[ACCEPT TERMS] Successfully updated terms for ${userType} ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Terms accepted successfully',
+      user: userObject
+    });
+
+  } catch (error) {
+    console.error('[ACCEPT TERMS] Error:', error);
+    console.error('[ACCEPT TERMS] Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to accept terms',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -706,6 +794,7 @@ module.exports = {
   resetPassword,
   changePassword,
   verifyEmail,
-  therapistSignup
+  therapistSignup,
+  acceptTerms
 };
 

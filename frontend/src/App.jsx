@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -27,6 +27,8 @@ import WhatsAppSettingsTab from './components/admin/WhatsAppSettingsTab';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import ChatWidget from './components/support/ChatWidget';
+import TermsConditionsModal from './components/modals/TermsConditionsModal';
+import SubscriptionPlanModal from './components/modals/SubscriptionPlanModal';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -48,7 +50,39 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, updateUser, needsTermsAcceptance, needsSubscription } = useAuth();
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
+  // Check if modals need to be shown
+  useEffect(() => {
+    if (user) {
+      const needsTerms = needsTermsAcceptance(user);
+      const needsSub = needsSubscription(user);
+      
+      setShowTermsModal(needsTerms);
+      setShowSubscriptionModal(!needsTerms && needsSub);
+    } else {
+      setShowTermsModal(false);
+      setShowSubscriptionModal(false);
+    }
+  }, [user, needsTermsAcceptance, needsSubscription]);
+
+  const handleTermsAccepted = (updatedUser) => {
+    // Update user in context
+    updateUser(updatedUser);
+    setShowTermsModal(false);
+    
+    // Check if subscription is needed after terms acceptance
+    const needsSub = needsSubscription(updatedUser);
+    setShowSubscriptionModal(needsSub);
+  };
+
+  const handleSubscriptionComplete = (updatedUser) => {
+    // Update user in context
+    updateUser(updatedUser);
+    setShowSubscriptionModal(false);
+  };
 
   // Memoize redirect path to prevent re-render loops
   // Use a stable key based on user ID and type to prevent unnecessary recalculations
@@ -63,6 +97,21 @@ function AppRoutes() {
     <>
       <InactivityLogout />
       <ChatWidget />
+      
+      {/* Terms & Conditions Modal */}
+      <TermsConditionsModal 
+        isOpen={showTermsModal}
+        user={user}
+        onAccept={handleTermsAccepted}
+      />
+      
+      {/* Subscription Plan Modal */}
+      <SubscriptionPlanModal 
+        isOpen={showSubscriptionModal}
+        user={user}
+        onSubscriptionComplete={handleSubscriptionComplete}
+      />
+      
       <Routes>
       {/* Public Routes */}
       <Route path="/" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <Home />} />

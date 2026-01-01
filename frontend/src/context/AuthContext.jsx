@@ -245,8 +245,72 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Check if user needs to accept terms
+  const needsTermsAcceptance = (user) => {
+    if (!user) return false;
+    
+    console.log('[needsTermsAcceptance] Checking user:', {
+      userType: user.userType,
+      terms_accepted: user.terms_accepted,
+      theraptrack_controlled: user.userType === 'partner' ? user.organization?.theraptrack_controlled : user.theraptrack_controlled
+    });
+    
+    // Partners in TheraPTrack-controlled orgs need to accept terms
+    if (user.userType === 'partner' && user.organization?.theraptrack_controlled === true) {
+      const needsAcceptance = !user.terms_accepted;
+      console.log('[needsTermsAcceptance] Partner needs acceptance:', needsAcceptance);
+      return needsAcceptance;
+    }
+    
+    // Organizations with theraptrack_controlled = false need to accept terms
+    if (user.userType === 'organization' && user.theraptrack_controlled === false) {
+      const needsAcceptance = !user.terms_accepted;
+      console.log('[needsTermsAcceptance] Organization needs acceptance:', needsAcceptance);
+      return needsAcceptance;
+    }
+    
+    console.log('[needsTermsAcceptance] No terms acceptance needed');
+    return false;
+  };
+
+  // Check if user needs to select subscription
+  const needsSubscription = (user) => {
+    if (!user) return false;
+    
+    // Only partners in TheraPTrack-controlled orgs need individual subscriptions
+    if (user.userType === 'partner' && user.organization?.theraptrack_controlled === true) {
+      // Check if they have accepted terms first
+      if (!user.terms_accepted) return false;
+      
+      // Check if they have an active subscription
+      if (!user.subscription_plan_id) return true;
+      
+      // Check if subscription has expired
+      if (user.subscription_end_date) {
+        const endDate = new Date(user.subscription_end_date);
+        const now = new Date();
+        return endDate < now;
+      }
+      
+      return true;
+    }
+    
+    return false;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, googleLogin, logout, updateUser, refreshUser, loading }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      signup, 
+      googleLogin, 
+      logout, 
+      updateUser, 
+      refreshUser, 
+      loading,
+      needsTermsAcceptance,
+      needsSubscription
+    }}>
       {children}
     </AuthContext.Provider>
   );

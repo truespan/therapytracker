@@ -1,0 +1,319 @@
+import React, { useState, useEffect } from 'react';
+import { Check, CreditCard, AlertCircle, Video, Calendar } from 'lucide-react';
+import api from '../../services/api';
+
+const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete }) => {
+  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedBillingPeriod, setSelectedBillingPeriod] = useState('monthly');
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchSubscriptionPlans();
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  const fetchSubscriptionPlans = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await api.get('/subscription-plans/individual');
+      if (response.data.success) {
+        // Filter out Free Plan and plans with ₹0 pricing - only show paid plans
+        const paidPlans = response.data.plans.filter(plan => {
+          // Exclude plans with "free" in the name
+          if (plan.plan_name.toLowerCase().includes('free')) {
+            return false;
+          }
+          
+          // Exclude plans where all pricing is ₹0
+          const hasNonZeroPrice = 
+            (plan.individual_monthly_price && plan.individual_monthly_price > 0) ||
+            (plan.individual_quarterly_price && plan.individual_quarterly_price > 0) ||
+            (plan.individual_yearly_price && plan.individual_yearly_price > 0);
+          
+          return hasNonZeroPrice;
+        });
+        setSubscriptionPlans(paidPlans);
+      } else {
+        setError('Failed to load subscription plans. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error fetching subscription plans:', err);
+      setError(err.response?.data?.error || 'Failed to load subscription plans. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPriceForPeriod = (plan, period) => {
+    switch (period) {
+      case 'yearly':
+        return plan.individual_yearly_price;
+      case 'quarterly':
+        return plan.individual_quarterly_price;
+      case 'monthly':
+      default:
+        return plan.individual_monthly_price;
+    }
+  };
+
+  const getPeriodLabel = (period) => {
+    switch (period) {
+      case 'yearly':
+        return 'year';
+      case 'quarterly':
+        return 'quarter';
+      case 'monthly':
+      default:
+        return 'month';
+    }
+  };
+
+  const handleSelectPlan = async () => {
+    if (!selectedPlan) {
+      setError('Please select a subscription plan');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      setError('');
+
+      // Mock payment - In production, this would integrate with a payment gateway
+      const response = await api.post('/partner-subscriptions/select-plan', {
+        plan_id: selectedPlan.id,
+        billing_period: selectedBillingPeriod
+      });
+
+      if (response.data.success) {
+        // Call the callback with updated user data
+        onSubscriptionComplete(response.data.user);
+      } else {
+        setError('Failed to activate subscription. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error selecting subscription:', err);
+      setError(err.response?.data?.error || 'Failed to activate subscription. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop with blur - dashboard partially visible */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md"></div>
+
+      {/* Modal Content */}
+      <div className="relative bg-white dark:bg-dark-bg-secondary rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-6 py-6 text-white">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-2">Select Your Subscription Plan</h2>
+            <p className="text-primary-100 dark:text-primary-200">
+              Choose the plan that best fits your practice needs
+            </p>
+          </div>
+        </div>
+
+        {/* Billing Period Selector */}
+        <div className="px-6 pt-6 pb-4 bg-gray-50 dark:bg-dark-bg-tertiary border-b border-gray-200 dark:border-dark-border">
+          <div className="flex justify-center space-x-2">
+            {['monthly', 'quarterly', 'yearly'].map((period) => (
+              <button
+                key={period}
+                onClick={() => setSelectedBillingPeriod(period)}
+                className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                  selectedBillingPeriod === period
+                    ? 'bg-primary-600 text-white shadow-lg'
+                    : 'bg-white dark:bg-dark-bg-secondary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-primary'
+                }`}
+              >
+                {period.charAt(0).toUpperCase() + period.slice(1)}
+                {period === 'yearly' && (
+                  <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
+                    Save 20%
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-dark-primary-500 mb-4"></div>
+              <p className="text-gray-600 dark:text-dark-text-secondary">Loading subscription plans...</p>
+            </div>
+          )}
+
+          {error && !loading && (
+            <div className="bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg p-4 mb-4">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 text-error-600 dark:text-error-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-error-700 dark:text-error-300 text-sm">{error}</p>
+                  <button
+                    onClick={fetchSubscriptionPlans}
+                    className="mt-2 text-sm text-error-700 dark:text-error-300 underline hover:no-underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && subscriptionPlans.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {subscriptionPlans
+                .filter(plan => {
+                  // Filter out plans with ₹0 for the selected billing period
+                  const price = getPriceForPeriod(plan, selectedBillingPeriod);
+                  return price > 0;
+                })
+                .map((plan) => {
+                const price = getPriceForPeriod(plan, selectedBillingPeriod);
+                const isSelected = selectedPlan?.id === plan.id;
+                const isFreePlan = plan.plan_name.toLowerCase().includes('free');
+
+                return (
+                  <div
+                    key={plan.id}
+                    onClick={() => setSelectedPlan(plan)}
+                    className={`relative rounded-xl border-2 p-6 cursor-pointer transition-all hover:shadow-lg ${
+                      isSelected
+                        ? 'border-primary-600 dark:border-dark-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-xl'
+                        : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-bg-tertiary hover:border-primary-300 dark:hover:border-dark-primary-700'
+                    }`}
+                  >
+                    {isSelected && (
+                      <div className="absolute -top-3 -right-3 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full p-2 shadow-lg">
+                        <Check className="h-5 w-5" />
+                      </div>
+                    )}
+
+                    <div className="text-center mb-4">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">
+                        {plan.plan_name}
+                      </h3>
+                      <div className="flex items-baseline justify-center">
+                        <span className="text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
+                          ₹{price}
+                        </span>
+                        <span className="text-gray-600 dark:text-dark-text-tertiary ml-2">
+                          / {getPeriodLabel(selectedBillingPeriod)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <ul className="space-y-3 mb-6">
+                      <li className="flex items-start space-x-2">
+                        <Calendar className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                          {plan.max_sessions === null || plan.max_sessions >= 999999
+                            ? 'Unlimited sessions'
+                            : `${plan.min_sessions}-${plan.max_sessions} sessions/month`}
+                        </span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <Video className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                          {plan.has_video ? 'Video sessions enabled' : 'No video sessions'}
+                        </span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <Check className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                          Client progress tracking
+                        </span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <Check className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                          Session reports & analytics
+                        </span>
+                      </li>
+                    </ul>
+
+                    {isFreePlan && (
+                      <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <p className="text-xs text-amber-800 dark:text-amber-200">
+                          Perfect for getting started with TheraP Track
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {!loading && !error && subscriptionPlans.length === 0 && (
+            <div className="text-center py-12">
+              <AlertCircle className="h-12 w-12 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-dark-text-secondary">
+                No subscription plans available at the moment.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-gray-200 dark:border-dark-border px-6 py-4 bg-gray-50 dark:bg-dark-bg-tertiary">
+          {error && (
+            <div className="mb-4 p-3 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-error-600 dark:text-error-400 flex-shrink-0" />
+              <span className="text-sm text-error-700 dark:text-error-300">{error}</span>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-gray-600 dark:text-dark-text-tertiary">
+              {selectedPlan
+                ? `Selected: ${selectedPlan.plan_name}`
+                : 'Please select a plan to continue'}
+            </p>
+            <button
+              onClick={handleSelectPlan}
+              disabled={!selectedPlan || processing}
+              className={`px-8 py-3 rounded-lg font-semibold text-white transition-all flex items-center space-x-2 ${
+                selectedPlan && !processing
+                  ? 'bg-primary-600 hover:bg-primary-700 dark:bg-dark-primary-600 dark:hover:bg-dark-primary-700 shadow-lg hover:shadow-xl'
+                  : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
+              }`}
+            >
+              {processing ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-5 w-5" />
+                  <span>Select & Pay</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SubscriptionPlanModal;
+

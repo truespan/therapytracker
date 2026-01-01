@@ -198,6 +198,40 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleToggleForNewTherapists = async (org) => {
+    const newValue = !org.for_new_therapists;
+    
+    if (newValue) {
+      // Warn user that this will unset the flag from other organizations
+      const currentOrg = organizations.find(o => o.for_new_therapists);
+      if (currentOrg && currentOrg.id !== org.id) {
+        if (!window.confirm(`Setting "${org.name}" as the default for new therapist signups will remove this designation from "${currentOrg.name}". Continue?`)) {
+          return;
+        }
+      } else {
+        if (!window.confirm(`Set "${org.name}" as the default organization for new therapist signups from the homepage?`)) {
+          return;
+        }
+      }
+    } else {
+      if (!window.confirm(`Remove "${org.name}" as the default for new therapist signups?`)) {
+        return;
+      }
+    }
+
+    try {
+      await adminAPI.setForNewTherapists(org.id, newValue);
+      alert(newValue 
+        ? `"${org.name}" is now the default for new therapist signups!` 
+        : `"${org.name}" removed as default for new therapist signups.`
+      );
+      loadDashboardData();
+    } catch (error) {
+      console.error('Error toggling for_new_therapists:', error);
+      alert(error.response?.data?.error || 'Failed to update organization');
+    }
+  };
+
   const handleViewMetrics = async (org) => {
     try {
       setSelectedOrg(org);
@@ -569,6 +603,9 @@ const AdminDashboard = () => {
                   TheraPTrack Controlled
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
+                  For New Therapists
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -576,7 +613,7 @@ const AdminDashboard = () => {
             <tbody className="bg-white dark:bg-dark-bg-tertiary divide-y divide-gray-200 dark:divide-dark-border">
               {filteredOrganizations.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-12 text-center">
+                  <td colSpan="10" className="px-6 py-12 text-center">
                     <Building2 className="h-12 w-12 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-3" />
                     <p className="text-gray-600 dark:text-dark-text-secondary">
                       {searchTerm ? 'No organizations found matching your search' : 'No organizations yet'}
@@ -640,6 +677,24 @@ const AdminDashboard = () => {
                           <XCircle className="h-3 w-3 mr-1" />
                           No
                         </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      {org.theraptrack_controlled ? (
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={org.for_new_therapists || false}
+                            onChange={() => handleToggleForNewTherapists(org)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                          {org.for_new_therapists && (
+                            <span className="ml-2 text-xs font-medium text-primary-600 dark:text-primary-400">Active</span>
+                          )}
+                        </label>
+                      ) : (
+                        <span className="text-xs text-gray-400 dark:text-dark-text-tertiary">N/A</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">

@@ -48,6 +48,7 @@ router.post('/auth/reset-password', authController.resetPassword);
 router.get('/auth/verify-email', authController.verifyEmail);
 router.post('/auth/change-password', authenticateToken, authController.changePassword);
 router.post('/auth/therapist-signup', authController.therapistSignup);
+router.post('/auth/accept-terms', authenticateToken, authController.acceptTerms);
 
 // ==================== GOOGLE CALENDAR ROUTES ====================
 router.get('/google-calendar/auth', authenticateToken, googleCalendarController.initiateOAuth);
@@ -106,6 +107,8 @@ router.post('/users/:userId/mental-status', authenticateToken, checkRole('partne
 // ==================== ORGANIZATION ROUTES ====================
 // Public route for signup - get all organizations
 router.get('/organizations', organizationController.getAllOrganizations);
+// Public route for getting TheraPTrack organization token
+router.get('/organizations/theraptrack-token', organizationController.getTherapTrackToken);
 // Public route for verifying therapist signup tokens
 router.get('/organizations/verify-signup-token/:token', organizationController.verifyTherapistSignupToken);
 router.get('/organizations/:id', authenticateToken, organizationController.getOrganizationById);
@@ -155,6 +158,7 @@ router.get('/subscription-plans/individual', subscriptionPlanController.getIndiv
 // Partner subscription selection (for partners to select their own plan)
 router.post('/partners/subscription/select', authenticateToken, checkRole('partner'), partnerSubscriptionController.selectOwnSubscription);
 router.post('/partners/subscription/cancel', authenticateToken, checkRole('partner'), partnerController.cancelSubscription);
+router.post('/partner-subscriptions/select-plan', authenticateToken, checkRole('partner'), partnerSubscriptionController.selectPlan);
 
 // Organization partner subscription management (available for all organizations)
 router.get('/organizations/:id/partner-subscriptions', authenticateToken, checkRole('organization'), partnerSubscriptionController.getOrganizationPartnerSubscriptions);
@@ -282,6 +286,7 @@ router.post('/admin/organizations/:id/deactivate', authenticateToken, checkRole(
 router.post('/admin/organizations/:id/activate', authenticateToken, checkRole('admin'), adminController.activateOrganization);
 router.delete('/admin/organizations/:id', authenticateToken, checkRole('admin'), adminController.deleteOrganization);
 router.get('/admin/organizations/:id/metrics', authenticateToken, checkRole('admin'), adminController.getOrganizationMetrics);
+router.put('/admin/organizations/:id/for-new-therapists', authenticateToken, checkRole('admin'), adminController.setForNewTherapists);
 router.get('/admin/dashboard/stats', authenticateToken, checkRole('admin'), adminController.getDashboardStats);
 router.post('/admin/earnings/check-and-create', authenticateToken, checkRole('admin'), adminController.checkAndCreateEarnings);
 router.post('/admin/earnings/backfill-order-notes', authenticateToken, checkRole('admin'), adminController.backfillOrderNotes);

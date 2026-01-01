@@ -1486,6 +1486,81 @@ const cancelOrganizationSubscription = async (req, res) => {
   }
 };
 
+// Get TheraPTrack Token - Public endpoint for therapist signup
+const getTherapTrackToken = async (req, res) => {
+  try {
+    let organizationId = null;
+
+    // First, try to find organization with for_new_therapists = true
+    const forNewTherapistsResult = await db.query(
+      `SELECT id FROM organizations 
+       WHERE for_new_therapists = true 
+       LIMIT 1`
+    );
+
+    if (forNewTherapistsResult.rows.length > 0) {
+      organizationId = forNewTherapistsResult.rows[0].id;
+      console.log(`[GET THERAPTRACK TOKEN] Using organization ${organizationId} (for_new_therapists = true)`);
+    } else {
+      // Fallback: Find any organization with theraptrack_controlled = true
+      const fallbackResult = await db.query(
+        `SELECT id FROM organizations 
+         WHERE theraptrack_controlled = true 
+         ORDER BY created_at DESC 
+         LIMIT 1`
+      );
+
+      if (fallbackResult.rows.length === 0) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'No TheraPTrack-controlled organization found. Please contact support.' 
+        });
+      }
+
+      organizationId = fallbackResult.rows[0].id;
+      console.log(`[GET THERAPTRACK TOKEN] Using fallback organization ${organizationId} (theraptrack_controlled = true)`);
+    }
+
+    // Check if there's already an active token for this organization
+    const existingTokenResult = await db.query(
+      `SELECT token FROM organization_signup_tokens
+       WHERE organization_id = $1 AND is_active = TRUE
+       LIMIT 1`,
+      [organizationId]
+    );
+
+    let token;
+    if (existingTokenResult.rows.length > 0) {
+      // Reuse existing active token
+      token = existingTokenResult.rows[0].token;
+      console.log(`[GET THERAPTRACK TOKEN] Reusing existing token for organization ${organizationId}`);
+    } else {
+      // Generate a new token
+      token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+      await db.query(
+        `INSERT INTO organization_signup_tokens (organization_id, token, expires_at, is_active)
+         VALUES ($1, $2, $3, TRUE)`,
+        [organizationId, token, expiresAt]
+      );
+      console.log(`[GET THERAPTRACK TOKEN] Created new token for organization ${organizationId}`);
+    }
+
+    res.json({ 
+      success: true,
+      token 
+    });
+  } catch (error) {
+    console.error('Get TheraPTrack token error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to generate signup token', 
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   getOrganizationById,
@@ -1512,6 +1587,7 @@ module.exports = {
   cancelOrganizationSubscription,
   getTherapistsBlogPermissions,
   grantBlogPermission,
-  revokeBlogPermission
+  revokeBlogPermission,
+  getTherapTrackToken
 };
 

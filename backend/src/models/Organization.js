@@ -505,6 +505,7 @@ class Organization {
           o.is_active,
           o.video_sessions_enabled,
           o.theraptrack_controlled,
+          o.for_new_therapists,
           o.number_of_therapists,
           o.deactivated_at,
           o.deactivated_by,
@@ -522,7 +523,7 @@ class Organization {
         LEFT JOIN video_sessions vs ON p.id = vs.partner_id
         GROUP BY o.id, o.name, o.email, o.contact, o.address, o.gst_no,
                  o.subscription_plan, o.is_active, o.video_sessions_enabled, o.theraptrack_controlled,
-                 o.number_of_therapists, o.deactivated_at, o.deactivated_by, o.created_at
+                 o.for_new_therapists, o.number_of_therapists, o.deactivated_at, o.deactivated_by, o.created_at
       )
       SELECT
         om.*,
@@ -724,6 +725,77 @@ class Organization {
     const dbClient = client || db;
     const result = await dbClient.query(query, [contactId, id]);
     return result.rows[0];
+  }
+
+  /**
+   * Set the for_new_therapists flag for an organization
+   * Only one organization can have this flag set to true at a time
+   * Only organizations with theraptrack_controlled = true can have this flag
+   * @param {number} organizationId - Organization ID
+   * @param {boolean} value - True to set, false to unset
+   * @returns {Object} Updated organization
+   */
+  static async setForNewTherapists(organizationId, value) {
+    try {
+      // First, verify the organization exists and has theraptrack_controlled = true
+      const org = await this.findById(organizationId);
+      
+      if (!org) {
+        throw new Error('Organization not found');
+      }
+
+      if (value === true && !org.theraptrack_controlled) {
+        throw new Error('Only TheraPTrack-controlled organizations can be set as "For New Therapists"');
+      }
+
+      // If setting to true, first unset all other organizations
+      if (value === true) {
+        await db.query(
+          'UPDATE organizations SET for_new_therapists = false WHERE for_new_therapists = true'
+        );
+      }
+
+      // Now update the target organization
+      const result = await db.query(
+        `UPDATE organizations 
+         SET for_new_therapists = $1 
+         WHERE id = $2 
+         RETURNING *`,
+        [value, organizationId]
+      );
+
+      if (result.rows.length === 0) {
+        throw new Error('Failed to update organization');
+      }
+
+      return this.decryptBankAccountFields(result.rows[0]);
+    } catch (error) {
+      console.error('Error setting for_new_therapists flag:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the organization designated for new therapist signups
+   * @returns {Object|null} Organization with for_new_therapists = true, or null
+   */
+  static async getForNewTherapists() {
+    try {
+      const result = await db.query(
+        `SELECT * FROM organizations 
+         WHERE for_new_therapists = true 
+         LIMIT 1`
+      );
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return this.decryptBankAccountFields(result.rows[0]);
+    } catch (error) {
+      console.error('Error getting for_new_therapists organization:', error);
+      throw error;
+    }
   }
 }
 

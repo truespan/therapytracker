@@ -901,6 +901,43 @@ const updatePartner = async (req, res) => {
   }
 };
 
+/**
+ * Set the for_new_therapists flag for an organization
+ */
+const setForNewTherapists = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { value } = req.body;
+
+    // Validate input
+    if (typeof value !== 'boolean') {
+      return res.status(400).json({
+        error: 'Value must be a boolean (true or false)'
+      });
+    }
+
+    console.log(`[ADMIN] Setting for_new_therapists=${value} for organization ${id}`);
+
+    // Use the Organization model method
+    const updatedOrganization = await Organization.setForNewTherapists(parseInt(id), value);
+
+    res.json({
+      success: true,
+      message: value 
+        ? 'Organization set as default for new therapist signups' 
+        : 'Organization removed as default for new therapist signups',
+      organization: updatedOrganization
+    });
+
+  } catch (error) {
+    console.error('Error setting for_new_therapists flag:', error);
+    res.status(500).json({
+      error: error.message || 'Failed to update organization',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   createOrganization,
@@ -913,6 +950,7 @@ module.exports = {
   checkAndCreateEarnings,
   backfillOrderNotes,
   getAllPartners,
-  updatePartner
+  updatePartner,
+  setForNewTherapists
 };
 

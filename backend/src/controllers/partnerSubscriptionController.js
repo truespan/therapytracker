@@ -445,13 +445,142 @@ const selectOwnSubscription = async (req, res) => {
   }
 };
 
+const selectPlan = async (req, res) => {
+  try {
+    const partnerId = req.user.id;
+    const { plan_id, billing_period } = req.body;
+
+    console.log(`[SELECT PLAN] Partner ${partnerId} selecting plan ${plan_id} with billing ${billing_period}`);
+
+    // Validate inputs
+    if (!plan_id || !billing_period) {
+      return res.status(400).json({
+        success: false,
+        error: 'Plan ID and billing period are required'
+      });
+    }
+
+    if (!['yearly', 'quarterly', 'monthly'].includes(billing_period)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid billing period. Must be yearly, quarterly, or monthly'
+      });
+    }
+
+    // Verify partner exists and get organization info
+    const partnerResult = await db.query(
+      `SELECT p.*, o.theraptrack_controlled 
+       FROM partners p
+       JOIN organizations o ON p.organization_id = o.id
+       WHERE p.id = $1`,
+      [partnerId]
+    );
+
+    if (partnerResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Partner not found'
+      });
+    }
+
+    const partner = partnerResult.rows[0];
+
+    // Only allow partners in TheraPTrack-controlled organizations to select their own plans
+    if (!partner.theraptrack_controlled) {
+      return res.status(403).json({
+        success: false,
+        error: 'Individual subscription selection is only available for TheraPTrack-controlled partners'
+      });
+    }
+
+    // Verify plan exists
+    const planResult = await db.query(
+      'SELECT * FROM subscription_plans WHERE id = $1 AND is_active = true',
+      [plan_id]
+    );
+
+    if (planResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Subscription plan not found or inactive'
+      });
+    }
+
+    const plan = planResult.rows[0];
+
+    // Calculate subscription dates
+    const startDate = new Date();
+    let endDate = new Date();
+
+    switch (billing_period) {
+      case 'yearly':
+        endDate.setFullYear(endDate.getFullYear() + 1);
+        break;
+      case 'quarterly':
+        endDate.setMonth(endDate.getMonth() + 3);
+        break;
+      case 'monthly':
+      default:
+        endDate.setMonth(endDate.getMonth() + 1);
+        break;
+    }
+
+    // Mock payment success - In production, integrate with payment gateway here
+    // Update partner with subscription details
+    const updateResult = await db.query(
+      `UPDATE partners 
+       SET subscription_plan_id = $1,
+           subscription_billing_period = $2,
+           subscription_start_date = $3,
+           subscription_end_date = $4
+       WHERE id = $5
+       RETURNING *`,
+      [plan_id, billing_period, startDate, endDate, partnerId]
+    );
+
+    const updatedPartner = updateResult.rows[0];
+
+    // Fetch full partner data with organization
+    const fullPartner = await Partner.findById(partnerId);
+
+    console.log(`[SELECT PLAN] Successfully assigned plan ${plan_id} to partner ${partnerId}`);
+
+    res.json({
+      success: true,
+      message: 'Subscription activated successfully',
+      user: {
+        id: fullPartner.id,
+        userType: 'partner',
+        ...fullPartner
+      },
+      subscription: {
+        plan_name: plan.plan_name,
+        billing_period,
+        start_date: startDate,
+        end_date: endDate,
+        max_sessions: plan.max_sessions,
+        has_video: plan.has_video
+      }
+    });
+
+  } catch (error) {
+    console.error('Select plan error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to activate subscription',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getOrganizationPartnerSubscriptions,
   assignSubscriptions,
   updateSubscription,
   removeSubscriptions,
   assignToAllPartners,
-  selectOwnSubscription
+  selectOwnSubscription,
+  selectPlan
 };
 
 
