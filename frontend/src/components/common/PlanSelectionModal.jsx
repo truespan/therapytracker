@@ -199,7 +199,7 @@ const PlanSelectionModal = ({
                             {originalPrice && (
                               <div className="flex items-center space-x-2 mb-1">
                                 <span className="text-lg text-red-600 dark:text-red-400 line-through font-medium">
-                                  {formatPrice(originalPrice)}/ month
+                                  ₹{originalPrice.toFixed(2)}/ month
                                 </span>
                               </div>
                             )}

@@ -80,6 +80,24 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
     }
   };
 
+  // Get original/cancelled price for plans (only for monthly billing)
+  const getOriginalPrice = (plan) => {
+    // Only show original price for monthly billing period
+    if (selectedBillingPeriod !== 'monthly') return null;
+    
+    const planName = plan.plan_name?.toLowerCase() || '';
+    
+    if (planName.includes('starter plan')) {
+      return 499;
+    } else if (planName.includes('pro plan premium')) {
+      return 1299;
+    } else if (planName.includes('pro plan') && !planName.includes('premium')) {
+      return 899;
+    }
+    
+    return null;
+  };
+
   const handleSelectPlan = async () => {
     if (!selectedPlan) {
       setError('Please select a subscription plan');
@@ -308,14 +326,28 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                       <h3 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">
                         {plan.plan_name}
                       </h3>
-                      <div className="flex items-baseline justify-center">
-                        <span className="text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
-                          ₹{price}
-                        </span>
-                        <span className="text-gray-600 dark:text-dark-text-secondary ml-2">
-                          / {getPeriodLabel(selectedBillingPeriod)}
-                        </span>
-                      </div>
+                      {(() => {
+                        const originalPrice = getOriginalPrice(plan);
+                        return (
+                          <>
+                            {originalPrice && (
+                              <div className="mb-1">
+                                <span className="text-lg text-red-600 dark:text-red-400 line-through font-medium">
+                                  ₹{originalPrice.toFixed(2)}/ month
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-baseline justify-center">
+                              <span className="text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
+                                ₹{price}
+                              </span>
+                              <span className="text-gray-600 dark:text-dark-text-secondary ml-2">
+                                / {getPeriodLabel(selectedBillingPeriod)}
+                              </span>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
 
                     <ul className="space-y-3 mb-6">
