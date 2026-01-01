@@ -14,7 +14,7 @@ import { getResponsiveCloudinaryUrls, BACKGROUND_IMAGES } from '../utils/cloudin
 import TherapistSignupModal from '../components/modals/TherapistSignupModal';
 
 const Home = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', whatsappNumber: '', message: '' });
   const [formStatus, setFormStatus] = useState({ type: null, message: '' });
   const [submitting, setSubmitting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -238,7 +238,7 @@ const Home = () => {
         type: 'success', 
         message: response.data.message || 'Thank you for contacting us! We will get back to you soon.' 
       });
-      setFormData({ name: '', email: '', message: '' });
+      setFormData({ name: '', email: '', whatsappNumber: '', message: '' });
     } catch (error) {
       setFormStatus({ 
         type: 'error', 
@@ -1150,6 +1150,20 @@ const Home = () => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-primary-500 dark:focus:border-dark-primary-500 bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
                   placeholder="your.email@example.com"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="whatsappNumber" className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                  WhatsApp Number
+                </label>
+                <input
+                  type="tel"
+                  id="whatsappNumber"
+                  value={formData.whatsappNumber}
+                  onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-primary-500 dark:focus:border-dark-primary-500 bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary dark:placeholder-dark-text-tertiary"
+                  placeholder="+1234567890"
                 />
               </div>
               
