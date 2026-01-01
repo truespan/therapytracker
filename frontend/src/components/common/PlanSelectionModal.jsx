@@ -227,79 +227,71 @@ const PlanSelectionModal = ({
                         <span className="text-sm text-gray-700 dark:text-dark-text-secondary">{getSessionLimit(plan)}</span>
                       </li>
 
-                      {/* Video Features */}
-                      {plan.has_video && (
-                        <>
-                          {plan.video_hours && (
-                            <li className="flex items-start">
-                              <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
-                              <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
-                                {plan.video_hours} hrs video/month
-                              </span>
-                            </li>
-                          )}
-                          {plan.extra_video_rate && (
-                            <li className="flex items-start">
-                              <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
-                              <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
-                                ₹{plan.extra_video_rate}/extra min
-                              </span>
-                            </li>
-                          )}
-                        </>
-                      )}
+                      {/* Video Features - Always show */}
+                      <li className="flex items-start">
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_video ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                        <span className={`text-sm ${plan.has_video ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                          Video sessions {plan.has_video ? 'enabled' : 'not included'}
+                        </span>
+                      </li>
 
-                      {/* WhatsApp Messaging */}
-                      {plan.has_whatsapp && (
-                        <li className="flex items-start">
-                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
-                            WhatsApp messaging & notifications
-                          </span>
-                        </li>
-                      )}
+                      {/* WhatsApp Messaging - Always show */}
+                      <li className="flex items-start">
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_whatsapp ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                        <span className={`text-sm ${plan.has_whatsapp ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                          WhatsApp messaging {plan.has_whatsapp ? '' : 'not included'}
+                        </span>
+                      </li>
 
-                      {/* Advanced Assessments */}
-                      {plan.has_advanced_assessments && (
-                        <li className="flex items-start">
-                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
-                            Advanced assessments & questionnaires
-                          </span>
-                        </li>
-                      )}
+                      {/* Advanced Assessments - Always show */}
+                      <li className="flex items-start">
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_advanced_assessments ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                        <span className={`text-sm ${plan.has_advanced_assessments ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                          Advanced assessments {plan.has_advanced_assessments ? '' : 'not included'}
+                        </span>
+                      </li>
 
-                      {/* Report Generation */}
-                      {plan.has_report_generation && (
-                        <li className="flex items-start">
-                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
-                            Report generation
-                          </span>
-                        </li>
-                      )}
+                      {/* Report Generation - Always show */}
+                      <li className="flex items-start">
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_report_generation ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                        <span className={`text-sm ${plan.has_report_generation ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                          Report generation {plan.has_report_generation ? '' : 'not included'}
+                        </span>
+                      </li>
 
-                      {/* Custom Branding */}
-                      {plan.has_custom_branding && (
-                        <li className="flex items-start">
-                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
-                            Custom branding
-                          </span>
-                        </li>
-                      )}
+                      {/* Custom Branding - Always show */}
+                      <li className="flex items-start">
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_custom_branding ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                        <span className={`text-sm ${plan.has_custom_branding ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                          Custom branding {plan.has_custom_branding ? '' : 'not included'}
+                        </span>
+                      </li>
 
-                      {/* Advanced Analytics */}
-                      {plan.has_advanced_analytics && (
-                        <li className="flex items-start">
-                          <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
-                            Advanced analytics
-                          </span>
-                        </li>
-                      )}
+                      {/* Advanced Analytics - Always show */}
+                      <li className="flex items-start">
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_advanced_analytics ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                        <span className={`text-sm ${plan.has_advanced_analytics ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                          Advanced analytics {plan.has_advanced_analytics ? '' : 'not included'}
+                        </span>
+                      </li>
 
-                      {/* Support Features */}
+                      {/* Blogs, Events & Announcements - Always show */}
+                      <li className="flex items-start">
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_blogs_events_announcements ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                        <span className={`text-sm ${plan.has_blogs_events_announcements ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                          Blogs, Events & Announcements {plan.has_blogs_events_announcements ? '' : 'not included'}
+                        </span>
+                      </li>
+
+                      {/* Customized Feature Support - Always show */}
+                      <li className="flex items-start">
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_customized_feature_support ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                        <span className={`text-sm ${plan.has_customized_feature_support ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                          Customized Feature Support {plan.has_customized_feature_support ? '' : 'not included'}
+                        </span>
+                      </li>
+
+                      {/* Support Features - Always show */}
                       {isFeatureEnabled(plan.has_priority_support) ? (
                         <li className="flex items-start">
                           <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
@@ -314,7 +306,14 @@ const PlanSelectionModal = ({
                             Chat and Email support
                           </span>
                         </li>
-                      ) : null}
+                      ) : (
+                        <li className="flex items-start">
+                          <Check className="h-5 w-5 text-gray-300 dark:text-gray-600 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-400 dark:text-gray-600">
+                            Support not included
+                          </span>
+                        </li>
+                      )}
 
                       {/* Therapist Range for Organization Plans */}
                       {plan.min_therapists && plan.max_therapists && (

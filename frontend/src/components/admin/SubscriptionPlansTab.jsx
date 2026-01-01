@@ -24,6 +24,8 @@ const SubscriptionPlansTab = () => {
     has_report_generation: false,
     has_custom_branding: false,
     has_advanced_analytics: false,
+    has_blogs_events_announcements: false,
+    has_customized_feature_support: false,
     has_priority_support: false,
     has_email_support: false,
     min_therapists: '',
@@ -74,6 +76,8 @@ const SubscriptionPlansTab = () => {
       has_report_generation: false,
       has_custom_branding: false,
       has_advanced_analytics: false,
+      has_blogs_events_announcements: false,
+      has_customized_feature_support: false,
       has_priority_support: false,
       has_email_support: false,
       min_therapists: '',
@@ -120,6 +124,8 @@ const SubscriptionPlansTab = () => {
       has_report_generation: plan.has_report_generation || false,
       has_custom_branding: plan.has_custom_branding || false,
       has_advanced_analytics: plan.has_advanced_analytics || false,
+      has_blogs_events_announcements: plan.has_blogs_events_announcements || false,
+      has_customized_feature_support: plan.has_customized_feature_support || false,
       has_priority_support: plan.has_priority_support || false,
       has_email_support: plan.has_email_support || false,
       min_therapists: plan.min_therapists || '',
@@ -237,6 +243,8 @@ const SubscriptionPlansTab = () => {
         has_report_generation: formData.has_report_generation,
         has_custom_branding: formData.has_custom_branding,
         has_advanced_analytics: formData.has_advanced_analytics,
+        has_blogs_events_announcements: formData.has_blogs_events_announcements,
+        has_customized_feature_support: formData.has_customized_feature_support,
         has_priority_support: formData.has_priority_support,
         has_email_support: formData.has_email_support,
         plan_order: formData.plan_order ? parseInt(formData.plan_order) : 0,
@@ -620,6 +628,8 @@ const SubscriptionPlansTab = () => {
                     { key: 'has_report_generation', label: 'Report Generation' },
                     { key: 'has_custom_branding', label: 'Custom Branding' },
                     { key: 'has_advanced_analytics', label: 'Advanced Analytics' },
+                    { key: 'has_blogs_events_announcements', label: 'Blogs, Events & Announcements' },
+                    { key: 'has_customized_feature_support', label: 'Customized Feature Support' },
                     { key: 'has_priority_support', label: 'Priority Support' },
                     { key: 'has_email_support', label: 'Chat and Email Support' }
                   ].map((feature) => (
@@ -700,6 +710,26 @@ const SubscriptionPlansTab = () => {
                       className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
                     />
                     <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Advanced Analytics</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_blogs_events_announcements"
+                      checked={formData.has_blogs_events_announcements}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Blogs, Events & Announcements</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
+                    <input
+                      type="checkbox"
+                      name="has_customized_feature_support"
+                      checked={formData.has_customized_feature_support}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-primary-700 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Customized Feature Support</span>
                   </label>
                   <label className="flex items-center space-x-2 cursor-pointer p-2 border border-gray-200 dark:border-dark-border rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors">
                     <input

@@ -13,6 +13,8 @@ class SubscriptionPlan {
       has_report_generation,
       has_custom_branding,
       has_advanced_analytics,
+      has_blogs_events_announcements,
+      has_customized_feature_support,
       has_priority_support,
       has_email_support,
       min_therapists,
@@ -38,7 +40,8 @@ class SubscriptionPlan {
       INSERT INTO subscription_plans (
         plan_name, plan_type, min_sessions, max_sessions, has_video,
         has_whatsapp, has_advanced_assessments, has_report_generation,
-        has_custom_branding, has_advanced_analytics, has_priority_support, has_email_support,
+        has_custom_branding, has_advanced_analytics, has_blogs_events_announcements, has_customized_feature_support,
+        has_priority_support, has_email_support,
         min_therapists, max_therapists, plan_order, plan_duration_days,
         individual_yearly_price, individual_quarterly_price, individual_monthly_price,
         organization_yearly_price, organization_quarterly_price, organization_monthly_price,
@@ -46,7 +49,7 @@ class SubscriptionPlan {
         individual_yearly_enabled, individual_quarterly_enabled, individual_monthly_enabled,
         organization_yearly_enabled, organization_quarterly_enabled, organization_monthly_enabled
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
       RETURNING *
     `;
 
@@ -61,6 +64,8 @@ class SubscriptionPlan {
       has_report_generation !== undefined ? has_report_generation : false,
       has_custom_branding !== undefined ? has_custom_branding : false,
       has_advanced_analytics !== undefined ? has_advanced_analytics : false,
+      has_blogs_events_announcements !== undefined ? has_blogs_events_announcements : false,
+      has_customized_feature_support !== undefined ? has_customized_feature_support : false,
       has_priority_support !== undefined ? has_priority_support : false,
       has_email_support !== undefined ? has_email_support : false,
       min_therapists || null,
@@ -117,6 +122,8 @@ class SubscriptionPlan {
       has_report_generation,
       has_custom_branding,
       has_advanced_analytics,
+      has_blogs_events_announcements,
+      has_customized_feature_support,
       has_priority_support,
       has_email_support,
       min_therapists,
@@ -182,6 +189,14 @@ class SubscriptionPlan {
     if (has_advanced_analytics !== undefined) {
       updates.push(`has_advanced_analytics = $${paramIndex++}`);
       values.push(has_advanced_analytics);
+    }
+    if (has_blogs_events_announcements !== undefined) {
+      updates.push(`has_blogs_events_announcements = $${paramIndex++}`);
+      values.push(has_blogs_events_announcements);
+    }
+    if (has_customized_feature_support !== undefined) {
+      updates.push(`has_customized_feature_support = $${paramIndex++}`);
+      values.push(has_customized_feature_support);
     }
     if (has_priority_support !== undefined) {
       updates.push(`has_priority_support = $${paramIndex++}`);
