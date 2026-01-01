@@ -157,9 +157,9 @@ const PlanSelectionModal = ({
         {/* Plans Grid */}
         <div className="p-6">
           {!plans || plans.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
-              <CreditCard className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-tertiary" />
-              <p>No plans available{userType === 'organization' ? ' for your organization size' : ''}</p>
+            <div className="text-center py-12 text-gray-500 dark:text-dark-text-secondary">
+              <CreditCard className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-secondary" />
+              <p className="text-gray-500 dark:text-dark-text-secondary">No plans available{userType === 'organization' ? ' for your organization size' : ''}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
@@ -170,7 +170,7 @@ const PlanSelectionModal = ({
                 return (
                   <div
                     key={plan.id}
-                    className={`relative border rounded-lg p-6 flex flex-col transition-all ${
+                    className={`relative border rounded-lg p-6 flex flex-col transition-all bg-white dark:bg-dark-bg-primary ${
                       isCurrentPlan
                         ? 'border-indigo-500 dark:border-dark-primary-500 ring-2 ring-indigo-500 dark:ring-dark-primary-500 shadow-lg'
                         : 'border-gray-200 dark:border-dark-border hover:border-indigo-300 dark:hover:border-dark-primary-500 hover:shadow-md'
@@ -229,64 +229,64 @@ const PlanSelectionModal = ({
 
                       {/* Video Features - Always show */}
                       <li className="flex items-start">
-                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_video ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_video ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_video ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_video ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Video sessions {plan.has_video ? 'enabled' : 'not included'}
                         </span>
                       </li>
 
                       {/* WhatsApp Messaging - Always show */}
                       <li className="flex items-start">
-                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_whatsapp ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_whatsapp ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_whatsapp ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_whatsapp ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           WhatsApp messaging {plan.has_whatsapp ? '' : 'not included'}
                         </span>
                       </li>
 
                       {/* Advanced Assessments - Always show */}
                       <li className="flex items-start">
-                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_advanced_assessments ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_advanced_assessments ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_advanced_assessments ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_advanced_assessments ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Advanced assessments {plan.has_advanced_assessments ? '' : 'not included'}
                         </span>
                       </li>
 
                       {/* Report Generation - Always show */}
                       <li className="flex items-start">
-                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_report_generation ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_report_generation ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_report_generation ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_report_generation ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Report generation {plan.has_report_generation ? '' : 'not included'}
                         </span>
                       </li>
 
                       {/* Custom Branding - Always show */}
                       <li className="flex items-start">
-                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_custom_branding ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_custom_branding ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_custom_branding ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_custom_branding ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Custom branding {plan.has_custom_branding ? '' : 'not included'}
                         </span>
                       </li>
 
                       {/* Advanced Analytics - Always show */}
                       <li className="flex items-start">
-                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_advanced_analytics ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_advanced_analytics ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_advanced_analytics ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_advanced_analytics ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Advanced analytics {plan.has_advanced_analytics ? '' : 'not included'}
                         </span>
                       </li>
 
                       {/* Blogs, Events & Announcements - Always show */}
                       <li className="flex items-start">
-                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_blogs_events_announcements ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_blogs_events_announcements ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_blogs_events_announcements ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_blogs_events_announcements ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Blogs, Events & Announcements {plan.has_blogs_events_announcements ? '' : 'not included'}
                         </span>
                       </li>
 
                       {/* Customized Feature Support - Always show */}
                       <li className="flex items-start">
-                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_customized_feature_support ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_customized_feature_support ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_customized_feature_support ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_customized_feature_support ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Customized Feature Support {plan.has_customized_feature_support ? '' : 'not included'}
                         </span>
                       </li>
@@ -308,8 +308,8 @@ const PlanSelectionModal = ({
                         </li>
                       ) : (
                         <li className="flex items-start">
-                          <Check className="h-5 w-5 text-gray-300 dark:text-gray-600 mr-2 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-400 dark:text-gray-600">
+                          <Check className="h-5 w-5 text-gray-300 dark:text-gray-500 mr-2 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-400 dark:text-gray-400">
                             Support not included
                           </span>
                         </li>

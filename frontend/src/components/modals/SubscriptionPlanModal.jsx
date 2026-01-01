@@ -312,7 +312,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                         <span className="text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
                           ₹{price}
                         </span>
-                        <span className="text-gray-600 dark:text-dark-text-tertiary ml-2">
+                        <span className="text-gray-600 dark:text-dark-text-secondary ml-2">
                           / {getPeriodLabel(selectedBillingPeriod)}
                         </span>
                       </div>
@@ -328,50 +328,50 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                         </span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_video ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_video ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_video ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_video ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Video sessions {plan.has_video ? 'enabled' : 'not included'}
                         </span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_whatsapp ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_whatsapp ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_whatsapp ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_whatsapp ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           WhatsApp messaging {plan.has_whatsapp ? '' : 'not included'}
                         </span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_advanced_assessments ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_advanced_assessments ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_advanced_assessments ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_advanced_assessments ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Advanced assessments {plan.has_advanced_assessments ? '' : 'not included'}
                         </span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_report_generation ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_report_generation ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_report_generation ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_report_generation ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Report generation {plan.has_report_generation ? '' : 'not included'}
                         </span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_custom_branding ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_custom_branding ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_custom_branding ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_custom_branding ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Custom branding {plan.has_custom_branding ? '' : 'not included'}
                         </span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_advanced_analytics ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_advanced_analytics ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_advanced_analytics ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_advanced_analytics ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Advanced analytics {plan.has_advanced_analytics ? '' : 'not included'}
                         </span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_blogs_events_announcements ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_blogs_events_announcements ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_blogs_events_announcements ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_blogs_events_announcements ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Blogs, Events & Announcements {plan.has_blogs_events_announcements ? '' : 'not included'}
                         </span>
                       </li>
                       <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_customized_feature_support ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-600'}`} />
-                        <span className={`text-sm ${plan.has_customized_feature_support ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-600'}`}>
+                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_customized_feature_support ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-sm ${plan.has_customized_feature_support ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Customized Feature Support {plan.has_customized_feature_support ? '' : 'not included'}
                         </span>
                       </li>

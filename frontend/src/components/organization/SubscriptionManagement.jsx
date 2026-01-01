@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { organizationAPI } from '../../services/api';
 import {
   CreditCard, Users, CheckCircle, XCircle, AlertCircle,
-  Loader
+  Loader, Filter
 } from 'lucide-react';
 
 const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => {
@@ -11,6 +11,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [selectedPlanFilter, setSelectedPlanFilter] = useState('all');
 
   useEffect(() => {
     if (isTheraPTrackControlled && organizationId) {
@@ -49,6 +50,34 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     };
     return labels[period] || period;
   };
+
+  // Extract unique plan names from subscriptions
+  const availablePlans = useMemo(() => {
+    const planSet = new Set();
+    subscriptions.forEach(sub => {
+      if (sub.plan_name) {
+        planSet.add(sub.plan_name);
+      }
+    });
+    return Array.from(planSet).sort();
+  }, [subscriptions]);
+
+  // Filter partners based on selected plan
+  const filteredPartners = useMemo(() => {
+    if (selectedPlanFilter === 'all') {
+      return partners;
+    }
+    if (selectedPlanFilter === 'no_plan') {
+      return partners.filter(partner => {
+        const subscription = subscriptions.find(s => s.partner_id === partner.id);
+        return !subscription || !subscription.plan_name;
+      });
+    }
+    return partners.filter(partner => {
+      const subscription = subscriptions.find(s => s.partner_id === partner.id);
+      return subscription && subscription.plan_name === selectedPlanFilter;
+    });
+  }, [partners, subscriptions, selectedPlanFilter]);
 
   if (!isTheraPTrackControlled) {
     return null;
@@ -98,19 +127,44 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
 
       {/* Partner List with Individual Select Buttons */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4 flex items-center">
-          <Users className="h-5 w-5 mr-2 text-indigo-600 dark:text-dark-primary-500" />
-          Therapists ({partners.length})
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary flex items-center">
+            <Users className="h-5 w-5 mr-2 text-indigo-600 dark:text-dark-primary-500" />
+            Therapists ({filteredPartners.length}{partners.length !== filteredPartners.length ? ` of ${partners.length}` : ''})
+          </h3>
+          
+          {/* Filter Dropdown */}
+          {partners.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-gray-500 dark:text-dark-text-tertiary" />
+              <select
+                value={selectedPlanFilter}
+                onChange={(e) => setSelectedPlanFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-primary-500"
+              >
+                <option value="all">All Plans</option>
+                <option value="no_plan">No Plan</option>
+                {availablePlans.map(plan => (
+                  <option key={plan} value={plan}>{plan}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
 
         {partners.length === 0 ? (
           <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
             <Users className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-tertiary" />
             <p>No therapists in your organization yet</p>
           </div>
+        ) : filteredPartners.length === 0 ? (
+          <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
+            <Users className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-tertiary" />
+            <p>No therapists found with the selected plan filter</p>
+          </div>
         ) : (
           <div className="space-y-4">
-            {partners.map((partner) => {
+            {filteredPartners.map((partner) => {
               const subscription = subscriptions.find(s => s.partner_id === partner.id);
 
               return (
