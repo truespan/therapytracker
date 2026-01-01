@@ -410,7 +410,7 @@ const Home = () => {
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             <span className="font-semibold text-sm sm:text-base">
-              TheraP Track phase 1 is live now. Sign up now to get early access features. Feature Therapists to generate new leads, Manual Onboarding and Priority Support.
+              TheraP Track phase 1 is live now. Sign up now to get early access features: Generating new leads, Manual Onboarding and Priority Support.
             </span>
           </div>
           <button
