@@ -11,6 +11,10 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
   const [selectedBillingPeriod, setSelectedBillingPeriod] = useState('monthly');
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
+  
+  // Check if user is on a trial plan
+  const isOnTrialPlan = user?.subscription?.plan_duration_days && user?.subscription?.plan_duration_days > 0;
+  const trialPlanName = user?.subscription?.plan_name || 'Trial Plan';
 
   useEffect(() => {
     if (isOpen) {
@@ -309,17 +313,20 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
   if (!isOpen) return null;
 
   const handleClose = () => {
-    // Only allow closing if there are no paid plans available
-    // This prevents users from bypassing payment
-    if (onClose && subscriptionPlans.length === 0 && !loading) {
+    // Allow closing if:
+    // 1. User is on a trial plan (can cancel and proceed), OR
+    // 2. There are no paid plans available (prevents users from bypassing payment)
+    if (onClose && (isOnTrialPlan || (subscriptionPlans.length === 0 && !loading))) {
       onClose();
     }
   };
 
   const handleBackdropClick = (e) => {
     // Only close if clicking the backdrop itself, not the modal content
-    // AND only if there are no paid plans available (prevents bypassing payment)
-    if (e.target === e.currentTarget && subscriptionPlans.length === 0 && !loading && !processing) {
+    // AND only if:
+    // 1. User is on a trial plan (can cancel and proceed), OR
+    // 2. There are no paid plans available (prevents bypassing payment)
+    if (e.target === e.currentTarget && !processing && (isOnTrialPlan || (subscriptionPlans.length === 0 && !loading))) {
       handleClose();
     }
   };
@@ -334,13 +341,19 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-6 py-6 text-white relative">
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-2">Select Your Subscription Plan</h2>
+            <h2 className="text-3xl font-bold mb-2">
+              {isOnTrialPlan 
+                ? `Your "${trialPlanName}" starts now. You can cancel this message and proceed.`
+                : 'Select Your Subscription Plan'}
+            </h2>
             <p className="text-primary-100 dark:text-primary-200">
-              Choose the plan that best fits your practice needs
+              {isOnTrialPlan
+                ? 'You can upgrade to a paid plan anytime or continue with your trial'
+                : 'Choose the plan that best fits your practice needs'}
             </p>
           </div>
-          {/* Close button - only show when no paid plans are available (admin deactivated all plans) */}
-          {!loading && !error && subscriptionPlans.length === 0 && onClose && !processing && (
+          {/* Close button - show for trial users or when no paid plans are available */}
+          {!loading && !error && (isOnTrialPlan || subscriptionPlans.length === 0) && onClose && !processing && (
             <button
               onClick={handleClose}
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
@@ -575,19 +588,22 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
 
           <div className="flex justify-between items-center">
             <p className="text-sm text-gray-600 dark:text-dark-text-tertiary">
-              {selectedPlan
+              {isOnTrialPlan
+                ? `Currently on: ${trialPlanName}`
+                : selectedPlan
                 ? `Selected: ${selectedPlan.plan_name}`
                 : subscriptionPlans.length === 0
                 ? 'No plans available'
                 : 'Please select a plan to continue'}
             </p>
             <div className="flex items-center space-x-3">
-              {subscriptionPlans.length === 0 && onClose && !processing && (
+              {/* Show close button for trial users or when no plans available */}
+              {(isOnTrialPlan || subscriptionPlans.length === 0) && onClose && !processing && (
                 <button
                   onClick={handleClose}
                   className="px-6 py-3 rounded-lg font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
-                  Close
+                  {isOnTrialPlan ? 'Continue with Trial' : 'Close'}
                 </button>
               )}
               {subscriptionPlans.length > 0 && (
@@ -608,7 +624,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                   ) : (
                     <>
                       <CreditCard className="h-5 w-5" />
-                      <span>Select & Pay</span>
+                      <span>{isOnTrialPlan ? 'Upgrade Now' : 'Select & Pay'}</span>
                     </>
                   )}
                 </button>
