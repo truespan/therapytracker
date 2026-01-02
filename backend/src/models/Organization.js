@@ -329,16 +329,34 @@ class Organization {
       console.log('Note: Could not ensure last_login column exists:', error.message);
     }
 
+    // Ensure subscription_plan_events table exists (for backward compatibility)
+    try {
+      await db.query(`
+        SELECT 1 FROM subscription_plan_events LIMIT 1
+      `);
+    } catch (error) {
+      // Table doesn't exist yet, that's okay - will return NULLs for event fields
+      console.log('Note: subscription_plan_events table does not exist yet:', error.message);
+    }
+
     const query = `
       SELECT 
         p.*,
         MAX(ts.created_at) as last_session_date,
         ac.last_login,
         p.is_active,
-        p.email_verified
+        p.email_verified,
+        -- Subscription plan event data
+        MAX(spe1.event_timestamp) FILTER (WHERE spe1.event_type = 'modal_shown') as modal_shown_at,
+        BOOL_OR(spe1.is_first_login) FILTER (WHERE spe1.event_type = 'modal_shown') as is_first_login,
+        MAX(spe2.event_timestamp) FILTER (WHERE spe2.event_type = 'payment_attempted') as payment_attempted_at,
+        MAX(spe3.event_timestamp) FILTER (WHERE spe3.event_type = 'payment_completed') as payment_completed_at
       FROM partners p
       LEFT JOIN therapy_sessions ts ON p.id = ts.partner_id
       LEFT JOIN auth_credentials ac ON ac.user_type = 'partner' AND ac.reference_id = p.id
+      LEFT JOIN subscription_plan_events spe1 ON spe1.user_type = 'partner' AND spe1.user_id = p.id AND spe1.event_type = 'modal_shown'
+      LEFT JOIN subscription_plan_events spe2 ON spe2.user_type = 'partner' AND spe2.user_id = p.id AND spe2.event_type = 'payment_attempted'
+      LEFT JOIN subscription_plan_events spe3 ON spe3.user_type = 'partner' AND spe3.user_id = p.id AND spe3.event_type = 'payment_completed'
       WHERE p.organization_id = $1
       GROUP BY p.id, ac.last_login, p.is_active, p.email_verified
       ORDER BY p.created_at DESC

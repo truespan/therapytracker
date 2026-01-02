@@ -627,6 +627,81 @@ const getOrganizationPlansForSelection = async (req, res) => {
   }
 };
 
+/**
+ * Log subscription plan event (modal shown, payment attempted, etc.)
+ */
+const logSubscriptionEvent = async (req, res) => {
+  try {
+    const { event_type, subscription_plan_id, billing_period, is_first_login, metadata } = req.body;
+    const { userType, id } = req.user;
+
+    // Only allow for partners and organizations
+    if (userType !== 'partner' && userType !== 'organization') {
+      return res.status(403).json({ error: 'Invalid user type' });
+    }
+
+    // Validate event type
+    const validEventTypes = ['modal_shown', 'payment_attempted', 'payment_completed'];
+    if (!validEventTypes.includes(event_type)) {
+      return res.status(400).json({ error: 'Invalid event type' });
+    }
+
+    const query = `
+      INSERT INTO subscription_plan_events 
+      (user_type, user_id, event_type, subscription_plan_id, billing_period, is_first_login, metadata, event_timestamp)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+      RETURNING *
+    `;
+
+    const result = await db.query(query, [
+      userType,
+      id,
+      event_type,
+      subscription_plan_id || null,
+      billing_period || null,
+      is_first_login || false,
+      metadata ? JSON.stringify(metadata) : null
+    ]);
+
+    console.log(`[Subscription Tracking] Logged ${event_type} for ${userType} ID ${id}`);
+    res.json({ success: true, event: result.rows[0] });
+  } catch (error) {
+    console.error('Log subscription event error:', error);
+    res.status(500).json({ error: 'Failed to log event', details: error.message });
+  }
+};
+
+/**
+ * Check if this is the user's first login (no previous subscription plan events)
+ */
+const checkFirstLogin = async (req, res) => {
+  try {
+    const { userType, id } = req.user;
+
+    // Only allow for partners and organizations
+    if (userType !== 'partner' && userType !== 'organization') {
+      return res.status(403).json({ error: 'Invalid user type' });
+    }
+
+    const query = `
+      SELECT COUNT(*) as event_count 
+      FROM subscription_plan_events 
+      WHERE user_type = $1 AND user_id = $2
+    `;
+
+    const result = await db.query(query, [userType, id]);
+    const eventCount = parseInt(result.rows[0].event_count);
+
+    res.json({ 
+      is_first_login: eventCount === 0 
+    });
+  } catch (error) {
+    console.error('Check first login error:', error);
+    // Default to false on error to not block user flow
+    res.json({ is_first_login: false });
+  }
+};
+
 module.exports = {
   getAllPlans,
   getActivePlans,
@@ -637,7 +712,9 @@ module.exports = {
   calculateOrganizationPrice,
   getIndividualTherapistPlans,
   getIndividualPlansForSelection,
-  getOrganizationPlansForSelection
+  getOrganizationPlansForSelection,
+  logSubscriptionEvent,
+  checkFirstLogin
 };
 
 

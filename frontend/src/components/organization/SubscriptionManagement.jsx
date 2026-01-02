@@ -253,6 +253,36 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                           </span>
                         </div>
                       </div>
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-border space-y-1 text-sm">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-600 dark:text-dark-text-secondary">"Select Your Subscription Plan" modal display:</span>
+                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                            {formatDateTime(partner.modal_shown_at)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-600 dark:text-dark-text-secondary">First login:</span>
+                          <span className={`font-medium ${
+                            partner.is_first_login 
+                              ? 'text-green-600 dark:text-green-400' 
+                              : 'text-gray-500 dark:text-gray-400'
+                          }`}>
+                            {partner.is_first_login ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-600 dark:text-dark-text-secondary">Payment attempted:</span>
+                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                            {formatDateTime(partner.payment_attempted_at)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-600 dark:text-dark-text-secondary">Payment completed:</span>
+                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                            {formatDateTime(partner.payment_completed_at)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     {/* For TheraPTrack controlled orgs: View only, no change/remove buttons */}
                     {/* Organizations can only view therapist plans, therapists select their own plans */}

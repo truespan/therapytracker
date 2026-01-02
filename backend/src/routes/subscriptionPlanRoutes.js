@@ -21,6 +21,10 @@ router.post('/calculate', authenticateToken, subscriptionPlanController.calculat
 router.get('/individual/selection', authenticateToken, checkRole('partner'), subscriptionPlanController.getIndividualPlansForSelection);
 router.get('/organization/selection', authenticateToken, checkRole('organization'), subscriptionPlanController.getOrganizationPlansForSelection);
 
+// Subscription plan event tracking routes
+router.post('/log-event', authenticateToken, checkRole('partner', 'organization'), subscriptionPlanController.logSubscriptionEvent);
+router.get('/check-first-login', authenticateToken, checkRole('partner', 'organization'), subscriptionPlanController.checkFirstLogin);
+
 module.exports = router;
 
 

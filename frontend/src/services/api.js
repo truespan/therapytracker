@@ -206,7 +206,9 @@ export const subscriptionPlanAPI = {
   calculatePrice: (data) => api.post('/subscription-plans/calculate', data),
   getIndividualPlansForSelection: () => api.get('/subscription-plans/individual/selection'),
   getOrganizationPlansForSelection: (therapistCount) =>
-    api.get(`/subscription-plans/organization/selection?therapist_count=${therapistCount}`)
+    api.get(`/subscription-plans/organization/selection?therapist_count=${therapistCount}`),
+  logEvent: (data) => api.post('/subscription-plans/log-event', data),
+  checkFirstLogin: () => api.get('/subscription-plans/check-first-login')
 };
 
 // Report Template APIs (for partners)

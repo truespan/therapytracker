@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, CreditCard, AlertCircle, Video, Calendar, X } from 'lucide-react';
 import api from '../../services/api';
-import { razorpayAPI } from '../../services/api';
+import { razorpayAPI, subscriptionPlanAPI } from '../../services/api';
 import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 
 const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }) => {
@@ -14,6 +14,25 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
 
   useEffect(() => {
     if (isOpen) {
+      // Track when modal is shown
+      const trackModalShown = async () => {
+        try {
+          // Check if this is first login
+          const firstLoginResponse = await subscriptionPlanAPI.checkFirstLogin();
+          const isFirstLogin = firstLoginResponse.data.is_first_login || false;
+
+          // Log modal shown event
+          await subscriptionPlanAPI.logEvent({
+            event_type: 'modal_shown',
+            is_first_login: isFirstLogin
+          });
+        } catch (err) {
+          console.error('Failed to track modal shown:', err);
+          // Don't block user flow if tracking fails
+        }
+      };
+
+      trackModalShown();
       fetchSubscriptionPlans();
       // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden';
@@ -108,6 +127,23 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
       setProcessing(true);
       setError('');
 
+      // Track payment attempt
+      try {
+        const price = getPriceForPeriod(selectedPlan, selectedBillingPeriod);
+        await subscriptionPlanAPI.logEvent({
+          event_type: 'payment_attempted',
+          subscription_plan_id: selectedPlan.id,
+          billing_period: selectedBillingPeriod,
+          metadata: {
+            plan_name: selectedPlan.plan_name,
+            price: price
+          }
+        });
+      } catch (trackErr) {
+        console.error('Failed to track payment attempt:', trackErr);
+        // Continue with payment flow even if tracking fails
+      }
+
       // DEVELOPMENT BYPASS: In development mode, bypass payment and directly assign subscription
       const isDevelopment = process.env.NODE_ENV === 'development' || 
                            process.env.REACT_APP_BYPASS_SUBSCRIPTION === 'true';
@@ -121,6 +157,22 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
         });
 
         if (response.data.success) {
+          // Track payment completion (development mode)
+          try {
+            await subscriptionPlanAPI.logEvent({
+              event_type: 'payment_completed',
+              subscription_plan_id: selectedPlan.id,
+              billing_period: selectedBillingPeriod,
+              metadata: {
+                plan_name: selectedPlan.plan_name,
+                price: getPriceForPeriod(selectedPlan, selectedBillingPeriod),
+                mode: 'development_bypass'
+              }
+            });
+          } catch (trackErr) {
+            console.error('Failed to track payment completion:', trackErr);
+          }
+
           // Call the callback with updated user data
           onSubscriptionComplete(response.data.user);
         } else {
@@ -144,6 +196,22 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
         });
 
         if (response.data.success) {
+          // Track payment completion (free plan)
+          try {
+            await subscriptionPlanAPI.logEvent({
+              event_type: 'payment_completed',
+              subscription_plan_id: selectedPlan.id,
+              billing_period: selectedBillingPeriod,
+              metadata: {
+                plan_name: selectedPlan.plan_name,
+                price: 0,
+                mode: 'free_plan'
+              }
+            });
+          } catch (trackErr) {
+            console.error('Failed to track payment completion:', trackErr);
+          }
+
           // Call the callback with updated user data
           onSubscriptionComplete(response.data.user);
         } else {
@@ -199,6 +267,24 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
         });
 
         if (response.data.success) {
+          // Track payment completion
+          try {
+            await subscriptionPlanAPI.logEvent({
+              event_type: 'payment_completed',
+              subscription_plan_id: selectedPlan.id,
+              billing_period: selectedBillingPeriod,
+              metadata: {
+                plan_name: selectedPlan.plan_name,
+                price: getPriceForPeriod(selectedPlan, selectedBillingPeriod),
+                razorpay_order_id: paymentDetails.razorpay_order_id,
+                razorpay_payment_id: paymentDetails.razorpay_payment_id
+              }
+            });
+          } catch (trackErr) {
+            console.error('Failed to track payment completion:', trackErr);
+            // Continue even if tracking fails
+          }
+
           // Call the callback with updated user data
           onSubscriptionComplete(response.data.user);
         } else {
