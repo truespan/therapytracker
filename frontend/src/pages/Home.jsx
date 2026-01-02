@@ -410,7 +410,7 @@ const Home = () => {
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             <span className="font-semibold text-sm sm:text-base">
-              TheraP Track phase 1 is live now. Sign up now to get early access features: Generating new leads, Manual Onboarding and Priority Support.
+            "Free Trial for 3 Days" and "Book a Free Demo"
             </span>
           </div>
           <button
@@ -420,7 +420,7 @@ const Home = () => {
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#006157'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007a6d'}
           >
-            Join Us
+            Free Trial for 3 Days
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -1105,7 +1105,7 @@ const Home = () => {
               <Mail className="h-8 w-8 text-primary-600 dark:text-dark-primary-500" />
               <Phone className="h-8 w-8 text-primary-600 dark:text-dark-primary-500" />
             </div>
-            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-dark-text-primary">Get in touch</h2>
+            <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-dark-text-primary">Book a Free Demo or Talk to Us</h2>
             <p className="text-lg text-gray-600 dark:text-dark-text-secondary">
               We will get back to you within 24 hrs.
             </p>
