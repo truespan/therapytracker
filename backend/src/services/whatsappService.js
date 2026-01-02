@@ -1010,7 +1010,8 @@ Please prepare for the session and contact the client if needed.
             from: fromNumber,
             text: messageBody
           });
-          messageId = result.message_uuid;
+          // Extract message ID - Vonage SDK returns messageUUID (camelCase)
+          messageId = result?.messageUUID || result?.message_uuid || result?.messageUuid || result?.message_id;
         } else {
           // Fallback to Basic Auth
           const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
@@ -1173,7 +1174,8 @@ Please prepare for the session and contact the client if needed.
           from: fromNumber,
           text: messageBody
         });
-        messageId = result.message_uuid;
+        // Extract message ID - Vonage SDK returns messageUUID (camelCase)
+        messageId = result?.messageUUID || result?.message_uuid || result?.messageUuid || result?.message_id;
       } else {
         // Fallback to Basic Auth
         const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
@@ -1203,12 +1205,20 @@ Please prepare for the session and contact the client if needed.
         null
       );
 
-      console.log(`[WhatsApp Service] Therapist notification sent successfully: ${messageId}`);
+      console.log(`[WhatsApp Service] ✅ Therapist notification sent successfully. Message ID: ${messageId}`);
+      console.log(`[WhatsApp Service] Therapist message details:`, {
+        messageId: messageId,
+        toPhoneNumber: toPhoneNumber,
+        appointmentId: appointmentId,
+        partnerId: partnerId
+      });
 
       return {
         success: true,
         messageId: messageId,
-        status: 'sent'
+        status: 'sent',
+        usedTemplate: false,
+        messageType: 'Text'
       };
     } catch (error) {
       // Enhanced error logging for Vonage API errors
@@ -1360,7 +1370,8 @@ Please prepare for the session and contact the client if needed.
             from: fromNumber,
             text: messageBody
           });
-          messageId = result.message_uuid;
+          // Extract message ID - Vonage SDK returns messageUUID (camelCase)
+        messageId = result?.messageUUID || result?.message_uuid || result?.messageUuid || result?.message_id;
         } else {
           const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
           
@@ -1515,7 +1526,8 @@ Please prepare for the session and contact the client if needed.
             from: fromNumber,
             text: messageBody
           });
-          messageId = result.message_uuid;
+          // Extract message ID - Vonage SDK returns messageUUID (camelCase)
+        messageId = result?.messageUUID || result?.message_uuid || result?.messageUuid || result?.message_id;
         } else {
           const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
           
@@ -1670,7 +1682,8 @@ Please prepare for the session and contact the client if needed.
             from: fromNumber,
             text: messageBody
           });
-          messageId = result.message_uuid;
+          // Extract message ID - Vonage SDK returns messageUUID (camelCase)
+        messageId = result?.messageUUID || result?.message_uuid || result?.messageUuid || result?.message_id;
         } else {
           const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
           
@@ -2393,7 +2406,8 @@ See you soon! 😊
           from: fromNumber,
           text: messageBody
         });
-        messageId = result.message_uuid;
+        // Extract message ID - Vonage SDK returns messageUUID (camelCase)
+        messageId = result?.messageUUID || result?.message_uuid || result?.messageUuid || result?.message_id;
       } else {
         // Fallback to Basic Auth
         const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
