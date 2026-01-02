@@ -48,7 +48,9 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
 
   const loadTrialPlans = async () => {
     try {
-      const response = await api.get('/subscription-plans/individual');
+      // Use /active endpoint to get all active plans (not filtered by individual_monthly_enabled)
+      // This ensures we get all trial plans including "1 Day Trial" even if individual_monthly_enabled is FALSE
+      const response = await api.get('/subscription-plans/active');
       if (response.data.success) {
         // Filter to trial plans (those with plan_duration_days > 0) or Free Plan
         // Use case-insensitive comparison and trim whitespace
