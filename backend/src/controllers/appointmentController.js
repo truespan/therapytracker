@@ -288,6 +288,13 @@ const sendWhatsAppCancellationNotification = async (appointmentId, userId, partn
 
     // Send notification to client
     if (user.contact) {
+      console.log(`[WhatsApp] Preparing to send cancellation notification to client for appointment ${appointmentId}`);
+      console.log(`[WhatsApp] Client details:`, {
+        userId: userId,
+        userName: user.name,
+        contact: user.contact
+      });
+      
       const clientAppointmentData = {
         userName: user.name,
         therapistName: partner.name,
@@ -303,20 +310,27 @@ const sendWhatsAppCancellationNotification = async (appointmentId, userId, partn
         duration: durationMinutes || 60
       };
 
-      const clientResult = await whatsappService.sendAppointmentCancellation(
-        user.contact,
-        clientAppointmentData,
-        appointmentId,
-        userId
-      );
+      try {
+        const clientResult = await whatsappService.sendAppointmentCancellation(
+          user.contact,
+          clientAppointmentData,
+          appointmentId,
+          userId
+        );
 
-      if (clientResult.success) {
-        console.log(`[WhatsApp] Cancellation notification sent successfully for appointment ${appointmentId}`);
-      } else {
-        console.error(`[WhatsApp] Failed to send cancellation notification for appointment ${appointmentId}:`, clientResult.error);
+        if (clientResult.success) {
+          console.log(`[WhatsApp] ✅ Cancellation notification sent successfully to client for appointment ${appointmentId}`);
+          console.log(`[WhatsApp] Client result:`, clientResult);
+        } else {
+          console.error(`[WhatsApp] ❌ Failed to send cancellation notification to client for appointment ${appointmentId}:`, clientResult.error);
+          console.error(`[WhatsApp] Client result details:`, clientResult);
+        }
+      } catch (clientError) {
+        console.error(`[WhatsApp] ❌ Exception sending cancellation notification to client for appointment ${appointmentId}:`, clientError);
+        console.error(`[WhatsApp] Client error stack:`, clientError.stack);
       }
     } else {
-      console.log(`[WhatsApp] No phone number found for user ${userId}`);
+      console.warn(`[WhatsApp] ⚠️  Skipping client cancellation notification for appointment ${appointmentId}: No phone number found for user ${userId}`);
     }
   } catch (error) {
     console.error(`[WhatsApp] Error sending cancellation notification for appointment ${appointmentId}:`, error.message);

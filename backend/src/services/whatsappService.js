@@ -715,8 +715,25 @@ Please prepare for the session and contact the client if needed.
             locale: languageCode
           }
         });
-        console.log('[WhatsApp Template] Template message sent successfully:', result.message_uuid);
-        return { success: true, messageId: result.message_uuid };
+        
+        // Vonage SDK response structure can vary - check multiple possible locations
+        const messageId = result?.message_uuid || result?.messageUuid || result?.message_id || result?.messageId || result?.uuid;
+        console.log('[WhatsApp Template] Template API call completed. Full result:', JSON.stringify(result, null, 2));
+        console.log('[WhatsApp Template] Extracted message ID:', messageId);
+        
+        // Check if the response indicates success
+        if (result && (result.message_uuid || result.messageUuid || result.message_id || result.messageId || result.uuid)) {
+          console.log('[WhatsApp Template] ✅ Template message sent successfully via Vonage SDK');
+          return { success: true, messageId: messageId };
+        } else if (result && Object.keys(result).length > 0) {
+          // Response exists but no message ID - might be an error response
+          console.error('[WhatsApp Template] ⚠️  Template API returned response but no message ID found');
+          console.error('[WhatsApp Template] Response keys:', Object.keys(result));
+          throw new Error('Template message sent but no message ID in response. Response: ' + JSON.stringify(result));
+        } else {
+          console.error('[WhatsApp Template] ❌ Template API returned empty or invalid response');
+          throw new Error('Template message failed - empty response from Vonage SDK');
+        }
       } else {
         // Fallback to Basic Auth with direct API call
         const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
@@ -750,8 +767,16 @@ Please prepare for the session and contact the client if needed.
             'Authorization': `Basic ${auth}`
           }
         });
-        console.log('[WhatsApp Template] Template message sent successfully:', response.data.message_uuid);
-        return { success: true, messageId: response.data.message_uuid };
+        
+        const messageId = response.data?.message_uuid || response.data?.messageUuid || response.data?.message_id;
+        console.log('[WhatsApp Template] Template message sent successfully. Full response:', JSON.stringify(response.data, null, 2));
+        console.log('[WhatsApp Template] Extracted message ID:', messageId);
+        
+        if (!messageId) {
+          console.warn('[WhatsApp Template] Warning: Could not extract message ID from API response. Response structure:', Object.keys(response.data || {}));
+        }
+        
+        return { success: true, messageId: messageId };
       }
     } catch (error) {
       // Log raw error for debugging
@@ -886,22 +911,36 @@ Please prepare for the session and contact the client if needed.
       // Try template first if configured (use theraptrack_appointment_is_booked)
       if (this.useTemplates && this.templateNames.appointmentConfirmation) {
         try {
-          console.log('[WhatsApp Service] Attempting to send appointment confirmation via template:', this.templateNames.appointmentConfirmation);
+          console.log('[WhatsApp Service] 🎯 Attempting to send appointment confirmation via template:', this.templateNames.appointmentConfirmation);
+          console.log('[WhatsApp Service] Template configuration:', {
+            useTemplates: this.useTemplates,
+            templateName: this.templateNames.appointmentConfirmation,
+            enabled: this.enabled
+          });
+          
           const templateParams = this.prepareAppointmentConfirmationTemplateParams(appointmentData);
           console.log('[WhatsApp Service] Prepared template parameters:', {
             count: templateParams.length,
             params: templateParams,
             includePaymentStatus: this.includePaymentStatusInTemplate
           });
+          
           const templateResult = await this.sendTemplateMessage(
             toPhoneNumber,
             this.templateNames.appointmentConfirmation,
             templateParams,
             'en'
           );
+          
           messageId = templateResult.messageId;
           usedTemplate = true;
-          console.log('[WhatsApp Service] Template message sent successfully:', messageId);
+          console.log('[WhatsApp Service] ✅ Template message sent successfully. Message ID:', messageId);
+          console.log('[WhatsApp Service] Template result:', templateResult);
+          
+          // If messageId is still undefined, log warning but continue
+          if (!messageId) {
+            console.warn('[WhatsApp Service] ⚠️  Warning: Template message sent but messageId is undefined. This might indicate the message was queued or the response structure is different.');
+          }
         } catch (templateError) {
           const errorDetails = this.extractErrorDetails(templateError);
           console.error('[WhatsApp Service] Template message failed, falling back to text message');
@@ -929,7 +968,12 @@ Please prepare for the session and contact the client if needed.
       
       // Fallback to text message if template not used or failed
       if (!usedTemplate) {
-        console.log('[WhatsApp Service] Sending appointment confirmation as text message');
+        console.log('[WhatsApp Service] 📝 Template not used, sending appointment confirmation as text message');
+        console.log('[WhatsApp Service] Reason template not used:', {
+          useTemplates: this.useTemplates,
+          hasTemplateName: !!this.templateNames.appointmentConfirmation,
+          templateName: this.templateNames.appointmentConfirmation
+        });
         const messageBody = this.createAppointmentMessage(appointmentData);
         
         if (this.vonageClient) {
@@ -1235,8 +1279,13 @@ Please prepare for the session and contact the client if needed.
       // Try template first if configured
       if (this.useTemplates && this.templateNames.appointmentCancellation) {
         try {
-          console.log('[WhatsApp Service] Attempting to send appointment cancellation via template:', this.templateNames.appointmentCancellation);
+          console.log('[WhatsApp Service] 🎯 Attempting to send appointment cancellation via template:', this.templateNames.appointmentCancellation);
           const templateParams = this.prepareAppointmentConfirmationTemplateParams(appointmentData);
+          console.log('[WhatsApp Service] Cancellation template parameters:', {
+            count: templateParams.length,
+            params: templateParams
+          });
+          
           const templateResult = await this.sendTemplateMessage(
             toPhoneNumber,
             this.templateNames.appointmentCancellation,
@@ -1245,11 +1294,21 @@ Please prepare for the session and contact the client if needed.
           );
           messageId = templateResult.messageId;
           usedTemplate = true;
-          console.log('[WhatsApp Service] Template message sent successfully:', messageId);
+          console.log('[WhatsApp Service] ✅ Cancellation template message sent successfully. Message ID:', messageId);
+          console.log('[WhatsApp Service] Cancellation template result:', templateResult);
         } catch (templateError) {
-          console.warn('[WhatsApp Service] Template message failed, falling back to text:', templateError.message);
+          const errorDetails = this.extractErrorDetails(templateError);
+          console.error('[WhatsApp Service] ❌ Cancellation template message failed, falling back to text');
+          console.error('[WhatsApp Service] Cancellation template error:', {
+            status: errorDetails.status || errorDetails.statusCode,
+            message: templateError.message,
+            title: errorDetails.title || errorDetails.details?.title,
+            detail: errorDetails.detail || errorDetails.details?.detail
+          });
           // Fall through to text message
         }
+      } else {
+        console.log('[WhatsApp Service] Cancellation template not configured, using text message');
       }
       
       // Fallback to text message if template not used or failed

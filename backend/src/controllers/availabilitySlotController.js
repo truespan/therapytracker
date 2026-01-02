@@ -551,6 +551,14 @@ const bookSlot = async (req, res) => {
           if (partnerHasWhatsApp && organizationHasWhatsApp) {
             // Send notification to client
             if (user && user.contact) {
+              console.log(`[WhatsApp] Preparing to send client notification for slot ${id}`);
+              console.log(`[WhatsApp] Client details:`, {
+                userId: userId,
+                userName: user.name,
+                contact: user.contact,
+                contactFormatted: user.contact
+              });
+              
               const bookingAmount = partner ? (parseFloat(partner.booking_fee) || 0) : 0;
               const feeCurrency = partner ? (partner.fee_currency || 'INR') : 'INR';
               
@@ -571,18 +579,31 @@ const bookSlot = async (req, res) => {
                 feeCurrency: feeCurrency
               };
 
-              const clientResult = await whatsappService.sendAppointmentConfirmation(
-                user.contact,
-                clientAppointmentData,
-                appointmentId,
-                userId
-              );
+              try {
+                const clientResult = await whatsappService.sendAppointmentConfirmation(
+                  user.contact,
+                  clientAppointmentData,
+                  appointmentId,
+                  userId
+                );
 
-              if (clientResult.success) {
-                console.log(`[WhatsApp] Client notification sent successfully for booked slot ${id}`);
-              } else {
-                console.error(`[WhatsApp] Failed to send client notification for booked slot ${id}:`, clientResult.error);
+                if (clientResult.success) {
+                  console.log(`[WhatsApp] ✅ Client notification sent successfully for booked slot ${id}`);
+                  console.log(`[WhatsApp] Client result:`, clientResult);
+                } else {
+                  console.error(`[WhatsApp] ❌ Failed to send client notification for booked slot ${id}:`, clientResult.error);
+                  console.error(`[WhatsApp] Client result details:`, clientResult);
+                }
+              } catch (clientError) {
+                console.error(`[WhatsApp] ❌ Exception sending client notification for booked slot ${id}:`, clientError);
+                console.error(`[WhatsApp] Client error stack:`, clientError.stack);
               }
+            } else {
+              console.warn(`[WhatsApp] ⚠️  Skipping client notification for slot ${id}:`, {
+                hasUser: !!user,
+                hasContact: !!(user && user.contact),
+                userId: userId
+              });
             }
 
             // Send notification to therapist
