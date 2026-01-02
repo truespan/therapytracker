@@ -118,6 +118,12 @@ const handleExistingUser = async (authRecord, res) => {
       return res.status(404).json({ error: 'User details not found' });
     }
 
+    // Update last login timestamp (for partners, this helps track system usage)
+    if (authRecord.user_type === 'partner') {
+      const Auth = require('../models/Auth');
+      await Auth.updateLastLogin(authRecord.user_type, authRecord.reference_id);
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       {

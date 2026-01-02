@@ -173,6 +173,36 @@ class Auth {
     return result.rows[0];
   }
 
+  static async updateLastLogin(userType, referenceId) {
+    // Update last_login, handling the case where the column might not exist yet
+    const query = `
+      UPDATE auth_credentials
+      SET last_login = CURRENT_TIMESTAMP
+      WHERE user_type = $1 AND reference_id = $2
+      RETURNING id, user_type, reference_id, email, last_login
+    `;
+    try {
+      const result = await db.query(query, [userType, referenceId]);
+      return result.rows[0];
+    } catch (error) {
+      // If column doesn't exist, try to add it and retry
+      if (error.code === '42703') { // column does not exist
+        try {
+          await db.query('ALTER TABLE auth_credentials ADD COLUMN IF NOT EXISTS last_login TIMESTAMP');
+          const retryResult = await db.query(query, [userType, referenceId]);
+          return retryResult.rows[0];
+        } catch (alterError) {
+          console.error('Error adding last_login column:', alterError);
+          // Return null if we can't update, but don't fail the login
+          return null;
+        }
+      }
+      console.error('Error updating last_login:', error);
+      // Return null if we can't update, but don't fail the login
+      return null;
+    }
+  }
+
   static async delete(email) {
     const query = 'DELETE FROM auth_credentials WHERE LOWER(email) = LOWER($1) RETURNING *';
     const result = await db.query(query, [email]);

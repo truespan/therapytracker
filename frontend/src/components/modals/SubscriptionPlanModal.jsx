@@ -108,6 +108,28 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
       setProcessing(true);
       setError('');
 
+      // DEVELOPMENT BYPASS: In development mode, bypass payment and directly assign subscription
+      const isDevelopment = process.env.NODE_ENV === 'development' || 
+                           process.env.REACT_APP_BYPASS_SUBSCRIPTION === 'true';
+      
+      if (isDevelopment) {
+        console.warn('⚠️ [SubscriptionPlanModal] DEVELOPMENT MODE: Bypassing payment flow');
+        // Directly assign subscription without payment in development
+        const response = await api.post('/partner-subscriptions/select-plan', {
+          plan_id: selectedPlan.id,
+          billing_period: selectedBillingPeriod
+        });
+
+        if (response.data.success) {
+          // Call the callback with updated user data
+          onSubscriptionComplete(response.data.user);
+        } else {
+          setError('Failed to activate subscription. Please try again.');
+        }
+        setProcessing(false);
+        return;
+      }
+
       // Get the price for the selected billing period
       const price = getPriceForPeriod(selectedPlan, selectedBillingPeriod);
       

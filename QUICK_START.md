@@ -67,6 +67,8 @@ NODE_ENV=development
 REACT_APP_API_URL=http://localhost:5000/api
 ```
 
+**Note:** In development mode (`NODE_ENV=development`), subscription payment checks are automatically bypassed, allowing you to test the application without completing payment flows.
+
 ## Verify Setup
 
 1. Visit http://localhost:5000 - Should show API info

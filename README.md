@@ -364,6 +364,24 @@ NODE_ENV=production
 REACT_APP_API_URL=https://your-api-domain.com/api
 ```
 
+### Development Mode Subscription Bypass
+
+In development mode (`NODE_ENV=development`), the system automatically bypasses subscription payment checks, allowing all users to access features without completing the subscription flow. This is useful for local development and testing.
+
+**How it works:**
+- When `NODE_ENV=development` is set, subscription checks are automatically bypassed
+- Optional: You can also set `REACT_APP_BYPASS_SUBSCRIPTION=true` for explicit control
+- Console warnings will appear in development mode to indicate the bypass is active
+
+**Important:** 
+- ⚠️ **Always** explicitly set `NODE_ENV=production` in production environments
+- ⚠️ **Never** set `NODE_ENV=development` or `REACT_APP_BYPASS_SUBSCRIPTION=true` in production
+- The bypass only activates when `NODE_ENV === 'development'`, but explicitly setting `production` ensures:
+  - Clear environment configuration
+  - Other parts of the application work correctly (error handling, SSL, logging)
+  - Defensive programming against misconfiguration
+- Subscription checks are enforced when `NODE_ENV !== 'development'`
+
 ## WhatsApp Notifications
 
 The system includes automated WhatsApp notifications for appointment confirmations. When appointments are created or slots are booked, clients receive WhatsApp messages with appointment details.

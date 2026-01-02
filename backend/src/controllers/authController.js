@@ -307,6 +307,11 @@ const login = async (req, res) => {
         return res.status(400).json({ error: 'Invalid user type' });
     }
 
+    // Update last login timestamp (for partners, this helps track system usage)
+    if (authRecord.user_type === 'partner') {
+      await Auth.updateLastLogin(authRecord.user_type, authRecord.reference_id);
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       {

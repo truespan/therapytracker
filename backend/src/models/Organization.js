@@ -318,7 +318,20 @@ class Organization {
   }
 
   static async getPartners(orgId) {
-    const query = 'SELECT * FROM partners WHERE organization_id = $1';
+    const query = `
+      SELECT 
+        p.*,
+        MAX(ts.created_at) as last_session_date,
+        ac.last_login,
+        p.is_active,
+        p.email_verified
+      FROM partners p
+      LEFT JOIN therapy_sessions ts ON p.id = ts.partner_id
+      LEFT JOIN auth_credentials ac ON ac.user_type = 'partner' AND ac.reference_id = p.id
+      WHERE p.organization_id = $1
+      GROUP BY p.id, ac.last_login, p.is_active, p.email_verified
+      ORDER BY p.created_at DESC
+    `;
     const result = await db.query(query, [orgId]);
     return result.rows;
   }

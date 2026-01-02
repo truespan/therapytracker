@@ -277,6 +277,16 @@ export const AuthProvider = ({ children }) => {
   const needsSubscription = (user) => {
     if (!user) return false;
     
+    // DEVELOPMENT BYPASS: Bypass subscription check in development environment
+    // This allows all users to bypass subscription payment flow during development
+    const isDevelopment = process.env.NODE_ENV === 'development' || 
+                         process.env.REACT_APP_BYPASS_SUBSCRIPTION === 'true';
+    
+    if (isDevelopment) {
+      console.warn('⚠️ [needsSubscription] DEVELOPMENT MODE: Subscription check bypassed');
+      return false;
+    }
+    
     // Only partners in TheraPTrack-controlled orgs need individual subscriptions
     if (user.userType === 'partner' && user.organization?.theraptrack_controlled === true) {
       // Check if they have accepted terms first

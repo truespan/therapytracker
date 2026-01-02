@@ -51,6 +51,20 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     return labels[period] || period;
   };
 
+  // Format date and time for display
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Extract unique plan names from subscriptions
   const availablePlans = useMemo(() => {
     const planSet = new Set();
@@ -215,6 +229,30 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                       ) : (
                         <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">No plan assigned</p>
                       )}
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-border space-y-1 text-sm">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-600 dark:text-dark-text-secondary">Therapist account created:</span>
+                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                            {formatDateTime(partner.created_at)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-600 dark:text-dark-text-secondary">System last used:</span>
+                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                            {formatDateTime(partner.last_login || partner.last_session_date)}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-gray-600 dark:text-dark-text-secondary">Login success:</span>
+                          <span className={`font-medium ${
+                            partner.is_active && partner.email_verified 
+                              ? 'text-green-600 dark:text-green-400' 
+                              : 'text-red-600 dark:text-red-400'
+                          }`}>
+                            {partner.is_active && partner.email_verified ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     {/* For TheraPTrack controlled orgs: View only, no change/remove buttons */}
                     {/* Organizations can only view therapist plans, therapists select their own plans */}
