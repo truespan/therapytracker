@@ -694,9 +694,11 @@ Please prepare for the session and contact the client if needed.
     console.log('  - To:', toNumber);
     console.log('  - Language:', languageCode);
     
+    // Vonage expects parameters as array of strings, not objects
+    // Error message: "Only array of strings is allowed. E.g. [\"param1\", \"param2\"]"
     const templatePayload = {
       name: templateName,
-      parameters: templateParams.map(param => ({ type: 'text', text: String(param) }))
+      parameters: templateParams.map(param => String(param)) // Array of strings
     };
     
     try {
@@ -718,6 +720,19 @@ Please prepare for the session and contact the client if needed.
       } else {
         // Fallback to Basic Auth with direct API call
         const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+        
+        // Log the exact payload being sent
+        console.log('[WhatsApp Template] Direct API Payload:', JSON.stringify({
+          from: fromNumber,
+          to: toNumber,
+          channel: 'whatsapp',
+          message_type: 'template',
+          template: templatePayload,
+          whatsapp: {
+            policy: 'deterministic',
+            locale: languageCode
+          }
+        }, null, 2));
         
         const response = await axios.post(this.baseUrl, {
           from: fromNumber,
@@ -2538,30 +2553,48 @@ See you soon! 😊
     if (error.response?.data) {
       const data = error.response.data;
       
-      // Handle Buffer data (common in axios errors)
+      // Handle Buffer data nested in _readableState (common in Vonage SDK errors)
       if (data._readableState?.buffer && Array.isArray(data._readableState.buffer) && data._readableState.buffer.length > 0) {
         try {
           const buffer = data._readableState.buffer[0];
-          if (buffer && buffer.data && Array.isArray(buffer.data)) {
-            errorData = JSON.parse(Buffer.from(buffer.data).toString());
+          if (buffer && buffer.data) {
+            // buffer.data can be an array of numbers (Buffer bytes) or a Buffer
+            if (Array.isArray(buffer.data)) {
+              // Convert array of byte values to Buffer, then to string, then parse JSON
+              const bufferString = Buffer.from(buffer.data).toString('utf8');
+              errorData = JSON.parse(bufferString);
+            } else if (Buffer.isBuffer(buffer.data)) {
+              errorData = JSON.parse(buffer.data.toString('utf8'));
+            } else {
+              errorData = buffer.data;
+            }
           } else {
             errorData = data;
           }
         } catch (e) {
+          console.error('[WhatsApp Service] Failed to parse buffer error data:', e.message);
           // If buffer parsing fails, try to use data as-is
           errorData = data;
         }
       } 
       // Handle regular object/string data
-      else if (typeof data === 'object' || typeof data === 'string') {
+      else if (typeof data === 'object' && data !== null && !Buffer.isBuffer(data)) {
         errorData = data;
       }
       // Handle Buffer directly
       else if (Buffer.isBuffer(data)) {
         try {
-          errorData = JSON.parse(data.toString());
+          errorData = JSON.parse(data.toString('utf8'));
         } catch {
-          errorData = data.toString();
+          errorData = data.toString('utf8');
+        }
+      }
+      // Handle string data
+      else if (typeof data === 'string') {
+        try {
+          errorData = JSON.parse(data);
+        } catch {
+          errorData = data;
         }
       }
       else {
