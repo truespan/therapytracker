@@ -348,7 +348,6 @@ class PartnerSubscription {
              sp.min_sessions,
              sp.max_sessions,
              sp.has_video,
-             sp.video_hours,
              sp.individual_monthly_price,
              sp.individual_quarterly_price,
              sp.individual_yearly_price

@@ -409,7 +409,6 @@ class Organization {
              sp.min_sessions,
              sp.max_sessions,
              sp.has_video,
-             sp.video_hours,
              sp.organization_monthly_price,
              sp.organization_quarterly_price,
              sp.organization_yearly_price
