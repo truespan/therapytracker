@@ -47,14 +47,12 @@ const PlanSelectionModal = ({
     }
   }, [availablePeriods, selectedBillingPeriod]);
 
-  // Check if user is currently on a trial plan
-  const isOnTrialPlan = currentSubscription?.plan_duration_days && currentSubscription.plan_duration_days > 0;
-
-  // Filter plans: if user is on a trial plan, show only paid plans (exclude Free Plan and other trial plans)
+  // Filter plans: Always exclude trial plans and Free Plan from upgrade options
+  // Only show paid plans as upgrade options (current plan is always shown for reference)
   const filteredPlans = useMemo(() => {
-    if (!isOnTrialPlan || !plans) return plans;
+    if (!plans) return plans;
     
-    // Filter out other trial plans and Free Plan
+    // Filter out trial plans and Free Plan
     // Keep only paid plans (plans with price > 0 for the selected billing period)
     const prefix = userType === 'individual' ? 'individual' : 'organization';
     return plans.filter(plan => {
@@ -62,13 +60,13 @@ const PlanSelectionModal = ({
       const isFreePlan = plan.plan_name && plan.plan_name.toLowerCase() === 'free plan';
       const isCurrentPlan = plan.id === currentPlanId;
       
-      // Always show current plan (even if it's a trial)
+      // Always show current plan (even if it's a trial or free) so user knows what they have
       if (isCurrentPlan) return true;
       
-      // Exclude other trial plans
+      // Exclude trial plans - cannot upgrade to a trial plan
       if (isTrialPlan) return false;
       
-      // Exclude Free Plan
+      // Exclude Free Plan - cannot upgrade to a free plan
       if (isFreePlan) return false;
       
       // Keep only paid plans (check if plan has a price > 0 for the selected billing period)
@@ -76,7 +74,7 @@ const PlanSelectionModal = ({
       const price = plan[priceKey] || 0;
       return price > 0;
     });
-  }, [plans, isOnTrialPlan, currentPlanId, selectedBillingPeriod, userType]);
+  }, [plans, currentPlanId, selectedBillingPeriod, userType]);
 
   // Format price in INR
   const formatPrice = (price) => {
