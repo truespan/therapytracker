@@ -222,9 +222,11 @@ class WhatsAppService {
       return;
     }
 
+    console.log(`[WhatsApp Queue] 🚀 Starting queue processing. Queue length: ${this.messageQueue.length}`);
     this.isProcessingQueue = true;
 
     while (this.messageQueue.length > 0) {
+      console.log(`[WhatsApp Queue] Processing queue. Remaining messages: ${this.messageQueue.length}`);
       const now = Date.now();
       const timeSinceLastMessage = now - this.lastMessageTime;
       
@@ -235,18 +237,33 @@ class WhatsAppService {
       }
 
       const message = this.messageQueue.shift();
-      if (!message) continue;
+      if (!message) {
+        console.log(`[WhatsApp Queue] Skipping empty message`);
+        continue;
+      }
+
+      console.log(`[WhatsApp Queue] 📨 Processing message:`, {
+        type: message.type,
+        toPhoneNumber: message.toPhoneNumber,
+        appointmentId: message.appointmentId,
+        userId: message.userId,
+        partnerId: message.partnerId,
+        retryCount: message.retryCount,
+        queueLength: this.messageQueue.length
+      });
 
       try {
         let result;
         switch (message.type) {
           case 'appointment_confirmation':
+            console.log(`[WhatsApp Queue] Sending appointment confirmation to client:`, message.toPhoneNumber);
             result = await this.sendAppointmentConfirmationDirect(
               message.toPhoneNumber,
               message.appointmentData,
               message.appointmentId,
               message.userId
             );
+            console.log(`[WhatsApp Queue] Client appointment confirmation result:`, result);
             break;
           case 'therapist_notification':
             result = await this.sendTherapistAppointmentNotificationDirect(
@@ -292,7 +309,12 @@ class WhatsAppService {
         }
 
         if (result.success) {
-          console.log(`[WhatsApp Queue] Message sent successfully: ${result.messageId}`);
+          console.log(`[WhatsApp Queue] ✅ Message sent successfully:`, {
+            type: message.type,
+            messageId: result.messageId,
+            toPhoneNumber: message.toPhoneNumber,
+            usedTemplate: result.usedTemplate || false
+          });
         } else if (message.retryCount < this.maxRetries) {
           // Retry on failure
           message.retryCount++;
@@ -330,9 +352,11 @@ class WhatsAppService {
     }
 
     this.isProcessingQueue = false;
+    console.log(`[WhatsApp Queue] ✅ Queue processing completed. Remaining messages: ${this.messageQueue.length}`);
     
     // Check if new messages were added during processing
     if (this.messageQueue.length > 0) {
+      console.log(`[WhatsApp Queue] 🔄 Restarting queue processing for ${this.messageQueue.length} remaining messages`);
       setTimeout(() => this.processQueue(), 100);
     }
   }
@@ -1007,7 +1031,7 @@ Please prepare for the session and contact the client if needed.
         }
       }
 
-      // Log successful notification
+      // Log successful notification with template usage info
       await this.logNotification(
         appointmentId,
         userId,
@@ -1017,12 +1041,23 @@ Please prepare for the session and contact the client if needed.
         null
       );
 
-      console.log(`[WhatsApp Service] Message sent successfully: ${messageId} (${usedTemplate ? 'Template' : 'Text'})`);
-
+      const messageType = usedTemplate ? 'Template' : 'Text';
+      console.log(`[WhatsApp Service] ✅ Message sent successfully: ${messageId} (${messageType})`);
+      console.log(`[WhatsApp Service] Message details:`, {
+        messageId: messageId,
+        usedTemplate: usedTemplate,
+        toPhoneNumber: toPhoneNumber,
+        appointmentId: appointmentId,
+        userId: userId
+      });
+      
+      // Return result with template usage indicator
       return {
         success: true,
         messageId: messageId,
-        status: 'sent'
+        status: 'sent',
+        usedTemplate: usedTemplate,
+        messageType: messageType
       };
     } catch (error) {
       // Enhanced error logging for Vonage API errors
