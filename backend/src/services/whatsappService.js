@@ -811,9 +811,21 @@ Please prepare for the session and contact the client if needed.
           console.error('[WhatsApp Service] Error Summary:', {
             status: errorDetails.status || errorDetails.statusCode,
             message: templateError.message,
-            title: errorDetails.details?.title,
-            detail: errorDetails.details?.detail
+            title: errorDetails.title || errorDetails.details?.title,
+            detail: errorDetails.detail || errorDetails.details?.detail,
+            invalid_parameters: errorDetails.invalid_parameters || errorDetails.details?.invalid_parameters
           });
+          
+          // If error is about parameter count, log helpful message
+          if (errorDetails.detail && errorDetails.detail.includes('parameter')) {
+            console.error('[WhatsApp Service] ⚠️  PARAMETER COUNT MISMATCH DETECTED:');
+            console.error(`  - Template "${this.templateNames.appointmentConfirmation}" expects different number of parameters`);
+            console.error(`  - Currently sending: ${templateParams.length} parameters`);
+            console.error(`  - includePaymentStatusInTemplate: ${this.includePaymentStatusInTemplate}`);
+            console.error('  - SOLUTION: Set WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=false in .env if template has 6 parameters');
+            console.error('  - OR: Update template in WhatsApp Manager to have 7 parameters');
+          }
+          
           // Fall through to text message
         }
       }
@@ -2432,23 +2444,99 @@ See you soon! 😊
       message: error.message,
       status: statusCode,
       statusCode: statusCode,
-      details: null
+      details: null,
+      title: null,
+      detail: null
     };
 
     // Try to extract detailed error information
+    let errorData = null;
+    
+    // Check if error.response.data exists and handle Buffer/stream cases
     if (error.response?.data) {
-      details.details = error.response.data;
-    } else if (error.response?.body) {
+      const data = error.response.data;
+      
+      // Handle Buffer data (common in axios errors)
+      if (data._readableState?.buffer && Array.isArray(data._readableState.buffer) && data._readableState.buffer.length > 0) {
+        try {
+          const buffer = data._readableState.buffer[0];
+          if (buffer && buffer.data && Array.isArray(buffer.data)) {
+            errorData = JSON.parse(Buffer.from(buffer.data).toString());
+          } else {
+            errorData = data;
+          }
+        } catch (e) {
+          // If buffer parsing fails, try to use data as-is
+          errorData = data;
+        }
+      } 
+      // Handle regular object/string data
+      else if (typeof data === 'object' || typeof data === 'string') {
+        errorData = data;
+      }
+      // Handle Buffer directly
+      else if (Buffer.isBuffer(data)) {
+        try {
+          errorData = JSON.parse(data.toString());
+        } catch {
+          errorData = data.toString();
+        }
+      }
+      else {
+        errorData = data;
+      }
+      details.details = errorData;
+    } 
+    // Check error.response.body
+    else if (error.response?.body) {
       try {
-        details.details = JSON.parse(error.response.body);
+        if (Buffer.isBuffer(error.response.body)) {
+          errorData = JSON.parse(error.response.body.toString());
+        } else if (typeof error.response.body === 'string') {
+          errorData = JSON.parse(error.response.body);
+        } else {
+          errorData = error.response.body;
+        }
+        details.details = errorData;
       } catch {
         details.details = error.response.body;
+        errorData = error.response.body;
       }
-    } else if (error.body) {
+    } 
+    // Check error.body directly
+    else if (error.body) {
       try {
-        details.details = JSON.parse(error.body);
+        if (Buffer.isBuffer(error.body)) {
+          errorData = JSON.parse(error.body.toString());
+        } else if (typeof error.body === 'string') {
+          errorData = JSON.parse(error.body);
+        } else {
+          errorData = error.body;
+        }
+        details.details = errorData;
       } catch {
         details.details = error.body;
+        errorData = error.body;
+      }
+    }
+
+    // Extract readable error fields
+    if (errorData) {
+      if (typeof errorData === 'object' && errorData !== null) {
+        details.title = errorData.title || null;
+        details.detail = errorData.detail || errorData.message || null;
+        details.invalid_parameters = errorData.invalid_parameters || null;
+        details.errors = errorData.errors || null;
+      } else if (typeof errorData === 'string') {
+        try {
+          const parsed = JSON.parse(errorData);
+          details.title = parsed.title || null;
+          details.detail = parsed.detail || parsed.message || null;
+          details.invalid_parameters = parsed.invalid_parameters || null;
+          details.errors = parsed.errors || null;
+        } catch {
+          details.detail = errorData;
+        }
       }
     }
 
