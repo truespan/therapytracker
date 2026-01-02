@@ -318,6 +318,17 @@ class Organization {
   }
 
   static async getPartners(orgId) {
+    // Ensure last_login column exists in auth_credentials table
+    try {
+      await db.query(`
+        ALTER TABLE auth_credentials 
+        ADD COLUMN IF NOT EXISTS last_login TIMESTAMP
+      `);
+    } catch (error) {
+      // Column might already exist or there's a permission issue, continue anyway
+      console.log('Note: Could not ensure last_login column exists:', error.message);
+    }
+
     const query = `
       SELECT 
         p.*,

@@ -174,7 +174,17 @@ class Auth {
   }
 
   static async updateLastLogin(userType, referenceId) {
-    // Update last_login, handling the case where the column might not exist yet
+    // Ensure last_login column exists first
+    try {
+      await db.query('ALTER TABLE auth_credentials ADD COLUMN IF NOT EXISTS last_login TIMESTAMP');
+    } catch (alterError) {
+      // Column might already exist, ignore the error
+      if (alterError.code !== '42703' && alterError.code !== '42P16') {
+        console.error('Error ensuring last_login column exists:', alterError.message);
+      }
+    }
+
+    // Update last_login
     const query = `
       UPDATE auth_credentials
       SET last_login = CURRENT_TIMESTAMP
@@ -183,22 +193,16 @@ class Auth {
     `;
     try {
       const result = await db.query(query, [userType, referenceId]);
-      return result.rows[0];
-    } catch (error) {
-      // If column doesn't exist, try to add it and retry
-      if (error.code === '42703') { // column does not exist
-        try {
-          await db.query('ALTER TABLE auth_credentials ADD COLUMN IF NOT EXISTS last_login TIMESTAMP');
-          const retryResult = await db.query(query, [userType, referenceId]);
-          return retryResult.rows[0];
-        } catch (alterError) {
-          console.error('Error adding last_login column:', alterError);
-          // Return null if we can't update, but don't fail the login
-          return null;
-        }
+      if (result.rows.length > 0) {
+        console.log(`[AUTH] Updated last_login for ${userType} ID ${referenceId}: ${result.rows[0].last_login}`);
+        return result.rows[0];
+      } else {
+        console.warn(`[AUTH] No auth_credentials found for ${userType} ID ${referenceId} to update last_login`);
+        return null;
       }
-      console.error('Error updating last_login:', error);
-      // Return null if we can't update, but don't fail the login
+    } catch (error) {
+      console.error(`[AUTH] Error updating last_login for ${userType} ID ${referenceId}:`, error.message);
+      // Return null if we can't update, but don't fail the operation
       return null;
     }
   }
