@@ -611,31 +611,40 @@ const assignTrialPlan = async (req, res) => {
       return res.status(400).json({ error: 'Partner does not belong to this organization' });
     }
 
-    // Verify plan is a trial plan (has plan_duration_days)
+    // Verify plan exists and is either a trial plan (has plan_duration_days) or Free Plan
     const plan = await SubscriptionPlan.findById(subscription_plan_id);
     if (!plan) {
       return res.status(404).json({ error: 'Subscription plan not found' });
     }
     
-    if (!plan.plan_duration_days || plan.plan_duration_days <= 0) {
+    // Check if plan is active
+    if (!plan.is_active) {
       return res.status(400).json({ 
-        error: 'Selected plan is not a trial plan. Only trial plans can be assigned by organizations.' 
+        error: 'Selected plan is not active.' 
+      });
+    }
+    
+    // Check if plan is Free Plan
+    const isFreePlan = plan.plan_name && plan.plan_name.toLowerCase() === 'free plan';
+    
+    // If not Free Plan, verify it's a trial plan (has plan_duration_days > 0)
+    if (!isFreePlan && (!plan.plan_duration_days || plan.plan_duration_days <= 0)) {
+      return res.status(400).json({ 
+        error: 'Selected plan must be either Free Plan or a trial plan (with plan duration).' 
       });
     }
 
     // Check partner's current subscription eligibility
     const currentSubscriptions = await PartnerSubscription.findByPartnerId(partner_id);
-    let isEligible = true;
-    let isRepeatTrial = false;
     
     if (currentSubscriptions.length > 0) {
       const currentSub = currentSubscriptions[0];
       
       // Check if current plan is Free Plan
-      const isFreePlan = currentSub.plan_name && currentSub.plan_name.toLowerCase().includes('free');
+      const currentIsFreePlan = currentSub.plan_name && currentSub.plan_name.toLowerCase().includes('free');
       
       // Check if current plan is a paid plan (not Free Plan and has price > 0)
-      const isPaidPlan = !isFreePlan && (
+      const isPaidPlan = !currentIsFreePlan && (
         (currentSub.individual_monthly_price && currentSub.individual_monthly_price > 0) ||
         (currentSub.individual_quarterly_price && currentSub.individual_quarterly_price > 0) ||
         (currentSub.individual_yearly_price && currentSub.individual_yearly_price > 0)
@@ -643,31 +652,42 @@ const assignTrialPlan = async (req, res) => {
       
       if (isPaidPlan) {
         return res.status(400).json({ 
-          error: 'Cannot assign trial plan. Therapist already has a paid subscription plan.',
+          error: 'Cannot assign plan. Therapist already has a paid subscription plan.',
           current_plan: currentSub.plan_name
         });
       }
     }
 
-    // Check trial history to warn about repeat trials
-    const trialHistoryQuery = `
-      SELECT COUNT(*) as trial_count
-      FROM partner_subscriptions ps
-      JOIN subscription_plans sp ON ps.subscription_plan_id = sp.id
-      WHERE ps.partner_id = $1 
-        AND sp.plan_duration_days IS NOT NULL 
-        AND sp.plan_duration_days > 0
-    `;
-    const historyResult = await db.query(trialHistoryQuery, [partner_id]);
-    const trialCount = parseInt(historyResult.rows[0].trial_count);
-    isRepeatTrial = trialCount > 0;
+    // Check trial history to warn about repeat trials (only for trial plans, not Free Plan)
+    let isRepeatTrial = false;
+    let trialCount = 0;
+    
+    if (!isFreePlan) {
+      const trialHistoryQuery = `
+        SELECT COUNT(*) as trial_count
+        FROM partner_subscriptions ps
+        JOIN subscription_plans sp ON ps.subscription_plan_id = sp.id
+        WHERE ps.partner_id = $1 
+          AND sp.plan_duration_days IS NOT NULL 
+          AND sp.plan_duration_days > 0
+      `;
+      const historyResult = await db.query(trialHistoryQuery, [partner_id]);
+      trialCount = parseInt(historyResult.rows[0].trial_count);
+      isRepeatTrial = trialCount > 0;
+    }
 
     // Calculate subscription dates
     const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+    let endDate = null;
+    
+    // For trial plans, calculate end date based on plan_duration_days
+    // For Free Plan, end date remains NULL (no expiration)
+    if (!isFreePlan && plan.plan_duration_days && plan.plan_duration_days > 0) {
+      endDate = new Date();
+      endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+    }
 
-    // Remove existing subscriptions and create new trial
+    // Remove existing subscriptions and create new subscription
     await PartnerSubscription.bulkRemove([partner_id]);
     
     const subscription = await PartnerSubscription.create({
@@ -676,19 +696,27 @@ const assignTrialPlan = async (req, res) => {
       billing_period
     });
 
-    // Update with dates
-    await PartnerSubscription.update(subscription.id, {
+    // Update with dates (endDate can be NULL for Free Plan)
+    const updateData = {
       subscription_start_date: startDate,
-      subscription_end_date: endDate,
       payment_status: 'paid'
-    });
+    };
+    
+    if (endDate) {
+      updateData.subscription_end_date = endDate;
+    }
+    
+    await PartnerSubscription.update(subscription.id, updateData);
+
+    // Get the updated subscription with plan details
+    const updatedSubscription = await PartnerSubscription.findById(subscription.id);
 
     res.json({
       success: true,
-      message: 'Trial plan assigned successfully',
-      subscription,
+      message: isFreePlan ? 'Free Plan assigned successfully' : 'Trial plan assigned successfully',
+      subscription: updatedSubscription,
       warning: isRepeatTrial ? 'This is a repeat trial for this therapist' : null,
-      trial_count: trialCount + 1
+      trial_count: isFreePlan ? 0 : trialCount + 1
     });
 
   } catch (error) {

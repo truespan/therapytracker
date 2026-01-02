@@ -50,14 +50,16 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     try {
       const response = await api.get('/subscription-plans/individual');
       if (response.data.success) {
-        // Filter to only trial plans (those with plan_duration_days > 0)
-        const trials = response.data.plans.filter(p => 
-          p.plan_duration_days && p.plan_duration_days > 0
-        );
-        setTrialPlans(trials);
+        // Filter to trial plans (those with plan_duration_days > 0) or Free Plan
+        const availablePlans = response.data.plans.filter(p => {
+          const isFreePlan = p.plan_name && p.plan_name.toLowerCase() === 'free plan';
+          const isTrialPlan = p.plan_duration_days && p.plan_duration_days > 0;
+          return isFreePlan || isTrialPlan;
+        });
+        setTrialPlans(availablePlans);
       }
     } catch (err) {
-      console.error('Failed to load trial plans:', err);
+      console.error('Failed to load plans:', err);
     }
   };
 
@@ -100,7 +102,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     return !isPaid;
   };
 
-  // Handle trial assignment
+  // Handle plan assignment
   const handleAssignTrial = async () => {
     if (!selectedPartner || !selectedTrialPlan) return;
 
@@ -112,7 +114,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
         organizationId,
         selectedPartner.id,
         selectedTrialPlan.id,
-        'monthly' // Default billing period for trial plans (not used for duration calculation)
+        'monthly' // Default billing period (monthly for both trial plans and Free Plan)
       );
       
       if (response.data.warning) {
@@ -126,7 +128,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
       setSelectedTrialPlan(null);
       loadData(); // Refresh
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to assign trial plan');
+      setError(err.response?.data?.error || 'Failed to assign plan');
     } finally {
       setAssigning(false);
     }
@@ -183,7 +185,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
             Therapist Subscription Management
           </h2>
           <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
-            Assign trial plans to therapists in your organization. Therapists can also select their own subscription plans.
+            Change plans for therapists in your organization. You can assign Free Plan or trial plans. Therapists can also select their own subscription plans.
           </p>
         </div>
       </div>
@@ -297,7 +299,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                       )}
                     </div>
                     
-                    {/* Trial Assignment Button */}
+                    {/* Plan Assignment Button */}
                     <div className="ml-4">
                       {eligible ? (
                         <button
@@ -308,7 +310,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                           className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                         >
                           <Gift className="h-4 w-4" />
-                          <span>Assign Trial</span>
+                          <span>Change Plan</span>
                         </button>
                       ) : (
                         <span className="text-sm text-gray-500 dark:text-dark-text-tertiary italic">
@@ -330,7 +332,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
           <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">
-                Assign Trial Plan
+                Change Plan
               </h3>
               <button
                 onClick={() => {
@@ -353,13 +355,13 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
             {trialPlans.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <AlertCircle className="h-12 w-12 mx-auto mb-2" />
-                <p>No trial plans available</p>
+                <p>No plans available</p>
               </div>
             ) : (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                    Select Trial Plan
+                    Select Plan
                   </label>
                   <select
                     value={selectedTrialPlan?.id || ''}
@@ -370,15 +372,24 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                     className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <option value="">-- Select a plan --</option>
-                    {trialPlans.map(plan => (
-                      <option key={plan.id} value={plan.id}>
-                        {plan.plan_name} ({plan.plan_duration_days} days)
-                      </option>
-                    ))}
+                    {trialPlans.map(plan => {
+                      const isFreePlan = plan.plan_name && plan.plan_name.toLowerCase() === 'free plan';
+                      const displayText = isFreePlan 
+                        ? plan.plan_name 
+                        : `${plan.plan_name} (${plan.plan_duration_days} days)`;
+                      return (
+                        <option key={plan.id} value={plan.id}>
+                          {displayText}
+                        </option>
+                      );
+                    })}
                   </select>
                   {selectedTrialPlan && (
                     <p className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
-                      This trial will expire in {selectedTrialPlan.plan_duration_days} days from assignment.
+                      {selectedTrialPlan.plan_name && selectedTrialPlan.plan_name.toLowerCase() === 'free plan' 
+                        ? 'Free Plan has no expiration date.'
+                        : `This trial will expire in ${selectedTrialPlan.plan_duration_days} days from assignment.`
+                      }
                     </p>
                   )}
                 </div>
@@ -400,7 +411,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                     disabled={!selectedTrialPlan || assigning}
                     className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
-                    {assigning ? 'Assigning...' : 'Assign Trial'}
+                    {assigning ? 'Changing...' : 'Change Plan'}
                   </button>
                 </div>
               </div>

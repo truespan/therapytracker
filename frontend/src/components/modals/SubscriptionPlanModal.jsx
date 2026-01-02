@@ -345,7 +345,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-2">
               {isOnTrialPlan 
-                ? `You are in "${trialPlanName}" plan now. You can cancel this message and proceed.`
+                ? `You are in "${trialPlanName}" plan now. You can cancel and proceed.`
                 : 'Select Your Subscription Plan'}
             </h2>
             <p className="text-primary-100 dark:text-primary-200">

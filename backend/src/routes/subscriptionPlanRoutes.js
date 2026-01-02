@@ -7,23 +7,21 @@ const subscriptionPlanController = require('../controllers/subscriptionPlanContr
 // Public routes - anyone can view plans
 router.get('/', subscriptionPlanController.getAllPlans);
 router.get('/active', subscriptionPlanController.getActivePlans);
+
+// Specific routes must come before parameterized routes
+router.get('/check-first-login', authenticateToken, checkRole('partner', 'organization'), subscriptionPlanController.checkFirstLogin);
+router.post('/log-event', authenticateToken, checkRole('partner', 'organization'), subscriptionPlanController.logSubscriptionEvent);
+router.post('/calculate', authenticateToken, subscriptionPlanController.calculateOrganizationPrice);
+router.get('/individual/selection', authenticateToken, checkRole('partner'), subscriptionPlanController.getIndividualPlansForSelection);
+router.get('/organization/selection', authenticateToken, checkRole('organization'), subscriptionPlanController.getOrganizationPlansForSelection);
+
+// Parameterized routes must come last
 router.get('/:id', subscriptionPlanController.getPlanById);
 
 // Admin-only routes
 router.post('/', authenticateToken, checkRole('admin'), subscriptionPlanController.createPlan);
 router.put('/:id', authenticateToken, checkRole('admin'), subscriptionPlanController.updatePlan);
 router.delete('/:id', authenticateToken, checkRole('admin'), subscriptionPlanController.deletePlan);
-
-// Price calculation route (can be used by organizations)
-router.post('/calculate', authenticateToken, subscriptionPlanController.calculateOrganizationPrice);
-
-// Plan selection routes for partners and organizations
-router.get('/individual/selection', authenticateToken, checkRole('partner'), subscriptionPlanController.getIndividualPlansForSelection);
-router.get('/organization/selection', authenticateToken, checkRole('organization'), subscriptionPlanController.getOrganizationPlansForSelection);
-
-// Subscription plan event tracking routes
-router.post('/log-event', authenticateToken, checkRole('partner', 'organization'), subscriptionPlanController.logSubscriptionEvent);
-router.get('/check-first-login', authenticateToken, checkRole('partner', 'organization'), subscriptionPlanController.checkFirstLogin);
 
 module.exports = router;
 
