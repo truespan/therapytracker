@@ -109,10 +109,10 @@ const PlanSelectionModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-7xl w-full my-8">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-dark-border flex items-center justify-between sticky top-0 bg-white dark:bg-dark-bg-tertiary z-10">
+        <div className="p-6 border-b border-gray-200 dark:border-dark-border flex items-center justify-between flex-shrink-0 bg-white dark:bg-dark-bg-tertiary">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
               <CreditCard className="h-6 w-6 mr-2 text-indigo-600 dark:text-dark-primary-500" />
@@ -135,7 +135,7 @@ const PlanSelectionModal = ({
 
         {/* Billing Period Tabs */}
         {availablePeriods.length > 1 && (
-          <div className="p-6 border-b border-gray-200 dark:border-dark-border">
+          <div className="p-6 border-b border-gray-200 dark:border-dark-border flex-shrink-0 bg-white dark:bg-dark-bg-tertiary">
             <div className="flex space-x-2 bg-gray-100 dark:bg-dark-bg-secondary rounded-lg p-1">
               {availablePeriods.map((period) => (
                 <button
@@ -154,8 +154,8 @@ const PlanSelectionModal = ({
           </div>
         )}
 
-        {/* Plans Grid */}
-        <div className="p-6">
+        {/* Plans Grid - Scrollable */}
+        <div className="p-6 overflow-y-auto flex-1">
           {!plans || plans.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-dark-text-secondary">
               <CreditCard className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-secondary" />
@@ -352,7 +352,7 @@ const PlanSelectionModal = ({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg-secondary">
+        <div className="p-6 border-t border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg-secondary flex-shrink-0">
           <p className="text-sm text-gray-600 dark:text-dark-text-secondary text-center">
             All plans include basic appointment scheduling and simple case notes
           </p>
