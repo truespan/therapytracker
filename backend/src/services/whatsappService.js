@@ -685,47 +685,88 @@ Please prepare for the session and contact the client if needed.
     const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
     const toNumber = toPhoneNumber.replace('+', '');
     
-    if (this.vonageClient) {
-      // Use Vonage SDK with JWT authentication
-      const result = await this.vonageClient.messages.send({
-        message_type: 'template',
-        channel: 'whatsapp',
-        to: toNumber,
-        from: fromNumber,
-        template: {
-          name: templateName,
-          parameters: templateParams.map(param => ({ type: 'text', text: String(param) }))
-        },
-        whatsapp: {
-          policy: 'deterministic',
-          locale: languageCode
-        }
-      });
-      return { success: true, messageId: result.message_uuid };
-    } else {
-      // Fallback to Basic Auth with direct API call
-      const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+    // Log template details for debugging
+    console.log('[WhatsApp Template] Sending template message:');
+    console.log('  - Template Name:', templateName);
+    console.log('  - Parameters Count:', templateParams.length);
+    console.log('  - Parameters:', templateParams.map((p, i) => `[${i + 1}] "${p}"`).join(', '));
+    console.log('  - From:', fromNumber);
+    console.log('  - To:', toNumber);
+    console.log('  - Language:', languageCode);
+    
+    const templatePayload = {
+      name: templateName,
+      parameters: templateParams.map(param => ({ type: 'text', text: String(param) }))
+    };
+    
+    try {
+      if (this.vonageClient) {
+        // Use Vonage SDK with JWT authentication
+        const result = await this.vonageClient.messages.send({
+          message_type: 'template',
+          channel: 'whatsapp',
+          to: toNumber,
+          from: fromNumber,
+          template: templatePayload,
+          whatsapp: {
+            policy: 'deterministic',
+            locale: languageCode
+          }
+        });
+        console.log('[WhatsApp Template] Template message sent successfully:', result.message_uuid);
+        return { success: true, messageId: result.message_uuid };
+      } else {
+        // Fallback to Basic Auth with direct API call
+        const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+        
+        const response = await axios.post(this.baseUrl, {
+          from: fromNumber,
+          to: toNumber,
+          channel: 'whatsapp',
+          message_type: 'template',
+          template: templatePayload,
+          whatsapp: {
+            policy: 'deterministic',
+            locale: languageCode
+          }
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${auth}`
+          }
+        });
+        console.log('[WhatsApp Template] Template message sent successfully:', response.data.message_uuid);
+        return { success: true, messageId: response.data.message_uuid };
+      }
+    } catch (error) {
+      // Enhanced error logging
+      const errorDetails = this.extractErrorDetails(error);
+      console.error('[WhatsApp Template] Template message failed:');
+      console.error('  - Template Name:', templateName);
+      console.error('  - Parameters Count:', templateParams.length);
+      console.error('  - Parameters:', JSON.stringify(templateParams, null, 2));
+      console.error('  - Error Status:', errorDetails.status || errorDetails.statusCode);
+      console.error('  - Error Message:', error.message);
+      console.error('  - Error Details:', JSON.stringify(errorDetails.details, null, 2));
       
-      const response = await axios.post(this.baseUrl, {
-        from: fromNumber,
-        to: toNumber,
-        channel: 'whatsapp',
-        message_type: 'template',
-        template: {
-          name: templateName,
-          parameters: templateParams.map(param => ({ type: 'text', text: String(param) }))
-        },
-        whatsapp: {
-          policy: 'deterministic',
-          locale: languageCode
+      // Log Vonage-specific error information
+      if (errorDetails.details) {
+        if (errorDetails.details.title) {
+          console.error('  - Error Title:', errorDetails.details.title);
         }
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`
+        if (errorDetails.details.detail) {
+          console.error('  - Error Detail:', errorDetails.details.detail);
         }
-      });
-      return { success: true, messageId: response.data.message_uuid };
+        if (errorDetails.details.invalid_parameters) {
+          console.error('  - Invalid Parameters:', JSON.stringify(errorDetails.details.invalid_parameters, null, 2));
+        }
+        if (errorDetails.details.errors) {
+          console.error('  - Errors:', JSON.stringify(errorDetails.details.errors, null, 2));
+        }
+      }
+      
+      // Re-throw to allow fallback handling
+      throw error;
     }
   }
 
@@ -750,6 +791,11 @@ Please prepare for the session and contact the client if needed.
         try {
           console.log('[WhatsApp Service] Attempting to send appointment confirmation via template:', this.templateNames.appointmentConfirmation);
           const templateParams = this.prepareAppointmentConfirmationTemplateParams(appointmentData);
+          console.log('[WhatsApp Service] Prepared template parameters:', {
+            count: templateParams.length,
+            params: templateParams,
+            includePaymentStatus: this.includePaymentStatusInTemplate
+          });
           const templateResult = await this.sendTemplateMessage(
             toPhoneNumber,
             this.templateNames.appointmentConfirmation,
@@ -760,7 +806,14 @@ Please prepare for the session and contact the client if needed.
           usedTemplate = true;
           console.log('[WhatsApp Service] Template message sent successfully:', messageId);
         } catch (templateError) {
-          console.warn('[WhatsApp Service] Template message failed, falling back to text:', templateError.message);
+          const errorDetails = this.extractErrorDetails(templateError);
+          console.error('[WhatsApp Service] Template message failed, falling back to text message');
+          console.error('[WhatsApp Service] Error Summary:', {
+            status: errorDetails.status || errorDetails.statusCode,
+            message: templateError.message,
+            title: errorDetails.details?.title,
+            detail: errorDetails.details?.detail
+          });
           // Fall through to text message
         }
       }
