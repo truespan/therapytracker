@@ -237,9 +237,39 @@ const createPartner = async (req, res) => {
         password_hash: passwordHash
       }, client);
 
-      // If organization is TheraPTrack controlled, automatically assign Free Plan
+      // Assign subscription plan based on organization type
+      const PartnerSubscription = require('../models/PartnerSubscription');
+      
       if (organization.theraptrack_controlled) {
-        const PartnerSubscription = require('../models/PartnerSubscription');
+        // TheraPTrack controlled: Use admin-configured default
+        const SystemSettings = require('../models/SystemSettings');
+        const defaultPlanId = await SystemSettings.getDefaultSubscriptionPlanId();
+        
+        if (defaultPlanId) {
+          // Calculate end date based on plan
+          const plan = await SubscriptionPlan.findById(defaultPlanId);
+          const startDate = new Date();
+          let endDate = null;
+          
+          if (plan && plan.plan_duration_days && plan.plan_duration_days > 0) {
+            // Trial plan with fixed duration
+            endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+          }
+          
+          await PartnerSubscription.create({
+            partner_id: partner.id,
+            subscription_plan_id: defaultPlanId,
+            billing_period: 'monthly',
+            subscription_start_date: startDate,
+            subscription_end_date: endDate
+          }, client);
+        } else {
+          // Fallback to Free Plan if no default configured
+          await PartnerSubscription.getOrCreateFreePlan(partner.id, client);
+        }
+      } else {
+        // Non-TheraPTrack controlled: Always Free Plan
         await PartnerSubscription.getOrCreateFreePlan(partner.id, client);
       }
 

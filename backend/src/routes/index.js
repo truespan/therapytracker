@@ -167,6 +167,9 @@ router.post('/organizations/:id/partner-subscriptions/assign-all', authenticateT
 router.put('/organizations/:id/partner-subscriptions/:subscriptionId', authenticateToken, checkRole('organization'), partnerSubscriptionController.updateSubscription);
 router.post('/organizations/:id/partner-subscriptions/remove', authenticateToken, checkRole('organization'), partnerSubscriptionController.removeSubscriptions);
 
+// Organization assigns trial plan to therapist (TheraPTrack controlled orgs only)
+router.post('/partner-subscriptions/organizations/:organizationId/assign-trial', authenticateToken, checkRole('organization', 'admin'), partnerSubscriptionController.assignTrialPlan);
+
 // ==================== APPOINTMENT ROUTES ====================
 router.post('/appointments', authenticateToken, appointmentController.createAppointment);
 router.get('/appointments/check-conflicts', authenticateToken, appointmentController.checkAppointmentConflicts);
@@ -292,6 +295,10 @@ router.post('/admin/earnings/check-and-create', authenticateToken, checkRole('ad
 router.post('/admin/earnings/backfill-order-notes', authenticateToken, checkRole('admin'), adminController.backfillOrderNotes);
 router.get('/admin/partners', authenticateToken, checkRole('admin'), adminController.getAllPartners);
 router.put('/admin/partners/:id', authenticateToken, checkRole('admin'), adminController.updatePartner);
+
+// System settings (admin only)
+router.get('/admin/default-subscription-plan', authenticateToken, checkRole('admin'), adminController.getDefaultSubscriptionPlan);
+router.post('/admin/default-subscription-plan', authenticateToken, checkRole('admin'), adminController.setDefaultSubscriptionPlan);
 
 // Report template management routes - admin only
 router.get('/admin/report-templates', authenticateToken, checkRole('admin'), reportTemplateController.getAllTemplates);

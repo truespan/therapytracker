@@ -176,6 +176,9 @@ const verifyPayment = async (req, res) => {
  */
 async function updateSubscriptionAfterPayment(dbOrder, dbPayment) {
   try {
+    // Fetch the plan to get plan_duration_days
+    const plan = await SubscriptionPlan.findById(dbOrder.subscription_plan_id);
+    
     if (dbOrder.customer_type === 'partner') {
       // Check if partner already has a subscription
       const existingSubscriptions = await PartnerSubscription.findByPartnerId(dbOrder.customer_id);
@@ -190,7 +193,7 @@ async function updateSubscriptionAfterPayment(dbOrder, dbPayment) {
           razorpay_payment_id: dbPayment.razorpay_payment_id,
           payment_status: 'paid',
           subscription_start_date: new Date(),
-          subscription_end_date: calculateEndDate(dbOrder.billing_period)
+          subscription_end_date: calculateEndDate(plan, dbOrder.billing_period)
         });
         // Fetch updated subscription with plan details
         subscription = await PartnerSubscription.findById(subscription.id);
@@ -207,7 +210,7 @@ async function updateSubscriptionAfterPayment(dbOrder, dbPayment) {
           razorpay_payment_id: dbPayment.razorpay_payment_id,
           payment_status: 'paid',
           subscription_start_date: new Date(),
-          subscription_end_date: calculateEndDate(dbOrder.billing_period)
+          subscription_end_date: calculateEndDate(plan, dbOrder.billing_period)
         });
         // Fetch updated subscription with plan details
         subscription = await PartnerSubscription.findById(subscription.id);
@@ -221,7 +224,7 @@ async function updateSubscriptionAfterPayment(dbOrder, dbPayment) {
         subscription_plan_id: dbOrder.subscription_plan_id,
         subscription_billing_period: dbOrder.billing_period,
         subscription_start_date: new Date(),
-        subscription_end_date: calculateEndDate(dbOrder.billing_period),
+        subscription_end_date: calculateEndDate(plan, dbOrder.billing_period),
         razorpay_subscription_id: null, // For one-time payments
         payment_status: 'paid'
       });
@@ -240,24 +243,34 @@ async function updateSubscriptionAfterPayment(dbOrder, dbPayment) {
 }
 
 /**
- * Calculate subscription end date based on billing period
+ * Calculate subscription end date based on plan duration or billing period
+ * @param {Object} plan - Subscription plan object with plan_duration_days field
+ * @param {string} billingPeriod - Billing period (monthly, quarterly, yearly)
+ * @returns {Date} End date
  */
-function calculateEndDate(billingPeriod) {
+function calculateEndDate(plan, billingPeriod) {
   const startDate = new Date();
   const endDate = new Date(startDate);
 
-  switch (billingPeriod) {
-    case 'monthly':
-      endDate.setMonth(endDate.getMonth() + 1);
-      break;
-    case 'quarterly':
-      endDate.setMonth(endDate.getMonth() + 3);
-      break;
-    case 'yearly':
-      endDate.setFullYear(endDate.getFullYear() + 1);
-      break;
-    default:
-      endDate.setMonth(endDate.getMonth() + 1);
+  // Check if plan has plan_duration_days set (for trial plans like 3-day trial)
+  if (plan && plan.plan_duration_days && plan.plan_duration_days > 0) {
+    // Use plan_duration_days if specified (e.g., 3 for 3-day trial)
+    endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+  } else {
+    // Fall back to billing period calculation for regular plans
+    switch (billingPeriod) {
+      case 'monthly':
+        endDate.setMonth(endDate.getMonth() + 1);
+        break;
+      case 'quarterly':
+        endDate.setMonth(endDate.getMonth() + 3);
+        break;
+      case 'yearly':
+        endDate.setFullYear(endDate.getFullYear() + 1);
+        break;
+      default:
+        endDate.setMonth(endDate.getMonth() + 1);
+    }
   }
 
   return endDate;

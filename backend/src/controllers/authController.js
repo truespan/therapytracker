@@ -295,6 +295,27 @@ const login = async (req, res) => {
             theraptrack_controlled: org.theraptrack_controlled,
             partner_terms_accepted: userDetails.terms_accepted
           });
+
+          // For partners in TheraPTrack orgs, check if subscription expired
+          if (org.theraptrack_controlled) {
+            const PartnerSubscription = require('../models/PartnerSubscription');
+            const activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+            
+            if (!activeSub || !PartnerSubscription.isActive(activeSub)) {
+              // Subscription expired, revert to Free Plan
+              console.log(`[LOGIN] Partner ${userDetails.id} subscription expired, reverting to Free Plan`);
+              await PartnerSubscription.revertToFreePlan(userDetails.id);
+              // Refresh partner data to include new subscription
+              userDetails = await Partner.findById(userDetails.id);
+              // Re-add organization object
+              userDetails.organization = {
+                id: org.id,
+                name: org.name,
+                theraptrack_controlled: org.theraptrack_controlled ?? false,
+                video_sessions_enabled: org.video_sessions_enabled ?? true
+              };
+            }
+          }
         }
         break;
       case 'organization':
@@ -660,18 +681,61 @@ const therapistSignup = async (req, res) => {
         password_hash: passwordHash
       }, client);
 
-      // Assign selected subscription plan or default to Free Plan
+      // Assign subscription plan based on organization type
       const PartnerSubscription = require('../models/PartnerSubscription');
+      const SubscriptionPlan = require('../models/SubscriptionPlan');
+      
       if (partnerData.subscription_plan_id) {
-        // Use the selected subscription plan
+        // Use the selected subscription plan (from signup form)
+        const plan = await SubscriptionPlan.findById(parseInt(partnerData.subscription_plan_id));
+        const startDate = new Date();
+        let endDate = null;
+        
+        if (plan && plan.plan_duration_days && plan.plan_duration_days > 0) {
+          // Trial plan with fixed duration
+          endDate = new Date(startDate);
+          endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+        }
+        
         await PartnerSubscription.create({
           partner_id: partner.id,
           subscription_plan_id: parseInt(partnerData.subscription_plan_id),
-          billing_period: 'monthly' // Always monthly for individual therapists
+          billing_period: 'monthly',
+          subscription_start_date: startDate,
+          subscription_end_date: endDate
         }, client);
       } else {
-        // Fallback to Free Plan if no plan selected
-        await PartnerSubscription.getOrCreateFreePlan(partner.id, client);
+        // Determine default based on organization type
+        if (organization.theraptrack_controlled) {
+          // TheraPTrack controlled: Use admin-configured default
+          const SystemSettings = require('../models/SystemSettings');
+          const defaultPlanId = await SystemSettings.getDefaultSubscriptionPlanId();
+          
+          if (defaultPlanId) {
+            const plan = await SubscriptionPlan.findById(defaultPlanId);
+            const startDate = new Date();
+            let endDate = null;
+            
+            if (plan && plan.plan_duration_days && plan.plan_duration_days > 0) {
+              // Trial plan with fixed duration
+              endDate = new Date(startDate);
+              endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+            }
+            
+            await PartnerSubscription.create({
+              partner_id: partner.id,
+              subscription_plan_id: defaultPlanId,
+              billing_period: 'monthly',
+              subscription_start_date: startDate,
+              subscription_end_date: endDate
+            }, client);
+          } else {
+            await PartnerSubscription.getOrCreateFreePlan(partner.id, client);
+          }
+        } else {
+          // Non-TheraPTrack controlled: Always Free Plan
+          await PartnerSubscription.getOrCreateFreePlan(partner.id, client);
+        }
       }
 
       return partner;

@@ -383,6 +383,33 @@ class PartnerSubscription {
     // Not cancelled, check if not expired
     return !endDate || endDate > now;
   }
+
+  /**
+   * Revert expired subscription to Free Plan
+   * @param {number} partnerId - Partner ID
+   * @returns {Promise<Object>} New Free Plan subscription
+   */
+  static async revertToFreePlan(partnerId) {
+    // Find Free Plan
+    const freePlanQuery = `SELECT id FROM subscription_plans WHERE plan_name = 'Free Plan' AND is_active = TRUE LIMIT 1`;
+    const freePlanResult = await db.query(freePlanQuery);
+    
+    if (freePlanResult.rows.length === 0) {
+      throw new Error('Free Plan not found');
+    }
+    
+    const freePlanId = freePlanResult.rows[0].id;
+    
+    // Remove existing subscriptions
+    await this.bulkRemove([partnerId]);
+    
+    // Create Free Plan subscription
+    return await this.create({
+      partner_id: partnerId,
+      subscription_plan_id: freePlanId,
+      billing_period: 'monthly'
+    });
+  }
 }
 
 module.exports = PartnerSubscription;

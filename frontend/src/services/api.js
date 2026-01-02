@@ -126,6 +126,14 @@ export const organizationAPI = {
   assignPartnerSubscriptionsToAll: (id, data) => api.post(`/organizations/${id}/partner-subscriptions/assign-all`, data),
   updatePartnerSubscription: (id, subscriptionId, data) => api.put(`/organizations/${id}/partner-subscriptions/${subscriptionId}`, data),
   removePartnerSubscriptions: (id, data) => api.post(`/organizations/${id}/partner-subscriptions/remove`, data),
+  
+  // Trial plan assignment (TheraPTrack controlled orgs only)
+  assignTrialPlan: (orgId, partnerId, planId, billingPeriod) =>
+    api.post(`/partner-subscriptions/organizations/${orgId}/assign-trial`, {
+      partner_id: partnerId,
+      subscription_plan_id: planId,
+      billing_period: billingPeriod
+    }),
 
   // Partner management
   createPartner: (organizationId, data) => api.post(`/organizations/${organizationId}/partners`, data),
@@ -208,7 +216,9 @@ export const subscriptionPlanAPI = {
   getOrganizationPlansForSelection: (therapistCount) =>
     api.get(`/subscription-plans/organization/selection?therapist_count=${therapistCount}`),
   logEvent: (data) => api.post('/subscription-plans/log-event', data),
-  checkFirstLogin: () => api.get('/subscription-plans/check-first-login')
+  checkFirstLogin: () => api.get('/subscription-plans/check-first-login'),
+  getDefaultPlan: () => api.get('/admin/default-subscription-plan'),
+  setDefaultPlan: (planId) => api.post('/admin/default-subscription-plan', { plan_id: planId })
 };
 
 // Report Template APIs (for partners)

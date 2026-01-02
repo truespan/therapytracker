@@ -11,6 +11,11 @@ const SubscriptionPlansTab = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  
+  // Default plan state
+  const [defaultPlan, setDefaultPlan] = useState(null);
+  const [selectedDefaultPlan, setSelectedDefaultPlan] = useState('');
+  const [savingDefault, setSavingDefault] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -49,6 +54,7 @@ const SubscriptionPlansTab = () => {
 
   useEffect(() => {
     loadPlans();
+    loadDefaultPlan();
   }, []);
 
   const loadPlans = async () => {
@@ -61,6 +67,33 @@ const SubscriptionPlansTab = () => {
       setError('Failed to load subscription plans. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDefaultPlan = async () => {
+    try {
+      const response = await subscriptionPlanAPI.getDefaultPlan();
+      if (response.data.default_plan) {
+        setDefaultPlan(response.data.default_plan);
+        setSelectedDefaultPlan(response.data.default_plan.id.toString());
+      }
+    } catch (err) {
+      console.error('Failed to load default plan:', err);
+    }
+  };
+
+  const handleSaveDefaultPlan = async () => {
+    try {
+      setSavingDefault(true);
+      await subscriptionPlanAPI.setDefaultPlan(selectedDefaultPlan ? parseInt(selectedDefaultPlan) : null);
+      setSuccess('Default subscription plan updated successfully');
+      loadDefaultPlan();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update default plan');
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setSavingDefault(false);
     }
   };
 
@@ -362,6 +395,56 @@ const SubscriptionPlansTab = () => {
           <span className="text-red-700">{error}</span>
         </div>
       )}
+
+      {/* Default Subscription Plan Configuration */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">
+          Default Subscription Plan
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
+          Select the default plan for new TheraPTrack-controlled therapists and non-controlled organizations.
+          <br />
+          <span className="font-medium text-blue-700 dark:text-blue-400">
+            Only applicable for TheraPTrack controlled Therapist and Other Organizations account creation
+          </span>
+        </p>
+        
+        <div className="flex items-center space-x-4">
+          <select
+            value={selectedDefaultPlan}
+            onChange={(e) => setSelectedDefaultPlan(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          >
+            <option value="">No Default (Use Free Plan)</option>
+            {plans
+              .filter(plan => {
+                const isFreePlan = plan.plan_name.toLowerCase().includes('free');
+                const isTrialPlan = plan.plan_duration_days && plan.plan_duration_days > 0;
+                return isFreePlan || isTrialPlan;
+              })
+              .map(plan => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.plan_name}
+                  {plan.plan_duration_days ? ` (${plan.plan_duration_days} days trial)` : ''}
+                </option>
+              ))}
+          </select>
+          
+          <button
+            onClick={handleSaveDefaultPlan}
+            disabled={savingDefault}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+          >
+            {savingDefault ? 'Saving...' : 'Save Default'}
+          </button>
+        </div>
+        
+        {defaultPlan && (
+          <div className="mt-3 text-sm text-gray-700 dark:text-dark-text-secondary">
+            Current default: <span className="font-semibold">{defaultPlan.plan_name}</span>
+          </div>
+        )}
+      </div>
 
       {/* Plans Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">

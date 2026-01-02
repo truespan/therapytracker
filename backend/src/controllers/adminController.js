@@ -95,21 +95,55 @@ const createOrganization = async (req, res) => {
         password_hash: passwordHash
       }, client);
 
-      // Assign Free Plan by default
-      const freePlanResult = await client.query(
-        `SELECT id FROM subscription_plans WHERE plan_name = 'Free Plan' AND is_active = TRUE LIMIT 1`
-      );
-      
-      if (freePlanResult.rows.length > 0) {
-        const freePlanId = freePlanResult.rows[0].id;
-        const updatedOrg = await Organization.update(newOrg.id, {
-          subscription_plan_id: freePlanId,
-          subscription_billing_period: 'monthly'
-        }, client);
-        return updatedOrg;
-      } else {
-        console.warn('Free Plan not found - organization created without subscription plan');
+      // Assign subscription plan based on organization type
+      if (theraptrack_controlled) {
+        // TheraPTrack controlled orgs: Get full-feature plan (highest tier)
+        // For now, we'll skip automatic subscription assignment for TheraPTrack controlled orgs
+        // They should be manually assigned a plan by admin
+        console.log('[ADMIN] TheraPTrack controlled organization created - manual plan assignment required');
         return newOrg;
+      } else {
+        // Non-controlled organizations: Use admin-configured default
+        const SystemSettings = require('../models/SystemSettings');
+        const SubscriptionPlan = require('../models/SubscriptionPlan');
+        const defaultPlanId = await SystemSettings.getDefaultSubscriptionPlanId();
+        
+        if (defaultPlanId) {
+          const plan = await SubscriptionPlan.findById(defaultPlanId);
+          const startDate = new Date();
+          let endDate = null;
+          
+          if (plan && plan.plan_duration_days && plan.plan_duration_days > 0) {
+            // Trial plan with fixed duration
+            endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+          }
+          
+          const updatedOrg = await Organization.update(newOrg.id, {
+            subscription_plan_id: defaultPlanId,
+            subscription_billing_period: 'monthly',
+            subscription_start_date: startDate,
+            subscription_end_date: endDate
+          }, client);
+          return updatedOrg;
+        } else {
+          // Fallback to Free Plan if no default configured
+          const freePlanResult = await client.query(
+            `SELECT id FROM subscription_plans WHERE plan_name = 'Free Plan' AND is_active = TRUE LIMIT 1`
+          );
+          
+          if (freePlanResult.rows.length > 0) {
+            const freePlanId = freePlanResult.rows[0].id;
+            const updatedOrg = await Organization.update(newOrg.id, {
+              subscription_plan_id: freePlanId,
+              subscription_billing_period: 'monthly'
+            }, client);
+            return updatedOrg;
+          } else {
+            console.warn('Free Plan not found - organization created without subscription plan');
+            return newOrg;
+          }
+        }
       }
     });
 
@@ -953,6 +987,84 @@ const setForNewTherapists = async (req, res) => {
   }
 };
 
+/**
+ * Get default subscription plan setting
+ */
+const getDefaultSubscriptionPlan = async (req, res) => {
+  try {
+    const SystemSettings = require('../models/SystemSettings');
+    const SubscriptionPlan = require('../models/SubscriptionPlan');
+    
+    const planId = await SystemSettings.getDefaultSubscriptionPlanId();
+    
+    if (!planId) {
+      return res.json({
+        success: true,
+        default_plan: null
+      });
+    }
+    
+    const plan = await SubscriptionPlan.findById(planId);
+    
+    res.json({
+      success: true,
+      default_plan: plan
+    });
+  } catch (error) {
+    console.error('Get default subscription plan error:', error);
+    res.status(500).json({
+      error: 'Failed to get default subscription plan',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Set default subscription plan
+ */
+const setDefaultSubscriptionPlan = async (req, res) => {
+  try {
+    const { plan_id } = req.body;
+    const adminId = req.user.id;
+    
+    const SystemSettings = require('../models/SystemSettings');
+    const SubscriptionPlan = require('../models/SubscriptionPlan');
+    
+    // Validate plan if provided
+    if (plan_id) {
+      const plan = await SubscriptionPlan.findById(plan_id);
+      if (!plan) {
+        return res.status(404).json({ error: 'Subscription plan not found' });
+      }
+      
+      // Validate it's either Free Plan or a trial plan
+      const isFreePlan = plan.plan_name.toLowerCase().includes('free');
+      const isTrialPlan = plan.plan_duration_days && plan.plan_duration_days > 0;
+      
+      if (!isFreePlan && !isTrialPlan) {
+        return res.status(400).json({
+          error: 'Default plan must be either Free Plan or a trial plan (with plan_duration_days > 0)'
+        });
+      }
+    }
+    
+    await SystemSettings.setDefaultSubscriptionPlanId(plan_id, adminId);
+    
+    res.json({
+      success: true,
+      message: plan_id 
+        ? 'Default subscription plan updated successfully'
+        : 'Default subscription plan cleared'
+    });
+  } catch (error) {
+    console.error('Set default subscription plan error:', error);
+    res.status(500).json({
+      error: 'Failed to set default subscription plan',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   createOrganization,
@@ -966,6 +1078,8 @@ module.exports = {
   backfillOrderNotes,
   getAllPartners,
   updatePartner,
-  setForNewTherapists
+  setForNewTherapists,
+  getDefaultSubscriptionPlan,
+  setDefaultSubscriptionPlan
 };
 

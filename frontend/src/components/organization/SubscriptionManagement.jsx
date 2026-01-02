@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { organizationAPI } from '../../services/api';
+import api from '../../services/api';
 import {
   CreditCard, Users, CheckCircle, XCircle, AlertCircle,
-  Loader, Filter
+  Loader, Filter, Gift, X
 } from 'lucide-react';
 
 const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => {
@@ -12,10 +13,16 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedPlanFilter, setSelectedPlanFilter] = useState('all');
+  const [trialPlans, setTrialPlans] = useState([]);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState(null);
+  const [selectedTrialPlan, setSelectedTrialPlan] = useState(null);
+  const [assigning, setAssigning] = useState(false);
 
   useEffect(() => {
     if (isTheraPTrackControlled && organizationId) {
       loadData();
+      loadTrialPlans();
     }
   }, [organizationId, isTheraPTrackControlled]);
 
@@ -39,8 +46,20 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     }
   };
 
-  // Note: For TheraPTrack controlled orgs, organizations can only view therapist subscriptions
-  // Therapists select their own plans, so no assignment/removal functions needed here
+  const loadTrialPlans = async () => {
+    try {
+      const response = await api.get('/subscription-plans/individual');
+      if (response.data.success) {
+        // Filter to only trial plans (those with plan_duration_days > 0)
+        const trials = response.data.plans.filter(p => 
+          p.plan_duration_days && p.plan_duration_days > 0
+        );
+        setTrialPlans(trials);
+      }
+    } catch (err) {
+      console.error('Failed to load trial plans:', err);
+    }
+  };
 
   const getBillingPeriodLabel = (period) => {
     const labels = {
@@ -63,6 +82,54 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Check if partner is eligible for trial (no plan or Free Plan only)
+  const isEligibleForTrial = (partner) => {
+    const subscription = subscriptions.find(s => s.partner_id === partner.id);
+    if (!subscription) return true; // No plan
+    
+    const isFreePlan = subscription.plan_name?.toLowerCase().includes('free');
+    if (isFreePlan) return true;
+    
+    // Check if paid plan (has price > 0)
+    const isPaid = (subscription.individual_monthly_price && subscription.individual_monthly_price > 0) ||
+                   (subscription.individual_quarterly_price && subscription.individual_quarterly_price > 0) ||
+                   (subscription.individual_yearly_price && subscription.individual_yearly_price > 0);
+    
+    return !isPaid;
+  };
+
+  // Handle trial assignment
+  const handleAssignTrial = async () => {
+    if (!selectedPartner || !selectedTrialPlan) return;
+
+    try {
+      setAssigning(true);
+      setError('');
+      
+      const response = await organizationAPI.assignTrialPlan(
+        organizationId,
+        selectedPartner.id,
+        selectedTrialPlan.id,
+        'monthly' // Default billing period for trial plans (not used for duration calculation)
+      );
+      
+      if (response.data.warning) {
+        setSuccessMessage(`${response.data.message} - Warning: ${response.data.warning}`);
+      } else {
+        setSuccessMessage(response.data.message);
+      }
+      
+      setShowAssignModal(false);
+      setSelectedPartner(null);
+      setSelectedTrialPlan(null);
+      loadData(); // Refresh
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to assign trial plan');
+    } finally {
+      setAssigning(false);
+    }
   };
 
   // Extract unique plan names from subscriptions
@@ -116,7 +183,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
             Therapist Subscription Management
           </h2>
           <p className="text-gray-600 dark:text-dark-text-secondary mt-1">
-            View subscription plans assigned to therapists in your organization. Therapists select their own subscription plans.
+            Assign trial plans to therapists in your organization. Therapists can also select their own subscription plans.
           </p>
         </div>
       </div>
@@ -126,6 +193,9 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
         <div className="p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-800 rounded-lg flex items-center space-x-2 text-green-700 dark:text-green-300">
           <CheckCircle className="h-5 w-5 flex-shrink-0" />
           <span>{successMessage}</span>
+          <button onClick={() => setSuccessMessage('')} className="ml-auto">
+            <X className="h-5 w-5" />
+          </button>
         </div>
       )}
 
@@ -139,7 +209,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
         </div>
       )}
 
-      {/* Partner List with Individual Select Buttons */}
+      {/* Partner List with Trial Assignment */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary flex items-center">
@@ -180,13 +250,14 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
           <div className="space-y-4">
             {filteredPartners.map((partner) => {
               const subscription = subscriptions.find(s => s.partner_id === partner.id);
+              const eligible = isEligibleForTrial(partner);
 
               return (
                 <div
                   key={partner.id}
                   className="border border-gray-200 dark:border-dark-border rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-dark-bg-secondary"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <h4 className="font-semibold text-gray-900 dark:text-dark-text-primary">
@@ -212,80 +283,39 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                               {getBillingPeriodLabel(subscription.billing_period)}
                             </span>
                           </div>
-                          {subscription.video_hours && (
+                          {subscription.subscription_end_date && (
                             <div className="flex items-center space-x-2">
-                              <span className="text-gray-600 dark:text-dark-text-secondary">Video Hours:</span>
-                              <span className="text-gray-900 dark:text-dark-text-primary">
-                                {subscription.video_hours} hrs/month
+                              <span className="text-gray-600 dark:text-dark-text-secondary">Expires:</span>
+                              <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                                {formatDateTime(subscription.subscription_end_date)}
                               </span>
                             </div>
-                          )}
-                          {subscription.has_video && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 mt-1">
-                              Video Enabled
-                            </span>
                           )}
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">No plan assigned</p>
                       )}
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-border space-y-1 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 dark:text-dark-text-secondary">Therapist account created:</span>
-                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
-                            {formatDateTime(partner.created_at)}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 dark:text-dark-text-secondary">System last used:</span>
-                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
-                            {formatDateTime(partner.last_login || partner.last_session_date)}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 dark:text-dark-text-secondary">Login success:</span>
-                          <span className={`font-medium ${
-                            partner.is_active && partner.email_verified 
-                              ? 'text-green-600 dark:text-green-400' 
-                              : 'text-red-600 dark:text-red-400'
-                          }`}>
-                            {partner.is_active && partner.email_verified ? 'Yes' : 'No'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-dark-border space-y-1 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 dark:text-dark-text-secondary">"Select Your Subscription Plan" modal display:</span>
-                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
-                            {formatDateTime(partner.modal_shown_at)}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 dark:text-dark-text-secondary">First login:</span>
-                          <span className={`font-medium ${
-                            partner.is_first_login 
-                              ? 'text-green-600 dark:text-green-400' 
-                              : 'text-gray-500 dark:text-gray-400'
-                          }`}>
-                            {partner.is_first_login ? 'Yes' : 'No'}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 dark:text-dark-text-secondary">Payment attempted:</span>
-                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
-                            {formatDateTime(partner.payment_attempted_at)}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-600 dark:text-dark-text-secondary">Payment completed:</span>
-                          <span className="font-medium text-gray-900 dark:text-dark-text-primary">
-                            {formatDateTime(partner.payment_completed_at)}
-                          </span>
-                        </div>
-                      </div>
                     </div>
-                    {/* For TheraPTrack controlled orgs: View only, no change/remove buttons */}
-                    {/* Organizations can only view therapist plans, therapists select their own plans */}
+                    
+                    {/* Trial Assignment Button */}
+                    <div className="ml-4">
+                      {eligible ? (
+                        <button
+                          onClick={() => {
+                            setSelectedPartner(partner);
+                            setShowAssignModal(true);
+                          }}
+                          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        >
+                          <Gift className="h-4 w-4" />
+                          <span>Assign Trial</span>
+                        </button>
+                      ) : (
+                        <span className="text-sm text-gray-500 dark:text-dark-text-tertiary italic">
+                          On paid plan
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -294,29 +324,92 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
         )}
       </div>
 
-      {/* No plan selection modal for TheraPTrack controlled orgs - view only */}
+      {/* Trial Assignment Modal */}
+      {showAssignModal && selectedPartner && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">
+                Assign Trial Plan
+              </h3>
+              <button
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setSelectedPartner(null);
+                  setSelectedTrialPlan(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-dark-text-tertiary dark:hover:text-dark-text-primary"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-2">
+                Therapist: <span className="font-semibold">{selectedPartner.name}</span>
+              </p>
+            </div>
+
+            {trialPlans.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <AlertCircle className="h-12 w-12 mx-auto mb-2" />
+                <p>No trial plans available</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                    Select Trial Plan
+                  </label>
+                  <select
+                    value={selectedTrialPlan?.id || ''}
+                    onChange={(e) => {
+                      const plan = trialPlans.find(p => p.id === parseInt(e.target.value));
+                      setSelectedTrialPlan(plan);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">-- Select a plan --</option>
+                    {trialPlans.map(plan => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.plan_name} ({plan.plan_duration_days} days)
+                      </option>
+                    ))}
+                  </select>
+                  {selectedTrialPlan && (
+                    <p className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
+                      This trial will expire in {selectedTrialPlan.plan_duration_days} days from assignment.
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => {
+                      setShowAssignModal(false);
+                      setSelectedPartner(null);
+                      setSelectedTrialPlan(null);
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text-primary rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary transition-colors"
+                    disabled={assigning}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAssignTrial}
+                    disabled={!selectedTrialPlan || assigning}
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {assigning ? 'Assigning...' : 'Assign Trial'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default SubscriptionManagement;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

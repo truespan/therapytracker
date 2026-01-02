@@ -292,17 +292,22 @@ export const AuthProvider = ({ children }) => {
       // Check if they have accepted terms first
       if (!user.terms_accepted) return false;
       
-      // Check if they have an active subscription
+      // No subscription plan
       if (!user.subscription_plan_id) return true;
       
       // Check if subscription has expired
       if (user.subscription_end_date) {
         const endDate = new Date(user.subscription_end_date);
         const now = new Date();
-        return endDate < now;
+        if (endDate <= now) {
+          console.log('[needsSubscription] Subscription expired, showing modal');
+          return true;
+        }
       }
       
-      return true;
+      // Check if on Free Plan (should select paid plan)
+      const isFreePlan = user.subscription?.plan_name?.toLowerCase().includes('free');
+      return isFreePlan;
     }
     
     return false;

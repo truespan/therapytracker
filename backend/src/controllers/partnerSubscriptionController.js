@@ -512,17 +512,24 @@ const selectPlan = async (req, res) => {
     const startDate = new Date();
     let endDate = new Date();
 
-    switch (billing_period) {
-      case 'yearly':
-        endDate.setFullYear(endDate.getFullYear() + 1);
-        break;
-      case 'quarterly':
-        endDate.setMonth(endDate.getMonth() + 3);
-        break;
-      case 'monthly':
-      default:
-        endDate.setMonth(endDate.getMonth() + 1);
-        break;
+    // Check if plan has plan_duration_days set (for trial plans like 3-day trial)
+    if (plan.plan_duration_days && plan.plan_duration_days > 0) {
+      // Use plan_duration_days if specified (e.g., 3 for 3-day trial)
+      endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+    } else {
+      // Fall back to billing period calculation for regular plans
+      switch (billing_period) {
+        case 'yearly':
+          endDate.setFullYear(endDate.getFullYear() + 1);
+          break;
+        case 'quarterly':
+          endDate.setMonth(endDate.getMonth() + 3);
+          break;
+        case 'monthly':
+        default:
+          endDate.setMonth(endDate.getMonth() + 1);
+          break;
+      }
     }
 
     // Mock payment success - In production, integrate with payment gateway here
@@ -573,6 +580,126 @@ const selectPlan = async (req, res) => {
   }
 };
 
+/**
+ * Assign trial plan to therapist (Organization-controlled only)
+ */
+const assignTrialPlan = async (req, res) => {
+  try {
+    const { organizationId } = req.params;
+    const { partner_id, subscription_plan_id, billing_period } = req.body;
+
+    // Verify organization exists and is TheraPTrack controlled
+    const organization = await Organization.findById(organizationId);
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+    
+    if (!organization.theraptrack_controlled) {
+      return res.status(403).json({ 
+        error: 'Trial assignment is only available for TheraPTrack-controlled organizations' 
+      });
+    }
+
+    // Check authorization
+    if (req.user.userType === 'organization' && req.user.id !== parseInt(organizationId)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Verify partner belongs to organization
+    const partner = await Partner.findById(partner_id);
+    if (!partner || partner.organization_id !== parseInt(organizationId)) {
+      return res.status(400).json({ error: 'Partner does not belong to this organization' });
+    }
+
+    // Verify plan is a trial plan (has plan_duration_days)
+    const plan = await SubscriptionPlan.findById(subscription_plan_id);
+    if (!plan) {
+      return res.status(404).json({ error: 'Subscription plan not found' });
+    }
+    
+    if (!plan.plan_duration_days || plan.plan_duration_days <= 0) {
+      return res.status(400).json({ 
+        error: 'Selected plan is not a trial plan. Only trial plans can be assigned by organizations.' 
+      });
+    }
+
+    // Check partner's current subscription eligibility
+    const currentSubscriptions = await PartnerSubscription.findByPartnerId(partner_id);
+    let isEligible = true;
+    let isRepeatTrial = false;
+    
+    if (currentSubscriptions.length > 0) {
+      const currentSub = currentSubscriptions[0];
+      
+      // Check if current plan is Free Plan
+      const isFreePlan = currentSub.plan_name && currentSub.plan_name.toLowerCase().includes('free');
+      
+      // Check if current plan is a paid plan (not Free Plan and has price > 0)
+      const isPaidPlan = !isFreePlan && (
+        (currentSub.individual_monthly_price && currentSub.individual_monthly_price > 0) ||
+        (currentSub.individual_quarterly_price && currentSub.individual_quarterly_price > 0) ||
+        (currentSub.individual_yearly_price && currentSub.individual_yearly_price > 0)
+      );
+      
+      if (isPaidPlan) {
+        return res.status(400).json({ 
+          error: 'Cannot assign trial plan. Therapist already has a paid subscription plan.',
+          current_plan: currentSub.plan_name
+        });
+      }
+    }
+
+    // Check trial history to warn about repeat trials
+    const trialHistoryQuery = `
+      SELECT COUNT(*) as trial_count
+      FROM partner_subscriptions ps
+      JOIN subscription_plans sp ON ps.subscription_plan_id = sp.id
+      WHERE ps.partner_id = $1 
+        AND sp.plan_duration_days IS NOT NULL 
+        AND sp.plan_duration_days > 0
+    `;
+    const historyResult = await db.query(trialHistoryQuery, [partner_id]);
+    const trialCount = parseInt(historyResult.rows[0].trial_count);
+    isRepeatTrial = trialCount > 0;
+
+    // Calculate subscription dates
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+
+    // Remove existing subscriptions and create new trial
+    await PartnerSubscription.bulkRemove([partner_id]);
+    
+    const subscription = await PartnerSubscription.create({
+      partner_id: parseInt(partner_id),
+      subscription_plan_id: parseInt(subscription_plan_id),
+      billing_period
+    });
+
+    // Update with dates
+    await PartnerSubscription.update(subscription.id, {
+      subscription_start_date: startDate,
+      subscription_end_date: endDate,
+      payment_status: 'paid'
+    });
+
+    res.json({
+      success: true,
+      message: 'Trial plan assigned successfully',
+      subscription,
+      warning: isRepeatTrial ? 'This is a repeat trial for this therapist' : null,
+      trial_count: trialCount + 1
+    });
+
+  } catch (error) {
+    console.error('Assign trial plan error:', error);
+    res.status(500).json({
+      error: 'Failed to assign trial plan',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getOrganizationPartnerSubscriptions,
   assignSubscriptions,
@@ -580,7 +707,8 @@ module.exports = {
   removeSubscriptions,
   assignToAllPartners,
   selectOwnSubscription,
-  selectPlan
+  selectPlan,
+  assignTrialPlan
 };
 
 
