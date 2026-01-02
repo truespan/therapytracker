@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Check, CreditCard } from 'lucide-react';
 
 const PlanSelectionModal = ({
@@ -8,10 +8,18 @@ const PlanSelectionModal = ({
   onClose,
   onSelectPlan,
   isBulkMode = false,
-  organizationName = 'Your Organization'
+  organizationName = 'Your Organization',
+  currentSubscription = null // Current subscription object to check if user is on trial
 }) => {
   const [selectedBillingPeriod, setSelectedBillingPeriod] = useState('monthly');
   const [selectedPlanForAction, setSelectedPlanForAction] = useState(null);
+
+  // Get price for a plan based on user type and billing period
+  const getPrice = (plan) => {
+    const prefix = userType === 'individual' ? 'individual' : 'organization';
+    const priceKey = `${prefix}_${selectedBillingPeriod}_price`;
+    return plan[priceKey] || 0;
+  };
 
   // Get available billing periods based on plan type and first plan's enabled flags
   const getAvailableBillingPeriods = () => {
@@ -39,12 +47,36 @@ const PlanSelectionModal = ({
     }
   }, [availablePeriods, selectedBillingPeriod]);
 
-  // Get price for a plan based on user type and billing period
-  const getPrice = (plan) => {
+  // Check if user is currently on a trial plan
+  const isOnTrialPlan = currentSubscription?.plan_duration_days && currentSubscription.plan_duration_days > 0;
+
+  // Filter plans: if user is on a trial plan, show only paid plans (exclude Free Plan and other trial plans)
+  const filteredPlans = useMemo(() => {
+    if (!isOnTrialPlan || !plans) return plans;
+    
+    // Filter out other trial plans and Free Plan
+    // Keep only paid plans (plans with price > 0 for the selected billing period)
     const prefix = userType === 'individual' ? 'individual' : 'organization';
-    const priceKey = `${prefix}_${selectedBillingPeriod}_price`;
-    return plan[priceKey] || 0;
-  };
+    return plans.filter(plan => {
+      const isTrialPlan = plan.plan_duration_days && plan.plan_duration_days > 0;
+      const isFreePlan = plan.plan_name && plan.plan_name.toLowerCase() === 'free plan';
+      const isCurrentPlan = plan.id === currentPlanId;
+      
+      // Always show current plan (even if it's a trial)
+      if (isCurrentPlan) return true;
+      
+      // Exclude other trial plans
+      if (isTrialPlan) return false;
+      
+      // Exclude Free Plan
+      if (isFreePlan) return false;
+      
+      // Keep only paid plans (check if plan has a price > 0 for the selected billing period)
+      const priceKey = `${prefix}_${selectedBillingPeriod}_price`;
+      const price = plan[priceKey] || 0;
+      return price > 0;
+    });
+  }, [plans, isOnTrialPlan, currentPlanId, selectedBillingPeriod, userType]);
 
   // Format price in INR
   const formatPrice = (price) => {
@@ -156,14 +188,14 @@ const PlanSelectionModal = ({
 
         {/* Plans Grid - Scrollable */}
         <div className="p-6 overflow-y-auto flex-1">
-          {!plans || plans.length === 0 ? (
+          {!filteredPlans || filteredPlans.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-dark-text-secondary">
               <CreditCard className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-secondary" />
               <p className="text-gray-500 dark:text-dark-text-secondary">No plans available{userType === 'organization' ? ' for your organization size' : ''}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-              {plans.map((plan) => {
+              {filteredPlans.map((plan) => {
                 const isCurrentPlan = plan.id === currentPlanId;
                 const price = getPrice(plan);
 

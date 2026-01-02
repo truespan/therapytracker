@@ -290,19 +290,22 @@ const PartnerSettings = () => {
         type: 'error',
         text: 'Subscription plan selection is not available for your organization. Your organization administrator will assign subscription plans to therapists.'
       });
-      return;
+      return [];
     }
 
     try {
       setLoadingPlans(true);
       const response = await subscriptionPlanAPI.getIndividualPlansForSelection();
-      setAvailablePlans(response.data.plans || []);
+      const plans = response.data.plans || [];
+      setAvailablePlans(plans);
+      return plans;
     } catch (err) {
       console.error('Failed to load individual plans:', err);
       setSaveMessage({
         type: 'error',
         text: 'Failed to load subscription plans. Please try again.'
       });
+      return [];
     } finally {
       setLoadingPlans(false);
     }
@@ -1102,7 +1105,7 @@ const PartnerSettings = () => {
             {organizationSubscription.theraptrack_controlled && (
               <div className="mt-4 flex items-center space-x-3">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     // Double-check organization status before opening modal (defense in depth)
                     if (!organizationSubscription?.theraptrack_controlled) {
                       setSaveMessage({
@@ -1111,7 +1114,9 @@ const PartnerSettings = () => {
                       });
                       return;
                     }
-                    loadIndividualPlans();
+                    // Wait for plans to load before opening modal
+                    const plans = await loadIndividualPlans();
+                    // Open modal after plans are loaded (even if empty, user should see the state)
                     setShowPlanModal(true);
                   }}
                   disabled={loadingPlans || saving || !organizationSubscription?.theraptrack_controlled}
@@ -1200,6 +1205,7 @@ const PartnerSettings = () => {
           userType="individual"
           onClose={() => setShowPlanModal(false)}
           onSelectPlan={handlePlanSelection}
+          currentSubscription={partnerSubscription}
         />
       )}
 
