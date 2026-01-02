@@ -3,7 +3,7 @@ import { organizationAPI } from '../../services/api';
 import api from '../../services/api';
 import {
   CreditCard, Users, CheckCircle, XCircle, AlertCircle,
-  Loader, Filter, Gift, X
+  Loader, Filter, Gift, X, Search
 } from 'lucide-react';
 
 const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => {
@@ -13,6 +13,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedPlanFilter, setSelectedPlanFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [trialPlans, setTrialPlans] = useState([]);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
@@ -154,22 +155,35 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     return Array.from(planSet).sort();
   }, [subscriptions]);
 
-  // Filter partners based on selected plan
+  // Filter partners based on selected plan and search query
   const filteredPartners = useMemo(() => {
-    if (selectedPlanFilter === 'all') {
-      return partners;
-    }
+    let filtered = partners;
+
+    // First filter by plan
     if (selectedPlanFilter === 'no_plan') {
-      return partners.filter(partner => {
+      filtered = partners.filter(partner => {
         const subscription = subscriptions.find(s => s.partner_id === partner.id);
         return !subscription || !subscription.plan_name;
       });
+    } else if (selectedPlanFilter !== 'all') {
+      filtered = partners.filter(partner => {
+        const subscription = subscriptions.find(s => s.partner_id === partner.id);
+        return subscription && subscription.plan_name === selectedPlanFilter;
+      });
     }
-    return partners.filter(partner => {
-      const subscription = subscriptions.find(s => s.partner_id === partner.id);
-      return subscription && subscription.plan_name === selectedPlanFilter;
-    });
-  }, [partners, subscriptions, selectedPlanFilter]);
+
+    // Then filter by search query (case-insensitive)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(partner => {
+        const name = (partner.name || '').toLowerCase();
+        const partnerId = (partner.partner_id || '').toLowerCase();
+        return name.includes(query) || partnerId.includes(query);
+      });
+    }
+
+    return filtered;
+  }, [partners, subscriptions, selectedPlanFilter, searchQuery]);
 
   if (!isTheraPTrackControlled) {
     return null;
@@ -222,27 +236,42 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
 
       {/* Partner List with Trial Assignment */}
       <div className="card">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary flex items-center">
             <Users className="h-5 w-5 mr-2 text-indigo-600 dark:text-dark-primary-500" />
             Therapists ({filteredPartners.length}{partners.length !== filteredPartners.length ? ` of ${partners.length}` : ''})
           </h3>
           
-          {/* Filter Dropdown */}
+          {/* Search and Filter Controls */}
           {partners.length > 0 && (
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-500 dark:text-dark-text-tertiary" />
-              <select
-                value={selectedPlanFilter}
-                onChange={(e) => setSelectedPlanFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-primary-500"
-              >
-                <option value="all">All Plans</option>
-                <option value="no_plan">No Plan</option>
-                {availablePlans.map(plan => (
-                  <option key={plan} value={plan}>{plan}</option>
-                ))}
-              </select>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Search Input */}
+              <div className="relative flex-1 sm:flex-initial sm:min-w-[250px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-dark-text-tertiary" />
+                <input
+                  type="text"
+                  placeholder="Search by name or ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-primary-500"
+                />
+              </div>
+              
+              {/* Filter Dropdown */}
+              <div className="flex items-center space-x-2">
+                <Filter className="h-4 w-4 text-gray-500 dark:text-dark-text-tertiary" />
+                <select
+                  value={selectedPlanFilter}
+                  onChange={(e) => setSelectedPlanFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-primary-500"
+                >
+                  <option value="all">All Plans</option>
+                  <option value="no_plan">No Plan</option>
+                  {availablePlans.map(plan => (
+                    <option key={plan} value={plan}>{plan}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
         </div>
@@ -255,7 +284,11 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
         ) : filteredPartners.length === 0 ? (
           <div className="text-center py-12 text-gray-500 dark:text-dark-text-tertiary">
             <Users className="h-16 w-16 mx-auto mb-4 text-gray-400 dark:text-dark-text-tertiary" />
-            <p>No therapists found with the selected plan filter</p>
+            <p>
+              {searchQuery.trim() 
+                ? `No therapists found matching "${searchQuery}"`
+                : 'No therapists found with the selected plan filter'}
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
