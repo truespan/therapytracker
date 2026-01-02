@@ -51,8 +51,10 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
       const response = await api.get('/subscription-plans/individual');
       if (response.data.success) {
         // Filter to trial plans (those with plan_duration_days > 0) or Free Plan
+        // Use case-insensitive comparison and trim whitespace
         const availablePlans = response.data.plans.filter(p => {
-          const isFreePlan = p.plan_name && p.plan_name.toLowerCase() === 'free plan';
+          const planName = (p.plan_name || '').toLowerCase().trim();
+          const isFreePlan = planName === 'free plan';
           const isTrialPlan = p.plan_duration_days && p.plan_duration_days > 0;
           return isFreePlan || isTrialPlan;
         });
@@ -86,20 +88,25 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
     });
   };
 
-  // Check if partner is eligible for trial (no plan or Free Plan only)
+  // Check if partner is eligible for trial (no plan, Free Plan, or trial plan only)
+  // Partners on paid plans are NOT eligible
   const isEligibleForTrial = (partner) => {
     const subscription = subscriptions.find(s => s.partner_id === partner.id);
-    if (!subscription) return true; // No plan
+    if (!subscription) return true; // No plan - eligible
     
-    const isFreePlan = subscription.plan_name?.toLowerCase().includes('free');
-    if (isFreePlan) return true;
+    const planName = (subscription.plan_name || '').toLowerCase().trim();
+    const isFreePlan = planName === 'free plan';
+    if (isFreePlan) return true; // Free Plan - eligible
     
-    // Check if paid plan (has price > 0)
-    const isPaid = (subscription.individual_monthly_price && subscription.individual_monthly_price > 0) ||
-                   (subscription.individual_quarterly_price && subscription.individual_quarterly_price > 0) ||
-                   (subscription.individual_yearly_price && subscription.individual_yearly_price > 0);
+    // Check if this is a trial plan by checking if it exists in trialPlans
+    const isTrialPlan = trialPlans.some(tp => {
+      const trialPlanName = (tp.plan_name || '').toLowerCase().trim();
+      return trialPlanName === planName;
+    });
+    if (isTrialPlan) return true; // Trial plan - eligible
     
-    return !isPaid;
+    // If it's not Free Plan and not a trial plan, it's a paid plan - NOT eligible
+    return false;
   };
 
   // Handle plan assignment
@@ -373,10 +380,11 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                   >
                     <option value="">-- Select a plan --</option>
                     {trialPlans.map(plan => {
-                      const isFreePlan = plan.plan_name && plan.plan_name.toLowerCase() === 'free plan';
+                      const planName = (plan.plan_name || '').trim();
+                      const isFreePlan = planName.toLowerCase() === 'free plan';
                       const displayText = isFreePlan 
-                        ? plan.plan_name 
-                        : `${plan.plan_name} (${plan.plan_duration_days} days)`;
+                        ? planName 
+                        : `${planName} (${plan.plan_duration_days} days)`;
                       return (
                         <option key={plan.id} value={plan.id}>
                           {displayText}
@@ -386,7 +394,7 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                   </select>
                   {selectedTrialPlan && (
                     <p className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
-                      {selectedTrialPlan.plan_name && selectedTrialPlan.plan_name.toLowerCase() === 'free plan' 
+                      {(selectedTrialPlan.plan_name || '').toLowerCase().trim() === 'free plan'
                         ? 'Free Plan has no expiration date.'
                         : `This trial will expire in ${selectedTrialPlan.plan_duration_days} days from assignment.`
                       }
