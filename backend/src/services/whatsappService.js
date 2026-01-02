@@ -739,6 +739,63 @@ Please prepare for the session and contact the client if needed.
         return { success: true, messageId: response.data.message_uuid };
       }
     } catch (error) {
+      // Log raw error for debugging
+      console.error('[WhatsApp Template] Raw error object:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.substring(0, 500),
+        hasResponse: !!error.response,
+        hasBody: !!error.body,
+        hasData: !!error.data,
+        errorKeys: Object.keys(error)
+      });
+      
+      // Try to extract error from various possible locations
+      let rawErrorData = null;
+      if (error.response) {
+        console.error('[WhatsApp Template] Error response:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          headers: error.response.headers,
+          hasData: !!error.response.data,
+          dataType: typeof error.response.data,
+          dataKeys: error.response.data ? Object.keys(error.response.data) : []
+        });
+        rawErrorData = error.response.data;
+      } else if (error.body) {
+        console.error('[WhatsApp Template] Error body:', {
+          bodyType: typeof error.body,
+          isBuffer: Buffer.isBuffer(error.body),
+          bodyKeys: typeof error.body === 'object' ? Object.keys(error.body) : []
+        });
+        rawErrorData = error.body;
+      } else if (error.data) {
+        console.error('[WhatsApp Template] Error data:', {
+          dataType: typeof error.data,
+          isBuffer: Buffer.isBuffer(error.data),
+          dataKeys: typeof error.data === 'object' ? Object.keys(error.data) : []
+        });
+        rawErrorData = error.data;
+      }
+      // Try to parse raw error data if available
+      let parsedErrorData = null;
+      if (rawErrorData) {
+        try {
+          if (Buffer.isBuffer(rawErrorData)) {
+            const bufferString = rawErrorData.toString();
+            console.error('[WhatsApp Template] Raw error (Buffer):', bufferString.substring(0, 1000));
+            parsedErrorData = JSON.parse(bufferString);
+          } else if (typeof rawErrorData === 'string') {
+            console.error('[WhatsApp Template] Raw error (string):', rawErrorData.substring(0, 1000));
+            parsedErrorData = JSON.parse(rawErrorData);
+          } else if (typeof rawErrorData === 'object' && rawErrorData !== null) {
+            parsedErrorData = rawErrorData;
+          }
+        } catch (parseError) {
+          console.error('[WhatsApp Template] Could not parse raw error data:', parseError.message);
+        }
+      }
+      
       // Enhanced error logging
       const errorDetails = this.extractErrorDetails(error);
       console.error('[WhatsApp Template] Template message failed:');
@@ -747,22 +804,47 @@ Please prepare for the session and contact the client if needed.
       console.error('  - Parameters:', JSON.stringify(templateParams, null, 2));
       console.error('  - Error Status:', errorDetails.status || errorDetails.statusCode);
       console.error('  - Error Message:', error.message);
-      console.error('  - Error Details:', JSON.stringify(errorDetails.details, null, 2));
       
-      // Log Vonage-specific error information
+      // Log parsed error data if we successfully parsed it
+      if (parsedErrorData) {
+        console.error('  - Parsed Error Data:', JSON.stringify(parsedErrorData, null, 2));
+        if (parsedErrorData.title) {
+          console.error('  - Error Title:', parsedErrorData.title);
+        }
+        if (parsedErrorData.detail) {
+          console.error('  - Error Detail:', parsedErrorData.detail);
+        }
+        if (parsedErrorData.invalid_parameters) {
+          console.error('  - Invalid Parameters:', JSON.stringify(parsedErrorData.invalid_parameters, null, 2));
+        }
+        if (parsedErrorData.errors) {
+          console.error('  - Errors:', JSON.stringify(parsedErrorData.errors, null, 2));
+        }
+      }
+      
+      // Log extracted error details (fallback)
       if (errorDetails.details) {
+        console.error('  - Extracted Error Details:', JSON.stringify(errorDetails.details, null, 2));
         if (errorDetails.details.title) {
-          console.error('  - Error Title:', errorDetails.details.title);
+          console.error('  - Extracted Error Title:', errorDetails.details.title);
         }
         if (errorDetails.details.detail) {
-          console.error('  - Error Detail:', errorDetails.details.detail);
+          console.error('  - Extracted Error Detail:', errorDetails.details.detail);
         }
         if (errorDetails.details.invalid_parameters) {
-          console.error('  - Invalid Parameters:', JSON.stringify(errorDetails.details.invalid_parameters, null, 2));
+          console.error('  - Extracted Invalid Parameters:', JSON.stringify(errorDetails.details.invalid_parameters, null, 2));
         }
         if (errorDetails.details.errors) {
-          console.error('  - Errors:', JSON.stringify(errorDetails.details.errors, null, 2));
+          console.error('  - Extracted Errors:', JSON.stringify(errorDetails.details.errors, null, 2));
         }
+      }
+      
+      // Also log from errorDetails directly
+      if (errorDetails.title) {
+        console.error('  - Error Title (from errorDetails):', errorDetails.title);
+      }
+      if (errorDetails.detail) {
+        console.error('  - Error Detail (from errorDetails):', errorDetails.detail);
       }
       
       // Re-throw to allow fallback handling
