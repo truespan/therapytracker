@@ -34,6 +34,7 @@ class WhatsAppService {
       appointmentRescheduled: null // theraptrack_appointment_rescheduled
     };
     this.useTemplates = false; // Will be true if at least one template is configured
+    this.includePaymentStatusInTemplate = process.env.WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS === 'true'; // Whether to include payment status as 7th parameter
     
     this.initialize();
   }
@@ -127,6 +128,7 @@ class WhatsAppService {
       console.log('[WhatsApp Service] From Number:', this.fromNumber || 'NOT SET');
       console.log('[WhatsApp Service] Sandbox Mode:', this.isSandbox);
       console.log('[WhatsApp Service] Template Support:', this.useTemplates ? 'ENABLED' : 'DISABLED');
+      console.log('[WhatsApp Service] Include Payment Status in Template:', this.includePaymentStatusInTemplate);
       if (this.useTemplates) {
         console.log('[WhatsApp Service] Templates configured:');
         console.log('  - Appointment Booked:', this.templateNames.appointmentConfirmation || 'NOT SET');
@@ -441,23 +443,29 @@ class WhatsAppService {
       });
     }
 
-    // Determine payment status message
-    const bookingAmountNum = parseFloat(bookingAmount) || 0;
-    const paymentStatus = bookingAmountNum === 0 
-      ? 'Booking made without payment' 
-      : `Booking amount: ${feeCurrency} ${bookingAmountNum.toFixed(2)}`;
-
-    // Return parameters in order (adjust based on your template structure)
-    // Common template structure: {{1}} = User Name, {{2}} = Date, {{3}} = Time, {{4}} = Therapist Name, {{5}} = Appointment Type, {{6}} = Duration, {{7}} = Payment Status
-    return [
+    // Base parameters (always included)
+    const baseParams = [
       userName || 'there',
       displayDate || appointmentDate,
       displayTime || appointmentTime,
       therapistName || 'Your therapist',
       appointmentType || 'Therapy Session',
-      `${duration || 60} minutes`,
-      paymentStatus
+      `${duration || 60} minutes`
     ];
+
+    // Add payment status as 7th parameter only if enabled
+    if (this.includePaymentStatusInTemplate) {
+      const bookingAmountNum = parseFloat(bookingAmount) || 0;
+      const paymentStatus = bookingAmountNum === 0 
+        ? 'Booking made without payment' 
+        : `Booking amount: ${feeCurrency} ${bookingAmountNum.toFixed(2)}`;
+      baseParams.push(paymentStatus);
+    }
+
+    // Return parameters in order
+    // If includePaymentStatusInTemplate is false: {{1}} = User Name, {{2}} = Date, {{3}} = Time, {{4}} = Therapist Name, {{5}} = Appointment Type, {{6}} = Duration
+    // If includePaymentStatusInTemplate is true: {{1}} = User Name, {{2}} = Date, {{3}} = Time, {{4}} = Therapist Name, {{5}} = Appointment Type, {{6}} = Duration, {{7}} = Payment Status
+    return baseParams;
   }
 
   /**
@@ -473,7 +481,9 @@ class WhatsAppService {
       appointmentTime,
       timezone,
       appointmentType,
-      duration
+      duration,
+      bookingAmount = 0,
+      feeCurrency = 'INR'
     } = appointmentData;
 
     // Use the provided appointmentTime if available, otherwise format the date
@@ -514,6 +524,12 @@ class WhatsAppService {
     }
 
     const timeZoneDisplay = timezone === 'UTC' ? 'IST' : (timezone || 'IST');
+    
+    // Add payment status information
+    const bookingAmountNum = parseFloat(bookingAmount) || 0;
+    const paymentInfo = bookingAmountNum === 0 
+      ? '💰 *Payment:* Booking made without payment'
+      : `💰 *Payment:* Booking amount: ${feeCurrency} ${bookingAmountNum.toFixed(2)}`;
 
     return `🎉 *Appointment Confirmed!* 🎉
 
@@ -526,6 +542,7 @@ Your therapy session has been successfully booked:
 👨‍⚕️ *Therapist:* ${therapistName || 'Your therapist'}
 🏥 *Type:* ${appointmentType || 'Therapy Session'}
 ⏱️ *Duration:* ${duration || 60} minutes
+${paymentInfo}
 
 Please arrive 5 minutes early for your session.
 
