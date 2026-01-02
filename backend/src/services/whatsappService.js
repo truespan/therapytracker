@@ -716,19 +716,20 @@ Please prepare for the session and contact the client if needed.
           }
         });
         
-        // Vonage SDK response structure can vary - check multiple possible locations
-        const messageId = result?.message_uuid || result?.messageUuid || result?.message_id || result?.messageId || result?.uuid;
+        // Vonage SDK response structure - check messageUUID first (camelCase, which is what Vonage SDK actually returns)
+        const messageId = result?.messageUUID || result?.message_uuid || result?.messageUuid || result?.message_id || result?.messageId || result?.uuid;
         console.log('[WhatsApp Template] Template API call completed. Full result:', JSON.stringify(result, null, 2));
         console.log('[WhatsApp Template] Extracted message ID:', messageId);
         
-        // Check if the response indicates success
-        if (result && (result.message_uuid || result.messageUuid || result.message_id || result.messageId || result.uuid)) {
+        // Check if the response indicates success - Vonage SDK returns messageUUID (camelCase)
+        if (messageId) {
           console.log('[WhatsApp Template] ✅ Template message sent successfully via Vonage SDK');
           return { success: true, messageId: messageId };
         } else if (result && Object.keys(result).length > 0) {
-          // Response exists but no message ID - might be an error response
+          // Response exists but no message ID found in any expected field
           console.error('[WhatsApp Template] ⚠️  Template API returned response but no message ID found');
           console.error('[WhatsApp Template] Response keys:', Object.keys(result));
+          console.error('[WhatsApp Template] Response structure:', JSON.stringify(result, null, 2));
           throw new Error('Template message sent but no message ID in response. Response: ' + JSON.stringify(result));
         } else {
           console.error('[WhatsApp Template] ❌ Template API returned empty or invalid response');
