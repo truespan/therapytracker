@@ -860,19 +860,45 @@ const backfillOrderNotes = async (req, res) => {
 const getAllPartners = async (req, res) => {
   try {
     const query = `
+      WITH partner_clients AS (
+        SELECT 
+          p.id as partner_id,
+          COUNT(DISTINCT upa.user_id) as total_clients
+        FROM partners p
+        LEFT JOIN user_partner_assignments upa ON p.id = upa.partner_id
+        GROUP BY p.id
+      ),
+      latest_subscriptions AS (
+        SELECT DISTINCT ON (ps.partner_id)
+          ps.partner_id,
+          ps.subscription_start_date,
+          ps.subscription_end_date,
+          sp.plan_name as subscription_plan_name,
+          sp.plan_duration_days as subscription_plan_duration_days
+        FROM partner_subscriptions ps
+        JOIN subscription_plans sp ON ps.subscription_plan_id = sp.id
+        WHERE (ps.subscription_end_date IS NULL OR ps.subscription_end_date > CURRENT_TIMESTAMP)
+          AND (ps.is_cancelled = FALSE OR ps.is_cancelled IS NULL)
+        ORDER BY ps.partner_id, ps.assigned_at DESC
+      )
       SELECT 
         p.*,
         o.name as organization_name,
         o.email as organization_email,
         o.theraptrack_controlled,
-        COUNT(DISTINCT upa.user_id) as total_clients
+        COALESCE(pc.total_clients, 0) as total_clients,
+        ls.subscription_plan_name,
+        ls.subscription_plan_duration_days,
+        ls.subscription_start_date,
+        ls.subscription_end_date
       FROM partners p
       LEFT JOIN organizations o ON p.organization_id = o.id
-      LEFT JOIN user_partner_assignments upa ON p.id = upa.partner_id
-      GROUP BY p.id, o.name, o.email, o.theraptrack_controlled
+      LEFT JOIN partner_clients pc ON p.id = pc.partner_id
+      LEFT JOIN latest_subscriptions ls ON p.id = ls.partner_id
       ORDER BY p.created_at DESC
     `;
     const result = await db.query(query);
+    
     res.json({
       success: true,
       partners: result.rows

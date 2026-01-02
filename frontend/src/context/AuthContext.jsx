@@ -277,13 +277,9 @@ export const AuthProvider = ({ children }) => {
   const needsSubscription = (user) => {
     if (!user) return false;
     
-    // DEVELOPMENT BYPASS: Bypass subscription check in development environment
-    // This allows all users to bypass subscription payment flow during development
-    const isDevelopment = process.env.NODE_ENV === 'development' || 
-                         process.env.REACT_APP_BYPASS_SUBSCRIPTION === 'true';
-    
-    if (isDevelopment) {
-      console.warn('⚠️ [needsSubscription] DEVELOPMENT MODE: Subscription check bypassed');
+    // DEVELOPMENT BYPASS: Only bypass if explicitly set via environment variable
+    if (process.env.REACT_APP_BYPASS_SUBSCRIPTION === 'true') {
+      console.warn('⚠️ [needsSubscription] BYPASS MODE: Subscription check bypassed (REACT_APP_BYPASS_SUBSCRIPTION=true)');
       return false;
     }
     
@@ -305,9 +301,24 @@ export const AuthProvider = ({ children }) => {
         }
       }
       
-      // Check if on Free Plan (should select paid plan)
+      // Check if on Trial Plan (should always show modal, but cancellable)
+      const subscriptionPlanDurationDays = user.subscription?.plan_duration_days;
+      const isTrialPlan = subscriptionPlanDurationDays && subscriptionPlanDurationDays > 0;
+      
+      if (isTrialPlan) {
+        // Trial Plan users: Always show modal (cancellable)
+        return true;
+      }
+      
+      // Check if on Free Plan (should select paid plan - modal not cancellable)
       const isFreePlan = user.subscription?.plan_name?.toLowerCase().includes('free');
-      return isFreePlan;
+      if (isFreePlan) {
+        // Free Plan users: Show modal (non-cancellable)
+        return true;
+      }
+      
+      // Paid Plan users: Don't show modal (they already have a paid subscription)
+      return false;
     }
     
     return false;

@@ -813,6 +813,9 @@ const AdminDashboard = () => {
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                       Clients
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
+                      Subscription Plan
+                    </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-dark-text-tertiary uppercase tracking-wider">
                       Query Resolver
                     </th>
@@ -824,13 +827,13 @@ const AdminDashboard = () => {
                 <tbody className="bg-white dark:bg-dark-bg-tertiary divide-y divide-gray-200 dark:divide-dark-border">
                   {partnersLoading ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-12 text-center">
+                      <td colSpan="7" className="px-6 py-12 text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                       </td>
                     </tr>
                   ) : filteredPartners.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-6 py-12 text-center">
+                      <td colSpan="7" className="px-6 py-12 text-center">
                         <User className="h-12 w-12 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-3" />
                         <p className="text-gray-600 dark:text-dark-text-secondary">
                           {partnerSearchTerm ? 'No partners found matching your search' : 'No partners yet'}
@@ -864,6 +867,31 @@ const AdminDashboard = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">{partner.total_clients || 0}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {partner.subscription_plan_name ? (
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-dark-text-primary">
+                                {partner.subscription_plan_name}
+                              </div>
+                              {partner.subscription_plan_duration_days && partner.subscription_plan_duration_days > 0 && (
+                                <div className="text-xs text-gray-500 dark:text-dark-text-secondary mt-1">
+                                  {partner.subscription_plan_duration_days} days trial
+                                </div>
+                              )}
+                              {partner.subscription_end_date && (
+                                <div className="text-xs text-gray-500 dark:text-dark-text-secondary mt-1">
+                                  {new Date(partner.subscription_end_date) > new Date() ? (
+                                    <>Expires: {new Date(partner.subscription_end_date).toLocaleDateString()}</>
+                                  ) : (
+                                    <span className="text-red-600 dark:text-red-400">Expired</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400 dark:text-dark-text-tertiary">No Plan</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           {partner.query_resolver ? (

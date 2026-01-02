@@ -15,6 +15,9 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
   // Check if user is on a trial plan
   const isOnTrialPlan = user?.subscription?.plan_duration_days && user?.subscription?.plan_duration_days > 0;
   const trialPlanName = user?.subscription?.plan_name || 'Trial Plan';
+  
+  // Check if user is on Free Plan
+  const isFreePlan = user?.subscription?.plan_name?.toLowerCase().includes('free');
 
   useEffect(() => {
     if (isOpen) {
@@ -148,12 +151,9 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
         // Continue with payment flow even if tracking fails
       }
 
-      // DEVELOPMENT BYPASS: In development mode, bypass payment and directly assign subscription
-      const isDevelopment = process.env.NODE_ENV === 'development' || 
-                           process.env.REACT_APP_BYPASS_SUBSCRIPTION === 'true';
-      
-      if (isDevelopment) {
-        console.warn('⚠️ [SubscriptionPlanModal] DEVELOPMENT MODE: Bypassing payment flow');
+      // DEVELOPMENT BYPASS: Only bypass payment if explicitly set via environment variable
+      if (process.env.REACT_APP_BYPASS_SUBSCRIPTION === 'true') {
+        console.warn('⚠️ [SubscriptionPlanModal] BYPASS MODE: Bypassing payment flow (REACT_APP_BYPASS_SUBSCRIPTION=true)');
         // Directly assign subscription without payment in development
         const response = await api.post('/partner-subscriptions/select-plan', {
           plan_id: selectedPlan.id,
@@ -315,8 +315,9 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
   const handleClose = () => {
     // Allow closing if:
     // 1. User is on a trial plan (can cancel and proceed), OR
-    // 2. There are no paid plans available (prevents users from bypassing payment)
-    if (onClose && (isOnTrialPlan || (subscriptionPlans.length === 0 && !loading))) {
+    // 2. User is on Free Plan (will trigger logout), OR
+    // 3. There are no paid plans available (prevents users from bypassing payment)
+    if (onClose && (isOnTrialPlan || isFreePlan || (subscriptionPlans.length === 0 && !loading))) {
       onClose();
     }
   };
@@ -325,8 +326,9 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
     // Only close if clicking the backdrop itself, not the modal content
     // AND only if:
     // 1. User is on a trial plan (can cancel and proceed), OR
-    // 2. There are no paid plans available (prevents bypassing payment)
-    if (e.target === e.currentTarget && !processing && (isOnTrialPlan || (subscriptionPlans.length === 0 && !loading))) {
+    // 2. User is on Free Plan (will trigger logout), OR
+    // 3. There are no paid plans available (prevents bypassing payment)
+    if (e.target === e.currentTarget && !processing && (isOnTrialPlan || isFreePlan || (subscriptionPlans.length === 0 && !loading))) {
       handleClose();
     }
   };
@@ -343,7 +345,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-2">
               {isOnTrialPlan 
-                ? `Your "${trialPlanName}" starts now. You can cancel this message and proceed.`
+                ? `You are in "${trialPlanName}" plan now. You can cancel this message and proceed.`
                 : 'Select Your Subscription Plan'}
             </h2>
             <p className="text-primary-100 dark:text-primary-200">
@@ -352,8 +354,8 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                 : 'Choose the plan that best fits your practice needs'}
             </p>
           </div>
-          {/* Close button - show for trial users or when no paid plans are available */}
-          {!loading && !error && (isOnTrialPlan || subscriptionPlans.length === 0) && onClose && !processing && (
+          {/* Close button - show for trial users, Free Plan users, or when no paid plans are available */}
+          {!loading && !error && (isOnTrialPlan || isFreePlan || subscriptionPlans.length === 0) && onClose && !processing && (
             <button
               onClick={handleClose}
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
@@ -597,8 +599,8 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                 : 'Please select a plan to continue'}
             </p>
             <div className="flex items-center space-x-3">
-              {/* Show close button for trial users or when no plans available */}
-              {(isOnTrialPlan || subscriptionPlans.length === 0) && onClose && !processing && (
+              {/* Show close button for trial users, Free Plan users, or when no plans available */}
+              {(isOnTrialPlan || isFreePlan || subscriptionPlans.length === 0) && onClose && !processing && (
                 <button
                   onClick={handleClose}
                   className="px-6 py-3 rounded-lg font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"

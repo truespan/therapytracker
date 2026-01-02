@@ -299,7 +299,7 @@ const login = async (req, res) => {
           // For partners in TheraPTrack orgs, check if subscription expired
           if (org.theraptrack_controlled) {
             const PartnerSubscription = require('../models/PartnerSubscription');
-            const activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+            let activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
             
             if (!activeSub || !PartnerSubscription.isActive(activeSub)) {
               // Subscription expired, revert to Free Plan
@@ -314,6 +314,35 @@ const login = async (req, res) => {
                 theraptrack_controlled: org.theraptrack_controlled ?? false,
                 video_sessions_enabled: org.video_sessions_enabled ?? true
               };
+              // Fetch the new Free Plan subscription
+              activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+            }
+            
+            // Attach subscription data to userDetails
+            if (activeSub) {
+              console.log(`[LOGIN] Partner ${userDetails.id} subscription:`, {
+                plan_name: activeSub.plan_name,
+                plan_duration_days: activeSub.plan_duration_days,
+                subscription_plan_id: activeSub.subscription_plan_id,
+                subscription_end_date: activeSub.subscription_end_date,
+                is_trial: activeSub.plan_duration_days && activeSub.plan_duration_days > 0
+              });
+              userDetails.subscription = activeSub;
+              userDetails.subscription_plan_id = activeSub.subscription_plan_id;
+              userDetails.subscription_billing_period = activeSub.billing_period;
+              userDetails.subscription_start_date = activeSub.subscription_start_date;
+              userDetails.subscription_end_date = activeSub.subscription_end_date;
+            } else {
+              // No active subscription, ensure they get Free Plan
+              await PartnerSubscription.getOrCreateFreePlan(userDetails.id);
+              activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+              if (activeSub) {
+                userDetails.subscription = activeSub;
+                userDetails.subscription_plan_id = activeSub.subscription_plan_id;
+                userDetails.subscription_billing_period = activeSub.billing_period;
+                userDetails.subscription_start_date = activeSub.subscription_start_date;
+                userDetails.subscription_end_date = activeSub.subscription_end_date;
+              }
             }
           }
         }
@@ -382,6 +411,31 @@ const getCurrentUser = async (req, res) => {
             theraptrack_controlled: org.theraptrack_controlled ?? false,
             video_sessions_enabled: org.video_sessions_enabled ?? true
           };
+          
+          // For partners in TheraPTrack orgs, attach subscription data
+          if (org.theraptrack_controlled) {
+            const PartnerSubscription = require('../models/PartnerSubscription');
+            const activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+            
+            if (activeSub) {
+              userDetails.subscription = activeSub;
+              userDetails.subscription_plan_id = activeSub.subscription_plan_id;
+              userDetails.subscription_billing_period = activeSub.billing_period;
+              userDetails.subscription_start_date = activeSub.subscription_start_date;
+              userDetails.subscription_end_date = activeSub.subscription_end_date;
+            } else {
+              // Ensure they have a subscription (Free Plan)
+              await PartnerSubscription.getOrCreateFreePlan(userDetails.id);
+              const freeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+              if (freeSub) {
+                userDetails.subscription = freeSub;
+                userDetails.subscription_plan_id = freeSub.subscription_plan_id;
+                userDetails.subscription_billing_period = freeSub.billing_period;
+                userDetails.subscription_start_date = freeSub.subscription_start_date;
+                userDetails.subscription_end_date = freeSub.subscription_end_date;
+              }
+            }
+          }
         }
         break;
       case 'organization':

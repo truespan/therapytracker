@@ -50,7 +50,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 function AppRoutes() {
-  const { user, updateUser, needsTermsAcceptance, needsSubscription } = useAuth();
+  const { user, updateUser, needsTermsAcceptance, needsSubscription, logout } = useAuth();
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
@@ -85,8 +85,17 @@ function AppRoutes() {
   };
 
   const handleSubscriptionClose = () => {
-    // Allow closing the modal when no plans are available
-    setShowSubscriptionModal(false);
+    // Check if user is on Free Plan
+    const isFreePlan = user?.subscription?.plan_name?.toLowerCase().includes('free');
+    
+    if (isFreePlan) {
+      // Free Plan users: Logout immediately when they close the modal
+      logout();
+      setShowSubscriptionModal(false);
+    } else {
+      // Trial Plan users or no plans available: Just close the modal
+      setShowSubscriptionModal(false);
+    }
   };
 
   // Memoize redirect path to prevent re-render loops
