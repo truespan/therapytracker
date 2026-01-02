@@ -97,10 +97,56 @@ const createOrganization = async (req, res) => {
 
       // Assign subscription plan based on organization type
       if (theraptrack_controlled) {
-        // TheraPTrack controlled orgs: Get full-feature plan (highest tier)
-        // For now, we'll skip automatic subscription assignment for TheraPTrack controlled orgs
-        // They should be manually assigned a plan by admin
-        console.log('[ADMIN] TheraPTrack controlled organization created - manual plan assignment required');
+        // TheraPTrack controlled orgs: Get or create a plan with all features enabled
+        // Find the highest tier plan with all features, or use the highest order plan
+        const SubscriptionPlan = require('../models/SubscriptionPlan');
+        
+        // Try to find a plan with all features enabled
+        const allFeaturesPlanQuery = `
+          SELECT id FROM subscription_plans 
+          WHERE has_video = TRUE 
+            AND has_whatsapp = TRUE 
+            AND has_advanced_assessments = TRUE 
+            AND has_report_generation = TRUE 
+            AND has_custom_branding = TRUE 
+            AND has_advanced_analytics = TRUE 
+            AND has_blogs_events_announcements = TRUE 
+            AND has_customized_feature_support = TRUE 
+            AND has_priority_support = TRUE 
+            AND has_email_support = TRUE
+            AND is_active = TRUE
+          ORDER BY plan_order DESC
+          LIMIT 1
+        `;
+        const planResult = await client.query(allFeaturesPlanQuery);
+        
+        let planId = null;
+        if (planResult.rows.length > 0) {
+          planId = planResult.rows[0].id;
+        } else {
+          // If no plan with all features exists, use the highest order plan
+          const highestPlanResult = await client.query(
+            `SELECT id FROM subscription_plans WHERE is_active = TRUE ORDER BY plan_order DESC LIMIT 1`
+          );
+          if (highestPlanResult.rows.length > 0) {
+            planId = highestPlanResult.rows[0].id;
+          }
+        }
+        
+        if (planId) {
+          const startDate = new Date();
+          const updatedOrg = await Organization.update(newOrg.id, {
+            subscription_plan_id: planId,
+            subscription_billing_period: 'monthly',
+            subscription_start_date: startDate,
+            subscription_end_date: null, // No expiration for TheraPTrack controlled orgs
+            payment_status: 'paid' // Mark as paid since it's owned by TheraPTrack
+          }, client);
+          console.log('[ADMIN] TheraPTrack controlled organization created - assigned plan with all features');
+          return updatedOrg;
+        }
+        
+        console.log('[ADMIN] TheraPTrack controlled organization created - no suitable plan found, features will be enabled via theraptrack_controlled flag');
         return newOrg;
       } else {
         // Non-controlled organizations: Use admin-configured default

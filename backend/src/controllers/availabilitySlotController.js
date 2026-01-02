@@ -11,11 +11,22 @@ const db = require('../config/database');
 
 /**
  * Check if WhatsApp is enabled for a partner based on their subscription plan
+ * Partners in TheraPTrack controlled organizations always have all features enabled
  * @param {number} partnerId - Partner ID
  * @returns {Promise<boolean>} True if WhatsApp is enabled
  */
 const checkPartnerWhatsAppAccess = async (partnerId) => {
   try {
+    // First check if partner's organization is TheraPTrack controlled
+    const partner = await Partner.findById(partnerId);
+    if (partner && partner.organization_id) {
+      const organization = await Organization.findById(partner.organization_id);
+      if (organization && organization.theraptrack_controlled === true) {
+        // Partners in TheraPTrack controlled organizations always have all features
+        return true;
+      }
+    }
+    
     const subscription = await PartnerSubscription.getActiveSubscription(partnerId);
     if (!subscription) {
       // No active subscription, default to false
@@ -33,11 +44,19 @@ const checkPartnerWhatsAppAccess = async (partnerId) => {
 
 /**
  * Check if WhatsApp is enabled for an organization based on their subscription plan
+ * TheraPTrack controlled organizations always have all features enabled
  * @param {number} organizationId - Organization ID
  * @returns {Promise<boolean>} True if WhatsApp is enabled
  */
 const checkOrganizationWhatsAppAccess = async (organizationId) => {
   try {
+    // First check if organization is TheraPTrack controlled
+    const organization = await Organization.findById(organizationId);
+    if (organization && organization.theraptrack_controlled === true) {
+      // TheraPTrack controlled organizations always have all features
+      return true;
+    }
+    
     const subscription = await Organization.getActiveSubscription(organizationId);
     if (!subscription || !subscription.subscription_plan_id) {
       // No active subscription, default to false
@@ -532,6 +551,9 @@ const bookSlot = async (req, res) => {
           if (partnerHasWhatsApp && organizationHasWhatsApp) {
             // Send notification to client
             if (user && user.contact) {
+              const bookingAmount = partner ? (parseFloat(partner.booking_fee) || 0) : 0;
+              const feeCurrency = partner ? (partner.fee_currency || 'INR') : 'INR';
+              
               const clientAppointmentData = {
                 userName: user.name,
                 therapistName: partner ? partner.name : 'Your therapist',
@@ -544,7 +566,9 @@ const bookSlot = async (req, res) => {
                 }),
                 timezone: 'UTC',
                 appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
-                duration: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / (1000 * 60))
+                duration: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / (1000 * 60)),
+                bookingAmount: bookingAmount,
+                feeCurrency: feeCurrency
               };
 
               const clientResult = await whatsappService.sendAppointmentConfirmation(

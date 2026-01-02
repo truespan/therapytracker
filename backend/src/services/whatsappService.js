@@ -401,7 +401,9 @@ class WhatsAppService {
       appointmentTime,
       timezone,
       appointmentType,
-      duration
+      duration,
+      bookingAmount = 0,
+      feeCurrency = 'INR'
     } = appointmentData;
 
     // Format date and time
@@ -439,15 +441,22 @@ class WhatsAppService {
       });
     }
 
+    // Determine payment status message
+    const bookingAmountNum = parseFloat(bookingAmount) || 0;
+    const paymentStatus = bookingAmountNum === 0 
+      ? 'Booking made without payment' 
+      : `Booking amount: ${feeCurrency} ${bookingAmountNum.toFixed(2)}`;
+
     // Return parameters in order (adjust based on your template structure)
-    // Common template structure: {{1}} = User Name, {{2}} = Date, {{3}} = Time, {{4}} = Therapist Name
+    // Common template structure: {{1}} = User Name, {{2}} = Date, {{3}} = Time, {{4}} = Therapist Name, {{5}} = Appointment Type, {{6}} = Duration, {{7}} = Payment Status
     return [
       userName || 'there',
       displayDate || appointmentDate,
       displayTime || appointmentTime,
       therapistName || 'Your therapist',
       appointmentType || 'Therapy Session',
-      `${duration || 60} minutes`
+      `${duration || 60} minutes`,
+      paymentStatus
     ];
   }
 

@@ -403,12 +403,75 @@ class Organization {
    * @returns {Promise<Object|null>} Organization with subscription details
    */
   static async getActiveSubscription(id) {
+    // First get the organization to check if it's TheraPTrack controlled
+    const orgQuery = `SELECT theraptrack_controlled FROM organizations WHERE id = $1`;
+    const orgResult = await db.query(orgQuery, [id]);
+    const isTheraPTrackControlled = orgResult.rows[0]?.theraptrack_controlled === true;
+    
+    // For TheraPTrack controlled organizations, return a subscription object with all features enabled
+    // even if they don't have a subscription plan assigned
+    if (isTheraPTrackControlled) {
+      const orgQuery = `
+        SELECT o.*,
+               sp.plan_name,
+               sp.min_sessions,
+               sp.max_sessions,
+               sp.has_video,
+               sp.has_whatsapp,
+               sp.has_advanced_assessments,
+               sp.has_report_generation,
+               sp.has_custom_branding,
+               sp.has_advanced_analytics,
+               sp.has_blogs_events_announcements,
+               sp.has_customized_feature_support,
+               sp.has_priority_support,
+               sp.has_email_support,
+               sp.organization_monthly_price,
+               sp.organization_quarterly_price,
+               sp.organization_yearly_price
+        FROM organizations o
+        LEFT JOIN subscription_plans sp ON o.subscription_plan_id = sp.id
+        WHERE o.id = $1
+      `;
+      const result = await db.query(orgQuery, [id]);
+      const subscription = result.rows[0] || null;
+      
+      if (subscription) {
+        // Ensure all features are enabled for TheraPTrack controlled organizations
+        subscription.has_video = true;
+        subscription.has_whatsapp = true;
+        subscription.has_advanced_assessments = true;
+        subscription.has_report_generation = true;
+        subscription.has_custom_branding = true;
+        subscription.has_advanced_analytics = true;
+        subscription.has_blogs_events_announcements = true;
+        subscription.has_customized_feature_support = true;
+        subscription.has_priority_support = true;
+        subscription.has_email_support = true;
+        // Ensure subscription is always considered active
+        subscription.subscription_end_date = null;
+        subscription.is_cancelled = false;
+      }
+      
+      return subscription;
+    }
+    
+    // For non-TheraPTrack controlled organizations, use the original logic
     const query = `
       SELECT o.*,
              sp.plan_name,
              sp.min_sessions,
              sp.max_sessions,
              sp.has_video,
+             sp.has_whatsapp,
+             sp.has_advanced_assessments,
+             sp.has_report_generation,
+             sp.has_custom_branding,
+             sp.has_advanced_analytics,
+             sp.has_blogs_events_announcements,
+             sp.has_customized_feature_support,
+             sp.has_priority_support,
+             sp.has_email_support,
              sp.organization_monthly_price,
              sp.organization_quarterly_price,
              sp.organization_yearly_price
@@ -424,11 +487,19 @@ class Organization {
 
   /**
    * Check if organization subscription is active
+   * TheraPTrack controlled organizations are always considered active
    * @param {Object} organization - Organization object
    * @returns {boolean} Whether subscription is active
    */
   static isSubscriptionActive(organization) {
-    if (!organization || !organization.subscription_plan_id) return false;
+    if (!organization) return false;
+    
+    // TheraPTrack controlled organizations are always considered active
+    if (organization.theraptrack_controlled === true) {
+      return true;
+    }
+    
+    if (!organization.subscription_plan_id) return false;
     
     const now = new Date();
     const endDate = organization.subscription_end_date ? new Date(organization.subscription_end_date) : null;
