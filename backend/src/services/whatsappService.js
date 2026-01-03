@@ -213,10 +213,21 @@ class WhatsAppService {
    * @param {Object} messageData - Message data including type, recipient, content
    */
   addToQueue(messageData) {
-    this.messageQueue.push({
+    const queueEntry = {
       ...messageData,
       retryCount: 0,
       timestamp: Date.now()
+    };
+    
+    this.messageQueue.push(queueEntry);
+    
+    console.log('[WhatsApp Queue] ➕ Added message to queue:', {
+      type: queueEntry.type,
+      toPhoneNumber: queueEntry.toPhoneNumber,
+      appointmentId: queueEntry.appointmentId,
+      userId: queueEntry.userId,
+      partnerId: queueEntry.partnerId,
+      queueLength: this.messageQueue.length
     });
     
     // Start processing queue if not already running
@@ -685,12 +696,28 @@ Please prepare for the session and contact the client if needed.
     const formattedPhone = this.formatPhoneNumber(toPhoneNumber);
     if (!formattedPhone) {
       const error = `Invalid phone number format: ${toPhoneNumber}`;
+      console.error('[WhatsApp Service] ❌ Client phone number validation failed:', {
+        original: toPhoneNumber,
+        error: error,
+        appointmentId: appointmentId,
+        userId: userId
+      });
       await this.logNotification(appointmentId, userId, toPhoneNumber, 'failed', null, error);
       return {
         success: false,
         error: error
       };
     }
+
+    console.log('[WhatsApp Service] 📝 Queueing client appointment confirmation:', {
+      originalPhone: toPhoneNumber,
+      formattedPhone: formattedPhone,
+      appointmentId: appointmentId,
+      userId: userId,
+      templateConfigured: !!this.templateNames.appointmentConfirmation,
+      templateName: this.templateNames.appointmentConfirmation,
+      useTemplates: this.useTemplates
+    });
 
     // Add to queue instead of sending directly
     this.addToQueue({
@@ -700,6 +727,8 @@ Please prepare for the session and contact the client if needed.
       appointmentId,
       userId
     });
+
+    console.log('[WhatsApp Service] ✅ Client message added to queue. Queue length:', this.messageQueue.length);
 
     return {
       success: true,
@@ -963,6 +992,8 @@ Please prepare for the session and contact the client if needed.
           console.log('[WhatsApp Service] Template configuration:', {
             useTemplates: this.useTemplates,
             templateName: this.templateNames.appointmentConfirmation,
+            templateNamespace: this.templateNamespace || 'NOT SET',
+            templateLocale: this.templateLocale,
             enabled: this.enabled
           });
           
@@ -976,8 +1007,8 @@ Please prepare for the session and contact the client if needed.
           const templateResult = await this.sendTemplateMessage(
             toPhoneNumber,
             this.templateNames.appointmentConfirmation,
-            templateParams,
-            'en'
+            templateParams
+            // Locale will be taken from this.templateLocale (default: 'en_US')
           );
           
           messageId = templateResult.messageId;
@@ -1020,7 +1051,10 @@ Please prepare for the session and contact the client if needed.
         console.log('[WhatsApp Service] Reason template not used:', {
           useTemplates: this.useTemplates,
           hasTemplateName: !!this.templateNames.appointmentConfirmation,
-          templateName: this.templateNames.appointmentConfirmation
+          templateName: this.templateNames.appointmentConfirmation,
+          templateNamespace: this.templateNamespace || 'NOT SET',
+          templateLocale: this.templateLocale,
+          enabled: this.enabled
         });
         const messageBody = this.createAppointmentMessage(appointmentData);
         
@@ -1358,8 +1392,8 @@ Please prepare for the session and contact the client if needed.
           const templateResult = await this.sendTemplateMessage(
             toPhoneNumber,
             this.templateNames.appointmentCancellation,
-            templateParams,
-            'en'
+            templateParams
+            // Locale will be taken from this.templateLocale (default: 'en_US')
           );
           messageId = templateResult.messageId;
           usedTemplate = true;
@@ -1524,8 +1558,8 @@ Please prepare for the session and contact the client if needed.
           const templateResult = await this.sendTemplateMessage(
             toPhoneNumber,
             this.templateNames.appointmentRescheduled,
-            templateParams,
-            'en'
+            templateParams
+            // Locale will be taken from this.templateLocale (default: 'en_US')
           );
           messageId = templateResult.messageId;
           usedTemplate = true;
@@ -1680,8 +1714,8 @@ Please prepare for the session and contact the client if needed.
           const templateResult = await this.sendTemplateMessage(
             toPhoneNumber,
             this.templateNames.appointmentReminder,
-            templateParams,
-            'en'
+            templateParams
+            // Locale will be taken from this.templateLocale (default: 'en_US')
           );
           messageId = templateResult.messageId;
           usedTemplate = true;
