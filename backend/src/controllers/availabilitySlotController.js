@@ -559,6 +559,14 @@ const bookSlot = async (req, res) => {
                 contactFormatted: user.contact
               });
               
+              console.log(`[WhatsApp] 📋 Preparing client notification for slot ${id}:`, {
+                userId: userId,
+                userName: user.name,
+                userContact: user.contact,
+                partnerId: slot.partner_id,
+                partnerName: partner ? partner.name : 'N/A'
+              });
+
               const bookingAmount = partner ? (parseFloat(partner.booking_fee) || 0) : 0;
               const feeCurrency = partner ? (partner.fee_currency || 'INR') : 'INR';
               
@@ -579,6 +587,12 @@ const bookSlot = async (req, res) => {
                 feeCurrency: feeCurrency
               };
 
+              console.log(`[WhatsApp] 📤 Calling sendAppointmentConfirmation for CLIENT:`, {
+                toPhoneNumber: user.contact,
+                appointmentId: appointmentId,
+                userId: userId
+              });
+
               try {
                 const clientResult = await whatsappService.sendAppointmentConfirmation(
                   user.contact,
@@ -586,6 +600,8 @@ const bookSlot = async (req, res) => {
                   appointmentId,
                   userId
                 );
+
+                console.log(`[WhatsApp] 📨 CLIENT sendAppointmentConfirmation returned:`, clientResult);
 
                 if (clientResult.success) {
                   console.log(`[WhatsApp] ✅ Client notification sent successfully for booked slot ${id}`);
@@ -602,7 +618,8 @@ const bookSlot = async (req, res) => {
               console.warn(`[WhatsApp] ⚠️  Skipping client notification for slot ${id}:`, {
                 hasUser: !!user,
                 hasContact: !!(user && user.contact),
-                userId: userId
+                userId: userId,
+                userObject: user ? { id: user.id, name: user.name, contact: user.contact } : null
               });
             }
 
