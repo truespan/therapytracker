@@ -1371,6 +1371,99 @@ Please prepare for the session and contact the client if needed.
   }
 
   /**
+   * Send WhatsApp appointment notification to therapist using template
+   * @param {string} toPhoneNumber - Recipient's phone number (therapist)
+   * @param {string} templateName - Template name (e.g., "theraptrack_therapist_appointment_notification")
+   * @param {Array} templateParams - Template parameters array [therapistName, clientName, eventName, date, time]
+   * @param {number} appointmentId - Appointment ID for logging
+   * @param {number} partnerId - Partner ID for logging
+   * @returns {Promise<Object>} Result with status and message ID
+   */
+  async sendTherapistAppointmentNotificationTemplate(toPhoneNumber, templateName, templateParams, appointmentId, partnerId) {
+    // Check if service is enabled
+    if (!this.enabled) {
+      return {
+        success: false,
+        error: 'WhatsApp service is disabled'
+      };
+    }
+
+    // Validate phone number
+    const formattedPhone = this.formatPhoneNumber(toPhoneNumber);
+    if (!formattedPhone) {
+      const error = `Invalid phone number format: ${toPhoneNumber}`;
+      await this.logNotification(appointmentId, null, toPhoneNumber, 'failed', null, error);
+      return {
+        success: false,
+        error: error
+      };
+    }
+
+    try {
+      console.log(`[WhatsApp Service] 📤 Sending therapist notification template "${templateName}" to ${formattedPhone}`);
+      console.log(`[WhatsApp Service] Template parameters:`, templateParams);
+
+      // Send template message
+      const templateResult = await this.sendTemplateMessage(
+        formattedPhone,
+        templateName,
+        templateParams,
+        this.templateLocale
+      );
+
+      if (templateResult.success) {
+        // Log successful notification
+        await this.logNotification(
+          appointmentId,
+          null, // userId is null for therapist notifications
+          formattedPhone,
+          'sent',
+          templateResult.messageId,
+          null
+        );
+
+        console.log(`[WhatsApp Service] ✅ Therapist notification template sent successfully. Message ID: ${templateResult.messageId}`);
+        return {
+          success: true,
+          messageId: templateResult.messageId,
+          status: 'sent',
+          usedTemplate: true,
+          templateName: templateName
+        };
+      } else {
+        throw new Error(templateResult.error || 'Template message failed');
+      }
+    } catch (error) {
+      const errorDetails = this.extractErrorDetails(error);
+      
+      console.error('[WhatsApp Service] Failed to send therapist notification template:', error.message);
+      console.error('[WhatsApp Service] Error details:', {
+        ...errorDetails,
+        templateName: templateName,
+        templateParams: templateParams,
+        appointmentId,
+        partnerId
+      });
+      
+      // Log failed notification
+      await this.logNotification(
+        appointmentId,
+        null,
+        formattedPhone,
+        'failed',
+        null,
+        typeof errorDetails.details === 'string' ? errorDetails.details : JSON.stringify(errorDetails.details)
+      );
+
+      return {
+        success: false,
+        error: error.message,
+        details: errorDetails.details
+      };
+    }
+  }
+
+  /**
    * Send WhatsApp appointment cancellation notification (adds to queue for rate limiting)
    * @param {string} toPhoneNumber - Recipient's phone number
    * @param {Object} appointmentData - Appointment details

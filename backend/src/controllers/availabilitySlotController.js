@@ -623,37 +623,55 @@ const bookSlot = async (req, res) => {
               });
             }
 
-            // Send notification to therapist
+            // Send notification to therapist (with delay)
             if (partner && partner.contact) {
-              const therapistAppointmentData = {
-                therapistName: partner.name,
-                clientName: user ? user.name : 'Client',
-                appointmentDate: slot.start_datetime,
-                appointmentTime: new Date(slot.start_datetime).toLocaleTimeString('en-IN', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true,
-                  timeZone: 'Asia/Kolkata'
-                }),
-                timezone: 'UTC',
-                appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
-                duration: Math.round((new Date(slot.end_datetime) - new Date(slot.start_datetime)) / (1000 * 60)),
-                clientPhone: user ? user.contact : 'Not provided',
-                clientEmail: user ? user.email : 'Not provided'
-              };
+              // Format date as "Sunday, 4 January 2026"
+              const appointmentDateObj = new Date(slot.start_datetime);
+              const formattedDate = appointmentDateObj.toLocaleDateString('en-IN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'Asia/Kolkata'
+              });
+              
+              // Format time as "10:00 am"
+              const formattedTime = appointmentDateObj.toLocaleTimeString('en-IN', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Kolkata'
+              });
 
-              const therapistResult = await whatsappService.sendTherapistAppointmentNotification(
-                partner.contact,
-                therapistAppointmentData,
-                appointmentId,
-                slot.partner_id
-              );
+              // Prepare template parameters in the specified order
+              const therapistTemplateParams = [
+                partner.name, // Parameter 1: Therapist name
+                user ? user.name : 'Client', // Parameter 2: Client name
+                `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`, // Parameter 3: Event name
+                formattedDate, // Parameter 4: Date (e.g., "Sunday, 4 January 2026")
+                formattedTime.toLowerCase() // Parameter 5: Time (e.g., "10:00 am")
+              ];
 
-              if (therapistResult.success) {
-                console.log(`[WhatsApp] Therapist notification sent successfully for booked slot ${id}`);
-              } else {
-                console.error(`[WhatsApp] Failed to send therapist notification for booked slot ${id}:`, therapistResult.error);
-              }
+              // Send therapist notification after a few seconds delay
+              setTimeout(async () => {
+                try {
+                  const therapistResult = await whatsappService.sendTherapistAppointmentNotificationTemplate(
+                    partner.contact,
+                    'theraptrack_therapist_appointment_notification',
+                    therapistTemplateParams,
+                    appointmentId,
+                    slot.partner_id
+                  );
+
+                  if (therapistResult.success) {
+                    console.log(`[WhatsApp] ✅ Therapist notification sent successfully for booked slot ${id} (delayed)`);
+                  } else {
+                    console.error(`[WhatsApp] ❌ Failed to send therapist notification for booked slot ${id}:`, therapistResult.error);
+                  }
+                } catch (therapistError) {
+                  console.error(`[WhatsApp] ❌ Exception sending delayed therapist notification for booked slot ${id}:`, therapistError);
+                }
+              }, 3000); // 3 seconds delay
             }
           } // End of if (partnerHasWhatsApp && organizationHasWhatsApp)
         } // End of else (partnerHasWhatsApp check)
