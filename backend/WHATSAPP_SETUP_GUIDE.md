@@ -152,14 +152,90 @@ Once approved:
 3. Update `VONAGE_WHATSAPP_NUMBER` in your environment variables
 4. Format: `+919876543210` (include country code, without whatsapp: prefix)
 
-### Step 10: Set Up Message Templates (Optional)
+### Step 10: Set Up Message Templates (Required for Production)
 
-For high-volume messaging, create approved message templates:
+For production use, you MUST create and use approved message templates:
 
-1. In Vonage Dashboard, go to **Messages and Dispatch** > **Templates**
-2. Create templates for different message types
-3. Submit for WhatsApp approval
-4. Update your code to use template IDs
+1. **Create Templates in WhatsApp Business Manager**:
+   - Go to [Facebook Business Manager](https://business.facebook.com/)
+   - Navigate to **WhatsApp Manager** > **Message Templates**
+   - Click **Create Template**
+   - Choose template category (e.g., "Appointment Update")
+   - Create your template with placeholders (e.g., `{{1}}`, `{{2}}`, etc.)
+   - Submit for approval (usually takes 1-2 hours)
+
+2. **Get Template Details**:
+   - Once approved, note down:
+     - **Template Name**: e.g., `theraptrack_appointment_is_booked`
+     - **Template Namespace**: Found in template details (e.g., `c0a5f8e8_a30e_41fd_9474_beea4345e9b5`)
+     - **Template Language**: e.g., `en_US` for English (US)
+     - **Parameter Count**: Number of placeholders in your template
+
+3. **Configure Environment Variables**:
+   ```env
+   # WhatsApp Template Configuration
+   WHATSAPP_TEMPLATE_NAMESPACE=c0a5f8e8_a30e_41fd_9474_beea4345e9b5
+   WHATSAPP_TEMPLATE_LOCALE=en_US
+   WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED=theraptrack_appointment_is_booked
+   WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED=theraptrack_appointment_cancelled
+   WHATSAPP_TEMPLATE_APPOINTMENT_REMINDER=theraptrack_appointment_reminder
+   WHATSAPP_TEMPLATE_APPOINTMENT_RESCHEDULED=theraptrack_appointment_rescheduled
+   WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=false  # Set to true if template has 7 parameters
+   ```
+
+4. **Template Parameter Mapping**:
+   
+   **Default (6 parameters)**:
+   - `{{1}}`: Client Name
+   - `{{2}}`: Appointment Date
+   - `{{3}}`: Appointment Time
+   - `{{4}}`: Therapist Name
+   - `{{5}}`: Appointment Type
+   - `{{6}}`: Duration
+   
+   **With Payment Status (7 parameters)**:
+   - `{{1}}`-`{{6}}`: Same as above
+   - `{{7}}`: Payment Status (e.g., "Booking amount: INR 500.00" or "Booking made without payment")
+   
+   Set `WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=true` if your template includes the 7th parameter.
+
+**⚠️ CRITICAL: Error 1022 - Template Configuration Issues**
+
+If you receive **Error 1022** (Template Rejected), it means one of the following:
+
+1. **Namespace Mismatch**: You're not using your own template namespace
+   - **Solution**: Set `WHATSAPP_TEMPLATE_NAMESPACE` to your namespace from WhatsApp Manager
+   
+2. **Locale Mismatch**: Template language doesn't match the locale in your API request
+   - **Solution**: Set `WHATSAPP_TEMPLATE_LOCALE=en_US` (or your template's language code)
+   - Common locales: `en_US`, `en_GB`, `hi` (Hindi), `es` (Spanish)
+   
+3. **Template Not Approved**: Template is pending or rejected
+   - **Solution**: Check WhatsApp Manager for approval status
+   
+4. **Parameter Count Mismatch**: Sending wrong number of parameters
+   - **Solution**: Verify parameter count matches your template
+   - Use `WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=false` for 6 parameters (default)
+   - Use `WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=true` for 7 parameters
+
+**Example Template (6 parameters)**:
+```
+🎉 *Appointment Confirmed!* 🎉
+
+Hi {{1}},
+
+Your therapy session has been successfully booked:
+
+📅 *Date:* {{2}}
+🕐 *Time:* {{3}}
+👨‍⚕️ *Therapist:* {{4}}
+🏥 *Type:* {{5}}
+⏱️ *Duration:* {{6}}
+
+Please arrive 5 minutes early for your session.
+
+See you then! 😊
+```
 
 ## Configuration Options
 
@@ -169,9 +245,39 @@ For high-volume messaging, create approved message templates:
 |----------|----------|-------------|---------|
 | `VONAGE_API_KEY` | Yes | Your Vonage API Key | `12345678` |
 | `VONAGE_API_SECRET` | Yes | Your Vonage API Secret | `AbCdEfGhIjKlMnOp` |
-| `VONAGE_WHATSAPP_NUMBER` | Yes | Your Vonage WhatsApp number | `+14155238886` |
-| `WHATSAPP_ENABLED` | No | Enable/disable WhatsApp notifications | `true` or `false` |
-| `WHATSAPP_NOTIFICATION_TEMPLATE` | No | Template name (future use) | `appointment_confirmation` |
+| `VONAGE_APPLICATION_ID` | Yes (Prod) | Vonage Application ID for JWT auth | `abcd1234-5678-90ef-ghij-klmnopqrstuv` |
+| `VONAGE_PRIVATE_KEY` | Yes (Prod) | Vonage Private Key for JWT auth | `-----BEGIN PRIVATE KEY-----\n...` |
+| `VONAGE_WHATSAPP_NUMBER` | Yes | Your Vonage WhatsApp number | `919655846492` |
+| `WHATSAPP_ENABLED` | No | Enable/disable WhatsApp notifications | `true` or `false` (default: `false`) |
+| `WHATSAPP_TEMPLATE_NAMESPACE` | Yes (Prod) | WhatsApp template namespace from Business Manager | `c0a5f8e8_a30e_41fd_9474_beea4345e9b5` |
+| `WHATSAPP_TEMPLATE_LOCALE` | No | Template language/locale code | `en_US` (default), `en_GB`, `hi`, etc. |
+| `WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED` | No | Template name for booking confirmation | `theraptrack_appointment_is_booked` |
+| `WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED` | No | Template name for cancellation | `theraptrack_appointment_cancelled` |
+| `WHATSAPP_TEMPLATE_APPOINTMENT_REMINDER` | No | Template name for reminders | `theraptrack_appointment_reminder` |
+| `WHATSAPP_TEMPLATE_APPOINTMENT_RESCHEDULED` | No | Template name for rescheduling | `theraptrack_appointment_rescheduled` |
+| `WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS` | No | Include payment status as 7th parameter | `true` or `false` (default: `false`) |
+
+**Complete Production Configuration Example**:
+```env
+# Vonage Credentials
+VONAGE_API_KEY=12345678
+VONAGE_API_SECRET=AbCdEfGhIjKlMnOp
+VONAGE_APPLICATION_ID=abcd1234-5678-90ef-ghij-klmnopqrstuv
+VONAGE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...\n-----END PRIVATE KEY-----"
+VONAGE_WHATSAPP_NUMBER=919655846492
+
+# WhatsApp Configuration
+WHATSAPP_ENABLED=true
+
+# Template Configuration (REQUIRED for Production)
+WHATSAPP_TEMPLATE_NAMESPACE=c0a5f8e8_a30e_41fd_9474_beea4345e9b5
+WHATSAPP_TEMPLATE_LOCALE=en_US
+WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED=theraptrack_appointment_is_booked
+WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED=theraptrack_appointment_cancelled
+WHATSAPP_TEMPLATE_APPOINTMENT_REMINDER=theraptrack_appointment_reminder
+WHATSAPP_TEMPLATE_APPOINTMENT_RESCHEDULED=theraptrack_appointment_rescheduled
+WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=false
+```
 
 ### Feature Flags
 
@@ -293,6 +399,64 @@ cd backend && node test_whatsapp_service.js
 - Validate phone numbers before sending
 - Check for rate limiting
 - Review Vonage account status and balance
+
+#### 7. Error 1022: Template Rejected
+**This is a template configuration issue!**
+
+**Symptoms:**
+- Error: `Request failed with status code 422`
+- Vonage Dashboard shows: "Rejected" with error code 1022
+- Messages fail even though template is approved
+
+**Root Causes and Solutions:**
+
+**A. Namespace Mismatch**
+- **Problem**: Using a template from a different WhatsApp Business Account
+- **Check**: Go to WhatsApp Manager → Message Templates → Click your template → Note the "Message Template Namespace"
+- **Solution**: Set `WHATSAPP_TEMPLATE_NAMESPACE` to your namespace (e.g., `c0a5f8e8_a30e_41fd_9474_beea4345e9b5`)
+
+**B. Locale/Language Mismatch**
+- **Problem**: Template language doesn't match the locale in API request
+- **Check**: In WhatsApp Manager, check your template's language (e.g., "English (US)")
+- **Solution**: Set `WHATSAPP_TEMPLATE_LOCALE` to match:
+  - English (US) → `en_US` (default)
+  - English (UK) → `en_GB`
+  - Hindi → `hi`
+  - Spanish → `es`
+- **Common mistake**: Using `en` instead of `en_US`
+
+**C. Template Not Approved**
+- **Problem**: Template is pending approval or was rejected
+- **Check**: WhatsApp Manager → Message Templates → Check status
+- **Solution**: Wait for approval or fix rejection issues
+
+**D. Parameter Count Mismatch**
+- **Problem**: Sending wrong number of parameters to template
+- **Check**: Count placeholders in your template (e.g., `{{1}}`, `{{2}}`, etc.)
+- **Solution**: 
+  - If template has 6 parameters: `WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=false`
+  - If template has 7 parameters: `WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=true`
+
+**Quick Diagnostic Steps:**
+1. Check Vonage Dashboard → Messages → Find the rejected message ID
+2. Look at the error details for specific cause
+3. Verify all template configuration in `.env`:
+   ```bash
+   # Check current configuration
+   grep WHATSAPP_TEMPLATE .env.production
+   ```
+4. Compare with WhatsApp Manager template details
+5. Update mismatched values and restart service
+
+**Example Fix:**
+```env
+# Before (causing error 1022)
+WHATSAPP_TEMPLATE_LOCALE=en  # ❌ Wrong!
+
+# After (fixed)
+WHATSAPP_TEMPLATE_LOCALE=en_US  # ✅ Correct!
+WHATSAPP_TEMPLATE_NAMESPACE=c0a5f8e8_a30e_41fd_9474_beea4345e9b5  # ✅ Added namespace
+```
 
 ### Testing Checklist
 

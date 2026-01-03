@@ -19,3 +19,4 @@ COMMENT ON COLUMN support_messages.sender_type IS 'Type of sender: partner, orga
 
 
 
+

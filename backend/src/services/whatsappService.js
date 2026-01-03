@@ -36,6 +36,10 @@ class WhatsAppService {
     this.useTemplates = false; // Will be true if at least one template is configured
     this.includePaymentStatusInTemplate = process.env.WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS === 'true'; // Whether to include payment status as 7th parameter
     
+    // WhatsApp Template Configuration
+    this.templateNamespace = null; // WhatsApp template namespace (e.g., 'c0a5f8e8_a30e_41fd_9474_beea4345e9b5')
+    this.templateLocale = 'en_US'; // Default locale for templates
+    
     this.initialize();
   }
 
@@ -106,6 +110,10 @@ class WhatsAppService {
       this.enabled = process.env.WHATSAPP_ENABLED === 'true';
       this.isSandbox = process.env.VONAGE_SANDBOX === 'true';
       
+      // Load template configuration from environment variables
+      this.templateNamespace = process.env.WHATSAPP_TEMPLATE_NAMESPACE?.trim() || null;
+      this.templateLocale = process.env.WHATSAPP_TEMPLATE_LOCALE?.trim() || 'en_US';
+      
       // Load template names from environment variables
       // Support both old and new template name formats
       this.templateNames.appointmentConfirmation = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CONFIRMATION?.trim() || 
@@ -130,6 +138,9 @@ class WhatsAppService {
       console.log('[WhatsApp Service] Template Support:', this.useTemplates ? 'ENABLED' : 'DISABLED');
       console.log('[WhatsApp Service] Include Payment Status in Template:', this.includePaymentStatusInTemplate);
       if (this.useTemplates) {
+        console.log('[WhatsApp Service] Template Configuration:');
+        console.log('  - Namespace:', this.templateNamespace || 'NOT SET (using default)');
+        console.log('  - Locale:', this.templateLocale);
         console.log('[WhatsApp Service] Templates configured:');
         console.log('  - Appointment Booked:', this.templateNames.appointmentConfirmation || 'NOT SET');
         console.log('  - Appointment Reminder:', this.templateNames.appointmentReminder || 'NOT SET');
@@ -702,26 +713,38 @@ Please prepare for the session and contact the client if needed.
    * @param {string} toPhoneNumber - Recipient's phone number
    * @param {string} templateName - Template name
    * @param {Array} templateParams - Template parameters
-   * @param {string} languageCode - Language code (default: 'en')
+   * @param {string} languageCode - Language code (default: 'en_US')
    * @returns {Promise<Object>} Result with message ID or error
    */
-  async sendTemplateMessage(toPhoneNumber, templateName, templateParams, languageCode = 'en') {
+  async sendTemplateMessage(toPhoneNumber, templateName, templateParams, languageCode = null) {
     const fromNumber = this.fromNumber.startsWith('+') ? this.fromNumber.substring(1) : this.fromNumber;
     const toNumber = toPhoneNumber.replace('+', '');
     
+    // Use configured locale if not provided
+    const locale = languageCode || this.templateLocale || 'en_US';
+    
+    // Prepend namespace to template name if configured
+    // WhatsApp expects format: "namespace:template_name" or just "template_name"
+    let fullTemplateName = templateName;
+    if (this.templateNamespace && !templateName.includes(':')) {
+      fullTemplateName = `${this.templateNamespace}:${templateName}`;
+    }
+    
     // Log template details for debugging
     console.log('[WhatsApp Template] Sending template message:');
-    console.log('  - Template Name:', templateName);
+    console.log('  - Template Name (original):', templateName);
+    console.log('  - Template Name (with namespace):', fullTemplateName);
+    console.log('  - Namespace:', this.templateNamespace || 'NOT SET');
     console.log('  - Parameters Count:', templateParams.length);
     console.log('  - Parameters:', templateParams.map((p, i) => `[${i + 1}] "${p}"`).join(', '));
     console.log('  - From:', fromNumber);
     console.log('  - To:', toNumber);
-    console.log('  - Language:', languageCode);
+    console.log('  - Locale:', locale);
     
     // Vonage expects parameters as array of strings, not objects
     // Error message: "Only array of strings is allowed. E.g. [\"param1\", \"param2\"]"
     const templatePayload = {
-      name: templateName,
+      name: fullTemplateName,
       parameters: templateParams.map(param => String(param)) // Array of strings
     };
     
@@ -736,7 +759,7 @@ Please prepare for the session and contact the client if needed.
           template: templatePayload,
           whatsapp: {
             policy: 'deterministic',
-            locale: languageCode
+            locale: locale
           }
         });
         
@@ -772,7 +795,7 @@ Please prepare for the session and contact the client if needed.
           template: templatePayload,
           whatsapp: {
             policy: 'deterministic',
-            locale: languageCode
+            locale: locale
           }
         }, null, 2));
         
@@ -784,7 +807,7 @@ Please prepare for the session and contact the client if needed.
           template: templatePayload,
           whatsapp: {
             policy: 'deterministic',
-            locale: languageCode
+            locale: locale
           }
         }, {
           headers: {

@@ -100,3 +100,4 @@ COMMENT ON TABLE subscription_plans IS 'Subscription plans including Free Plan f
 
 
 
+
