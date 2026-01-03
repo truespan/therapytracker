@@ -752,18 +752,14 @@ Please prepare for the session and contact the client if needed.
     // Use configured locale if not provided
     const locale = languageCode || this.templateLocale || 'en_US';
     
-    // Prepend namespace to template name if configured
-    // WhatsApp expects format: "namespace:template_name" or just "template_name"
-    let fullTemplateName = templateName;
-    if (this.templateNamespace && !templateName.includes(':')) {
-      fullTemplateName = `${this.templateNamespace}:${templateName}`;
-    }
+    // NOTE: Vonage API uses the template name directly (without namespace prefix)
+    // The namespace is associated with your WhatsApp Business Account in Facebook Business Manager
+    // Do NOT prepend namespace to template name for Vonage API
     
     // Log template details for debugging
     console.log('[WhatsApp Template] Sending template message:');
-    console.log('  - Template Name (original):', templateName);
-    console.log('  - Template Name (with namespace):', fullTemplateName);
-    console.log('  - Namespace:', this.templateNamespace || 'NOT SET');
+    console.log('  - Template Name:', templateName);
+    console.log('  - Namespace (configured, not sent to API):', this.templateNamespace || 'NOT SET');
     console.log('  - Parameters Count:', templateParams.length);
     console.log('  - Parameters:', templateParams.map((p, i) => `[${i + 1}] "${p}"`).join(', '));
     console.log('  - From:', fromNumber);
@@ -773,7 +769,7 @@ Please prepare for the session and contact the client if needed.
     // Vonage expects parameters as array of strings, not objects
     // Error message: "Only array of strings is allowed. E.g. [\"param1\", \"param2\"]"
     const templatePayload = {
-      name: fullTemplateName,
+      name: templateName,  // Use template name directly, without namespace
       parameters: templateParams.map(param => String(param)) // Array of strings
     };
     

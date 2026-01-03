@@ -6,8 +6,9 @@ You're receiving **Error 1022** when sending WhatsApp template messages. Vonage 
 ## Root Cause
 Error 1022 indicates a template configuration mismatch. The most common causes are:
 1. **Locale Mismatch**: Using `en` instead of `en_US`
-2. **Missing Namespace**: Not specifying your WhatsApp template namespace
+2. **Template Name Mismatch**: Template name doesn't match exactly (case-sensitive)
 3. **Parameter Count Mismatch**: Sending wrong number of parameters
+4. **Template Not Approved**: Template is pending or rejected in WhatsApp Manager
 
 ## Immediate Fix
 
@@ -27,13 +28,10 @@ Error 1022 indicates a template configuration mismatch. The most common causes a
 Add or update these variables in your production environment (e.g., Render, Heroku, etc.):
 
 ```env
-# Template Namespace (REQUIRED - from WhatsApp Manager)
-WHATSAPP_TEMPLATE_NAMESPACE=c0a5f8e8_a30e_41fd_9474_beea4345e9b5
-
 # Template Locale (REQUIRED - must match your template language)
 WHATSAPP_TEMPLATE_LOCALE=en_US
 
-# Template Names
+# Template Names (REQUIRED - must match exactly as shown in WhatsApp Manager)
 WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED=theraptrack_appointment_is_booked
 WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED=theraptrack_appointment_cancelled
 
@@ -42,6 +40,8 @@ WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED=theraptrack_appointment_cancelled
 # Set to true if your template has 7 parameters (includes payment status)
 WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=false
 ```
+
+**IMPORTANT:** Do NOT set `WHATSAPP_TEMPLATE_NAMESPACE`. Vonage API doesn't use the namespace in the API call. The namespace is automatically associated with your WhatsApp Business Account.
 
 ### Step 3: Restart Your Application
 
@@ -77,32 +77,34 @@ docker-compose restart
 
 ## Verification Checklist
 
-- [ ] `WHATSAPP_TEMPLATE_NAMESPACE` is set to your namespace from WhatsApp Manager
-- [ ] `WHATSAPP_TEMPLATE_LOCALE` matches your template language (e.g., `en_US`, not `en`)
-- [ ] Template names match exactly (case-sensitive)
+- [ ] `WHATSAPP_TEMPLATE_LOCALE` is set to `en_US` (not `en`)
+- [ ] Template names match EXACTLY as shown in WhatsApp Manager (case-sensitive)
 - [ ] `WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS` matches your parameter count:
   - `false` for 6 parameters (default)
   - `true` for 7 parameters
 - [ ] Application has been restarted after environment variable changes
 - [ ] Templates are approved in WhatsApp Manager (green checkmark)
+- [ ] `WHATSAPP_TEMPLATE_NAMESPACE` is NOT set (Vonage doesn't use it)
 
 ## Example: Your Current Setup
 
 Based on your earlier message, here's what you should set:
 
 ```env
-# Your WhatsApp Template Namespace (you mentioned this)
-WHATSAPP_TEMPLATE_NAMESPACE=c0a5f8e8_a30e_41fd_9474_beea4345e9b5
-
 # Your Template Language: English (US)
 WHATSAPP_TEMPLATE_LOCALE=en_US
 
-# Your Template Names (already set)
+# Your Template Names (must match WhatsApp Manager exactly)
 WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED=theraptrack_appointment_is_booked
 WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED=theraptrack_appointment_cancelled
 
 # Your Template Has 6 Parameters
 WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS=false
+```
+
+**REMOVE this if you have it set:**
+```env
+# WHATSAPP_TEMPLATE_NAMESPACE=c0a5f8e8_a30e_41fd_9474_beea4345e9b5  # ❌ Don't set this!
 ```
 
 ## What Changed in the Code

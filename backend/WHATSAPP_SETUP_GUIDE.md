@@ -249,7 +249,7 @@ See you then! 😊
 | `VONAGE_PRIVATE_KEY` | Yes (Prod) | Vonage Private Key for JWT auth | `-----BEGIN PRIVATE KEY-----\n...` |
 | `VONAGE_WHATSAPP_NUMBER` | Yes | Your Vonage WhatsApp number | `919655846492` |
 | `WHATSAPP_ENABLED` | No | Enable/disable WhatsApp notifications | `true` or `false` (default: `false`) |
-| `WHATSAPP_TEMPLATE_NAMESPACE` | Yes (Prod) | WhatsApp template namespace from Business Manager | `c0a5f8e8_a30e_41fd_9474_beea4345e9b5` |
+| `WHATSAPP_TEMPLATE_NAMESPACE` | No | ~~Not used by Vonage API~~ | ~~Do not set~~ |
 | `WHATSAPP_TEMPLATE_LOCALE` | No | Template language/locale code | `en_US` (default), `en_GB`, `hi`, etc. |
 | `WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED` | No | Template name for booking confirmation | `theraptrack_appointment_is_booked` |
 | `WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED` | No | Template name for cancellation | `theraptrack_appointment_cancelled` |
@@ -270,7 +270,6 @@ VONAGE_WHATSAPP_NUMBER=919655846492
 WHATSAPP_ENABLED=true
 
 # Template Configuration (REQUIRED for Production)
-WHATSAPP_TEMPLATE_NAMESPACE=c0a5f8e8_a30e_41fd_9474_beea4345e9b5
 WHATSAPP_TEMPLATE_LOCALE=en_US
 WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED=theraptrack_appointment_is_booked
 WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLED=theraptrack_appointment_cancelled
