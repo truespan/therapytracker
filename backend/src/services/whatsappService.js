@@ -459,58 +459,90 @@ class WhatsAppService {
     let displayDate = appointmentDate;
     
     if (!appointmentTime && appointmentDate) {
-      const dateObj = new Date(appointmentDate);
-      const localTimezone = timezone || 'Asia/Kolkata';
-      
-      displayTime = dateObj.toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-        timeZone: localTimezone
-      });
-      
-      displayDate = dateObj.toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        timeZone: localTimezone
-      });
+      try {
+        const dateObj = new Date(appointmentDate);
+        if (!isNaN(dateObj.getTime())) {
+          const localTimezone = timezone || 'Asia/Kolkata';
+          
+          displayTime = dateObj.toLocaleTimeString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: localTimezone
+          });
+          
+          displayDate = dateObj.toLocaleDateString('en-IN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: localTimezone
+          });
+        }
+      } catch (error) {
+        console.error('[WhatsApp Template] Error formatting date/time:', error);
+      }
     } else if (appointmentDate) {
-      const dateObj = new Date(appointmentDate);
-      const localTimezone = timezone || 'Asia/Kolkata';
-      
-      displayDate = dateObj.toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        timeZone: localTimezone
-      });
+      try {
+        const dateObj = new Date(appointmentDate);
+        if (!isNaN(dateObj.getTime())) {
+          const localTimezone = timezone || 'Asia/Kolkata';
+          
+          displayDate = dateObj.toLocaleDateString('en-IN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: localTimezone
+          });
+        }
+      } catch (error) {
+        console.error('[WhatsApp Template] Error formatting date:', error);
+      }
     }
 
-    // Base parameters (always included)
+    // Base parameters with proper fallbacks to ensure no empty/null/undefined values
+    // WhatsApp rejects empty parameters, null, undefined, or "null"/"undefined" strings
+    // Template expects 5 parameters in this order:
+    // {{1}} = User Name
+    // {{2}} = Therapist Name
+    // {{3}} = Appointment Type
+    // {{4}} = Date
+    // {{5}} = Time
     const baseParams = [
-      userName || 'there',
-      displayDate || appointmentDate,
-      displayTime || appointmentTime,
-      therapistName || 'Your therapist',
-      appointmentType || 'Therapy Session',
-      `${duration || 60} minutes`
+      String(userName || 'there').trim(),                    // {{1}} - User Name
+      String(therapistName || 'Your therapist').trim(),      // {{2}} - Therapist Name
+      String(appointmentType || 'Therapy Session').trim(),    // {{3}} - Appointment Type
+      String(displayDate || appointmentDate || 'Date TBD').trim(),  // {{4}} - Date
+      String(displayTime || appointmentTime || 'Time TBD').trim()   // {{5}} - Time
     ];
 
-    // Add payment status as 7th parameter only if enabled
-    if (this.includePaymentStatusInTemplate) {
-      const bookingAmountNum = parseFloat(bookingAmount) || 0;
-      const paymentStatus = bookingAmountNum === 0 
-        ? 'Booking made without payment' 
-        : `Booking amount: ${feeCurrency} ${bookingAmountNum.toFixed(2)}`;
-      baseParams.push(paymentStatus);
+    // Validate all parameters are non-empty and not invalid strings
+    for (let i = 0; i < baseParams.length; i++) {
+      const param = baseParams[i];
+      const isEmpty = !param || param.length === 0;
+      const isInvalid = param === 'null' || param === 'undefined' || param === 'NaN';
+      
+      if (isEmpty || isInvalid) {
+        console.error(`[WhatsApp Template] ⚠️  Parameter ${i + 1} is empty or invalid: "${param}"`);
+        // Set a default value to prevent rejection
+        const defaults = ['there', 'Your therapist', 'Therapy Session', 'Date TBD', 'Time TBD'];
+        baseParams[i] = defaults[i] || 'N/A';
+        console.log(`[WhatsApp Template] ✅ Parameter ${i + 1} set to default: "${baseParams[i]}"`);
+      }
     }
 
-    // Return parameters in order
-    // If includePaymentStatusInTemplate is false: {{1}} = User Name, {{2}} = Date, {{3}} = Time, {{4}} = Therapist Name, {{5}} = Appointment Type, {{6}} = Duration
-    // If includePaymentStatusInTemplate is true: {{1}} = User Name, {{2}} = Date, {{3}} = Time, {{4}} = Therapist Name, {{5}} = Appointment Type, {{6}} = Duration, {{7}} = Payment Status
+    // Note: Payment status is NOT included in the booking template (only 5 parameters)
+    // If you need to add payment status, you'll need to create a separate template with 6 parameters
+
+    // Log final parameters for debugging
+    console.log('[WhatsApp Template] Final validated parameters:', {
+      count: baseParams.length,
+      params: baseParams.map((p, i) => `{{${i + 1}}} = "${p}" (length: ${p.length})`),
+      order: '{{1}} User Name, {{2}} Therapist Name, {{3}} Appointment Type, {{4}} Date, {{5}} Time'
+    });
+
+    // Return parameters in order: User Name, Therapist Name, Appointment Type, Date, Time
     return baseParams;
   }
 
@@ -766,12 +798,35 @@ Please prepare for the session and contact the client if needed.
     console.log('  - To:', toNumber);
     console.log('  - Locale:', locale);
     
+    // Validate parameters before sending
+    console.log('[WhatsApp Template] Parameter validation:');
+    const validatedParams = [];
+    for (let i = 0; i < templateParams.length; i++) {
+      const param = String(templateParams[i] || '').trim();
+      const isEmpty = !param || param.length === 0;
+      const isInvalid = param === 'null' || param === 'undefined' || param === 'NaN' || param === 'Invalid Date';
+      
+      if (isEmpty || isInvalid) {
+        console.error(`  ⚠️  Parameter ${i + 1}: "${param}" - Empty: ${isEmpty}, Invalid: ${isInvalid}`);
+        // Set default to prevent rejection (matching the 5-parameter template order)
+        // Order: {{1}} User Name, {{2}} Therapist Name, {{3}} Appointment Type, {{4}} Date, {{5}} Time
+        const defaults = ['there', 'Your therapist', 'Therapy Session', 'Date TBD', 'Time TBD', 'N/A'];
+        validatedParams.push(defaults[i] || 'N/A');
+        console.log(`  ✅ Parameter ${i + 1} corrected to: "${validatedParams[i]}"`);
+      } else {
+        validatedParams.push(param);
+        console.log(`  ✅ Parameter ${i + 1}: "${param}" (length: ${param.length})`);
+      }
+    }
+    
     // Vonage expects parameters as array of strings, not objects
     // Error message: "Only array of strings is allowed. E.g. [\"param1\", \"param2\"]"
     const templatePayload = {
       name: templateName,  // Use template name directly, without namespace
-      parameters: templateParams.map(param => String(param)) // Array of strings
+      parameters: validatedParams // Use validated parameters
     };
+    
+    console.log('[WhatsApp Template] Final payload parameters:', validatedParams.map((p, i) => `{{${i + 1}}}="${p}"`).join(', '));
     
     try {
       if (this.vonageClient) {
