@@ -150,6 +150,9 @@ export const organizationAPI = {
 
   // Therapist signup URL management
   getTherapistSignupToken: (organizationId) => api.get(`/organizations/${organizationId}/therapist-signup-token`),
+  
+  // Referral code verification (public endpoint)
+  verifyReferralCode: (code) => api.get(`/organizations/verify-referral-code/${code}`),
 
   // Therapist video session management (for theraptrack-controlled organizations)
   getTherapistsVideoSettings: (organizationId) => api.get(`/organizations/${organizationId}/therapists/video-settings`),
@@ -179,6 +182,7 @@ export const adminAPI = {
   getAllPartners: () => api.get('/admin/partners'),
   updatePartner: (id, data) => api.put(`/admin/partners/${id}`, data),
   setForNewTherapists: (id, value) => api.put(`/admin/organizations/${id}/for-new-therapists`, { value }),
+  generateReferralCode: () => api.get('/admin/generate-referral-code'),
   // Report Templates
   getAllTemplates: () => api.get('/admin/report-templates'),
   getTemplateCount: () => api.get('/admin/report-templates/count'),

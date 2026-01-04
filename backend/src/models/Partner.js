@@ -131,14 +131,14 @@ class Partner {
   }
 
   static async create(partnerData, client = null) {
-    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled, query_resolver } = partnerData;
+    const { name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled, query_resolver, referral_code_used, referral_discount_applied, referral_discount_type } = partnerData;
 
     // Generate unique Partner ID
     const partnerId = await this.generatePartnerId(organization_id);
 
     const query = `
-      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled, query_resolver)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+      INSERT INTO partners (partner_id, name, sex, age, email, contact, qualification, license_id, address, photo_url, work_experience, other_practice_details, organization_id, verification_token, verification_token_expires, fee_min, fee_max, fee_currency, language_preferences, video_sessions_enabled, query_resolver, referral_code_used, referral_discount_applied, referral_discount_type)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
       RETURNING *
     `;
     const values = [
@@ -146,7 +146,10 @@ class Partner {
       work_experience || null, other_practice_details || null, organization_id, verification_token, verification_token_expires,
       fee_min || null, fee_max || null, fee_currency || 'INR', language_preferences || null,
       video_sessions_enabled !== undefined ? video_sessions_enabled : true,
-      query_resolver !== undefined ? query_resolver : false
+      query_resolver !== undefined ? query_resolver : false,
+      referral_code_used || null,
+      referral_discount_applied || null,
+      referral_discount_type || null
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);

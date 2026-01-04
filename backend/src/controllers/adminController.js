@@ -43,7 +43,10 @@ const createOrganization = async (req, res) => {
       video_sessions_enabled,
       theraptrack_controlled,
       number_of_therapists,
-      password
+      password,
+      referral_code,
+      referral_code_discount,
+      referral_code_discount_type
     } = req.body;
 
     // Validate required fields
@@ -60,6 +63,28 @@ const createOrganization = async (req, res) => {
     } else if (number_of_therapists !== null) {
       // Convert to integer if it's a string
       number_of_therapists = parseInt(number_of_therapists, 10);
+    }
+
+    // Validate referral code if provided
+    if (referral_code) {
+      // Trim and convert to uppercase
+      referral_code = referral_code.trim();
+      
+      // Check if referral code already exists
+      const existingOrg = await Organization.findByReferralCode(referral_code);
+      if (existingOrg) {
+        return res.status(409).json({ 
+          error: 'This referral code is already in use by another organization' 
+        });
+      }
+    }
+
+    // Convert empty discount to null
+    if (referral_code_discount === '' || referral_code_discount === undefined) {
+      referral_code_discount = null;
+      referral_code_discount_type = null;
+    } else if (referral_code_discount !== null) {
+      referral_code_discount = parseFloat(referral_code_discount);
     }
 
     // Check if email already exists
@@ -84,7 +109,10 @@ const createOrganization = async (req, res) => {
         gst_no: gst_no || null,
         video_sessions_enabled: video_sessions_enabled !== undefined ? video_sessions_enabled : true,
         theraptrack_controlled: theraptrack_controlled !== undefined ? theraptrack_controlled : false,
-        number_of_therapists: number_of_therapists ? parseInt(number_of_therapists) : null
+        number_of_therapists: number_of_therapists ? parseInt(number_of_therapists) : null,
+        referral_code: referral_code || null,
+        referral_code_discount: referral_code_discount,
+        referral_code_discount_type: referral_code_discount_type || null
       }, client);
 
       // Create auth credentials
@@ -230,6 +258,37 @@ const updateOrganization = async (req, res) => {
     const org = await Organization.findById(id);
     if (!org) {
       return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Validate referral code if being updated
+    if (updateData.referral_code !== undefined) {
+      if (updateData.referral_code === '' || updateData.referral_code === null) {
+        // Clearing referral code
+        updateData.referral_code = null;
+        updateData.referral_code_discount = null;
+        updateData.referral_code_discount_type = null;
+      } else {
+        // Setting/updating referral code
+        updateData.referral_code = updateData.referral_code.trim();
+        
+        // Check if referral code is already in use by another organization
+        const existingOrg = await Organization.findByReferralCode(updateData.referral_code);
+        if (existingOrg && existingOrg.id !== parseInt(id)) {
+          return res.status(409).json({ 
+            error: 'This referral code is already in use by another organization' 
+          });
+        }
+      }
+    }
+
+    // Handle discount fields
+    if (updateData.referral_code_discount !== undefined) {
+      if (updateData.referral_code_discount === '' || updateData.referral_code_discount === null) {
+        updateData.referral_code_discount = null;
+        updateData.referral_code_discount_type = null;
+      } else {
+        updateData.referral_code_discount = parseFloat(updateData.referral_code_discount);
+      }
     }
 
     // If setting query_resolver = true, ensure organization is TheraPTrack controlled
@@ -1137,6 +1196,50 @@ const setDefaultSubscriptionPlan = async (req, res) => {
   }
 };
 
+/**
+ * Generate a unique referral code
+ */
+const generateReferralCode = async (req, res) => {
+  try {
+    const crypto = require('crypto');
+    let attempts = 0;
+    const maxAttempts = 10;
+    let code = null;
+    let isUnique = false;
+
+    while (!isUnique && attempts < maxAttempts) {
+      // Generate a random code: 3-4 letters + 4-5 digits (e.g., ABC1234, XY789)
+      const letters = crypto.randomBytes(3).toString('hex').toUpperCase().substring(0, 3);
+      const numbers = Math.floor(1000 + Math.random() * 9000).toString();
+      code = `${letters}${numbers}`;
+
+      // Check if code already exists
+      const existingOrg = await Organization.findByReferralCode(code);
+      if (!existingOrg) {
+        isUnique = true;
+      }
+      attempts++;
+    }
+
+    if (!isUnique) {
+      return res.status(500).json({
+        error: 'Failed to generate unique referral code after multiple attempts. Please try again.'
+      });
+    }
+
+    res.json({
+      success: true,
+      referral_code: code
+    });
+  } catch (error) {
+    console.error('Error generating referral code:', error);
+    res.status(500).json({
+      error: 'Failed to generate referral code',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllOrganizations,
   createOrganization,
@@ -1152,6 +1255,7 @@ module.exports = {
   updatePartner,
   setForNewTherapists,
   getDefaultSubscriptionPlan,
-  setDefaultSubscriptionPlan
+  setDefaultSubscriptionPlan,
+  generateReferralCode
 };
 

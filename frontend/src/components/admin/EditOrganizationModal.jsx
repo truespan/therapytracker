@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, Users, Shield, MessageCircle } from 'lucide-react';
+import { X, Building2, Mail, Phone, MapPin, FileText, Users, Shield, MessageCircle, RefreshCw, Edit2, Check } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
+import { adminAPI } from '../../services/api';
 
 const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organization }) => {
   const [formData, setFormData] = useState({
@@ -14,12 +15,29 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     query_resolver: false,
     number_of_therapists: '',
     photo_url: '',
+    referral_code: '',
+    referral_code_discount: '',
+    referral_code_discount_type: 'percentage',
   });
 
   const [errors, setErrors] = useState({});
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [codeGenerated, setCodeGenerated] = useState(false);
+  const [isEditingDiscount, setIsEditingDiscount] = useState(false);
+  const [discountEditData, setDiscountEditData] = useState({
+    referral_code_discount: '',
+    referral_code_discount_type: 'percentage',
+  });
 
   useEffect(() => {
     if (organization) {
+      // Check if organization has an existing referral code (from database)
+      const referralCode = organization.referral_code;
+      const hasExistingCode = referralCode && 
+                              typeof referralCode === 'string' && 
+                              referralCode.trim() !== '' && 
+                              referralCode.trim().toUpperCase() !== 'NULL';
+      
       setFormData({
         name: organization.name || '',
         email: organization.email || '',
@@ -31,12 +49,49 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         query_resolver: organization.query_resolver ?? false,
         number_of_therapists: organization.number_of_therapists != null ? organization.number_of_therapists : '',
         photo_url: organization.photo_url || '',
+        referral_code: referralCode || '',
+        referral_code_discount: organization.referral_code_discount != null ? organization.referral_code_discount : '',
+        referral_code_discount_type: organization.referral_code_discount_type || 'percentage',
       });
+      
+      // Initialize discount edit data
+      setDiscountEditData({
+        referral_code_discount: organization.referral_code_discount != null ? organization.referral_code_discount : '',
+        referral_code_discount_type: organization.referral_code_discount_type || 'percentage',
+      });
+      setIsEditingDiscount(false);
+      
+      // If organization already has a referral code, mark it as read-only
+      // This prevents generating a new code when editing an existing organization with a code
+      setCodeGenerated(hasExistingCode);
+      
+      // Debug log to help troubleshoot
+      if (hasExistingCode) {
+        console.log('[EditOrganizationModal] Organization has existing referral code:', referralCode);
+      }
+    } else {
+      // Reset when organization is cleared
+      setCodeGenerated(false);
     }
   }, [organization]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Prevent changes to referral_code if it's already set (read-only)
+    if (name === 'referral_code' && codeGenerated) {
+      return;
+    }
+    
+    // Handle discount fields separately when in edit mode
+    if ((name === 'referral_code_discount' || name === 'referral_code_discount_type') && isEditingDiscount) {
+      setDiscountEditData((prev) => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value,
+      }));
+      return;
+    }
+    
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -47,6 +102,50 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         ...prev,
         [name]: '',
       }));
+    }
+  };
+  
+  const handleEditDiscount = () => {
+    setIsEditingDiscount(true);
+    setDiscountEditData({
+      referral_code_discount: formData.referral_code_discount,
+      referral_code_discount_type: formData.referral_code_discount_type,
+    });
+  };
+  
+  const handleSaveDiscount = () => {
+    setFormData((prev) => ({
+      ...prev,
+      referral_code_discount: discountEditData.referral_code_discount,
+      referral_code_discount_type: discountEditData.referral_code_discount_type,
+    }));
+    setIsEditingDiscount(false);
+  };
+  
+  const handleCancelDiscount = () => {
+    setIsEditingDiscount(false);
+    setDiscountEditData({
+      referral_code_discount: formData.referral_code_discount,
+      referral_code_discount_type: formData.referral_code_discount_type,
+    });
+  };
+
+  const handleGenerateCode = async () => {
+    try {
+      setGeneratingCode(true);
+      const response = await adminAPI.generateReferralCode();
+      if (response.data.success && response.data.referral_code) {
+        setFormData((prev) => ({
+          ...prev,
+          referral_code: response.data.referral_code,
+        }));
+        setCodeGenerated(true);
+      }
+    } catch (error) {
+      console.error('Error generating referral code:', error);
+      alert(error.response?.data?.error || 'Failed to generate referral code. Please try again.');
+    } finally {
+      setGeneratingCode(false);
     }
   };
 
@@ -85,6 +184,9 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         ...formData,
         number_of_therapists: formData.number_of_therapists === '' ? null : (formData.number_of_therapists ? parseInt(formData.number_of_therapists, 10) : null),
         gst_no: formData.gst_no === '' ? null : formData.gst_no,
+        referral_code: formData.referral_code === '' ? null : formData.referral_code,
+        referral_code_discount: formData.referral_code_discount === '' ? null : parseFloat(formData.referral_code_discount),
+        referral_code_discount_type: formData.referral_code_discount === '' ? null : formData.referral_code_discount_type,
       };
       onSubmit(submitData);
     }
@@ -92,6 +194,8 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
 
   const handleClose = () => {
     setErrors({});
+    setCodeGenerated(false);
+    setIsEditingDiscount(false);
     onClose();
   };
 
@@ -331,6 +435,146 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
                   </p>
                 </div>
               </label>
+            </div>
+          )}
+
+          {/* Referral Code (Only for TheraPTrack Controlled) */}
+          {formData.theraptrack_controlled && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Referral Code (Optional)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="referral_code"
+                    value={formData.referral_code}
+                    onChange={handleChange}
+                    readOnly={codeGenerated}
+                    className={`flex-1 px-4 py-2 border rounded-lg uppercase ${
+                      codeGenerated
+                        ? 'bg-gray-100 border-gray-300 text-gray-700 cursor-not-allowed'
+                        : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                    }`}
+                    placeholder="e.g., WELCOME2024"
+                    disabled={isLoading || generatingCode || codeGenerated}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGenerateCode}
+                    disabled={isLoading || generatingCode || codeGenerated}
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    title={codeGenerated ? "Referral code cannot be changed" : "Generate a random unique referral code"}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${generatingCode ? 'animate-spin' : ''}`} />
+                    {generatingCode ? 'Generating...' : 'Generate'}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  {codeGenerated 
+                    ? '✓ Referral code is set. This code cannot be edited or regenerated.'
+                    : 'Therapists can use this code to join your organization during signup. Click "Generate" for a random unique code.'}
+                </p>
+                {organization?.referral_code && formData.referral_code && formData.referral_code !== organization.referral_code && !codeGenerated && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    ⚠️ Changing the referral code will invalidate the old code
+                  </p>
+                )}
+              </div>
+
+              {/* Discount Fields (Only show if referral code is entered) */}
+              {formData.referral_code && (
+                <div className="space-y-3 pl-4 border-l-2 border-green-300">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium text-gray-700">Discount Settings</h4>
+                    {!isEditingDiscount ? (
+                      <button
+                        type="button"
+                        onClick={handleEditDiscount}
+                        className="flex items-center gap-1 px-3 py-1 text-sm text-primary-700 hover:text-primary-800 hover:bg-primary-50 rounded-lg transition-colors"
+                        disabled={isLoading}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                        Edit
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleSaveDiscount}
+                          className="flex items-center gap-1 px-3 py-1 text-sm text-green-700 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
+                          disabled={isLoading}
+                        >
+                          <Check className="h-4 w-4" />
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCancelDiscount}
+                          className="flex items-center gap-1 px-3 py-1 text-sm text-gray-700 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors"
+                          disabled={isLoading}
+                        >
+                          <X className="h-4 w-4" />
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount Amount
+                      </label>
+                      <input
+                        type="number"
+                        name="referral_code_discount"
+                        value={isEditingDiscount ? discountEditData.referral_code_discount : formData.referral_code_discount}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          isEditingDiscount 
+                            ? 'border-gray-300' 
+                            : 'bg-gray-100 border-gray-300 text-gray-700 cursor-not-allowed'
+                        }`}
+                        placeholder="0"
+                        disabled={isLoading || !isEditingDiscount}
+                        readOnly={!isEditingDiscount}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount Type
+                      </label>
+                      <select
+                        name="referral_code_discount_type"
+                        value={isEditingDiscount ? discountEditData.referral_code_discount_type : formData.referral_code_discount_type}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                          isEditingDiscount 
+                            ? 'border-gray-300' 
+                            : 'bg-gray-100 border-gray-300 text-gray-700 cursor-not-allowed'
+                        }`}
+                        disabled={isLoading || !isEditingDiscount}
+                      >
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount (₹)</option>
+                      </select>
+                    </div>
+                  </div>
+                  {(isEditingDiscount ? discountEditData.referral_code_discount : formData.referral_code_discount) && (
+                    <div className="bg-white rounded p-2 text-sm">
+                      <span className="font-medium text-green-700">
+                        Discount Preview: {' '}
+                        {(isEditingDiscount ? discountEditData.referral_code_discount_type : formData.referral_code_discount_type) === 'percentage'
+                          ? `${isEditingDiscount ? discountEditData.referral_code_discount : formData.referral_code_discount}% off`
+                          : `₹${isEditingDiscount ? discountEditData.referral_code_discount : formData.referral_code_discount} off`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

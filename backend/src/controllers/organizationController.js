@@ -1098,6 +1098,59 @@ const verifyTherapistSignupToken = async (req, res) => {
 };
 
 /**
+ * Verify a referral code (public endpoint)
+ */
+const verifyReferralCode = async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    if (!code) {
+      return res.status(400).json({ error: 'Referral code is required' });
+    }
+
+    console.log('Verifying referral code:', code);
+
+    const organization = await Organization.findByReferralCode(code);
+
+    if (!organization) {
+      console.log('Referral code verification failed - no organization found');
+      return res.status(404).json({
+        error: 'Invalid referral code',
+        valid: false
+      });
+    }
+
+    console.log('Referral code verification successful for organization:', organization.name);
+
+    // Prepare discount information
+    let discountInfo = null;
+    if (organization.referral_code_discount && organization.referral_code_discount_type) {
+      discountInfo = {
+        amount: parseFloat(organization.referral_code_discount),
+        type: organization.referral_code_discount_type,
+        display: organization.referral_code_discount_type === 'percentage'
+          ? `${organization.referral_code_discount}% off`
+          : `₹${organization.referral_code_discount} off`
+      };
+    }
+
+    res.json({
+      success: true,
+      valid: true,
+      organization_id: organization.id,
+      organization_name: organization.name,
+      discount: discountInfo
+    });
+  } catch (error) {
+    console.error('Verify referral code error:', error);
+    res.status(500).json({
+      error: 'Failed to verify referral code',
+      details: error.message
+    });
+  }
+};
+
+/**
  * Get all therapists for an organization with their video session settings
  */
 const getTherapistsVideoSettings = async (req, res) => {
@@ -1611,6 +1664,7 @@ module.exports = {
   calculateSubscriptionPrice,
   getTherapistSignupToken,
   verifyTherapistSignupToken,
+  verifyReferralCode,
   getTherapistsVideoSettings,
   updateTherapistVideoSettings,
   bulkUpdateTherapistVideoSettings,

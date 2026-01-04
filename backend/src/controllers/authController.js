@@ -633,15 +633,15 @@ const verifyEmail = async (req, res) => {
 };
 
 /**
- * Therapist signup using organization signup token
+ * Therapist signup using organization signup token or referral code
  */
 const therapistSignup = async (req, res) => {
   try {
-    const { token, password, ...partnerData } = req.body;
+    const { token, referral_code, password, ...partnerData } = req.body;
 
-    // Validate required fields
-    if (!token) {
-      return res.status(400).json({ error: 'Signup token is required' });
+    // Validate that either token or referral_code is provided
+    if (!token && !referral_code) {
+      return res.status(400).json({ error: 'Either signup token or referral code is required' });
     }
 
     if (!password) {
@@ -654,12 +654,33 @@ const therapistSignup = async (req, res) => {
       });
     }
 
-    // Verify signup token and get organization
-    const organization = await Organization.verifySignupToken(token);
-    if (!organization) {
-      return res.status(404).json({
-        error: 'Invalid or expired signup link. Please contact your organization for a new link.'
-      });
+    // Get organization either by token or referral code
+    let organization = null;
+    let referralInfo = null;
+    
+    if (referral_code) {
+      // Lookup organization by referral code
+      organization = await Organization.findByReferralCode(referral_code);
+      if (!organization) {
+        return res.status(404).json({
+          error: 'Invalid referral code. Please check the code and try again.'
+        });
+      }
+      
+      // Store referral code info for later use
+      referralInfo = {
+        code: referral_code,
+        discount: organization.referral_code_discount,
+        discount_type: organization.referral_code_discount_type
+      };
+    } else {
+      // Verify signup token and get organization
+      organization = await Organization.verifySignupToken(token);
+      if (!organization) {
+        return res.status(404).json({
+          error: 'Invalid or expired signup link. Please contact your organization for a new link.'
+        });
+      }
     }
 
     // Validate email format
@@ -724,7 +745,10 @@ const therapistSignup = async (req, res) => {
         verification_token_expires: tokenExpiry,
         fee_min: partnerData.fee_min !== undefined && partnerData.fee_min !== null && partnerData.fee_min !== '' ? parseFloat(partnerData.fee_min) : null,
         fee_max: partnerData.fee_max !== undefined && partnerData.fee_max !== null && partnerData.fee_max !== '' ? parseFloat(partnerData.fee_max) : null,
-        fee_currency: partnerData.fee_currency || 'INR'
+        fee_currency: partnerData.fee_currency || 'INR',
+        referral_code_used: referralInfo ? referralInfo.code : null,
+        referral_discount_applied: referralInfo ? referralInfo.discount : null,
+        referral_discount_type: referralInfo ? referralInfo.discount_type : null
       }, client);
 
       // Create auth credentials

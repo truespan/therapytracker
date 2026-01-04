@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Building2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
@@ -7,6 +7,11 @@ const TherapistSignupModal = ({ isOpen, onClose }) => {
   const [signupToken, setSignupToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+  const [referralCodeValid, setReferralCodeValid] = useState(null);
+  const [referralDiscount, setReferralDiscount] = useState(null);
+  const [referralOrgName, setReferralOrgName] = useState('');
+  const [verifyingReferral, setVerifyingReferral] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,8 +38,59 @@ const TherapistSignupModal = ({ isOpen, onClose }) => {
     }
   };
 
+  // Verify referral code
+  const verifyReferralCode = async (code) => {
+    if (!code || code.trim() === '') {
+      setReferralCodeValid(null);
+      setReferralDiscount(null);
+      setReferralOrgName('');
+      return;
+    }
+
+    setVerifyingReferral(true);
+    try {
+      const response = await api.get(`/organizations/verify-referral-code/${code}`);
+      if (response.data.valid) {
+        setReferralCodeValid(true);
+        setReferralOrgName(response.data.organization_name);
+        setReferralDiscount(response.data.discount || response.data.discountInfo);
+      } else {
+        setReferralCodeValid(false);
+        setReferralOrgName('');
+        setReferralDiscount(null);
+      }
+    } catch (err) {
+      console.error('Referral code verification error:', err);
+      setReferralCodeValid(false);
+      setReferralOrgName('');
+      setReferralDiscount(null);
+    } finally {
+      setVerifyingReferral(false);
+    }
+  };
+
+  // Handle referral code change with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (referralCode) {
+        verifyReferralCode(referralCode);
+      } else {
+        setReferralCodeValid(null);
+        setReferralDiscount(null);
+        setReferralOrgName('');
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [referralCode]);
+
   const handleNavigateToSignup = () => {
-    if (signupToken) {
+    // If referral code is provided and valid, use it (bypasses token system)
+    if (referralCode && referralCodeValid) {
+      onClose();
+      navigate(`/therapist-signup?referral_code=${encodeURIComponent(referralCode)}`);
+    } else if (signupToken) {
+      // Use token-based flow if no referral code
       onClose();
       navigate(`/therapist-signup/${signupToken}`);
     }
@@ -166,14 +222,72 @@ const TherapistSignupModal = ({ isOpen, onClose }) => {
                 </ol>
               </div>
 
+              {/* Referral Code Input (Optional) */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-2">
+                  Have a Referral Code? (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary uppercase ${
+                    referralCodeValid === true
+                      ? 'border-green-500 dark:border-green-400'
+                      : referralCodeValid === false
+                      ? 'border-red-500 dark:border-red-400'
+                      : 'border-gray-300 dark:border-dark-border'
+                  }`}
+                  placeholder="Enter referral code (e.g., WELCOME2024)"
+                  disabled={verifyingReferral}
+                />
+                {verifyingReferral && (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-dark-text-tertiary">Verifying...</p>
+                )}
+                {referralCodeValid === true && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                      <CheckCircle className="h-4 w-4" />
+                      Valid referral code
+                    </p>
+                    {referralOrgName && (
+                      <p className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center gap-1">
+                        <Building2 className="h-4 w-4" />
+                        Joining: {referralOrgName}
+                      </p>
+                    )}
+                    {referralDiscount && referralDiscount.display && (
+                      <p className="text-sm font-semibold text-green-700 dark:text-green-300">
+                        🎉 {referralDiscount.display} on your subscription!
+                      </p>
+                    )}
+                  </div>
+                )}
+                {referralCodeValid === false && (
+                  <p className="mt-1 text-sm text-red-500 dark:text-red-400 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    Invalid referral code
+                  </p>
+                )}
+                <p className="text-xs text-gray-600 dark:text-dark-text-tertiary mt-2">
+                  If you have a referral code, enter it here to join a specific organization and receive any associated discounts.
+                </p>
+              </div>
+
               <div className="flex justify-center pt-4">
                 <button
                   onClick={handleNavigateToSignup}
-                  className="bg-primary-600 hover:bg-primary-700 dark:bg-dark-primary-600 dark:hover:bg-dark-primary-700 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors shadow-lg hover:shadow-xl"
+                  disabled={referralCode && !referralCodeValid}
+                  className="bg-primary-600 hover:bg-primary-700 dark:bg-dark-primary-600 dark:hover:bg-dark-primary-700 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continue to Registration
                 </button>
               </div>
+              {referralCode && !referralCodeValid && (
+                <p className="text-center text-sm text-red-500 dark:text-red-400 mt-2">
+                  Please enter a valid referral code or leave it blank to continue
+                </p>
+              )}
             </div>
           )}
         </div>

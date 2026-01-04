@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, Lock, Users, Shield } from 'lucide-react';
+import { X, Building2, Mail, Phone, MapPin, FileText, Lock, Users, Shield, RefreshCw } from 'lucide-react';
+import { adminAPI } from '../../services/api';
 
 const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -12,9 +13,14 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     theraptrack_controlled: false,
     number_of_therapists: '',
     password: '',
+    referral_code: '',
+    referral_code_discount: '',
+    referral_code_discount_type: 'percentage',
   });
 
   const [errors, setErrors] = useState({});
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [codeGenerated, setCodeGenerated] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,6 +34,25 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         ...prev,
         [name]: '',
       }));
+    }
+  };
+
+  const handleGenerateCode = async () => {
+    try {
+      setGeneratingCode(true);
+      const response = await adminAPI.generateReferralCode();
+      if (response.data.success && response.data.referral_code) {
+        setFormData((prev) => ({
+          ...prev,
+          referral_code: response.data.referral_code,
+        }));
+        setCodeGenerated(true);
+      }
+    } catch (error) {
+      console.error('Error generating referral code:', error);
+      alert(error.response?.data?.error || 'Failed to generate referral code. Please try again.');
+    } finally {
+      setGeneratingCode(false);
     }
   };
 
@@ -72,6 +97,9 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         ...formData,
         number_of_therapists: formData.number_of_therapists === '' ? null : (formData.number_of_therapists ? parseInt(formData.number_of_therapists, 10) : null),
         gst_no: formData.gst_no === '' ? null : formData.gst_no,
+        referral_code: formData.referral_code === '' ? null : formData.referral_code,
+        referral_code_discount: formData.referral_code_discount === '' ? null : parseFloat(formData.referral_code_discount),
+        referral_code_discount_type: formData.referral_code_discount === '' ? null : formData.referral_code_discount_type,
       };
       onSubmit(submitData);
     }
@@ -88,8 +116,12 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
       theraptrack_controlled: false,
       number_of_therapists: '',
       password: '',
+      referral_code: '',
+      referral_code_discount: '',
+      referral_code_discount_type: 'percentage',
     });
     setErrors({});
+    setCodeGenerated(false);
     onClose();
   };
 
@@ -279,6 +311,97 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
               </div>
             </label>
           </div>
+
+          {/* Referral Code (Only for TheraPTrack Controlled) */}
+          {formData.theraptrack_controlled && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Referral Code (Optional)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="referral_code"
+                    value={formData.referral_code}
+                    onChange={handleChange}
+                    readOnly={codeGenerated}
+                    className={`flex-1 px-4 py-2 border rounded-lg uppercase ${
+                      codeGenerated
+                        ? 'bg-gray-100 border-gray-300 text-gray-700 cursor-not-allowed'
+                        : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                    }`}
+                    placeholder="e.g., WELCOME2024"
+                    disabled={isLoading || generatingCode || codeGenerated}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGenerateCode}
+                    disabled={isLoading || generatingCode || codeGenerated}
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    title={codeGenerated ? "Referral code already generated" : "Generate a random unique referral code"}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${generatingCode ? 'animate-spin' : ''}`} />
+                    {generatingCode ? 'Generating...' : 'Generate'}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  {codeGenerated 
+                    ? '✓ Referral code generated. This code cannot be edited after generation.'
+                    : 'Therapists can use this code to join your organization during signup. Click "Generate" for a random unique code.'}
+                </p>
+              </div>
+
+              {/* Discount Fields (Only show if referral code is entered) */}
+              {formData.referral_code && (
+                <div className="space-y-3 pl-4 border-l-2 border-blue-300">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount Amount
+                      </label>
+                      <input
+                        type="number"
+                        name="referral_code_discount"
+                        value={formData.referral_code_discount}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="0"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount Type
+                      </label>
+                      <select
+                        name="referral_code_discount_type"
+                        value={formData.referral_code_discount_type}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        disabled={isLoading}
+                      >
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount (₹)</option>
+                      </select>
+                    </div>
+                  </div>
+                  {formData.referral_code_discount && (
+                    <div className="bg-white rounded p-2 text-sm">
+                      <span className="font-medium text-green-700">
+                        Discount Preview: {' '}
+                        {formData.referral_code_discount_type === 'percentage'
+                          ? `${formData.referral_code_discount}% off`
+                          : `₹${formData.referral_code_discount} off`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Number of Therapists */}
           <div>

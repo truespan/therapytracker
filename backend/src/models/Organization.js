@@ -87,16 +87,35 @@ class Organization {
       name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, 
       video_sessions_enabled, theraptrack_controlled, number_of_therapists, 
       subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date,
-      query_resolver
+      query_resolver, referral_code, referral_code_discount, referral_code_discount_type
     } = orgData;
+    
+    // Validate referral code can only be set for theraptrack_controlled organizations
+    if (referral_code && !theraptrack_controlled) {
+      throw new Error('Referral codes can only be set for TheraPTrack-controlled organizations');
+    }
+    
+    // Validate discount type if discount is provided
+    if (referral_code_discount !== undefined && referral_code_discount !== null) {
+      if (!referral_code_discount_type || !['percentage', 'fixed'].includes(referral_code_discount_type)) {
+        throw new Error('Discount type must be either "percentage" or "fixed" when discount is set');
+      }
+      if (referral_code_discount < 0) {
+        throw new Error('Discount amount must be greater than or equal to 0');
+      }
+      if (referral_code_discount_type === 'percentage' && referral_code_discount > 100) {
+        throw new Error('Percentage discount cannot exceed 100');
+      }
+    }
+    
     const query = `
       INSERT INTO organizations (
         name, date_of_creation, email, contact, address, photo_url, gst_no, subscription_plan, 
         is_active, video_sessions_enabled, theraptrack_controlled, number_of_therapists,
         subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date,
-        query_resolver
+        query_resolver, referral_code, referral_code_discount, referral_code_discount_type
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
       RETURNING *
     `;
     const values = [
@@ -116,7 +135,10 @@ class Organization {
       subscription_billing_period || null,
       subscription_start_date || null,
       subscription_end_date || null,
-      query_resolver !== undefined ? query_resolver : false
+      query_resolver !== undefined ? query_resolver : false,
+      referral_code ? referral_code.toUpperCase() : null,
+      referral_code_discount || null,
+      referral_code_discount_type || null
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
@@ -141,8 +163,29 @@ class Organization {
     return null;
   }
 
+  /**
+   * Find organization by referral code (case-insensitive)
+   * @param {string} referralCode - The referral code to look up
+   * @returns {Promise<Object|null>} Organization with discount info or null
+   */
+  static async findByReferralCode(referralCode) {
+    if (!referralCode) {
+      return null;
+    }
+    const query = `
+      SELECT * FROM organizations 
+      WHERE UPPER(referral_code) = UPPER($1) 
+        AND theraptrack_controlled = TRUE
+    `;
+    const result = await db.query(query, [referralCode]);
+    if (result.rows[0]) {
+      return this.decryptBankAccountFields(result.rows[0]);
+    }
+    return null;
+  }
+
   static async getAll() {
-    const query = 'SELECT id, name, email, contact, address, photo_url, gst_no, subscription_plan, is_active, video_sessions_enabled, theraptrack_controlled, number_of_therapists, created_at FROM organizations ORDER BY name';
+    const query = 'SELECT id, name, email, contact, address, photo_url, gst_no, subscription_plan, is_active, video_sessions_enabled, theraptrack_controlled, number_of_therapists, referral_code, referral_code_discount, referral_code_discount_type, created_at FROM organizations ORDER BY name';
     const result = await db.query(query);
     return result.rows;
   }
@@ -154,10 +197,37 @@ class Organization {
       subscription_billing_period, subscription_start_date, subscription_end_date,
       razorpay_subscription_id, razorpay_customer_id, payment_status,
       bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified,
-      query_resolver
+      query_resolver, referral_code, referral_code_discount, referral_code_discount_type
     } = orgData;
 
     console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
+
+    // Get current organization to check theraptrack_controlled status
+    const currentOrg = await this.findById(id);
+    if (!currentOrg) {
+      throw new Error('Organization not found');
+    }
+
+    // Validate referral code can only be set for theraptrack_controlled organizations
+    if (referral_code !== undefined && referral_code !== null) {
+      const isControlled = theraptrack_controlled !== undefined ? theraptrack_controlled : currentOrg.theraptrack_controlled;
+      if (!isControlled) {
+        throw new Error('Referral codes can only be set for TheraPTrack-controlled organizations');
+      }
+    }
+
+    // Validate discount type if discount is provided
+    if (referral_code_discount !== undefined && referral_code_discount !== null) {
+      if (!referral_code_discount_type || !['percentage', 'fixed'].includes(referral_code_discount_type)) {
+        throw new Error('Discount type must be either "percentage" or "fixed" when discount is set');
+      }
+      if (referral_code_discount < 0) {
+        throw new Error('Discount amount must be greater than or equal to 0');
+      }
+      if (referral_code_discount_type === 'percentage' && referral_code_discount > 100) {
+        throw new Error('Percentage discount cannot exceed 100');
+      }
+    }
 
     // Build dynamic update query to handle undefined vs explicit values
     const updates = [];
@@ -206,6 +276,18 @@ class Organization {
     if (query_resolver !== undefined) {
       updates.push(`query_resolver = $${paramIndex++}`);
       values.push(query_resolver);
+    }
+    if (referral_code !== undefined) {
+      updates.push(`referral_code = $${paramIndex++}`);
+      values.push(referral_code ? referral_code.toUpperCase() : null);
+    }
+    if (referral_code_discount !== undefined) {
+      updates.push(`referral_code_discount = $${paramIndex++}`);
+      values.push(referral_code_discount);
+    }
+    if (referral_code_discount_type !== undefined) {
+      updates.push(`referral_code_discount_type = $${paramIndex++}`);
+      values.push(referral_code_discount_type);
     }
     if (number_of_therapists !== undefined) {
       // Convert empty string to null for integer field
@@ -622,6 +704,9 @@ class Organization {
           o.deactivated_at,
           o.deactivated_by,
           o.created_at,
+          o.referral_code,
+          o.referral_code_discount,
+          o.referral_code_discount_type,
           COUNT(DISTINCT p.id)::int as total_partners,
           COUNT(DISTINCT u.id)::int as total_clients,
           COUNT(DISTINCT vs.id)::int as total_sessions,
@@ -635,7 +720,8 @@ class Organization {
         LEFT JOIN video_sessions vs ON p.id = vs.partner_id
         GROUP BY o.id, o.name, o.email, o.contact, o.address, o.gst_no,
                  o.subscription_plan, o.is_active, o.video_sessions_enabled, o.theraptrack_controlled,
-                 o.for_new_therapists, o.number_of_therapists, o.deactivated_at, o.deactivated_by, o.created_at
+                 o.for_new_therapists, o.number_of_therapists, o.deactivated_at, o.deactivated_by, o.created_at,
+                 o.referral_code, o.referral_code_discount, o.referral_code_discount_type
       )
       SELECT
         om.*,

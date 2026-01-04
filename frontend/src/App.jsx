@@ -132,7 +132,7 @@ function AppRoutes() {
       <Route path="/" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <Home />} />
       <Route path="/login" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <Login />} />
       <Route path="/signup" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <Signup />} />
-      <Route path="/therapist-signup/:token" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <TherapistSignup />} />
+      <Route path="/therapist-signup/:token?" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <TherapistSignup />} />
       <Route path="/forgot-password" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <ForgotPassword />} />
       <Route path="/reset-password" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />

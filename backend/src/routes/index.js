@@ -111,6 +111,8 @@ router.get('/organizations', organizationController.getAllOrganizations);
 router.get('/organizations/theraptrack-token', organizationController.getTherapTrackToken);
 // Public route for verifying therapist signup tokens
 router.get('/organizations/verify-signup-token/:token', organizationController.verifyTherapistSignupToken);
+// Public route for verifying referral codes
+router.get('/organizations/verify-referral-code/:code', organizationController.verifyReferralCode);
 router.get('/organizations/:id', authenticateToken, organizationController.getOrganizationById);
 router.put('/organizations/:id', authenticateToken, organizationController.updateOrganization);
 router.post('/organizations/subscription/cancel', authenticateToken, checkRole('organization'), organizationController.cancelOrganizationSubscription);
@@ -301,6 +303,7 @@ router.put('/admin/partners/:id', authenticateToken, checkRole('admin'), adminCo
 // System settings (admin only)
 router.get('/admin/default-subscription-plan', authenticateToken, checkRole('admin'), adminController.getDefaultSubscriptionPlan);
 router.post('/admin/default-subscription-plan', authenticateToken, checkRole('admin'), adminController.setDefaultSubscriptionPlan);
+router.get('/admin/generate-referral-code', authenticateToken, checkRole('admin'), adminController.generateReferralCode);
 
 // Report template management routes - admin only
 router.get('/admin/report-templates', authenticateToken, checkRole('admin'), reportTemplateController.getAllTemplates);

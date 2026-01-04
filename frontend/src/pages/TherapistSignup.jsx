@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { User, Mail, Phone, MapPin, Lock, Calendar, Award, FileText, Eye, EyeOff, AlertCircle, CheckCircle, Building2 } from 'lucide-react';
 import CountryCodeSelect from '../components/common/CountryCodeSelect';
 import api from '../services/api';
 
 const TherapistSignup = () => {
   const { token } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  
+  // Get referral code from query parameter (takes precedence over token)
+  const referralCodeFromUrl = searchParams.get('referral_code');
 
   const [tokenValid, setTokenValid] = useState(null);
   const [organizationName, setOrganizationName] = useState('');
@@ -14,6 +18,10 @@ const TherapistSignup = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [referralCode, setReferralCode] = useState(referralCodeFromUrl || '');
+  const [referralCodeValid, setReferralCodeValid] = useState(null);
+  const [referralDiscount, setReferralDiscount] = useState(null);
+  const [verifyingReferral, setVerifyingReferral] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -40,8 +48,17 @@ const TherapistSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Verify token on mount
+  // Verify token on mount (only if no referral code is provided)
   useEffect(() => {
+    // If referral code is provided via URL, skip token verification (referral code takes precedence)
+    if (referralCodeFromUrl) {
+      setTokenValid(null);
+      setLoading(false);
+      // Verify the referral code from URL immediately
+      verifyReferralCode(referralCodeFromUrl);
+      return;
+    }
+
     const verifyToken = async () => {
       try {
         const response = await api.get(`/organizations/verify-signup-token/${token}`);
@@ -62,10 +79,53 @@ const TherapistSignup = () => {
     if (token) {
       verifyToken();
     } else {
-      setTokenValid(false);
+      // No token provided - allow signup with referral code
+      setTokenValid(null);
       setLoading(false);
     }
-  }, [token]);
+  }, [token, referralCodeFromUrl]);
+
+  // Verify referral code
+  const verifyReferralCode = async (code) => {
+    if (!code || code.trim() === '') {
+      setReferralCodeValid(null);
+      setReferralDiscount(null);
+      setOrganizationName('');
+      return;
+    }
+
+    setVerifyingReferral(true);
+    try {
+      const response = await api.get(`/organizations/verify-referral-code/${code}`);
+      if (response.data.valid) {
+        setReferralCodeValid(true);
+        setOrganizationName(response.data.organization_name);
+        setReferralDiscount(response.data.discount);
+      } else {
+        setReferralCodeValid(false);
+        setOrganizationName('');
+        setReferralDiscount(null);
+      }
+    } catch (err) {
+      console.error('Referral code verification error:', err);
+      setReferralCodeValid(false);
+      setOrganizationName('');
+      setReferralDiscount(null);
+    } finally {
+      setVerifyingReferral(false);
+    }
+  };
+
+  // Handle referral code change with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (referralCode) {
+        verifyReferralCode(referralCode);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [referralCode]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -134,6 +194,18 @@ const TherapistSignup = () => {
     e.preventDefault();
     setError('');
 
+    // Validate that either token or referral code is provided
+    // Referral code takes precedence - if provided, token is not needed
+    if (referralCode && !referralCodeValid) {
+      setError('Please enter a valid referral code');
+      return;
+    }
+    
+    if (!referralCode && !token) {
+      setError('Please enter a valid referral code or use a signup link');
+      return;
+    }
+
     if (!validate()) {
       return;
     }
@@ -145,7 +217,10 @@ const TherapistSignup = () => {
       const submitData = {
         ...formData,
         contact: `${formData.countryCode}${formData.contact}`,
-        token: token
+        // If referral code is provided, use it and don't send token (bypasses default org)
+        // Otherwise, use token
+        token: referralCode && referralCodeValid ? undefined : token,
+        referral_code: referralCode && referralCodeValid ? referralCode : undefined
       };
       delete submitData.countryCode;
       delete submitData.confirmPassword;
@@ -175,14 +250,14 @@ const TherapistSignup = () => {
     );
   }
 
-  if (!tokenValid) {
+  if (tokenValid === false && !referralCodeValid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-dark-bg-primary dark:to-dark-bg-secondary flex items-center justify-center p-4">
         <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl p-8 max-w-md w-full text-center">
           <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">Invalid Signup Link</h2>
           <p className="text-gray-600 dark:text-dark-text-secondary mb-6">
-            This signup link is invalid or has expired. Please contact your organization to get a new signup link.
+            This signup link is invalid or has expired. Please contact your organization to get a new signup link or use a referral code.
           </p>
           <Link
             to="/"
@@ -232,6 +307,59 @@ const TherapistSignup = () => {
               <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-2 text-red-700 dark:text-red-300">
                 <AlertCircle className="h-5 w-5 flex-shrink-0" />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {/* Organization Info */}
+            {organizationName && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                  <Building2 className="h-5 w-5" />
+                  <span className="font-medium">Joining: {organizationName}</span>
+                </div>
+                {referralDiscount && referralDiscount.display && (
+                  <div className="mt-2 text-sm text-green-700 dark:text-green-300 font-medium">
+                    🎉 {referralDiscount.display} on your subscription!
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Referral Code (show if no token OR if referral code is provided via URL) */}
+            {(!token || referralCodeFromUrl) && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-1">
+                  Referral Code {!referralCodeFromUrl && <span className="text-red-500 dark:text-red-400">*</span>}
+                </label>
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-dark-primary-500 focus:border-transparent bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary uppercase ${
+                    referralCodeValid === true
+                      ? 'border-green-500 dark:border-green-400'
+                      : referralCodeValid === false
+                      ? 'border-red-500 dark:border-red-400'
+                      : 'border-gray-300 dark:border-dark-border'
+                  }`}
+                  placeholder="Enter referral code"
+                  disabled={submitting || !!referralCodeFromUrl}
+                  readOnly={!!referralCodeFromUrl}
+                />
+                {referralCodeFromUrl && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
+                    Referral code provided - you'll join the organization associated with this code
+                  </p>
+                )}
+                {verifyingReferral && (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-dark-text-tertiary">Verifying...</p>
+                )}
+                {referralCodeValid === true && (
+                  <p className="mt-1 text-sm text-green-600 dark:text-green-400">✓ Valid referral code</p>
+                )}
+                {referralCodeValid === false && (
+                  <p className="mt-1 text-sm text-red-500 dark:text-red-400">Invalid referral code</p>
+                )}
               </div>
             )}
 
