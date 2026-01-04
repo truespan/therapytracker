@@ -110,38 +110,40 @@ const EarningsTab = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Pending Earnings */}
-        <div className="card p-6 bg-orange-50 dark:bg-orange-900/20 aspect-square">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex-shrink-0">
-              <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+        <div className="card p-4 md:p-6 bg-orange-50 dark:bg-orange-900/20 aspect-square">
+          <div className="flex items-center gap-2 mb-2 md:mb-3">
+            <div className="p-1.5 md:p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex-shrink-0">
+              <Clock className="h-4 w-4 md:h-5 md:w-5 text-orange-600 dark:text-orange-400" />
             </div>
-            <p className="text-sm text-gray-600 dark:text-dark-text-secondary truncate">Pending Earnings</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-dark-text-secondary truncate">Pending Earnings</p>
           </div>
-          <div className="mb-3">
-            <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
+          <div className="mb-2 md:mb-3">
+            <p className="text-xl md:text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
               {formatCurrency(earningsData.pending_earnings || 0)}
             </p>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Payment captured, waiting for Razorpay settlement (T+2/T+3 days)
+          <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 leading-tight">
+            <span className="md:hidden">Payment captured, waiting for Razorpay settlement (T+3 days)</span>
+            <span className="hidden md:inline">Payment captured, waiting for Razorpay settlement (T+2/T+3 days)</span>
           </p>
         </div>
 
         {/* Available Balance */}
-        <div className="card p-6 bg-green-50 dark:bg-green-900/20 aspect-square">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
-              <CurrencyIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+        <div className="card p-4 md:p-6 bg-green-50 dark:bg-green-900/20 aspect-square">
+          <div className="flex items-center gap-2 mb-2 md:mb-3">
+            <div className="p-1.5 md:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
+              <CurrencyIcon className="h-4 w-4 md:h-5 md:w-5 text-green-600 dark:text-green-400" />
             </div>
-            <p className="text-sm text-gray-600 dark:text-dark-text-secondary truncate">Available Balance</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-dark-text-secondary truncate">Available Balance</p>
           </div>
-          <div className="mb-3">
-            <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
+          <div className="mb-2 md:mb-3">
+            <p className="text-xl md:text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
               {formatCurrency(earningsData.available_balance)}
             </p>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Payment settled, ready for withdrawal (money in merchant account)
+          <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 leading-tight">
+            <span className="md:hidden">Payment settled, ready for withdrawal</span>
+            <span className="hidden md:inline">Payment settled, ready for withdrawal (money in merchant account)</span>
           </p>
         </div>
 
