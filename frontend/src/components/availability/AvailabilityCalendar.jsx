@@ -3,7 +3,7 @@ import { Edit, Trash2, Calendar, User, AlertCircle } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
 import { formatTime } from '../../utils/dateUtils';
 
-const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'partner' }) => {
+const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, onPayRemaining, viewMode = 'partner' }) => {
   // Generate array of next 4 weeks (28 days) starting from today
   const getNext4Weeks = () => {
     const days = [];
@@ -141,6 +141,7 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
                         onEdit={onEdit}
                         onDelete={onDelete}
                         onBook={onBook}
+                        onPayRemaining={onPayRemaining}
                         viewMode={viewMode}
                       />
                     ))
@@ -177,7 +178,7 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, viewMode = 'par
   );
 };
 
-const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
+const SlotCard = ({ slot, onEdit, onDelete, onBook, onPayRemaining, viewMode }) => {
   /**
    * Get color scheme based on status
    */
@@ -211,6 +212,21 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
           text: 'text-yellow-800 dark:text-yellow-300',
           badge: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300'
         };
+      case 'confirmed':
+        return {
+          bg: 'bg-green-50 dark:bg-dark-bg-tertiary',
+          border: 'border-green-300 dark:border-green-700',
+          text: 'text-green-800 dark:text-green-300',
+          badge: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
+        };
+      case 'confirmed_balance_pending':
+      case 'confirmed_payment_pending':
+        return {
+          bg: 'bg-orange-50 dark:bg-dark-bg-tertiary',
+          border: 'border-orange-300 dark:border-orange-700',
+          text: 'text-orange-800 dark:text-orange-300',
+          badge: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
+        };
       default:
         return {
           bg: 'bg-gray-50 dark:bg-dark-bg-tertiary',
@@ -222,15 +238,23 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
   };
 
   const formatStatus = (status) => {
-    return status.replace(/_/g, ' ').split(' ').map(word =>
+    const statusMap = {
+      'confirmed': 'Confirmed',
+      'confirmed_balance_pending': 'Confirmed - Balance Pending',
+      'confirmed_payment_pending': 'Confirmed - Payment Pending',
+      'booked': 'Booked'
+    };
+    return statusMap[status] || status.replace(/_/g, ' ').split(' ').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
 
   const style = getStatusStyle(slot.status);
-  const canEdit = viewMode === 'partner' && slot.status !== 'booked';
+  const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+  const canEdit = viewMode === 'partner' && !bookedStatuses.includes(slot.status);
   const canDelete = viewMode === 'partner'; // Partners can delete any slot, including booked ones
-  const canBook = viewMode === 'client' && slot.is_available && slot.status !== 'booked';
+  const canBook = viewMode === 'client' && slot.is_available && !bookedStatuses.includes(slot.status);
+  const canPayRemaining = viewMode === 'client' && ['confirmed_balance_pending', 'confirmed_payment_pending'].includes(slot.status);
 
   return (
     <div className={`${style.bg} border ${style.border} rounded-lg p-2 sm:p-2 text-xs transition-all hover:shadow-md`}>
@@ -257,8 +281,8 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
             {canDelete && (
               <button
                 onClick={() => onDelete(slot)}
-                className={`p-0.5 ${slot.status === 'booked' ? 'text-orange-600 hover:bg-orange-100' : 'text-red-600 hover:bg-red-100'} rounded transition-colors`}
-                title={slot.status === 'booked' ? 'Delete booked slot and appointment' : 'Delete slot'}
+                className={`p-0.5 ${bookedStatuses.includes(slot.status) ? 'text-orange-600 hover:bg-orange-100' : 'text-red-600 hover:bg-red-100'} rounded transition-colors`}
+                title={bookedStatuses.includes(slot.status) ? 'Delete booked slot and appointment' : 'Delete slot'}
               >
                 <Trash2 className="h-3 w-3" />
               </button>
@@ -269,13 +293,23 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
 
       {/* Status Badge */}
       <div className="mb-1">
-        <span className={`inline-block text-xs font-medium px-1.5 py-0.5 rounded ${style.badge}`}>
-          {formatStatus(slot.status)}
-        </span>
+        {canPayRemaining ? (
+          <button
+            onClick={() => onPayRemaining && onPayRemaining(slot)}
+            className={`inline-block text-xs font-medium px-1.5 py-0.5 rounded ${style.badge} hover:opacity-80 cursor-pointer underline`}
+            title="Click to complete payment"
+          >
+            {formatStatus(slot.status)}
+          </button>
+        ) : (
+          <span className={`inline-block text-xs font-medium px-1.5 py-0.5 rounded ${style.badge}`}>
+            {formatStatus(slot.status)}
+          </span>
+        )}
       </div>
 
       {/* Booked Info */}
-      {slot.status === 'booked' && viewMode === 'partner' && (
+      {(bookedStatuses.includes(slot.status)) && viewMode === 'partner' && (
         <div className="mt-1 pt-1 border-t border-yellow-200 dark:border-yellow-800">
           <div className="flex items-center text-xs text-yellow-900 dark:text-yellow-300">
             <User className="h-3 w-3 mr-1 flex-shrink-0" />
@@ -297,7 +331,7 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, viewMode }) => {
       )}
 
       {/* Unpublished Badge for Partner */}
-      {viewMode === 'partner' && !slot.is_published && slot.status !== 'booked' && (
+      {viewMode === 'partner' && !slot.is_published && !bookedStatuses.includes(slot.status) && (
         <div className="mt-1">
           <span className="inline-block text-xs font-semibold px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded">
             Unpublished

@@ -160,7 +160,8 @@ const AvailabilityTab = ({ partnerId }) => {
    */
   const handleDelete = async (slot) => {
     // Different confirmation messages for booked vs unbooked slots
-    const isBooked = slot.status === 'booked';
+    const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+    const isBooked = bookedStatuses.includes(slot.status);
     const timeRange = `${formatTime(slot.start_datetime)} - ${formatTime(slot.end_datetime)}`;
     const confirmMessage = isBooked
       ? `⚠️ WARNING: This slot is BOOKED by ${slot.user_name || 'a client'}.\n\n` +
@@ -216,7 +217,8 @@ const AvailabilityTab = ({ partnerId }) => {
     }
   };
 
-  const unpublishedCount = slots.filter(s => !s.is_published && s.status !== 'booked').length;
+  const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+  const unpublishedCount = slots.filter(s => !s.is_published && !bookedStatuses.includes(s.status)).length;
 
   return (
     <div className="space-y-6">

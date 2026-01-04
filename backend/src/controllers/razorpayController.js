@@ -928,6 +928,269 @@ const verifyBookingPayment = async (req, res) => {
   }
 };
 
+/**
+ * Create a Razorpay order for remaining payment (balance or full payment)
+ */
+const createRemainingPaymentOrder = async (req, res) => {
+  try {
+    const { slot_id } = req.body;
+    const userId = req.user.id;
+
+    if (!slot_id) {
+      return res.status(400).json({
+        error: 'slot_id is required'
+      });
+    }
+
+    // Get slot details
+    const AvailabilitySlot = require('../models/AvailabilitySlot');
+    const slot = await AvailabilitySlot.findById(slot_id);
+    
+    if (!slot) {
+      return res.status(404).json({ error: 'Slot not found' });
+    }
+
+    // Verify slot belongs to the user
+    if (slot.booked_by_user_id !== userId) {
+      return res.status(403).json({ error: 'You can only pay for your own bookings' });
+    }
+
+    // Verify slot status allows payment
+    if (!['confirmed_balance_pending', 'confirmed_payment_pending'].includes(slot.status)) {
+      return res.status(400).json({ 
+        error: 'This slot does not require payment or is already fully paid' 
+      });
+    }
+
+    // Get partner fee settings
+    const Partner = require('../models/Partner');
+    const feeSettings = await Partner.getFeeSettings(slot.partner_id);
+    
+    if (!feeSettings) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+
+    const sessionFee = parseFloat(feeSettings.session_fee) || 0;
+    const bookingFee = parseFloat(feeSettings.booking_fee) || 0;
+    const currency = feeSettings.fee_currency || 'INR';
+
+    // Calculate remaining amount
+    let remainingAmount = 0;
+    if (slot.status === 'confirmed_balance_pending') {
+      // Partial payment already made, calculate balance
+      remainingAmount = sessionFee - bookingFee;
+    } else if (slot.status === 'confirmed_payment_pending') {
+      // No payment made, full session fee required
+      remainingAmount = sessionFee;
+    }
+
+    if (remainingAmount <= 0) {
+      return res.status(400).json({
+        error: 'No remaining amount to pay'
+      });
+    }
+
+    // Check if we're in test mode
+    const isTestMode = RazorpayService.isTestMode();
+
+    // If test mode, skip payment and return test mode flag
+    if (isTestMode) {
+      console.log(`[CREATE_REMAINING_PAYMENT_ORDER] Test mode detected - skipping payment for slot ${slot_id}`);
+      return res.status(201).json({
+        message: 'Test mode: Payment skipped',
+        test_mode: true,
+        skip_payment: true,
+        order: null,
+        remainingAmount: remainingAmount,
+        currency: currency
+      });
+    }
+
+    // Create Razorpay order
+    const amountInPaise = Math.round(remainingAmount * 100); // Convert to smallest currency unit
+    const receipt = `remaining_${slot_id}_${Date.now()}`;
+
+    const razorpayOrder = await RazorpayService.createOrder({
+      amount: amountInPaise,
+      currency: currency,
+      receipt: receipt,
+      notes: {
+        slot_id: slot_id,
+        partner_id: slot.partner_id,
+        user_id: userId,
+        payment_type: 'remaining_payment'
+      }
+    });
+
+    // Prepare notes object
+    const orderNotes = {
+      slot_id,
+      partner_id: slot.partner_id,
+      payment_type: 'remaining_payment'
+    };
+
+    // Save order to database
+    const dbOrder = await RazorpayOrder.create({
+      razorpay_order_id: razorpayOrder.id,
+      amount: remainingAmount,
+      currency: currency,
+      receipt: receipt,
+      status: razorpayOrder.status,
+      customer_id: userId,
+      customer_type: 'user',
+      notes: orderNotes
+    });
+
+    res.status(201).json({
+      message: 'Remaining payment order created successfully',
+      order: {
+        id: razorpayOrder.id,
+        amount: remainingAmount,
+        currency: currency,
+        receipt: receipt
+      },
+      remainingAmount: remainingAmount,
+      currency: currency
+    });
+  } catch (error) {
+    console.error('Create remaining payment order error:', error);
+    res.status(500).json({
+      error: 'Failed to create remaining payment order',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Verify remaining payment and update slot status to 'confirmed'
+ */
+const verifyRemainingPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      slot_id
+    } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !slot_id) {
+      return res.status(400).json({
+        error: 'razorpay_order_id, razorpay_payment_id, razorpay_signature, and slot_id are required'
+      });
+    }
+
+    // Verify signature
+    const isValid = RazorpayService.verifyPaymentSignature(
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    );
+
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid payment signature' });
+    }
+
+    // Fetch payment details from Razorpay
+    const payment = await RazorpayService.fetchPayment(razorpay_payment_id);
+
+    // Get order from database
+    const dbOrder = await RazorpayOrder.findByOrderId(razorpay_order_id);
+    if (!dbOrder) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Get slot details
+    const AvailabilitySlot = require('../models/AvailabilitySlot');
+    const slot = await AvailabilitySlot.findById(slot_id);
+    
+    if (!slot) {
+      return res.status(404).json({ error: 'Slot not found' });
+    }
+
+    // Verify slot belongs to the user
+    if (slot.booked_by_user_id !== req.user.id) {
+      return res.status(403).json({ error: 'You can only pay for your own bookings' });
+    }
+
+    // Save payment to database
+    const dbPayment = await RazorpayPayment.create({
+      razorpay_payment_id: payment.id,
+      razorpay_order_id: razorpay_order_id,
+      amount: payment.amount / 100,
+      currency: payment.currency,
+      status: payment.status,
+      payment_method: payment.method,
+      description: 'Remaining payment for booking',
+      customer_id: dbOrder.customer_id,
+      customer_type: 'user',
+      metadata: {
+        ...payment,
+        slot_id: slot_id,
+        payment_type: 'remaining_payment'
+      }
+    });
+
+    // Update order status
+    await RazorpayOrder.updateStatus(razorpay_order_id, payment.status);
+
+    // If payment successful, update slot status to 'confirmed'
+    if (payment.status === 'captured' || payment.status === 'authorized') {
+      const db = require('../config/database');
+      await db.query(
+        `UPDATE availability_slots 
+         SET status = 'confirmed', updated_at = CURRENT_TIMESTAMP 
+         WHERE id = $1`,
+        [slot_id]
+      );
+
+      // Create earnings record
+      try {
+        const Partner = require('../models/Partner');
+        const partner = await Partner.findById(slot.partner_id);
+        
+        if (partner) {
+          // Check if earnings already exist
+          const existingEarnings = await Earnings.findByPaymentId(payment.id);
+          if (!existingEarnings) {
+            await Earnings.create({
+              recipient_id: partner.id,
+              recipient_type: 'partner',
+              razorpay_payment_id: payment.id,
+              amount: dbPayment.amount,
+              currency: dbPayment.currency,
+              status: 'pending',
+              appointment_id: slot.appointment_id,
+              payout_date: null
+            });
+
+            console.log(`[EARNINGS] Created earnings record for partner ${partner.id} from remaining payment ${payment.id}`);
+          }
+        }
+      } catch (earningsError) {
+        console.error('[EARNINGS] Failed to create earnings record:', earningsError);
+        // Don't fail the payment verification if earnings creation fails
+      }
+    }
+
+    res.json({
+      message: 'Remaining payment verified successfully',
+      payment: {
+        id: dbPayment.id,
+        status: dbPayment.status,
+        amount: dbPayment.amount
+      },
+      payment_confirmed: payment.status === 'captured' || payment.status === 'authorized',
+      slot_status: payment.status === 'captured' || payment.status === 'authorized' ? 'confirmed' : slot.status
+    });
+  } catch (error) {
+    console.error('Verify remaining payment error:', error);
+    res.status(500).json({
+      error: 'Failed to verify remaining payment',
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   verifyPayment,
@@ -935,6 +1198,8 @@ module.exports = {
   handleWebhook,
   createBookingOrder,
   verifyBookingPayment,
-  verifyBookingPaymentTestMode
+  verifyBookingPaymentTestMode,
+  createRemainingPaymentOrder,
+  verifyRemainingPayment
 };
 

@@ -12,6 +12,7 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const [feeSettings, setFeeSettings] = useState(null);
 
   useEffect(() => {
@@ -229,6 +230,84 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
     setBookingLoading(false);
   };
 
+  /**
+   * Handle payment for remaining balance
+   */
+  const handlePayRemaining = async (slot) => {
+    try {
+      setPaymentLoading(true);
+
+      // Create Razorpay order for remaining payment
+      const orderResponse = await razorpayAPI.createRemainingPaymentOrder({
+        slot_id: slot.id
+      });
+
+      // Check if test mode - skip payment flow
+      if (orderResponse.data.skip_payment || orderResponse.data.test_mode) {
+        // Test mode: Skip payment and directly verify
+        const verifyResponse = await razorpayAPI.verifyRemainingPayment({
+          razorpay_order_id: null,
+          razorpay_payment_id: null,
+          razorpay_signature: null,
+          slot_id: slot.id
+        });
+
+        if (verifyResponse.data.payment_confirmed) {
+          setPaymentLoading(false);
+          alert('Payment successful! Your booking is now confirmed.');
+          // Reload slots to show updated status
+          loadAvailableSlots(selectedPartner.id);
+        } else {
+          throw new Error('Payment verification failed');
+        }
+        return;
+      }
+
+      // Normal flow: Proceed with Razorpay payment
+      const order = orderResponse.data.order;
+
+      // Get user details for prefill
+      const userDetails = {
+        name: '',
+        email: '',
+        contact: ''
+      };
+
+      // Initialize Razorpay checkout
+      const paymentResult = await initializeRazorpayCheckout(order, {
+        name: 'TheraP Track',
+        description: 'Remaining Payment for Booking',
+        prefill: userDetails
+      });
+
+      // Verify payment
+      const verifyResponse = await razorpayAPI.verifyRemainingPayment({
+        razorpay_order_id: paymentResult.razorpay_order_id,
+        razorpay_payment_id: paymentResult.razorpay_payment_id,
+        razorpay_signature: paymentResult.razorpay_signature,
+        slot_id: slot.id
+      });
+
+      if (verifyResponse.data.payment_confirmed) {
+        setPaymentLoading(false);
+        alert('Payment successful! Your booking is now confirmed.');
+        // Reload slots to show updated status
+        loadAvailableSlots(selectedPartner.id);
+      } else {
+        throw new Error('Payment verification failed');
+      }
+    } catch (error) {
+      setPaymentLoading(false);
+      if (error.message === 'Payment cancelled by user') {
+        alert('Payment cancelled. Please try again when ready.');
+      } else {
+        console.error('Failed to process remaining payment:', error);
+        const errorMessage = error.response?.data?.error || 'Failed to process payment';
+        alert(errorMessage);
+      }
+    }
+  };
+
   // Handle case where no partners are available
   if (!partners || partners.length === 0) {
     return (
@@ -308,6 +387,7 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
         <AvailabilityCalendar
           slots={availableSlots}
           onBook={handleBookSlot}
+          onPayRemaining={handlePayRemaining}
           viewMode="client"
         />
       )}

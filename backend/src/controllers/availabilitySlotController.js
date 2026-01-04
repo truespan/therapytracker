@@ -251,8 +251,9 @@ const updateSlot = async (req, res) => {
       return res.status(404).json({ error: 'Slot not found' });
     }
 
-    // Prevent editing booked slots
-    if (slot.status === 'booked') {
+    // Prevent editing booked/confirmed slots
+    const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+    if (bookedStatuses.includes(slot.status)) {
       return res.status(400).json({
         error: 'Cannot edit a booked slot. Please delete and create a new one instead.'
       });
@@ -346,8 +347,9 @@ const deleteSlot = async (req, res) => {
       return res.status(404).json({ error: 'Slot not found' });
     }
 
-    // If slot is booked, delete the associated appointment first
-    if (slot.status === 'booked' && slot.appointment_id) {
+    // If slot is booked/confirmed, delete the associated appointment first
+    const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+    if (bookedStatuses.includes(slot.status) && slot.appointment_id) {
       try {
         await Appointment.delete(slot.appointment_id);
         console.log(`Deleted associated appointment ${slot.appointment_id} for booked slot ${id}`);
@@ -360,11 +362,11 @@ const deleteSlot = async (req, res) => {
     const archivedSlot = await AvailabilitySlot.archive(id);
 
     res.json({
-      message: slot.status === 'booked'
+      message: bookedStatuses.includes(slot.status)
         ? 'Booked slot and associated appointment deleted successfully'
         : 'Slot deleted successfully',
       slot: archivedSlot,
-      appointment_deleted: slot.status === 'booked'
+      appointment_deleted: bookedStatuses.includes(slot.status)
     });
   } catch (error) {
     console.error('Delete slot error:', error);
@@ -431,7 +433,9 @@ const bookSlot = async (req, res) => {
     }
 
     // Verify slot is available and published
-    if (slot.status === 'booked') {
+    // Check for all booked/confirmed statuses
+    const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+    if (bookedStatuses.includes(slot.status)) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Slot is already booked' });
     }
@@ -507,10 +511,32 @@ const bookSlot = async (req, res) => {
       googleConflict = true;
     }
 
-    // Update slot to booked status
+    // Get partner fee settings to determine booking status
+    const partner = await Partner.findById(slot.partner_id);
+    const sessionFee = partner ? (parseFloat(partner.session_fee) || 0) : 0;
+    const bookingFee = partner ? (parseFloat(partner.booking_fee) || 0) : 0;
+    
+    // Determine status based on payment conditions
+    let bookingStatus = 'booked'; // Default for backward compatibility
+    
+    if (bookingFee > 0) {
+      // Booking fee was collected
+      if (bookingFee >= sessionFee) {
+        // Full payment received
+        bookingStatus = 'confirmed';
+      } else {
+        // Partial payment - balance pending
+        bookingStatus = 'confirmed_balance_pending';
+      }
+    } else {
+      // No booking fee collected - payment pending
+      bookingStatus = 'confirmed_payment_pending';
+    }
+
+    // Update slot with appropriate status
     const updateQuery = `
       UPDATE availability_slots
-      SET status = 'booked',
+      SET status = $4,
           is_available = FALSE,
           booked_by_user_id = $1,
           booked_at = CURRENT_TIMESTAMP,
@@ -519,7 +545,7 @@ const bookSlot = async (req, res) => {
       WHERE id = $3
       RETURNING *
     `;
-    const updateResult = await client.query(updateQuery, [userId, appointmentId, id]);
+    const updateResult = await client.query(updateQuery, [userId, appointmentId, id, bookingStatus]);
     const bookedSlot = updateResult.rows[0];
 
     await client.query('COMMIT');

@@ -31,6 +31,12 @@ router.post('/verify-booking-payment', authenticateToken, async (req, res, next)
 // Get payment history (requires authentication)
 router.get('/payment-history', authenticateToken, razorpayController.getPaymentHistory);
 
+// Create order for remaining payment (requires authentication)
+router.post('/create-remaining-payment-order', authenticateToken, razorpayController.createRemainingPaymentOrder);
+
+// Verify remaining payment (requires authentication)
+router.post('/verify-remaining-payment', authenticateToken, razorpayController.verifyRemainingPayment);
+
 // Webhook endpoint (no authentication required, but verifies Razorpay signature)
 // Uses express.raw() to capture raw body for signature verification, then parses JSON
 router.post('/webhook', 

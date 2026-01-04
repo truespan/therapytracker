@@ -470,6 +470,8 @@ export const razorpayAPI = {
   verifyPayment: (data) => api.post('/razorpay/verify-payment', data),
   createBookingOrder: (data) => api.post('/razorpay/create-booking-order', data),
   verifyBookingPayment: (data) => api.post('/razorpay/verify-booking-payment', data),
+  createRemainingPaymentOrder: (data) => api.post('/razorpay/create-remaining-payment-order', data),
+  verifyRemainingPayment: (data) => api.post('/razorpay/verify-remaining-payment', data),
   getPaymentHistory: () => api.get('/razorpay/payment-history'),
 };
 

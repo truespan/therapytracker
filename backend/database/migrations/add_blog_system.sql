@@ -37,3 +37,4 @@ COMMENT ON TABLE blogs IS 'Blog posts and news articles created by therapists wi
 
 
 
+

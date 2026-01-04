@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, RefreshCw } from 'lucide-react';
+import { Save, RefreshCw, Edit } from 'lucide-react';
 import { partnerAPI } from '../../services/api';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 
@@ -13,6 +13,8 @@ const BookingFeeCard = ({ partnerId }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [hasSubmittedFees, setHasSubmittedFees] = useState(false);
 
   // Currency options
   const currencies = [
@@ -37,11 +39,19 @@ const BookingFeeCard = ({ partnerId }) => {
       setError('');
       const response = await partnerAPI.getFeeSettings(partnerId);
       
+      const sessionFee = response.data.feeSettings.session_fee;
+      const bookingFee = response.data.feeSettings.booking_fee;
+      const hasFees = (sessionFee !== null && sessionFee !== '') || (bookingFee !== null && bookingFee !== '');
+      
       setFeeData({
-        session_fee: response.data.feeSettings.session_fee || '',
-        booking_fee: response.data.feeSettings.booking_fee || '',
+        session_fee: sessionFee || '',
+        booking_fee: bookingFee || '',
         fee_currency: response.data.feeSettings.fee_currency || 'INR'
       });
+      
+      // If fees have been submitted, set view mode (read-only)
+      setHasSubmittedFees(hasFees);
+      setIsEditMode(!hasFees); // If no fees exist, start in edit mode
     } catch (error) {
       console.error('Failed to load fee settings:', error);
       setError('Failed to load fee settings. Please try again.');
@@ -101,6 +111,8 @@ const BookingFeeCard = ({ partnerId }) => {
       await partnerAPI.updateFeeSettings(partnerId, payload);
       
       setSuccessMessage('Fee settings saved successfully!');
+      setHasSubmittedFees(true);
+      setIsEditMode(false); // Switch back to view mode after successful submission
       
       // Clear success message after 3 seconds
       setTimeout(() => {
@@ -113,6 +125,15 @@ const BookingFeeCard = ({ partnerId }) => {
     } finally {
       setSaving(false);
     }
+  };
+
+  /**
+   * Handle edit button click
+   */
+  const handleEditClick = () => {
+    setIsEditMode(true);
+    setError('');
+    setSuccessMessage('');
   };
 
   const selectedCurrency = currencies.find(c => c.code === feeData.fee_currency);
@@ -130,7 +151,7 @@ const BookingFeeCard = ({ partnerId }) => {
           <span className="ml-2 text-gray-600 dark:text-dark-text-secondary">Loading fee settings...</span>
         </div>
       ) : (
-        <form onSubmit={handleSubmit}>
+        <>
           {/* Error Message */}
           {error && (
             <div className="mb-4 p-3 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-md">
@@ -145,92 +166,144 @@ const BookingFeeCard = ({ partnerId }) => {
             </div>
           )}
 
-          <div className="space-y-4">
-            {/* Currency Selector */}
+          {!isEditMode && hasSubmittedFees ? (
+            /* View Mode - Read-only display */
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                Currency
-              </label>
-              <select
-                value={feeData.fee_currency}
-                onChange={(e) => handleChange('fee_currency', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
-              >
-                {currencies.map(currency => (
-                  <option key={currency.code} value={currency.code}>
-                    {currency.symbol} - {currency.name} ({currency.code})
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="space-y-4">
+                {/* Currency Display */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                    Currency
+                  </label>
+                  <div className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md bg-gray-50 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-primary">
+                    {selectedCurrency?.symbol} - {selectedCurrency?.name} ({selectedCurrency?.code})
+                  </div>
+                </div>
 
-            {/* Session Fee */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                Fee per session
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary">
-                  {selectedCurrency?.symbol}
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={feeData.session_fee}
-                  onChange={(e) => handleChange('session_fee', e.target.value)}
-                  placeholder="0.00"
-                  className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
-                />
+                {/* Session Fee Display */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                    Fee per session
+                  </label>
+                  <div className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md bg-gray-50 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-primary">
+                    {selectedCurrency?.symbol}{feeData.session_fee !== '' && feeData.session_fee !== null ? parseFloat(feeData.session_fee).toFixed(2) : '0.00'}
+                  </div>
+                </div>
+
+                {/* Booking Fee Display */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                    Booking Fee
+                  </label>
+                  <div className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md bg-gray-50 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-primary">
+                    {selectedCurrency?.symbol}{feeData.booking_fee !== '' && feeData.booking_fee !== null ? parseFloat(feeData.booking_fee).toFixed(2) : '0.00'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Edit Button */}
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={handleEditClick}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </button>
               </div>
             </div>
+          ) : (
+            /* Edit Mode - Editable form */
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                {/* Currency Selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                    Currency
+                  </label>
+                  <select
+                    value={feeData.fee_currency}
+                    onChange={(e) => handleChange('fee_currency', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                  >
+                    {currencies.map(currency => (
+                      <option key={currency.code} value={currency.code}>
+                        {currency.symbol} - {currency.name} ({currency.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            {/* Booking Fee */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                Booking Fee
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary">
-                  {selectedCurrency?.symbol}
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={feeData.booking_fee}
-                  onChange={(e) => handleChange('booking_fee', e.target.value)}
-                  placeholder="0.00"
-                  className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
-                />
+                {/* Session Fee */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                    Fee per session
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary">
+                      {selectedCurrency?.symbol}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={feeData.session_fee}
+                      onChange={(e) => handleChange('session_fee', e.target.value)}
+                      placeholder="0.00"
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Booking Fee */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                    Booking Fee
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary">
+                      {selectedCurrency?.symbol}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={feeData.booking_fee}
+                      onChange={(e) => handleChange('booking_fee', e.target.value)}
+                      placeholder="0.00"
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
+                    Booking fee can be a percentage of the total session fee
+                  </p>
+                </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
-                Booking fee can be a percentage of the total session fee
-              </p>
-            </div>
-          </div>
 
-          {/* Submit Button */}
-          <div className="mt-6">
-            <button
-              type="submit"
-              disabled={saving}
-              className={`w-full flex items-center justify-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors ${
-                saving ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              <Save className="h-4 w-4" />
-              {saving ? 'Saving...' : 'Submit'}
-            </button>
-          </div>
+              {/* Submit Button */}
+              <div className="mt-6">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className={`w-full flex items-center justify-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors ${
+                    saving ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? 'Saving...' : 'Submit'}
+                </button>
+              </div>
 
-          {/* Info Note */}
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-dark-bg-tertiary border border-blue-200 dark:border-blue-800 rounded-md">
-            <p className="text-sm text-blue-800 dark:text-blue-300">
-              <strong>Note:</strong> Booking fee can be a percentage of the total session fee
-            </p>
-          </div>
-        </form>
+              {/* Info Note */}
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-dark-bg-tertiary border border-blue-200 dark:border-blue-800 rounded-md">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  <strong>Note:</strong> Booking fee can be a percentage of the total session fee
+                </p>
+              </div>
+            </form>
+          )}
+        </>
       )}
     </div>
   );
