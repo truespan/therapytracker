@@ -110,7 +110,7 @@ const EarningsTab = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Pending Earnings */}
-        <div className="card p-6 bg-orange-50 dark:bg-orange-900/20">
+        <div className="card p-6 bg-orange-50 dark:bg-orange-900/20 aspect-square">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex-shrink-0">
               <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
@@ -128,7 +128,7 @@ const EarningsTab = () => {
         </div>
 
         {/* Available Balance */}
-        <div className="card p-6 bg-green-50 dark:bg-green-900/20">
+        <div className="card p-6 bg-green-50 dark:bg-green-900/20 aspect-square">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
               <CurrencyIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
