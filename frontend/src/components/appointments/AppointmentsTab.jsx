@@ -335,7 +335,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                         key={`apt-${item.id}`}
                         className={`p-3 sm:p-2 rounded border text-sm sm:text-xs ${
                           item.has_session
-                            ? 'bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-700/50'
+                            ? 'bg-glossyPink-50 border-glossyPink-300 dark:bg-dark-bg-tertiary dark:border-glossyPink-700'
                             : 'bg-primary-50 border-primary-200 hover:bg-primary-100 dark:bg-dark-bg-secondary dark:border-dark-primary-700 dark:hover:bg-dark-bg-tertiary cursor-pointer'
                         }`}
                         onClick={() => !item.has_session && handleStartSession(item)}
@@ -372,8 +372,8 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                           </div>
 
                           {item.has_session ? (
-                            <div className="flex items-center space-x-1 text-green-700 dark:text-green-400 mt-2">
-                              <CheckCircle className="h-3 w-3 dark:text-green-400" />
+                            <div className="flex items-center space-x-1 text-glossyPink-800 dark:text-glossyPink-300 mt-2">
+                              <CheckCircle className="h-3 w-3 dark:text-glossyPink-300" />
                               <span className="font-medium">
                                 {item.session_status === 'completed' ? 'Session Completed' : 'Session Created'}
                               </span>
@@ -383,7 +383,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                     e.stopPropagation();
                                     onNavigateToSession(item.user_id, item.session_id);
                                   }}
-                                  className="ml-1 p-0.5 text-green-700 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors"
+                                  className="ml-1 p-0.5 text-glossyPink-800 dark:text-glossyPink-300 hover:text-glossyPink-900 dark:hover:text-glossyPink-200 hover:bg-glossyPink-100 dark:hover:bg-glossyPink-900/30 rounded transition-colors"
                                   title="View Session Details"
                                 >
                                   <ArrowRight className="h-3 w-3" />
@@ -439,8 +439,8 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
 
                           {/* Button or status - moved up with reduced margin */}
                           {item.has_session ? (
-                            <div className="flex items-center space-x-2 text-green-700 dark:text-green-400">
-                              <CheckCircle className="h-4 w-4 dark:text-green-400" />
+                            <div className="flex items-center space-x-2 text-glossyPink-800 dark:text-glossyPink-300">
+                              <CheckCircle className="h-4 w-4 dark:text-glossyPink-300" />
                               <span className="font-medium text-sm">
                                 {item.session_status === 'completed' ? 'Session Completed' : 'Session Created'}
                               </span>
@@ -450,7 +450,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
                                     e.stopPropagation();
                                     onNavigateToSession(item.user_id, item.session_id);
                                   }}
-                                  className="ml-1 p-1 text-green-700 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors"
+                                  className="ml-1 p-1 text-glossyPink-800 dark:text-glossyPink-300 hover:text-glossyPink-900 dark:hover:text-glossyPink-200 hover:bg-glossyPink-100 dark:hover:bg-glossyPink-900/30 rounded transition-colors"
                                   title="View Session Details"
                                 >
                                   <ArrowRight className="h-4 w-4" />
@@ -622,7 +622,7 @@ const AppointmentsTab = ({ partnerId, videoSessionsEnabled = true, onNavigateToS
               <span className="text-gray-600 dark:text-dark-text-secondary">Video Session</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-50 border border-green-200 rounded dark:bg-green-900/30 dark:border-green-700/50"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-glossyPink-50 border border-glossyPink-300 rounded dark:bg-dark-bg-tertiary dark:border-glossyPink-700"></div>
               <span className="text-gray-600 dark:text-dark-text-secondary">Completed</span>
             </div>
             <div className="flex items-center space-x-2">

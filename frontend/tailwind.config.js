@@ -119,6 +119,20 @@ module.exports = {
           900: '#7f1d1d',  // Darkest
         },
 
+        // GLOSSY PINK: Based on #FF6FAF for availability slots
+        glossyPink: {
+          50: '#FFF0F8',   // Lightest - glossy background
+          100: '#FFE0F1',  // Very light
+          200: '#FFC1E3',  // Light
+          300: '#FFA2D5',  // Medium light
+          400: '#FF83C7',  // Medium
+          500: '#FF6FAF',  // BASE - Main pink color
+          600: '#E65A9D',  // Medium dark
+          700: '#CC458B',  // Dark
+          800: '#B33079',  // Darker
+          900: '#991B67',  // Darkest
+        },
+
         // BANNER COLORS: Custom colors for home page banners
         banner: {
           bg: '#FFF4CC',  // Light yellow background

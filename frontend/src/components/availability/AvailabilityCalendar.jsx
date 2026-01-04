@@ -224,10 +224,10 @@ const SlotCard = ({ slot, onEdit, onDelete, onCancelBooking, onDeleteSlotAndBook
       case 'confirmed_balance_pending':
       case 'confirmed_payment_pending':
         return {
-          bg: 'bg-orange-50 dark:bg-dark-bg-tertiary',
-          border: 'border-orange-300 dark:border-orange-700',
-          text: 'text-orange-800 dark:text-orange-300',
-          badge: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
+          bg: 'bg-glossyPink-50 dark:bg-dark-bg-tertiary',
+          border: 'border-glossyPink-300 dark:border-glossyPink-700',
+          text: 'text-glossyPink-800 dark:text-glossyPink-300',
+          badge: 'bg-glossyPink-100 dark:bg-glossyPink-900 text-glossyPink-800 dark:text-glossyPink-300'
         };
       default:
         return {
