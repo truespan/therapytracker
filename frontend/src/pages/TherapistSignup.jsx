@@ -14,6 +14,7 @@ const TherapistSignup = () => {
 
   const [tokenValid, setTokenValid] = useState(null);
   const [organizationName, setOrganizationName] = useState('');
+  const [organizationNameFromReferral, setOrganizationNameFromReferral] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -64,7 +65,9 @@ const TherapistSignup = () => {
         const response = await api.get(`/organizations/verify-signup-token/${token}`);
         if (response.data.valid) {
           setTokenValid(true);
-          setOrganizationName(response.data.organization_name);
+          // Don't set organization name from token - only show it if from referral code
+          setOrganizationName('');
+          setOrganizationNameFromReferral(false);
         } else {
           setTokenValid(false);
         }
@@ -91,6 +94,7 @@ const TherapistSignup = () => {
       setReferralCodeValid(null);
       setReferralDiscount(null);
       setOrganizationName('');
+      setOrganizationNameFromReferral(false);
       return;
     }
 
@@ -100,16 +104,19 @@ const TherapistSignup = () => {
       if (response.data.valid) {
         setReferralCodeValid(true);
         setOrganizationName(response.data.organization_name);
+        setOrganizationNameFromReferral(true);
         setReferralDiscount(response.data.discount);
       } else {
         setReferralCodeValid(false);
         setOrganizationName('');
+        setOrganizationNameFromReferral(false);
         setReferralDiscount(null);
       }
     } catch (err) {
       console.error('Referral code verification error:', err);
       setReferralCodeValid(false);
       setOrganizationName('');
+      setOrganizationNameFromReferral(false);
       setReferralDiscount(null);
     } finally {
       setVerifyingReferral(false);
@@ -310,8 +317,8 @@ const TherapistSignup = () => {
               </div>
             )}
 
-            {/* Organization Info */}
-            {organizationName && (
+            {/* Organization Info - Only show when joining with a referral code */}
+            {organizationName && organizationNameFromReferral && (
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
                   <Building2 className="h-5 w-5" />

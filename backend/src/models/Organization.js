@@ -145,9 +145,10 @@ class Organization {
     return result.rows[0];
   }
 
-  static async findById(id) {
+  static async findById(id, client = null) {
     const query = 'SELECT * FROM organizations WHERE id = $1';
-    const result = await db.query(query, [id]);
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [id]);
     if (result.rows[0]) {
       return this.decryptBankAccountFields(result.rows[0]);
     }
@@ -203,7 +204,7 @@ class Organization {
     console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
 
     // Get current organization to check theraptrack_controlled status
-    const currentOrg = await this.findById(id);
+    const currentOrg = await this.findById(id, client);
     if (!currentOrg) {
       throw new Error('Organization not found');
     }
