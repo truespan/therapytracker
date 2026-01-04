@@ -296,6 +296,8 @@ export const availabilityAPI = {
   updateSlot: (slotId, slotData) => api.put(`/availability-slots/${slotId}`, slotData),
   deleteSlot: (slotId) => api.delete(`/availability-slots/${slotId}`),
   publishSlots: (partnerId) => api.post(`/partners/${partnerId}/availability-slots/publish`),
+  cancelBooking: (slotId) => api.post(`/availability-slots/${slotId}/cancel-booking`),
+  getPaymentInfo: (slotId) => api.get(`/availability-slots/${slotId}/payment-info`),
 
   // Client methods
   getClientSlots: (partnerId) => api.get(`/partners/${partnerId}/availability-slots/client-view`),

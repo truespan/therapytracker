@@ -1,9 +1,9 @@
 import React from 'react';
-import { Edit, Trash2, Calendar, User, AlertCircle } from 'lucide-react';
+import { Edit, Trash2, Calendar, User, AlertCircle, X } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
 import { formatTime } from '../../utils/dateUtils';
 
-const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, onPayRemaining, viewMode = 'partner' }) => {
+const AvailabilityCalendar = ({ slots, onEdit, onDelete, onCancelBooking, onDeleteSlotAndBooking, onBook, onPayRemaining, viewMode = 'partner' }) => {
   // Generate array of next 4 weeks (28 days) starting from today
   const getNext4Weeks = () => {
     const days = [];
@@ -140,6 +140,8 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, onPayRemaining,
                         slot={slot}
                         onEdit={onEdit}
                         onDelete={onDelete}
+                        onCancelBooking={onCancelBooking}
+                        onDeleteSlotAndBooking={onDeleteSlotAndBooking}
                         onBook={onBook}
                         onPayRemaining={onPayRemaining}
                         viewMode={viewMode}
@@ -178,7 +180,7 @@ const AvailabilityCalendar = ({ slots, onEdit, onDelete, onBook, onPayRemaining,
   );
 };
 
-const SlotCard = ({ slot, onEdit, onDelete, onBook, onPayRemaining, viewMode }) => {
+const SlotCard = ({ slot, onEdit, onDelete, onCancelBooking, onDeleteSlotAndBooking, onBook, onPayRemaining, viewMode }) => {
   /**
    * Get color scheme based on status
    */
@@ -257,10 +259,21 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, onPayRemaining, viewMode }) 
   const canPayRemaining = viewMode === 'client' && ['confirmed_balance_pending', 'confirmed_payment_pending'].includes(slot.status);
 
   return (
-    <div className={`${style.bg} border ${style.border} rounded-lg p-2 sm:p-2 text-xs transition-all hover:shadow-md`}>
+    <div className={`${style.bg} border ${style.border} rounded-lg p-2 sm:p-2 text-xs transition-all hover:shadow-md relative`}>
+      {/* Cross button at top-right corner - Delete slot and booking */}
+      {viewMode === 'partner' && (
+        <button
+          onClick={() => onDeleteSlotAndBooking && onDeleteSlotAndBooking(slot)}
+          className="absolute top-0.5 right-0.5 p-0.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors z-10"
+          title={bookedStatuses.includes(slot.status) ? "Delete slot and booking" : "Delete slot"}
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+
       {/* Time and Actions Header */}
       <div className="flex justify-between items-start mb-1">
-        <div className="flex-1">
+        <div className="flex-1 pr-6">
           <p className={`font-semibold ${style.text} text-xs`}>
             {formatTime(slot.start_datetime)} - {formatTime(slot.end_datetime)}
           </p>
@@ -268,7 +281,7 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, onPayRemaining, viewMode }) 
 
         {/* Action Buttons for Partner View */}
         {viewMode === 'partner' && (
-          <div className="flex gap-1 ml-1">
+          <div className="flex gap-1 ml-1 mr-5">
             {canEdit && (
               <button
                 onClick={() => onEdit(slot)}
@@ -278,15 +291,17 @@ const SlotCard = ({ slot, onEdit, onDelete, onBook, onPayRemaining, viewMode }) 
                 <Edit className="h-3 w-3" />
               </button>
             )}
-            {canDelete && (
+            {/* Delete icon (Trash2) - Only show for booked slots to cancel booking */}
+            {canDelete && bookedStatuses.includes(slot.status) && (
               <button
-                onClick={() => onDelete(slot)}
-                className={`p-0.5 ${bookedStatuses.includes(slot.status) ? 'text-orange-600 hover:bg-orange-100' : 'text-red-600 hover:bg-red-100'} rounded transition-colors`}
-                title={bookedStatuses.includes(slot.status) ? 'Delete booked slot and appointment' : 'Delete slot'}
+                onClick={() => onCancelBooking && onCancelBooking(slot)}
+                className="p-0.5 text-orange-600 hover:bg-orange-100 rounded transition-colors"
+                title="Cancel booking only (retain slot)"
               >
                 <Trash2 className="h-3 w-3" />
               </button>
             )}
+            {/* For unbooked slots, only the cross icon (X) is shown for deleting the slot */}
           </div>
         )}
       </div>

@@ -188,6 +188,8 @@ router.put('/availability-slots/:id', authenticateToken, checkRole('partner'), a
 router.delete('/availability-slots/:id', authenticateToken, checkRole('partner'), availabilitySlotController.deleteSlot);
 router.post('/partners/:partnerId/availability-slots/publish', authenticateToken, checkRole('partner'), availabilitySlotController.publishSlots);
 router.post('/availability-slots/:id/book', authenticateToken, checkRole('user'), availabilitySlotController.bookSlot);
+router.post('/availability-slots/:id/cancel-booking', authenticateToken, checkRole('partner'), availabilitySlotController.cancelBooking);
+router.get('/availability-slots/:id/payment-info', authenticateToken, checkRole('partner'), availabilitySlotController.getPaymentInfo);
 
 // ==================== VONAGE WEBHOOK ROUTES ====================
 // Public webhook endpoints (no authentication required - Vonage calls these directly)

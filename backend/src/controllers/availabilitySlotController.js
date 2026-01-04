@@ -729,6 +729,143 @@ const bookSlot = async (req, res) => {
   }
 };
 
+/**
+ * Cancel booking only - retains the availability slot
+ * Sets slot status back to available and deletes associated appointment
+ */
+const cancelBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const slot = await AvailabilitySlot.findById(id);
+    if (!slot) {
+      return res.status(404).json({ error: 'Slot not found' });
+    }
+
+    // Check if slot is booked
+    const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+    if (!bookedStatuses.includes(slot.status)) {
+      return res.status(400).json({ error: 'Slot is not booked' });
+    }
+
+    // Delete associated appointment if exists
+    if (slot.appointment_id) {
+      try {
+        await Appointment.delete(slot.appointment_id);
+        console.log(`Deleted associated appointment ${slot.appointment_id} for cancelled booking on slot ${id}`);
+      } catch (appointmentError) {
+        console.error('Failed to delete associated appointment:', appointmentError);
+        // Continue with slot update even if appointment deletion fails
+      }
+    }
+
+    // Determine the original status based on location_type
+    const originalStatus = slot.location_type === 'online' ? 'available_online' : 'available_offline';
+
+    // Update slot to make it available again
+    const updateQuery = `
+      UPDATE availability_slots
+      SET status = $1,
+          is_available = TRUE,
+          booked_by_user_id = NULL,
+          booked_at = NULL,
+          appointment_id = NULL,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING *
+    `;
+    const result = await db.query(updateQuery, [originalStatus, id]);
+    const updatedSlot = result.rows[0];
+
+    res.json({
+      message: 'Booking cancelled successfully. Availability slot has been retained.',
+      slot: updatedSlot
+    });
+  } catch (error) {
+    console.error('Cancel booking error:', error);
+    res.status(500).json({
+      error: 'Failed to cancel booking',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Get payment information for a booked slot
+ */
+const getPaymentInfo = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const slot = await AvailabilitySlot.findById(id);
+    if (!slot) {
+      return res.status(404).json({ error: 'Slot not found' });
+    }
+
+    // Check if slot is booked
+    const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+    if (!bookedStatuses.includes(slot.status)) {
+      return res.json({
+        amount_paid: 0,
+        balance_pending: 0,
+        session_fee: 0,
+        booking_fee: 0,
+        currency: 'INR',
+        has_payment: false
+      });
+    }
+
+    // Get partner fee settings
+    const partner = await Partner.findById(slot.partner_id);
+    const sessionFee = partner ? (parseFloat(partner.session_fee) || 0) : 0;
+    const bookingFee = partner ? (parseFloat(partner.booking_fee) || 0) : 0;
+    const currency = partner ? (partner.fee_currency || 'INR') : 'INR';
+
+    // Query razorpay orders and payments for this slot
+    // Handle both JSONB and string formats for notes field
+    const paymentQuery = `
+      SELECT 
+        COALESCE(SUM(
+          CASE 
+            WHEN rp.status = 'captured' THEN rp.amount
+            ELSE 0
+          END
+        ), 0) as total_paid
+      FROM razorpay_orders ro
+      LEFT JOIN razorpay_payments rp ON ro.razorpay_order_id = rp.razorpay_order_id
+      WHERE 
+        (
+          (ro.notes->>'slot_id')::text = $1::text
+          OR (ro.notes->>'slot_id')::integer = $1
+        )
+        AND (
+          ro.notes->>'payment_type' = 'booking_fee' 
+          OR ro.notes->>'payment_type' = 'remaining_payment'
+        )
+    `;
+    
+    const paymentResult = await db.query(paymentQuery, [id]);
+    const totalPaid = parseFloat(paymentResult.rows[0]?.total_paid || 0);
+
+    const balancePending = Math.max(0, sessionFee - totalPaid);
+
+    res.json({
+      amount_paid: totalPaid,
+      balance_pending: balancePending,
+      session_fee: sessionFee,
+      booking_fee: bookingFee,
+      currency: currency,
+      has_payment: totalPaid > 0
+    });
+  } catch (error) {
+    console.error('Get payment info error:', error);
+    res.status(500).json({
+      error: 'Failed to get payment information',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   createSlot,
   getPartnerSlots,
@@ -736,5 +873,7 @@ module.exports = {
   updateSlot,
   deleteSlot,
   publishSlots,
-  bookSlot
+  bookSlot,
+  cancelBooking,
+  getPaymentInfo
 };

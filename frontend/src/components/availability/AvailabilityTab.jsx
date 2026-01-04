@@ -4,6 +4,7 @@ import AvailabilitySlotForm from './AvailabilitySlotForm';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import ConflictWarningModal from './ConflictWarningModal';
 import BookingFeeCard from './BookingFeeCard';
+import DeleteWarningDialog from './DeleteWarningDialog';
 import { availabilityAPI } from '../../services/api';
 import { formatTime, getUserTimezone } from '../../utils/dateUtils';
 
@@ -20,6 +21,11 @@ const AvailabilityTab = ({ partnerId }) => {
   const [pendingSlotData, setPendingSlotData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [publishLoading, setPublishLoading] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteDialogSlot, setDeleteDialogSlot] = useState(null);
+  const [deleteDialogAction, setDeleteDialogAction] = useState(null);
+  const [paymentInfo, setPaymentInfo] = useState(null);
+  const [loadingPaymentInfo, setLoadingPaymentInfo] = useState(false);
 
   useEffect(() => {
     loadSlots();
@@ -156,35 +162,116 @@ const AvailabilityTab = ({ partnerId }) => {
   };
 
   /**
-   * Handle delete slot
+   * Load payment information for a slot
+   */
+  const loadPaymentInfo = async (slotId) => {
+    try {
+      setLoadingPaymentInfo(true);
+      const response = await availabilityAPI.getPaymentInfo(slotId);
+      setPaymentInfo(response.data);
+    } catch (error) {
+      console.error('Failed to load payment info:', error);
+      setPaymentInfo(null);
+    } finally {
+      setLoadingPaymentInfo(false);
+    }
+  };
+
+  /**
+   * Handle delete slot (for unbooked slots only)
    */
   const handleDelete = async (slot) => {
-    // Different confirmation messages for booked vs unbooked slots
     const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
     const isBooked = bookedStatuses.includes(slot.status);
+    
+    if (isBooked) {
+      // For booked slots, show warning dialog
+      setDeleteDialogSlot(slot);
+      setDeleteDialogAction('deleteSlotAndBooking');
+      await loadPaymentInfo(slot.id);
+      setShowDeleteDialog(true);
+      return;
+    }
+
+    // For unbooked slots, simple confirmation
     const timeRange = `${formatTime(slot.start_datetime)} - ${formatTime(slot.end_datetime)}`;
-    const confirmMessage = isBooked
-      ? `⚠️ WARNING: This slot is BOOKED by ${slot.user_name || 'a client'}.\n\n` +
-        `Deleting this slot will also DELETE the associated appointment from both your calendar and the client's dashboard.\n\n` +
-        `Date: ${slot.slot_date}\nTime: ${timeRange}\n\n` +
-        `Are you absolutely sure you want to delete this booked slot and appointment?`
-      : `Are you sure you want to delete this availability slot?\n\n` +
-        `Date: ${slot.slot_date}\nTime: ${timeRange}`;
+    const confirmMessage = `Are you sure you want to delete this availability slot?\n\n` +
+      `Date: ${slot.slot_date}\nTime: ${timeRange}`;
 
     if (!window.confirm(confirmMessage)) {
       return;
     }
 
     try {
-      const response = await availabilityAPI.deleteSlot(slot.id);
-      const successMessage = response.data.appointment_deleted
-        ? 'Booked slot and associated appointment deleted successfully'
-        : 'Slot deleted successfully';
-      alert(successMessage);
+      await availabilityAPI.deleteSlot(slot.id);
+      alert('Slot deleted successfully');
       loadSlots();
     } catch (error) {
       console.error('Failed to delete slot:', error);
       const errorMessage = error.response?.data?.error || 'Failed to delete slot';
+      alert(errorMessage);
+    }
+  };
+
+  /**
+   * Handle delete slot and booking (cross button)
+   */
+  const handleDeleteSlotAndBooking = async (slot) => {
+    setDeleteDialogSlot(slot);
+    setDeleteDialogAction('deleteSlotAndBooking');
+    await loadPaymentInfo(slot.id);
+    setShowDeleteDialog(true);
+  };
+
+  /**
+   * Handle cancel booking only (delete icon for booked slots)
+   */
+  const handleCancelBooking = async (slot) => {
+    setDeleteDialogSlot(slot);
+    setDeleteDialogAction('cancelBooking');
+    await loadPaymentInfo(slot.id);
+    setShowDeleteDialog(true);
+  };
+
+  /**
+   * Confirm delete slot and booking
+   */
+  const confirmDeleteSlotAndBooking = async () => {
+    if (!deleteDialogSlot) return;
+
+    try {
+      const response = await availabilityAPI.deleteSlot(deleteDialogSlot.id);
+      const successMessage = response.data.appointment_deleted
+        ? 'Booked slot and associated appointment deleted successfully'
+        : 'Slot deleted successfully';
+      alert(successMessage);
+      setShowDeleteDialog(false);
+      setDeleteDialogSlot(null);
+      setPaymentInfo(null);
+      loadSlots();
+    } catch (error) {
+      console.error('Failed to delete slot:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to delete slot';
+      alert(errorMessage);
+    }
+  };
+
+  /**
+   * Confirm cancel booking only
+   */
+  const confirmCancelBooking = async () => {
+    if (!deleteDialogSlot) return;
+
+    try {
+      await availabilityAPI.cancelBooking(deleteDialogSlot.id);
+      alert('Booking cancelled successfully. Availability slot has been retained.');
+      setShowDeleteDialog(false);
+      setDeleteDialogSlot(null);
+      setPaymentInfo(null);
+      loadSlots();
+    } catch (error) {
+      console.error('Failed to cancel booking:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to cancel booking';
       alert(errorMessage);
     }
   };
@@ -285,6 +372,8 @@ const AvailabilityTab = ({ partnerId }) => {
           slots={slots}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onCancelBooking={handleCancelBooking}
+          onDeleteSlotAndBooking={handleDeleteSlotAndBooking}
           viewMode="partner"
         />
       )}
@@ -295,6 +384,22 @@ const AvailabilityTab = ({ partnerId }) => {
           conflict={conflictWarning}
           onProceed={proceedWithCreation}
           onCancel={cancelConflict}
+        />
+      )}
+
+      {/* Delete Warning Dialog */}
+      {showDeleteDialog && deleteDialogSlot && (
+        <DeleteWarningDialog
+          isOpen={showDeleteDialog}
+          onClose={() => {
+            setShowDeleteDialog(false);
+            setDeleteDialogSlot(null);
+            setPaymentInfo(null);
+          }}
+          onConfirm={deleteDialogAction === 'deleteSlotAndBooking' ? confirmDeleteSlotAndBooking : confirmCancelBooking}
+          slot={deleteDialogSlot}
+          paymentInfo={paymentInfo}
+          actionType={deleteDialogAction}
         />
       )}
     </div>

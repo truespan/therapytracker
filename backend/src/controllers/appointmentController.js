@@ -6,6 +6,7 @@ const Partner = require('../models/Partner');
 const PartnerSubscription = require('../models/PartnerSubscription');
 const Organization = require('../models/Organization');
 const SubscriptionPlan = require('../models/SubscriptionPlan');
+const db = require('../config/database');
 
 const createAppointment = async (req, res) => {
   try {
@@ -570,6 +571,70 @@ const deleteAppointment = async (req, res) => {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
+    // Check if appointment is linked to an availability slot
+    const slotQuery = `
+      SELECT id, status, location_type, partner_id
+      FROM availability_slots
+      WHERE appointment_id = $1 AND archived_at IS NULL
+      LIMIT 1
+    `;
+    const slotResult = await db.query(slotQuery, [id]);
+    const linkedSlot = slotResult.rows[0];
+
+    // If linked to slot, cancel booking instead of deleting appointment
+    if (linkedSlot) {
+      // Send cancellation notification before cancelling (non-blocking)
+      try {
+        if (appointment.status !== 'cancelled') {
+          await sendWhatsAppCancellationNotification(
+            id,
+            appointment.user_id,
+            appointment.partner_id,
+            appointment.title,
+            appointment.appointment_date,
+            appointment.end_date,
+            appointment.duration_minutes || 60,
+            appointment.timezone || 'UTC'
+          );
+        }
+      } catch (error) {
+        console.error('WhatsApp cancellation notification failed:', error.message);
+        // Continue with cancellation even if WhatsApp fails
+      }
+
+      // Delete from Google Calendar first (non-blocking)
+      try {
+        await googleCalendarService.deleteAppointmentFromGoogle(id);
+      } catch (error) {
+        console.error('Google Calendar delete failed:', error.message);
+        // Continue with cancellation even if Google sync fails
+      }
+
+      // Delete the appointment
+      await Appointment.delete(id);
+
+      // Update slot to make it available again
+      const originalStatus = linkedSlot.location_type === 'online' ? 'available_online' : 'available_offline';
+      const updateSlotQuery = `
+        UPDATE availability_slots
+        SET status = $1,
+            is_available = TRUE,
+            booked_by_user_id = NULL,
+            booked_at = NULL,
+            appointment_id = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+        RETURNING *
+      `;
+      await db.query(updateSlotQuery, [originalStatus, linkedSlot.id]);
+
+      return res.json({ 
+        message: 'Booking cancelled successfully. Availability slot has been retained.',
+        slot_retained: true
+      });
+    }
+
+    // If not linked to slot, proceed with normal deletion
     // Send cancellation notification before deleting (non-blocking)
     try {
       if (appointment.status !== 'cancelled') {
