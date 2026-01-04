@@ -108,7 +108,7 @@ const EarningsTab = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Pending Earnings */}
         <div className="card p-6">
           <div className="flex items-center justify-between mb-4">
@@ -145,8 +145,23 @@ const EarningsTab = () => {
           </p>
         </div>
 
-        {/* Withdrawn Amount */}
-        <div className="card p-6">
+        {/* Total Earnings - Full width on mobile */}
+        <div className="card p-6 col-span-2 md:col-span-1 lg:col-span-1">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-1">Total Earnings</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
+                {formatCurrency(earningsData.total_earnings)}
+              </p>
+            </div>
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <CurrencyIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Withdrawn Amount - Full width on mobile */}
+        <div className="card p-6 col-span-2 md:col-span-1 lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-1">Withdrawn Amount</p>
@@ -161,21 +176,6 @@ const EarningsTab = () => {
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Total payment transferred to partner/organization bank account
           </p>
-        </div>
-
-        {/* Total Earnings */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-1">Total Earnings</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
-                {formatCurrency(earningsData.total_earnings)}
-              </p>
-            </div>
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-              <CurrencyIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-            </div>
-          </div>
         </div>
       </div>
 
