@@ -111,13 +111,13 @@ const EarningsTab = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Pending Earnings */}
         <div className="card p-6 bg-orange-50 dark:bg-orange-900/20">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex-shrink-0">
               <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
             </div>
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary truncate">Pending Earnings</p>
           </div>
           <div className="mb-3">
-            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-2">Pending Earnings</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
               {formatCurrency(earningsData.pending_earnings || 0)}
             </p>
@@ -129,13 +129,13 @@ const EarningsTab = () => {
 
         {/* Available Balance */}
         <div className="card p-6 bg-green-50 dark:bg-green-900/20">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
               <CurrencyIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary truncate">Available Balance</p>
           </div>
           <div className="mb-3">
-            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-2">Available Balance</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">
               {formatCurrency(earningsData.available_balance)}
             </p>
@@ -146,7 +146,7 @@ const EarningsTab = () => {
         </div>
 
         {/* Total Earnings - Full width on mobile */}
-        <div className="card p-6 col-span-2 md:col-span-1 lg:col-span-1">
+        <div className="card p-6 col-span-2 md:col-span-1 lg:col-span-1 bg-purple-50 dark:bg-purple-900/20">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-1">Total Earnings</p>
@@ -161,7 +161,7 @@ const EarningsTab = () => {
         </div>
 
         {/* Withdrawn Amount - Full width on mobile */}
-        <div className="card p-6 col-span-2 md:col-span-1 lg:col-span-1">
+        <div className="card p-6 col-span-2 md:col-span-1 lg:col-span-1 bg-blue-50 dark:bg-blue-900/20">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-1">Withdrawn Amount</p>
