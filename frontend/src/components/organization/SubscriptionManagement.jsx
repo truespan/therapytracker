@@ -313,6 +313,12 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                           </span>
                         )}
                       </div>
+                      <div className="mb-2 text-sm">
+                        <span className="text-gray-600 dark:text-dark-text-secondary">Last login:</span>
+                        <span className="font-medium text-gray-900 dark:text-dark-text-primary ml-2">
+                          {formatDateTime(partner.last_login)}
+                        </span>
+                      </div>
                       {subscription ? (
                         <div className="space-y-1 text-sm">
                           <div className="flex items-center space-x-2">
