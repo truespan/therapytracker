@@ -661,29 +661,34 @@ const bookSlot = async (req, res) => {
                 timeZone: 'Asia/Kolkata'
               });
               
-              // Format time as "10:00 am"
-              const formattedTime = appointmentDateObj.toLocaleTimeString('en-IN', {
+              // Format time as "10 am" (remove :00 minutes)
+              const timeString = appointmentDateObj.toLocaleTimeString('en-IN', {
                 hour: 'numeric',
                 minute: '2-digit',
                 hour12: true,
                 timeZone: 'Asia/Kolkata'
               });
+              // Convert "10:00 am" to "10 am", keep "10:30 am" as is
+              const formattedTime = timeString.replace(':00 ', ' ').toLowerCase();
 
               // Prepare template parameters in the specified order
               const therapistTemplateParams = [
                 partner.name, // Parameter 1: Therapist name
                 user ? user.name : 'Client', // Parameter 2: Client name
-                `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`, // Parameter 3: Event name
+                `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'Offline'}`, // Parameter 3: Event name ("Therapy Session - Online" or "Therapy Session - Offline")
                 formattedDate, // Parameter 4: Date (e.g., "Sunday, 4 January 2026")
-                formattedTime.toLowerCase() // Parameter 5: Time (e.g., "10:00 am")
+                formattedTime // Parameter 5: Time (e.g., "10 am")
               ];
+
+              // Get template name from WhatsApp service (uses environment variable)
+              const templateName = whatsappService.templateNames.therapistAppointmentNotification || 'theraptrack_therapist_appointment_notification';
 
               // Send therapist notification after a few seconds delay
               setTimeout(async () => {
                 try {
                   const therapistResult = await whatsappService.sendTherapistAppointmentNotificationTemplate(
                     partner.contact,
-                    'theraptrack_therapist_appointment_notification',
+                    templateName,
                     therapistTemplateParams,
                     appointmentId,
                     slot.partner_id

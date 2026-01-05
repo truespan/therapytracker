@@ -31,7 +31,8 @@ class WhatsAppService {
       appointmentConfirmation: null, // theraptrack_appointment_is_booked
       appointmentReminder: null, // theraptrack_appointment_reminder
       appointmentCancellation: null, // theraptrack_appointment_cancelled
-      appointmentRescheduled: null // theraptrack_appointment_rescheduled
+      appointmentRescheduled: null, // theraptrack_appointment_rescheduled
+      therapistAppointmentNotification: null // theraptrack_therapist_appointment_notification
     };
     this.useTemplates = false; // Will be true if at least one template is configured
     this.includePaymentStatusInTemplate = process.env.WHATSAPP_TEMPLATE_INCLUDE_PAYMENT_STATUS === 'true'; // Whether to include payment status as 7th parameter
@@ -125,12 +126,15 @@ class WhatsAppService {
                                                    'theraptrack_appointment_cancelled';
       this.templateNames.appointmentRescheduled = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_RESCHEDULED?.trim() || 
                                                   'theraptrack_appointment_rescheduled';
+      this.templateNames.therapistAppointmentNotification = process.env.WHATSAPP_TEMPLATE_THERAPIST_APPOINTMENT_NOTIFICATION?.trim() || 
+                                                             'theraptrack_therapist_appointment_notification';
       
       // Check if templates are configured
       this.useTemplates = !!(this.templateNames.appointmentConfirmation || 
                             this.templateNames.appointmentReminder || 
                             this.templateNames.appointmentCancellation ||
-                            this.templateNames.appointmentRescheduled);
+                            this.templateNames.appointmentRescheduled ||
+                            this.templateNames.therapistAppointmentNotification);
       
       console.log('[WhatsApp Service] Enabled:', this.enabled);
       console.log('[WhatsApp Service] From Number:', this.fromNumber || 'NOT SET');
@@ -146,6 +150,7 @@ class WhatsAppService {
         console.log('  - Appointment Reminder:', this.templateNames.appointmentReminder || 'NOT SET');
         console.log('  - Appointment Cancellation:', this.templateNames.appointmentCancellation || 'NOT SET');
         console.log('  - Appointment Rescheduled:', this.templateNames.appointmentRescheduled || 'NOT SET');
+        console.log('  - Therapist Appointment Notification:', this.templateNames.therapistAppointmentNotification || 'NOT SET');
       }
       
       // Set base URL based on sandbox mode
