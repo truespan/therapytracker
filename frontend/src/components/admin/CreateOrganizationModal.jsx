@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, Lock, Users, Shield, RefreshCw } from 'lucide-react';
-import { adminAPI } from '../../services/api';
+import { X, Building2, Mail, Phone, MapPin, FileText, Lock, Users, Shield, CreditCard } from 'lucide-react';
 
 const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -16,11 +15,12 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     referral_code: '',
     referral_code_discount: '',
     referral_code_discount_type: 'percentage',
+    hide_therapists_tab: false,
+    hide_questionnaires_tab: false,
+    disable_therapist_plan_change: false,
   });
 
   const [errors, setErrors] = useState({});
-  const [generatingCode, setGeneratingCode] = useState(false);
-  const [codeGenerated, setCodeGenerated] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -37,24 +37,6 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     }
   };
 
-  const handleGenerateCode = async () => {
-    try {
-      setGeneratingCode(true);
-      const response = await adminAPI.generateReferralCode();
-      if (response.data.success && response.data.referral_code) {
-        setFormData((prev) => ({
-          ...prev,
-          referral_code: response.data.referral_code,
-        }));
-        setCodeGenerated(true);
-      }
-    } catch (error) {
-      console.error('Error generating referral code:', error);
-      alert(error.response?.data?.error || 'Failed to generate referral code. Please try again.');
-    } finally {
-      setGeneratingCode(false);
-    }
-  };
 
   const validate = () => {
     const newErrors = {};
@@ -119,9 +101,11 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
       referral_code: '',
       referral_code_discount: '',
       referral_code_discount_type: 'percentage',
+      hide_therapists_tab: false,
+      hide_questionnaires_tab: false,
+      disable_therapist_plan_change: false,
     });
     setErrors({});
-    setCodeGenerated(false);
     onClose();
   };
 
@@ -312,6 +296,94 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             </label>
           </div>
 
+          {/* Tab Visibility Settings - Only shown if TheraPTrack Controlled is enabled */}
+          {formData.theraptrack_controlled && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-center mb-2">
+                <Users className="h-4 w-4 text-purple-700 mr-2" />
+                <span className="text-sm font-medium text-gray-900">
+                  Tab Visibility Settings
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 mb-3">
+                Control which tabs are visible in the organization dashboard. When checked, the selected tabs will be hidden from navigation.
+              </p>
+              
+              <div className="space-y-2">
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <div className="flex items-center h-5">
+                    <input
+                      type="checkbox"
+                      name="hide_therapists_tab"
+                      checked={formData.hide_therapists_tab}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs font-medium text-gray-900">
+                      Hide Therapists Management Tab
+                    </span>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      Hide the Therapists Management tab from the organization dashboard navigation.
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <div className="flex items-center h-5">
+                    <input
+                      type="checkbox"
+                      name="hide_questionnaires_tab"
+                      checked={formData.hide_questionnaires_tab}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs font-medium text-gray-900">
+                      Hide Questionnaires Tab
+                    </span>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      Hide the Questionnaires tab from the organization dashboard navigation.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Disable Therapist Plan Change - Only shown if TheraPTrack Controlled is enabled */}
+          {formData.theraptrack_controlled && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <div className="flex items-center h-5">
+                  <input
+                    type="checkbox"
+                    name="disable_therapist_plan_change"
+                    checked={formData.disable_therapist_plan_change}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center">
+                    <CreditCard className="h-4 w-4 text-blue-700 mr-2" />
+                    <span className="text-xs font-medium text-gray-900">
+                      Disable Therapist Plan Change
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    When checked, therapists in this organization will not be able to change their subscription plans from the Subscription Management tab.
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
+
           {/* Referral Code (Only for TheraPTrack Controlled) */}
           {formData.theraptrack_controlled && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
@@ -319,36 +391,17 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Referral Code (Optional)
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    name="referral_code"
-                    value={formData.referral_code}
-                    onChange={handleChange}
-                    readOnly={codeGenerated}
-                    className={`flex-1 px-4 py-2 border rounded-lg uppercase ${
-                      codeGenerated
-                        ? 'bg-gray-100 border-gray-300 text-gray-700 cursor-not-allowed'
-                        : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
-                    }`}
-                    placeholder="e.g., WELCOME2024"
-                    disabled={isLoading || generatingCode || codeGenerated}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleGenerateCode}
-                    disabled={isLoading || generatingCode || codeGenerated}
-                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    title={codeGenerated ? "Referral code already generated" : "Generate a random unique referral code"}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${generatingCode ? 'animate-spin' : ''}`} />
-                    {generatingCode ? 'Generating...' : 'Generate'}
-                  </button>
-                </div>
+                <input
+                  type="text"
+                  name="referral_code"
+                  value={formData.referral_code}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg uppercase focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="e.g., WELCOME2024"
+                  disabled={isLoading}
+                />
                 <p className="text-xs text-gray-600 mt-1">
-                  {codeGenerated 
-                    ? '✓ Referral code generated. This code cannot be edited after generation.'
-                    : 'Therapists can use this code to join your organization during signup. Click "Generate" for a random unique code.'}
+                  Enter a referral code for therapists to use when joining your organization during signup.
                 </p>
               </div>
 

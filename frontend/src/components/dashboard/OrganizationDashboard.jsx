@@ -112,6 +112,37 @@ const OrganizationDashboard = () => {
     setFilteredPartners(partners);
   }, [partners]);
 
+  // Handle redirect if activeView is set to a hidden tab
+  useEffect(() => {
+    if (!user) return;
+    
+    const shouldHideTherapistsTab = user.theraptrack_controlled && user.hide_therapists_tab;
+    const shouldHideQuestionnairesTab = user.theraptrack_controlled && user.hide_questionnaires_tab;
+    
+    // If the active view is set to a hidden tab, redirect to a visible tab
+    if (activeView === 'partners' && shouldHideTherapistsTab) {
+      // Redirect to questionnaires if visible, otherwise subscriptions, otherwise settings
+      if (!shouldHideQuestionnairesTab) {
+        setActiveView('questionnaires');
+      } else if (!user.theraptrack_controlled) {
+        // For non-controlled orgs, show earnings if available
+        setActiveView('subscriptions');
+      } else {
+        setActiveView('settings');
+      }
+    } else if (activeView === 'questionnaires' && shouldHideQuestionnairesTab) {
+      // Redirect to partners if visible, otherwise subscriptions, otherwise settings
+      if (!shouldHideTherapistsTab) {
+        setActiveView('partners');
+      } else if (!user.theraptrack_controlled) {
+        // For non-controlled orgs, show earnings if available
+        setActiveView('subscriptions');
+      } else {
+        setActiveView('settings');
+      }
+    }
+  }, [user, activeView]);
+
   const loadOrganizationData = async () => {
     try {
       setLoading(true);
@@ -518,17 +549,19 @@ const OrganizationDashboard = () => {
         </div>
 
         <nav className="flex space-x-8 overflow-x-auto">
-          <button
-            onClick={() => setActiveView('partners')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
-              activeView === 'partners'
-                ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
-            }`}
-          >
-            <Users className="inline h-5 w-5 mr-2" />
-            Therapists Management
-          </button>
+          {!(user.theraptrack_controlled && user.hide_therapists_tab) && (
+            <button
+              onClick={() => setActiveView('partners')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
+                activeView === 'partners'
+                  ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
+              }`}
+            >
+              <Users className="inline h-5 w-5 mr-2" />
+              Therapists Management
+            </button>
+          )}
           <button
             onClick={() => setActiveView('subscriptions')}
             className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
@@ -540,17 +573,19 @@ const OrganizationDashboard = () => {
             <CreditCard className="inline h-5 w-5 mr-2" />
             Subscription Management
           </button>
-          <button
-            onClick={() => setActiveView('questionnaires')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
-              activeView === 'questionnaires'
-                ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
-            }`}
-          >
-            <ClipboardList className="inline h-5 w-5 mr-2" />
-            Questionnaires
-          </button>
+          {!(user.theraptrack_controlled && user.hide_questionnaires_tab) && (
+            <button
+              onClick={() => setActiveView('questionnaires')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
+                activeView === 'questionnaires'
+                  ? 'border-indigo-600 text-indigo-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
+              }`}
+            >
+              <ClipboardList className="inline h-5 w-5 mr-2" />
+              Questionnaires
+            </button>
+          )}
           {!user.theraptrack_controlled && (
             <button
               onClick={() => setActiveView('earnings')}
@@ -1053,6 +1088,7 @@ const OrganizationDashboard = () => {
         <SubscriptionManagement 
           organizationId={user.id} 
           isTheraPTrackControlled={user.theraptrack_controlled}
+          disableTherapistPlanChange={user.disable_therapist_plan_change}
         />
       )}
 

@@ -308,7 +308,6 @@ router.put('/admin/partners/:id', authenticateToken, checkRole('admin'), adminCo
 // System settings (admin only)
 router.get('/admin/default-subscription-plan', authenticateToken, checkRole('admin'), adminController.getDefaultSubscriptionPlan);
 router.post('/admin/default-subscription-plan', authenticateToken, checkRole('admin'), adminController.setDefaultSubscriptionPlan);
-router.get('/admin/generate-referral-code', authenticateToken, checkRole('admin'), adminController.generateReferralCode);
 
 // Report template management routes - admin only
 router.get('/admin/report-templates', authenticateToken, checkRole('admin'), reportTemplateController.getAllTemplates);

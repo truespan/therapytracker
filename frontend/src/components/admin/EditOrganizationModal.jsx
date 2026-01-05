@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Building2, Mail, Phone, MapPin, FileText, Users, Shield, MessageCircle, RefreshCw, Edit2, Check } from 'lucide-react';
+import { X, Building2, Mail, Phone, MapPin, FileText, Users, Shield, MessageCircle, Edit2, Check, CreditCard } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
-import { adminAPI } from '../../services/api';
 
 const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organization }) => {
   const [formData, setFormData] = useState({
@@ -19,11 +18,12 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     referral_code: '',
     referral_code_discount: '',
     referral_code_discount_type: 'percentage',
+    hide_therapists_tab: false,
+    hide_questionnaires_tab: false,
+    disable_therapist_plan_change: false,
   });
 
   const [errors, setErrors] = useState({});
-  const [generatingCode, setGeneratingCode] = useState(false);
-  const [codeGenerated, setCodeGenerated] = useState(false);
   const [isEditingDiscount, setIsEditingDiscount] = useState(false);
   const [discountEditData, setDiscountEditData] = useState({
     referral_code_discount: '',
@@ -54,6 +54,9 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         referral_code: referralCode || '',
         referral_code_discount: organization.referral_code_discount != null ? organization.referral_code_discount : '',
         referral_code_discount_type: organization.referral_code_discount_type || 'percentage',
+        hide_therapists_tab: organization.hide_therapists_tab ?? false,
+        hide_questionnaires_tab: organization.hide_questionnaires_tab ?? false,
+        disable_therapist_plan_change: organization.disable_therapist_plan_change ?? false,
       });
       
       // Initialize discount edit data
@@ -63,26 +66,25 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
       });
       setIsEditingDiscount(false);
       
-      // If organization already has a referral code, mark it as read-only
-      // This prevents generating a new code when editing an existing organization with a code
-      setCodeGenerated(hasExistingCode);
-      
       // Debug log to help troubleshoot
       if (hasExistingCode) {
         console.log('[EditOrganizationModal] Organization has existing referral code:', referralCode);
       }
-    } else {
-      // Reset when organization is cleared
-      setCodeGenerated(false);
     }
   }, [organization]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
-    // Prevent changes to referral_code if it's already set (read-only)
-    if (name === 'referral_code' && codeGenerated) {
-      return;
+    // Prevent changes to referral_code if organization already has one set
+    if (name === 'referral_code') {
+      const hasExistingCode = organization?.referral_code && 
+                              typeof organization.referral_code === 'string' && 
+                              organization.referral_code.trim() !== '' && 
+                              organization.referral_code.trim().toUpperCase() !== 'NULL';
+      if (hasExistingCode) {
+        return;
+      }
     }
     
     // Handle for_new_therapists with warning
@@ -143,24 +145,6 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     });
   };
 
-  const handleGenerateCode = async () => {
-    try {
-      setGeneratingCode(true);
-      const response = await adminAPI.generateReferralCode();
-      if (response.data.success && response.data.referral_code) {
-        setFormData((prev) => ({
-          ...prev,
-          referral_code: response.data.referral_code,
-        }));
-        setCodeGenerated(true);
-      }
-    } catch (error) {
-      console.error('Error generating referral code:', error);
-      alert(error.response?.data?.error || 'Failed to generate referral code. Please try again.');
-    } finally {
-      setGeneratingCode(false);
-    }
-  };
 
   const validate = () => {
     const newErrors = {};
@@ -207,7 +191,6 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
 
   const handleClose = () => {
     setErrors({});
-    setCodeGenerated(false);
     setIsEditingDiscount(false);
     onClose();
   };
@@ -486,6 +469,94 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
             </div>
           )}
 
+          {/* Tab Visibility Settings - Only shown if TheraPTrack Controlled is enabled */}
+          {formData.theraptrack_controlled && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-center mb-2">
+                <Users className="h-4 w-4 text-purple-700 mr-2" />
+                <span className="text-sm font-medium text-gray-900">
+                  Tab Visibility Settings
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 mb-3">
+                Control which tabs are visible in the organization dashboard. When checked, the selected tabs will be hidden from navigation.
+              </p>
+              
+              <div className="space-y-2">
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <div className="flex items-center h-5">
+                    <input
+                      type="checkbox"
+                      name="hide_therapists_tab"
+                      checked={formData.hide_therapists_tab}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs font-medium text-gray-900">
+                      Hide Therapists Management Tab
+                    </span>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      Hide the Therapists Management tab from the organization dashboard navigation.
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <div className="flex items-center h-5">
+                    <input
+                      type="checkbox"
+                      name="hide_questionnaires_tab"
+                      checked={formData.hide_questionnaires_tab}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs font-medium text-gray-900">
+                      Hide Questionnaires Tab
+                    </span>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      Hide the Questionnaires tab from the organization dashboard navigation.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Disable Therapist Plan Change - Only shown if TheraPTrack Controlled is enabled */}
+          {formData.theraptrack_controlled && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <div className="flex items-center h-5">
+                  <input
+                    type="checkbox"
+                    name="disable_therapist_plan_change"
+                    checked={formData.disable_therapist_plan_change}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center">
+                    <CreditCard className="h-4 w-4 text-blue-700 mr-2" />
+                    <span className="text-xs font-medium text-gray-900">
+                      Disable Therapist Plan Change
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    When checked, therapists in this organization will not be able to change their subscription plans from the Subscription Management tab.
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
+
           {/* Referral Code (Only for TheraPTrack Controlled) */}
           {formData.theraptrack_controlled && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
@@ -493,42 +564,35 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Referral Code (Optional)
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    name="referral_code"
-                    value={formData.referral_code}
-                    onChange={handleChange}
-                    readOnly={codeGenerated}
-                    className={`flex-1 px-4 py-2 border rounded-lg uppercase ${
-                      codeGenerated
-                        ? 'bg-gray-100 border-gray-300 text-gray-700 cursor-not-allowed'
-                        : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
-                    }`}
-                    placeholder="e.g., WELCOME2024"
-                    disabled={isLoading || generatingCode || codeGenerated}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleGenerateCode}
-                    disabled={isLoading || generatingCode || codeGenerated}
-                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    title={codeGenerated ? "Referral code cannot be changed" : "Generate a random unique referral code"}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${generatingCode ? 'animate-spin' : ''}`} />
-                    {generatingCode ? 'Generating...' : 'Generate'}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-600 mt-1">
-                  {codeGenerated 
-                    ? '✓ Referral code is set. This code cannot be edited or regenerated.'
-                    : 'Therapists can use this code to join your organization during signup. Click "Generate" for a random unique code.'}
-                </p>
-                {organization?.referral_code && formData.referral_code && formData.referral_code !== organization.referral_code && !codeGenerated && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    ⚠️ Changing the referral code will invalidate the old code
-                  </p>
-                )}
+                {(() => {
+                  const hasExistingCode = organization?.referral_code && 
+                                          typeof organization.referral_code === 'string' && 
+                                          organization.referral_code.trim() !== '' && 
+                                          organization.referral_code.trim().toUpperCase() !== 'NULL';
+                  return (
+                    <>
+                      <input
+                        type="text"
+                        name="referral_code"
+                        value={formData.referral_code}
+                        onChange={handleChange}
+                        readOnly={hasExistingCode}
+                        className={`w-full px-4 py-2 border rounded-lg uppercase ${
+                          hasExistingCode
+                            ? 'bg-gray-100 border-gray-300 text-gray-700 cursor-not-allowed'
+                            : 'border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                        }`}
+                        placeholder="e.g., WELCOME2024"
+                        disabled={isLoading || hasExistingCode}
+                      />
+                      <p className="text-xs text-gray-600 mt-1">
+                        {hasExistingCode 
+                          ? '✓ Referral code is set. This code cannot be edited.'
+                          : 'Enter a referral code for therapists to use when joining your organization during signup.'}
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Discount Fields (Only show if referral code is entered) */}

@@ -1196,50 +1196,6 @@ const setDefaultSubscriptionPlan = async (req, res) => {
   }
 };
 
-/**
- * Generate a unique referral code
- */
-const generateReferralCode = async (req, res) => {
-  try {
-    const crypto = require('crypto');
-    let attempts = 0;
-    const maxAttempts = 10;
-    let code = null;
-    let isUnique = false;
-
-    while (!isUnique && attempts < maxAttempts) {
-      // Generate a random code: 3-4 letters + 4-5 digits (e.g., ABC1234, XY789)
-      const letters = crypto.randomBytes(3).toString('hex').toUpperCase().substring(0, 3);
-      const numbers = Math.floor(1000 + Math.random() * 9000).toString();
-      code = `${letters}${numbers}`;
-
-      // Check if code already exists
-      const existingOrg = await Organization.findByReferralCode(code);
-      if (!existingOrg) {
-        isUnique = true;
-      }
-      attempts++;
-    }
-
-    if (!isUnique) {
-      return res.status(500).json({
-        error: 'Failed to generate unique referral code after multiple attempts. Please try again.'
-      });
-    }
-
-    res.json({
-      success: true,
-      referral_code: code
-    });
-  } catch (error) {
-    console.error('Error generating referral code:', error);
-    res.status(500).json({
-      error: 'Failed to generate referral code',
-      details: error.message
-    });
-  }
-};
-
 module.exports = {
   getAllOrganizations,
   createOrganization,
@@ -1255,7 +1211,6 @@ module.exports = {
   updatePartner,
   setForNewTherapists,
   getDefaultSubscriptionPlan,
-  setDefaultSubscriptionPlan,
-  generateReferralCode
+  setDefaultSubscriptionPlan
 };
 

@@ -6,7 +6,7 @@ import {
   Loader, Filter, Gift, X, Search
 } from 'lucide-react';
 
-const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => {
+const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled, disableTherapistPlanChange }) => {
   const [partners, setPartners] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -355,7 +355,13 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled }) => 
                             setSelectedPartner(partner);
                             setShowAssignModal(true);
                           }}
-                          className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                          disabled={disableTherapistPlanChange}
+                          className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                            disableTherapistPlanChange
+                              ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                              : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                          }`}
+                          title={disableTherapistPlanChange ? 'Plan change has been disabled for this organization' : ''}
                         >
                           <Gift className="h-4 w-4" />
                           <span>Change Plan</span>
