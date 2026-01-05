@@ -264,7 +264,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
           </div>
 
           {/* Session Notes Section */}
-          <div className="mb-3 pt-3 px-3 pb-3 -mx-3 border-t border-gray-100 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="mb-3 pt-3 px-3 pb-3 -mx-3 border-t border-gray-100 dark:border-gray-600 bg-green-50 dark:bg-green-900/20 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
                 <FileText className="h-4 w-4 mr-1.5" />
@@ -640,7 +640,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
         })()}
 
         {/* Session Notes Section - Mobile */}
-        <div className="mb-3 pt-3 px-3 pb-3 -mx-3 border-t border-gray-100 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 rounded-lg">
+        <div className="mb-3 pt-3 px-3 pb-3 -mx-3 border-t border-gray-100 dark:border-gray-600 bg-green-50 dark:bg-green-900/20 rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
               <FileText className="h-4 w-4 mr-1.5" />
