@@ -346,8 +346,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             </div>
                             {meetLink && (
                               <div className="flex items-center space-x-2">
-                                <Link2 className="h-4 w-4" />
-                                <span className="break-all">{meetLink}</span>
+                                <Link2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                <span className="break-all text-green-600 dark:text-green-400">{meetLink}</span>
                               </div>
                             )}
                             {!canJoin && (
@@ -470,8 +470,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           </div>
                           {meetLink && (
                             <div className="flex items-start space-x-2">
-                              <Link2 className="h-3 w-3 flex-shrink-0 mt-0.5" />
-                              <span className="break-all text-xs">{meetLink}</span>
+                              <Link2 className="h-3 w-3 flex-shrink-0 mt-0.5 text-green-600 dark:text-green-400" />
+                              <span className="break-all text-xs text-green-600 dark:text-green-400">{meetLink}</span>
                             </div>
                           )}
                           {!canJoin && (
@@ -585,8 +585,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             </div>
                             {meetLink && (
                               <div className="flex items-center space-x-2">
-                                <Link2 className="h-4 w-4" />
-                                <span className="break-all">{meetLink}</span>
+                                <Link2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                <span className="break-all text-green-600 dark:text-green-400">{meetLink}</span>
                               </div>
                             )}
                           </div>
@@ -678,8 +678,8 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                           </div>
                           {meetLink && (
                             <div className="flex items-start space-x-2">
-                              <Link2 className="h-3 w-3 flex-shrink-0 mt-0.5" />
-                              <span className="break-all text-xs">{meetLink}</span>
+                              <Link2 className="h-3 w-3 flex-shrink-0 mt-0.5 text-green-600 dark:text-green-400" />
+                              <span className="break-all text-xs text-green-600 dark:text-green-400">{meetLink}</span>
                             </div>
                           )}
                         </div>
