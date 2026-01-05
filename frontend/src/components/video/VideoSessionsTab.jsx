@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { videoSessionAPI, therapySessionAPI } from '../../services/api';
 import VideoSessionModal from './VideoSessionModal';
 import VideoSessionStartDialog from './VideoSessionStartDialog';
-import { Video, Calendar, Clock, User, Lock, Unlock, Copy, Check, Edit, Trash2, AlertCircle, FileText, CheckCircle, ExternalLink } from 'lucide-react';
+import { Video, Calendar, Clock, User, Lock, Unlock, Copy, Check, Edit, Trash2, AlertCircle, FileText, CheckCircle, ExternalLink, Link2 } from 'lucide-react';
 import { getMeetLink, formatTimeUntilSession, canJoinSession, generateShareText, openMeetLink } from '../../utils/videoHelper';
 
 const VideoSessionsTab = ({ partnerId, users }) => {
@@ -344,6 +344,12 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                               <Clock className="h-4 w-4" />
                               <span>{session.duration_minutes} minutes</span>
                             </div>
+                            {meetLink && (
+                              <div className="flex items-center space-x-2">
+                                <Link2 className="h-4 w-4" />
+                                <span className="break-all">{meetLink}</span>
+                              </div>
+                            )}
                             {!canJoin && (
                               <div className="text-primary-600 font-medium">
                                 Starts in: {formatTimeUntilSession(session.session_date)}
@@ -462,6 +468,12 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             <Clock className="h-3 w-3 flex-shrink-0" />
                             <span>{session.duration_minutes} minutes</span>
                           </div>
+                          {meetLink && (
+                            <div className="flex items-start space-x-2">
+                              <Link2 className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                              <span className="break-all text-xs">{meetLink}</span>
+                            </div>
+                          )}
                           {!canJoin && (
                             <div className="text-primary-600 font-medium text-xs">
                               Starts in: {formatTimeUntilSession(session.session_date)}
@@ -571,6 +583,12 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                               <Clock className="h-4 w-4" />
                               <span>{session.duration_minutes} minutes</span>
                             </div>
+                            {meetLink && (
+                              <div className="flex items-center space-x-2">
+                                <Link2 className="h-4 w-4" />
+                                <span className="break-all">{meetLink}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -658,6 +676,12 @@ const VideoSessionsTab = ({ partnerId, users }) => {
                             <Clock className="h-3 w-3 flex-shrink-0" />
                             <span>{session.duration_minutes} minutes</span>
                           </div>
+                          {meetLink && (
+                            <div className="flex items-start space-x-2">
+                              <Link2 className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                              <span className="break-all text-xs">{meetLink}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Mobile Buttons - Vertical Stack with smaller size */}
