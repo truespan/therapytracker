@@ -1532,7 +1532,7 @@ Please prepare for the session and contact the client if needed.
       if (this.useTemplates && this.templateNames.appointmentCancellation) {
         try {
           console.log('[WhatsApp Service] 🎯 Attempting to send appointment cancellation via template:', this.templateNames.appointmentCancellation);
-          const templateParams = this.prepareAppointmentConfirmationTemplateParams(appointmentData);
+          const templateParams = this.prepareAppointmentCancellationTemplateParams(appointmentData);
           console.log('[WhatsApp Service] Cancellation template parameters:', {
             count: templateParams.length,
             params: templateParams
@@ -1949,6 +1949,117 @@ Please prepare for the session and contact the client if needed.
         isSandboxError: this.isSandboxRegistrationError(error)
       };
     }
+  }
+
+  /**
+   * Prepare template parameters for appointment cancellation notification
+   * Template expects 4 parameters:
+   * {{1}} - Client name
+   * {{2}} - "Therapy Session - Online" or "Therapy Session - In Person"
+   * {{3}} - Date formatted as "Sunday, 4 January 2026"
+   * {{4}} - Time formatted as "10 am"
+   * @param {Object} appointmentData - Appointment details
+   * @returns {Array} Template parameters array
+   */
+  prepareAppointmentCancellationTemplateParams(appointmentData) {
+    const {
+      userName,
+      appointmentDate,
+      appointmentTime,
+      timezone,
+      appointmentType
+    } = appointmentData;
+
+    // Format date as "Sunday, 4 January 2026"
+    let displayDate = appointmentDate;
+    if (appointmentDate) {
+      try {
+        const dateObj = new Date(appointmentDate);
+        if (!isNaN(dateObj.getTime())) {
+          const localTimezone = timezone || 'Asia/Kolkata';
+          
+          displayDate = dateObj.toLocaleDateString('en-IN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: localTimezone
+          });
+        }
+      } catch (error) {
+        console.error('[WhatsApp Template] Error formatting cancellation date:', error);
+      }
+    }
+
+    // Format time as "10 am" (remove :00 minutes)
+    let displayTime = appointmentTime;
+    if (!appointmentTime && appointmentDate) {
+      try {
+        const dateObj = new Date(appointmentDate);
+        if (!isNaN(dateObj.getTime())) {
+          const localTimezone = timezone || 'Asia/Kolkata';
+          
+          const timeString = dateObj.toLocaleTimeString('en-IN', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: localTimezone
+          });
+          // Convert "10:00 am" to "10 am" or "10:00am" to "10 am", keep "10:30 am" as is
+          displayTime = timeString.replace(/:00(\s|$)/g, '$1').toLowerCase().trim();
+        }
+      } catch (error) {
+        console.error('[WhatsApp Template] Error formatting cancellation time:', error);
+      }
+    } else if (appointmentTime) {
+      // Convert "10:00 am" to "10 am" or "10:00am" to "10 am", keep "10:30 am" as is
+      displayTime = appointmentTime.replace(/:00(\s|$)/g, '$1').toLowerCase().trim();
+    }
+
+    // Determine appointment type: "Therapy Session - Online" or "Therapy Session - In Person"
+    let sessionType = 'Therapy Session - In Person'; // Default
+    if (appointmentType) {
+      const typeLower = appointmentType.toLowerCase();
+      if (typeLower.includes('online')) {
+        sessionType = 'Therapy Session - Online';
+      } else if (typeLower.includes('offline') || typeLower.includes('in-person') || typeLower.includes('in person')) {
+        sessionType = 'Therapy Session - In Person';
+      } else {
+        // If title doesn't specify, default to "In Person"
+        sessionType = 'Therapy Session - In Person';
+      }
+    }
+
+    // Prepare parameters in the specified order
+    const params = [
+      String(userName || 'Client').trim(),                    // {{1}} - Client name
+      String(sessionType).trim(),                             // {{2}} - "Therapy Session - Online" or "Therapy Session - In Person"
+      String(displayDate || appointmentDate || 'Date TBD').trim(),  // {{3}} - Date (e.g., "Sunday, 4 January 2026")
+      String(displayTime || 'Time TBD').trim()                // {{4}} - Time (e.g., "10 am")
+    ];
+
+    // Validate all parameters are non-empty
+    for (let i = 0; i < params.length; i++) {
+      const param = params[i];
+      const isEmpty = !param || param.length === 0;
+      const isInvalid = param === 'null' || param === 'undefined' || param === 'NaN';
+      
+      if (isEmpty || isInvalid) {
+        console.error(`[WhatsApp Template] ⚠️  Cancellation parameter ${i + 1} is empty or invalid: "${param}"`);
+        const defaults = ['Client', 'Therapy Session - In Person', 'Date TBD', 'Time TBD'];
+        params[i] = defaults[i] || 'N/A';
+        console.log(`[WhatsApp Template] ✅ Cancellation parameter ${i + 1} set to default: "${params[i]}"`);
+      }
+    }
+
+    // Log final parameters for debugging
+    console.log('[WhatsApp Template] Final cancellation template parameters:', {
+      count: params.length,
+      params: params.map((p, i) => `{{${i + 1}}} = "${p}" (length: ${p.length})`),
+      order: '{{1}} Client Name, {{2}} Session Type, {{3}} Date, {{4}} Time'
+    });
+
+    return params;
   }
 
   /**
