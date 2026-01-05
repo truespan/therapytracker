@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { partnerAPI, chartAPI, questionnaireAPI } from '../../services/api';
+import { partnerAPI, chartAPI, questionnaireAPI, googleCalendarAPI } from '../../services/api';
 import QuestionnaireComparison from '../charts/QuestionnaireComparison';
 import PartnerCalendar from '../calendar/PartnerCalendar';
 import VideoSessionsTab from '../video/VideoSessionsTab';
@@ -15,14 +15,14 @@ import AppointmentsTab from '../appointments/AppointmentsTab';
 import PartnerSettings from '../partner/PartnerSettings';
 import CaseHistoryForm from '../casehistory/CaseHistoryForm';
 import MentalStatusExaminationForm from '../mentalstatus/MentalStatusExaminationForm';
-import SessionNotesTab from '../sessions/SessionNotesTab';
+import PlanOfAssessmentForm from '../planofassessment/PlanOfAssessmentForm';
 import PartnerReportsTab from '../reports/PartnerReportsTab';
 import ClientReportsTab from '../reports/ClientReportsTab';
 import AvailabilityTab from '../availability/AvailabilityTab';
 import EarningsTab from '../earnings/EarningsTab';
 import BlogManagement from '../blogs/BlogManagement';
 import SupportDashboard from '../support/SupportDashboard';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, StickyNote, UserPlus, Link as LinkIcon, CalendarClock, Edit, Headphones } from 'lucide-react';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, UserPlus, Share, CalendarClock, Edit, Headphones, Sun, Calendar as CalendarIcon, AlertCircle, Link2, Unlink } from 'lucide-react';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 import CreatePatientModal from '../partner/CreatePatientModal';
 import EditClientModal from '../partner/EditClientModal';
@@ -67,7 +67,6 @@ const PartnerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('appointments');
   const [videoSessionsEnabled, setVideoSessionsEnabled] = useState(false);
-  const [copiedPartnerId, setCopiedPartnerId] = useState(false);
   const [showCreatePatientModal, setShowCreatePatientModal] = useState(false);
   const [showEditClientModal, setShowEditClientModal] = useState(false);
   const [copiedSignupUrl, setCopiedSignupUrl] = useState(false);
@@ -80,12 +79,17 @@ const PartnerDashboard = () => {
 
   // Client detail tabs state
   const [clientDetailTab, setClientDetailTab] = useState('sessionDetails');
-  const [editingNoteSessionId, setEditingNoteSessionId] = useState(null);
   const [reportSessionId, setReportSessionId] = useState(null);
   const sessionsSectionRef = useRef(null);
 
+  // Google Calendar state
+  const [googleCalendarStatus, setGoogleCalendarStatus] = useState(null);
+  const [connectingCalendar, setConnectingCalendar] = useState(false);
+  const [loadingCalendarStatus, setLoadingCalendarStatus] = useState(true);
+
   useEffect(() => {
     loadPartnerUsers();
+    checkGoogleCalendarStatus();
     // Debug: Log user organization data
     console.log('PartnerDashboard - User object:', user);
     console.log('PartnerDashboard - Organization:', user?.organization);
@@ -123,11 +127,6 @@ const PartnerDashboard = () => {
       console.error('Failed to load user data:', err);
       setLoading(false);
     }
-  };
-
-  const handleNavigateToNotes = (sessionId) => {
-    setClientDetailTab('sessionNotes');
-    setEditingNoteSessionId(sessionId);
   };
 
   const handleNoteChanged = () => {
@@ -200,14 +199,6 @@ const PartnerDashboard = () => {
     } catch (err) {
       console.error('Failed to send chart:', err);
       alert('Failed to send chart. Please try again.');
-    }
-  };
-
-  const handleCopyPartnerId = () => {
-    if (user?.partner_id) {
-      navigator.clipboard.writeText(user.partner_id);
-      setCopiedPartnerId(true);
-      setTimeout(() => setCopiedPartnerId(false), 2000);
     }
   };
 
@@ -302,6 +293,57 @@ const PartnerDashboard = () => {
     }
   };
 
+  const checkGoogleCalendarStatus = async () => {
+    try {
+      setLoadingCalendarStatus(true);
+      const response = await googleCalendarAPI.getStatus();
+      setGoogleCalendarStatus(response.data);
+    } catch (err) {
+      console.error('Failed to check Google Calendar status:', err);
+      setGoogleCalendarStatus({ connected: false });
+    } finally {
+      setLoadingCalendarStatus(false);
+    }
+  };
+
+  const connectGoogleCalendar = async () => {
+    try {
+      setConnectingCalendar(true);
+      const response = await googleCalendarAPI.initiateAuth();
+      // Redirect to Google OAuth page
+      window.location.href = response.data.authUrl;
+    } catch (err) {
+      console.error('Failed to initiate Google Calendar auth:', err);
+      alert('Failed to connect Google Calendar. Please try again.');
+      setConnectingCalendar(false);
+    }
+  };
+
+  const disconnectGoogleCalendar = async () => {
+    if (!window.confirm('Are you sure you want to disconnect Google Calendar? Appointments will no longer sync automatically.')) {
+      return;
+    }
+
+    try {
+      await googleCalendarAPI.disconnect();
+      setGoogleCalendarStatus({ connected: false });
+      alert('Google Calendar disconnected successfully.');
+    } catch (err) {
+      console.error('Failed to disconnect Google Calendar:', err);
+      alert('Failed to disconnect Google Calendar. Please try again.');
+    }
+  };
+
+  const toggleSync = async (enabled) => {
+    try {
+      await googleCalendarAPI.toggleSync(enabled);
+      setGoogleCalendarStatus(prev => ({ ...prev, syncEnabled: enabled }));
+    } catch (err) {
+      console.error('Failed to toggle sync:', err);
+      alert('Failed to update sync settings. Please try again.');
+    }
+  };
+
   if (loading && users.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -316,8 +358,8 @@ const PartnerDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Welcome Section & Partner ID - Hidden on mobile, visible on desktop/tablet */}
-      <div className="hidden lg:flex lg:items-center lg:justify-between mb-8">
-        <div className="flex items-center space-x-4">
+      <div className="hidden lg:flex lg:items-start lg:justify-between mb-8">
+        <div className="flex items-start space-x-4">
           {/* Profile Picture */}
           <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
             {user.photo_url ? (
@@ -336,40 +378,30 @@ const PartnerDashboard = () => {
               </div>
             )}
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
-            <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Manage your clients and track their progress</p>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">{user.name}</h1>
+            <p className="text-gray-600 dark:text-dark-text-secondary mt-1">{user.qualification || 'Manage your clients and track their progress'}</p>
+            
+            {/* Appearance Settings */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border w-fit">
+                <div className="flex items-center space-x-2">
+                  <Sun className="h-4 w-4 text-primary-600 dark:text-dark-primary-500" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-dark-text-primary">Dark Mode</span>
+                </div>
+                <DarkModeToggle variant="switch" />
+              </div>
+            </div>
           </div>
         </div>
         {user.partner_id && (
-          <div className="ml-6">
-            <div className="card bg-primary-50 dark:bg-dark-bg-secondary border-2 border-primary-200 dark:border-dark-primary-700 mb-2">
-              <div>
-                <p className="text-xs text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
-                <div className="flex items-center space-x-2">
-                  <p className="text-xl font-bold text-primary-700 tracking-wider">
-                    {user.partner_id}
-                  </p>
-                  <button
-                    onClick={handleCopyPartnerId}
-                    className="p-1.5 hover:bg-primary-100 rounded-lg transition-colors"
-                    title="Copy Partner ID"
-                  >
-                    {copiedPartnerId ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Copy className="h-4 w-4 text-primary-600" />
-                    )}
-                  </button>
-                </div>
-                {copiedPartnerId && (
-                  <p className="text-xs text-green-600 mt-1">Copied!</p>
-                )}
-              </div>
-            </div>
+          <div className="ml-6 flex flex-col items-end gap-3">
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
+              Your Therapist ID: <span className="font-semibold text-gray-900 dark:text-dark-text-primary">{user.partner_id}</span>
+            </p>
             <button
               onClick={handleShareSignupUrl}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
             >
               {copiedSignupUrl ? (
                 <>
@@ -378,18 +410,77 @@ const PartnerDashboard = () => {
                 </>
               ) : (
                 <>
-                  <LinkIcon className="h-4 w-4" />
+                  <Share className="h-4 w-4" />
                   Share Signup & Appointment link
                 </>
               )}
             </button>
+            
+            {/* Google Calendar Integration */}
+            <div className="w-full mt-2">
+              {loadingCalendarStatus ? (
+                <div className="flex items-center justify-center py-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+                </div>
+              ) : googleCalendarStatus?.connected ? (
+                <div className="space-y-2">
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <span className="text-xs font-medium text-green-700 dark:text-green-400">Calendar Connected</span>
+                      </div>
+                      <button
+                        onClick={disconnectGoogleCalendar}
+                        className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center space-x-1"
+                      >
+                        <Unlink className="h-3 w-3" />
+                        <span>Disconnect</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border">
+                    <div>
+                      <p className="text-xs font-medium text-gray-700 dark:text-dark-text-primary">Sync Enabled</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={googleCalendarStatus.syncEnabled}
+                        onChange={(e) => toggleSync(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={connectGoogleCalendar}
+                  disabled={connectingCalendar}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium disabled:opacity-50"
+                >
+                  {connectingCalendar ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Connecting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CalendarIcon className="h-4 w-4" />
+                      <span>Connect Google Calendar</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
 
       {/* Mobile Welcome Section - Mobile only (hidden on desktop) */}
       <div className="lg:hidden mb-6">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-start space-x-3">
           {/* Profile Picture */}
           <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
             {user.photo_url ? (
@@ -410,7 +501,18 @@ const PartnerDashboard = () => {
           </div>
           <div className="flex-1">
             <h1 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
-            <p className="text-sm text-gray-600 dark:text-dark-text-secondary">Manage your clients</p>
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary">{user.qualification || 'Manage your clients'}</p>
+            
+            {/* Appearance Settings */}
+            <div className="mt-2">
+              <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border w-fit">
+                <div className="flex items-center space-x-2">
+                  <Sun className="h-3 w-3 text-primary-600 dark:text-dark-primary-500" />
+                  <span className="text-xs font-medium text-gray-700 dark:text-dark-text-primary">Dark Mode</span>
+                </div>
+                <DarkModeToggle variant="switch" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -418,33 +520,12 @@ const PartnerDashboard = () => {
       {/* Partner ID Section - Tablet only (mobile shows in hamburger, desktop shows above) */}
       {user.partner_id && (
         <div className="hidden sm:block lg:hidden mb-6">
-          <div className="card bg-primary-50 dark:bg-dark-bg-secondary border-2 border-primary-200 dark:border-dark-primary-700 mb-2">
-            <div>
-              <p className="text-xs text-gray-600 dark:text-dark-text-tertiary mb-1">Your Partner ID</p>
-              <div className="flex items-center justify-between">
-                <p className="text-xl font-bold text-primary-700 tracking-wider">
-                  {user.partner_id}
-                </p>
-                <button
-                  onClick={handleCopyPartnerId}
-                  className="p-1.5 hover:bg-primary-100 rounded-lg transition-colors"
-                  title="Copy Partner ID"
-                >
-                  {copiedPartnerId ? (
-                    <Check className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Copy className="h-4 w-4 text-primary-600" />
-                  )}
-                </button>
-              </div>
-              {copiedPartnerId && (
-                <p className="text-xs text-green-600 mt-1">Copied!</p>
-              )}
-            </div>
-          </div>
+          <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-3">
+            Your Therapist ID: <span className="font-semibold text-gray-900 dark:text-dark-text-primary">{user.partner_id}</span>
+          </p>
           <button
             onClick={handleShareSignupUrl}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium mb-3"
           >
             {copiedSignupUrl ? (
               <>
@@ -453,11 +534,68 @@ const PartnerDashboard = () => {
               </>
             ) : (
               <>
-                <LinkIcon className="h-4 w-4" />
-                Get Signup URL
+                <Share className="h-4 w-4" />
+                Share Signup & Appointment link
               </>
             )}
           </button>
+          
+          {/* Google Calendar Integration */}
+          {loadingCalendarStatus ? (
+            <div className="flex items-center justify-center py-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+            </div>
+          ) : googleCalendarStatus?.connected ? (
+            <div className="space-y-2">
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <span className="text-xs font-medium text-green-700 dark:text-green-400">Calendar Connected</span>
+                  </div>
+                  <button
+                    onClick={disconnectGoogleCalendar}
+                    className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center space-x-1"
+                  >
+                    <Unlink className="h-3 w-3" />
+                    <span>Disconnect</span>
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border">
+                <div>
+                  <p className="text-xs font-medium text-gray-700 dark:text-dark-text-primary">Sync Enabled</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={googleCalendarStatus.syncEnabled}
+                    onChange={(e) => toggleSync(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+                </label>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={connectGoogleCalendar}
+              disabled={connectingCalendar}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium disabled:opacity-50"
+            >
+              {connectingCalendar ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>Connect Google Calendar</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       )}
 
@@ -478,7 +616,7 @@ const PartnerDashboard = () => {
                 </>
               ) : (
                 <>
-                  <LinkIcon className="h-4 w-4" />
+                  <Share className="h-4 w-4" />
                   Share Signup & Appointment link
                 </>
               )}
@@ -498,17 +636,6 @@ const PartnerDashboard = () => {
             <span className="text-xs">Appointments</span>
           </button>
           <button
-            onClick={() => setActiveTab('clients')}
-            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
-              activeTab === 'clients'
-                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
-                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
-            }`}
-          >
-            <Users className="h-5 w-5" />
-            <span className="text-xs">Clients</span>
-          </button>
-          <button
             onClick={() => setActiveTab('availability')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
               activeTab === 'availability'
@@ -520,15 +647,15 @@ const PartnerDashboard = () => {
             <span className="text-xs">Availability</span>
           </button>
           <button
-            onClick={() => setActiveTab('charts')}
+            onClick={() => setActiveTab('clients')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
-              activeTab === 'charts'
+              activeTab === 'clients'
                 ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
                 : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
             }`}
           >
-            <BarChart3 className="h-5 w-5" />
-            <span className="text-xs">Charts</span>
+            <Users className="h-5 w-5" />
+            <span className="text-xs">Client Details</span>
           </button>
           {videoSessionsEnabled && (
             <button
@@ -616,7 +743,7 @@ const PartnerDashboard = () => {
             }`}
           >
             <Settings className="h-5 w-5" />
-            <span className="text-xs">Settings</span>
+            <span className="text-xs">Edit Profile</span>
           </button>
         </nav>
       </div>
@@ -636,17 +763,6 @@ const PartnerDashboard = () => {
             Appointments
           </button>
           <button
-            onClick={() => setActiveTab('clients')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'clients'
-                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
-            }`}
-          >
-            <Users className="inline h-5 w-5 mr-2" />
-            Clients
-          </button>
-          <button
             onClick={() => setActiveTab('availability')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'availability'
@@ -658,15 +774,15 @@ const PartnerDashboard = () => {
             Availability
           </button>
           <button
-            onClick={() => setActiveTab('charts')}
+            onClick={() => setActiveTab('clients')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'charts'
+              activeTab === 'clients'
                 ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
             }`}
           >
-            <BarChart3 className="inline h-5 w-5 mr-2" />
-            Charts
+            <Users className="inline h-5 w-5 mr-2" />
+            Client Details
           </button>
           {videoSessionsEnabled && (
             <button
@@ -754,7 +870,7 @@ const PartnerDashboard = () => {
             }`}
           >
             <Settings className="inline h-5 w-5 mr-2" />
-            Settings
+            Edit Profile
           </button>
         </nav>
       </div>
@@ -921,21 +1037,29 @@ const PartnerDashboard = () => {
                     }`}
                   >
                     <Brain className="h-4 w-4" />
-                    <span>Mental Status Examination</span>
+                    <span>MSE</span>
                   </button>
                   <button
-                    onClick={() => {
-                      setClientDetailTab('sessionNotes');
-                      setEditingNoteSessionId(null);
-                    }}
+                    onClick={() => setClientDetailTab('planOfAssessment')}
                     className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
-                      clientDetailTab === 'sessionNotes'
+                      clientDetailTab === 'planOfAssessment'
                         ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
                     }`}
                   >
-                    <StickyNote className="h-4 w-4" />
-                    <span>Session Notes</span>
+                    <FileText className="h-4 w-4" />
+                    <span>Plan of Assessment</span>
+                  </button>
+                  <button
+                    onClick={() => setClientDetailTab('charts')}
+                    className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 flex-shrink-0 ${
+                      clientDetailTab === 'charts'
+                        ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
+                    }`}
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Charts</span>
                   </button>
                   <button
                     onClick={() => {
@@ -961,9 +1085,34 @@ const PartnerDashboard = () => {
                   <CaseHistoryForm key={selectedUser.id} userId={selectedUser.id} partnerId={user.id} userName={selectedUser.name} />
                 )}
 
-                {/* Mental Status Examination & BO Tab */}
+                {/* MSE & BO Tab */}
                 {clientDetailTab === 'mentalStatus' && selectedUser && (
                   <MentalStatusExaminationForm key={selectedUser.id} userId={selectedUser.id} partnerId={user.id} userName={selectedUser.name} />
+                )}
+
+                {/* Plan of Assessment Tab */}
+                {clientDetailTab === 'planOfAssessment' && selectedUser && (
+                  <PlanOfAssessmentForm key={selectedUser.id} userId={selectedUser.id} partnerId={user.id} userName={selectedUser.name} />
+                )}
+
+                {/* Charts Tab */}
+                {clientDetailTab === 'charts' && selectedUser && (
+                  <QuestionnaireComparison
+                    userId={selectedUser.id}
+                    partnerId={user.id}
+                    userName={selectedUser.name}
+                    sentCharts={sentCharts}
+                    onChartSent={async () => {
+                      // Reload sent charts
+                      const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUser.id);
+                      setSentCharts(chartsResponse.data.charts || []);
+                    }}
+                    onChartDeleted={async () => {
+                      // Reload sent charts
+                      const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUser.id);
+                      setSentCharts(chartsResponse.data.charts || []);
+                    }}
+                  />
                 )}
 
                 {/* General Notes Tab */}
@@ -975,8 +1124,8 @@ const PartnerDashboard = () => {
                       partnerId={user.id}
                       userId={selectedUser.id}
                       userName={selectedUser.name}
-                      onNavigateToNotes={handleNavigateToNotes}
                       onGenerateReport={handleGenerateReport}
+                      onNoteChanged={handleNoteChanged}
                     />
 
                     {/* Latest Chart Sent to Client */}
@@ -993,28 +1142,29 @@ const PartnerDashboard = () => {
                   </div>
                 )}
 
-                {/* Session Notes Tab */}
-                {clientDetailTab === 'sessionNotes' && selectedUser && (
-                  <SessionNotesTab
-                    partnerId={user.id}
-                    userId={selectedUser.id}
-                    userName={selectedUser.name}
-                    initialEditSessionId={editingNoteSessionId}
-                    onNoteChanged={handleNoteChanged}
-                  />
-                )}
-
                 {/* Reports Tab */}
                 {clientDetailTab === 'reports' && selectedUser && (
-                  <ClientReportsTab
-                    partnerId={user.id}
-                    userId={selectedUser.id}
-                    userName={selectedUser.name}
-                    sessionId={reportSessionId}
-                    onReportCreated={() => {
-                      setReportSessionId(null);
-                    }}
-                  />
+                  <div className="space-y-8">
+                    {/* Client Reports Section */}
+                    <ClientReportsTab
+                      partnerId={user.id}
+                      userId={selectedUser.id}
+                      userName={selectedUser.name}
+                      sessionId={reportSessionId}
+                      onReportCreated={() => {
+                        setReportSessionId(null);
+                      }}
+                    />
+                    
+                    {/* Report Template Settings Section */}
+                    <div className="border-t-4 border-gray-200 dark:border-dark-border pt-8">
+                      <div className="mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">Report Template Settings</h2>
+                        <p className="text-gray-600 dark:text-dark-text-secondary">Manage default report template settings</p>
+                      </div>
+                      <PartnerReportsTab />
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -1049,106 +1199,6 @@ const PartnerDashboard = () => {
         client={selectedUser}
         onSuccess={handleEditClientSuccess}
       />
-
-      {/* Charts Tab */}
-      {activeTab === 'charts' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-          {/* Mobile Dropdown - Show only on mobile/tablet */}
-          <div className="lg:hidden mb-4">
-            {users.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
-                <Users className="h-10 w-10 mx-auto mb-3 text-gray-400 dark:text-dark-text-tertiary" />
-                <p className="text-sm">No clients assigned yet</p>
-              </div>
-            ) : (
-              <div className="relative">
-                <select
-                  value={selectedUser?.id || ''}
-                  onChange={(e) => handleUserSelect(parseInt(e.target.value))}
-                  className="w-full px-4 py-3 text-base font-medium border-2 border-primary-600 rounded-lg appearance-none bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
-                  style={{ paddingRight: '2.5rem' }}
-                >
-                  <option value="">Select a Client</option>
-                  {users.map((client) => (
-                    <option key={client.id} value={client.id} className="py-2">
-                      {client.name} - {client.sex}, {client.age} yrs
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-primary-600 pointer-events-none" />
-              </div>
-            )}
-          </div>
-
-          {/* Desktop Users List - Hidden on mobile/tablet */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="card lg:sticky lg:top-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base sm:text-lg font-semibold flex items-center text-gray-900 dark:text-dark-text-primary">
-                  <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Your Clients ({users.length})
-                </h2>
-              </div>
-
-              {users.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
-                  <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-gray-400 dark:text-dark-text-tertiary" />
-                  <p className="text-sm sm:text-base">No clients assigned yet</p>
-                </div>
-              ) : (
-                <div className="space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style={{ minHeight: '240px', maxHeight: '500px' }}>
-                  {users.map((client) => (
-                    <button
-                      key={client.id}
-                      onClick={() => handleUserSelect(client.id)}
-                      className={`w-full text-left p-3 rounded-lg border-2 transition ${
-                        selectedUser?.id === client.id
-                          ? 'border-primary-600 bg-primary-50 dark:bg-dark-bg-secondary'
-                          : 'border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-border'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <User className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-base text-gray-900 dark:text-dark-text-primary truncate">{client.name}</p>
-                          <p className="text-sm text-gray-600 dark:text-dark-text-secondary">{client.sex}, {client.age} years</p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Charts Section */}
-          <div className="lg:col-span-2">
-            {selectedUser ? (
-              <QuestionnaireComparison
-                userId={selectedUser.id}
-                partnerId={user.id}
-                userName={selectedUser.name}
-                sentCharts={sentCharts}
-                onChartSent={async () => {
-                  // Reload sent charts
-                  const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUser.id);
-                  setSentCharts(chartsResponse.data.charts || []);
-                }}
-                onChartDeleted={async () => {
-                  // Reload sent charts
-                  const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUser.id);
-                  setSentCharts(chartsResponse.data.charts || []);
-                }}
-              />
-            ) : (
-              <div className="card text-center py-16">
-                <BarChart3 className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-dark-text-secondary text-lg">Select a client to create and send questionnaire comparison charts</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Video Tab */}
       {activeTab === 'video' && videoSessionsEnabled && (
@@ -1185,14 +1235,6 @@ const PartnerDashboard = () => {
                 />
               </div>
 
-              {/* Reports Section */}
-              <div className="border-t-4 border-gray-200 pt-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">Reports</h2>
-                  <p className="text-gray-600 dark:text-dark-text-secondary">Manage default report template settings</p>
-                </div>
-                <PartnerReportsTab />
-              </div>
             </>
           )}
 

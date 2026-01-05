@@ -198,7 +198,8 @@ class Organization {
       subscription_billing_period, subscription_start_date, subscription_end_date,
       razorpay_subscription_id, razorpay_customer_id, payment_status,
       bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified,
-      query_resolver, referral_code, referral_code_discount, referral_code_discount_type
+      query_resolver, referral_code, referral_code_discount, referral_code_discount_type,
+      for_new_therapists
     } = orgData;
 
     console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
@@ -227,6 +228,23 @@ class Organization {
       }
       if (referral_code_discount_type === 'percentage' && referral_code_discount > 100) {
         throw new Error('Percentage discount cannot exceed 100');
+      }
+    }
+
+    // Handle for_new_therapists flag - ensure only one organization can have it set to true
+    if (for_new_therapists !== undefined) {
+      const isControlled = theraptrack_controlled !== undefined ? theraptrack_controlled : currentOrg.theraptrack_controlled;
+      if (for_new_therapists === true && !isControlled) {
+        throw new Error('Only TheraPTrack-controlled organizations can be set as "For New Therapists"');
+      }
+
+      // If setting to true, first unset all other organizations
+      if (for_new_therapists === true) {
+        const dbClient = client || db;
+        await dbClient.query(
+          'UPDATE organizations SET for_new_therapists = false WHERE for_new_therapists = true AND id != $1',
+          [id]
+        );
       }
     }
 
@@ -289,6 +307,10 @@ class Organization {
     if (referral_code_discount_type !== undefined) {
       updates.push(`referral_code_discount_type = $${paramIndex++}`);
       values.push(referral_code_discount_type);
+    }
+    if (for_new_therapists !== undefined) {
+      updates.push(`for_new_therapists = $${paramIndex++}`);
+      values.push(for_new_therapists);
     }
     if (number_of_therapists !== undefined) {
       // Convert empty string to null for integer field

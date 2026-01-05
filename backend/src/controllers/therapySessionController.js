@@ -290,7 +290,7 @@ const getUserTherapySessions = async (req, res) => {
 const updateTherapySession = async (req, res) => {
   try {
     const { id } = req.params;
-    let { session_title, session_date, session_duration, session_notes, payment_notes, status } = req.body;
+    let { session_title, session_date, session_duration, session_notes, payment_notes, google_drive_link, status } = req.body;
 
     // Validate session note length if provided
     if (session_notes !== undefined && session_notes !== null) {
@@ -322,6 +322,7 @@ const updateTherapySession = async (req, res) => {
       session_duration,
       session_notes,
       payment_notes,
+      google_drive_link,
       status
     });
 

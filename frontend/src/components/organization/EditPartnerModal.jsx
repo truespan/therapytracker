@@ -219,7 +219,7 @@ const EditPartnerModal = ({ isOpen, onClose, onSubmit, partner, isLoading }) => 
           {/* Partner ID Display */}
           {partner && partner.partner_id && (
             <div className="bg-gray-50 dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border rounded-lg p-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Partner ID: </span>
+              <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Therapist ID: </span>
               <span className="text-sm font-bold text-primary-600">{partner.partner_id}</span>
             </div>
           )}

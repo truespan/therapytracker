@@ -122,7 +122,7 @@ const Navbar = () => {
               <div className="px-4 py-3 bg-primary-50 border-2 border-primary-500 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-umbra-900 mb-0.5">Partner ID: <span className="text-base font-bold text-primary-500">{user.partner_id}</span></p>
+                    <p className="text-sm text-umbra-900 mb-0.5">Therapist ID: <span className="text-base font-bold text-primary-500">{user.partner_id}</span></p>
                   </div>
                   <button
                     onClick={handleCopyPartnerId}

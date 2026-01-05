@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Phone, MapPin, Calendar, Calendar as CalendarIcon, CheckCircle, XCircle, AlertCircle, Link2, Unlink, Award, FileText, CreditCard, Sun, Edit, X, Save } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Award, FileText, CreditCard, Edit, X, Save, XCircle, Globe, Plus } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
-import DarkModeToggle from '../common/DarkModeToggle';
-import { googleCalendarAPI, partnerAPI, subscriptionPlanAPI, organizationAPI, razorpayAPI } from '../../services/api';
+import { partnerAPI, subscriptionPlanAPI, organizationAPI, razorpayAPI } from '../../services/api';
 import ChangePasswordSection from '../common/ChangePasswordSection';
 import PlanSelectionModal from '../common/PlanSelectionModal';
 import CancellationConfirmDialog from '../common/CancellationConfirmDialog';
@@ -15,9 +14,6 @@ import { getPlanSelectionButtonText, canCancelSubscription } from '../../utils/s
 
 const PartnerSettings = () => {
   const { user, refreshUser } = useAuth();
-  const [googleCalendarStatus, setGoogleCalendarStatus] = useState(null);
-  const [connectingCalendar, setConnectingCalendar] = useState(false);
-  const [loadingStatus, setLoadingStatus] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
   const [organizationSubscription, setOrganizationSubscription] = useState(null);
@@ -29,6 +25,8 @@ const PartnerSettings = () => {
   const [cancelling, setCancelling] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [originalFormData, setOriginalFormData] = useState(null);
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
+  const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
 
   // Form state for editable fields
   const [formData, setFormData] = useState({
@@ -37,17 +35,20 @@ const PartnerSettings = () => {
     contact: '',
     address: '',
     qualification: '',
+    qualification_degree: '',
     license_id: '',
     work_experience: '',
     other_practice_details: '',
     fee_min: '',
     fee_max: '',
-    fee_currency: 'INR'
+    fee_currency: 'INR',
+    language_preferences: ''
   });
 
   // Initialize form data from user
+  // Only reset form data when not in edit mode to prevent losing user's edits
   useEffect(() => {
-    if (user) {
+    if (user && !isEditing) {
       // Parse contact to extract country code and number
       const parseContact = (contact) => {
         if (!contact) return { countryCode: '+91', number: '' };
@@ -109,21 +110,29 @@ const PartnerSettings = () => {
         contact: number,
         address: user.address || '',
         qualification: user.qualification || '',
+        qualification_degree: user.qualification_degree || '',
         license_id: user.license_id || '',
         work_experience: user.work_experience || '',
         other_practice_details: user.other_practice_details || '',
         fee_min: user.fee_min || '',
         fee_max: user.fee_max || '',
-        fee_currency: user.fee_currency || 'INR'
+        fee_currency: user.fee_currency || 'INR',
+        language_preferences: user.language_preferences || ''
       };
       setFormData(initialFormData);
       setOriginalFormData(initialFormData);
+      
+      // Parse language preferences from comma-separated string
+      if (user.language_preferences) {
+        const languages = user.language_preferences.split(',').map(lang => lang.trim()).filter(lang => lang);
+        setSelectedLanguages(languages);
+      } else {
+        setSelectedLanguages([]);
+      }
     }
-  }, [user]);
+  }, [user, isEditing]);
 
-  // Load Google Calendar status
   useEffect(() => {
-    checkGoogleCalendarStatus();
     loadOrganizationSubscription();
   }, [user]);
 
@@ -157,57 +166,6 @@ const PartnerSettings = () => {
   };
 
 
-  const checkGoogleCalendarStatus = async () => {
-    try {
-      setLoadingStatus(true);
-      const response = await googleCalendarAPI.getStatus();
-      setGoogleCalendarStatus(response.data);
-    } catch (err) {
-      console.error('Failed to check Google Calendar status:', err);
-      setGoogleCalendarStatus({ connected: false });
-    } finally {
-      setLoadingStatus(false);
-    }
-  };
-
-  const connectGoogleCalendar = async () => {
-    try {
-      setConnectingCalendar(true);
-      const response = await googleCalendarAPI.initiateAuth();
-      // Redirect to Google OAuth page
-      window.location.href = response.data.authUrl;
-    } catch (err) {
-      console.error('Failed to initiate Google Calendar auth:', err);
-      alert('Failed to connect Google Calendar. Please try again.');
-      setConnectingCalendar(false);
-    }
-  };
-
-  const disconnectGoogleCalendar = async () => {
-    if (!window.confirm('Are you sure you want to disconnect Google Calendar? Appointments will no longer sync automatically.')) {
-      return;
-    }
-
-    try {
-      await googleCalendarAPI.disconnect();
-      setGoogleCalendarStatus({ connected: false });
-      alert('Google Calendar disconnected successfully.');
-    } catch (err) {
-      console.error('Failed to disconnect Google Calendar:', err);
-      alert('Failed to disconnect Google Calendar. Please try again.');
-    }
-  };
-
-  const toggleSync = async (enabled) => {
-    try {
-      await googleCalendarAPI.toggleSync(enabled);
-      setGoogleCalendarStatus(prev => ({ ...prev, syncEnabled: enabled }));
-    } catch (err) {
-      console.error('Failed to toggle sync:', err);
-      alert('Failed to update sync settings. Please try again.');
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -215,6 +173,40 @@ const PartnerSettings = () => {
       [name]: value
     }));
     // Clear save message when user starts editing
+    if (saveMessage.text) {
+      setSaveMessage({ type: '', text: '' });
+    }
+  };
+
+  // Language preferences handlers
+  const availableLanguages = [
+    'English', 'Hindi', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 
+    'Bengali', 'Gujarati', 'Marathi', 'Punjabi', 'Urdu', 'Spanish',
+    'French', 'German', 'Mandarin', 'Japanese', 'Korean', 'Other'
+  ];
+
+  const handleAddLanguage = (language) => {
+    if (!selectedLanguages.includes(language)) {
+      const updatedLanguages = [...selectedLanguages, language];
+      setSelectedLanguages(updatedLanguages);
+      setFormData(prev => ({
+        ...prev,
+        language_preferences: updatedLanguages.join(', ')
+      }));
+      setLanguageDropdownOpen(false);
+      if (saveMessage.text) {
+        setSaveMessage({ type: '', text: '' });
+      }
+    }
+  };
+
+  const handleRemoveLanguage = (language) => {
+    const updatedLanguages = selectedLanguages.filter(lang => lang !== language);
+    setSelectedLanguages(updatedLanguages);
+    setFormData(prev => ({
+      ...prev,
+      language_preferences: updatedLanguages.join(', ')
+    }));
     if (saveMessage.text) {
       setSaveMessage({ type: '', text: '' });
     }
@@ -230,6 +222,13 @@ const PartnerSettings = () => {
     // Reset form data to original values
     if (originalFormData) {
       setFormData({ ...originalFormData });
+      // Reset selected languages
+      if (originalFormData.language_preferences) {
+        const languages = originalFormData.language_preferences.split(',').map(lang => lang.trim()).filter(lang => lang);
+        setSelectedLanguages(languages);
+      } else {
+        setSelectedLanguages([]);
+      }
     }
     setIsEditing(false);
     setSaveMessage({ type: '', text: '' });
@@ -249,12 +248,14 @@ const PartnerSettings = () => {
         contact: contact,
         address: formData.address || null,
         qualification: formData.qualification || null,
+        qualification_degree: formData.qualification_degree || null,
         license_id: formData.license_id || null,
         work_experience: formData.work_experience || null,
         other_practice_details: formData.other_practice_details || null,
         fee_min: formData.fee_min ? parseFloat(formData.fee_min) : null,
         fee_max: formData.fee_max ? parseFloat(formData.fee_max) : null,
-        fee_currency: formData.fee_currency || 'INR'
+        fee_currency: formData.fee_currency || 'INR',
+        language_preferences: selectedLanguages.length > 0 ? selectedLanguages.join(', ') : null
       };
 
       await partnerAPI.update(user.id, updateData);
@@ -263,7 +264,9 @@ const PartnerSettings = () => {
       await refreshUser();
       
       // Update original form data to current values
-      setOriginalFormData({ ...formData });
+      const updatedOriginalFormData = { ...formData };
+      updatedOriginalFormData.language_preferences = selectedLanguages.length > 0 ? selectedLanguages.join(', ') : '';
+      setOriginalFormData(updatedOriginalFormData);
       
       // Exit edit mode
       setIsEditing(false);
@@ -540,30 +543,29 @@ const PartnerSettings = () => {
             {/* Partner ID Display */}
             {user && user.partner_id && (
               <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 dark:bg-dark-bg-secondary dark:border-dark-border">
-                <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Partner ID: </span>
+                <span className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary">Therapist ID: </span>
                 <span className="text-lg font-bold text-primary-600 dark:text-dark-primary-500">{user.partner_id}</span>
               </div>
             )}
 
-            {/* Name - Read Only */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
-                <input
-                  type="text"
-                  value={user?.name || ''}
-                  className="input bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75"
-                  disabled
-                  readOnly
-                />
+            {/* Full Name, Sex, and Age - Side by side */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+                  <input
+                    type="text"
+                    value={user?.name || ''}
+                    className="input bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75"
+                    disabled
+                    readOnly
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Sex and Age */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
                   Sex
@@ -602,50 +604,51 @@ const PartnerSettings = () => {
               </div>
             </div>
 
-            {/* Email - Read Only */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
-                <input
-                  type="email"
-                  value={user?.email || ''}
-                  className="input pl-10 bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75"
-                  disabled
-                  readOnly
-                />
-              </div>
-            </div>
-
-            {/* Contact Number - Editable */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                Contact Number
-              </label>
-              <div className="flex space-x-2">
-                <CountryCodeSelect
-                  value={formData.countryCode}
-                  onChange={handleChange}
-                  name="countryCode"
-                  disabled={!isEditing}
-                />
-                <div className="relative flex-1">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+            {/* Email and Contact Number - Side by side */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
                   <input
-                    type="tel"
-                    name="contact"
-                    value={formData.contact}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                      isEditing 
-                        ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                        : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
-                    }`}
-                    placeholder="1234567890"
+                    type="email"
+                    value={user?.email || ''}
+                    className="input pl-10 bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75"
+                    disabled
+                    readOnly
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  Contact Number
+                </label>
+                <div className="flex space-x-2">
+                  <CountryCodeSelect
+                    value={formData.countryCode}
+                    onChange={handleChange}
+                    name="countryCode"
+                    disabled={!isEditing}
+                  />
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+                    <input
+                      type="tel"
+                      name="contact"
+                      value={formData.contact}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                        isEditing 
+                          ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                          : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
+                      }`}
+                      placeholder="1234567890"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -653,26 +656,73 @@ const PartnerSettings = () => {
             Use your WhatsApp number so you can receive client bookings, appointments, updates and reminders.
             </p>
 
-            {/* Qualification - Editable */}
+            {/* Location (Optional) - Renamed from Address */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                Qualification
+                Location (Optional)
               </label>
               <div className="relative">
-                <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
-                <input
-                  type="text"
-                  name="qualification"
-                  value={formData.qualification}
+                <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+                <textarea
+                  name="address"
+                  value={formData.address}
                   onChange={handleChange}
                   disabled={!isEditing}
+                  rows="3"
                   className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                     isEditing 
                       ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
                       : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                   }`}
-                  placeholder="e.g., M.D. Psychiatry, Clinical Psychologist"
+                  placeholder="Enter location/address"
                 />
+              </div>
+            </div>
+
+            {/* Designation and Qualification - Side by side */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  Designation
+                </label>
+                <div className="relative">
+                  <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+                  <input
+                    type="text"
+                    name="qualification"
+                    value={formData.qualification}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      isEditing 
+                        ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                        : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
+                    }`}
+                    placeholder="e.g., Clinical Psychologist"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  Qualification
+                </label>
+                <div className="relative">
+                  <Award className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+                  <input
+                    type="text"
+                    name="qualification_degree"
+                    value={formData.qualification_degree || ''}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                      isEditing 
+                        ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
+                        : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
+                    }`}
+                    placeholder="e.g., M.A. Clinical Psychology"
+                  />
+                </div>
               </div>
             </div>
 
@@ -695,29 +745,6 @@ const PartnerSettings = () => {
                       : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                   }`}
                   placeholder="e.g., PSY-12345, MED-67890"
-                />
-              </div>
-            </div>
-
-            {/* Address - Editable */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                Address (Optional)
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  rows="3"
-                  className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-                    isEditing 
-                      ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
-                      : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
-                  }`}
-                  placeholder="Enter full address"
                 />
               </div>
             </div>
@@ -745,10 +772,10 @@ const PartnerSettings = () => {
               </div>
             </div>
 
-            {/* Other Practice Details - Editable */}
+            {/* Interest Areas (Optional) - Renamed from Other Practice Details */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                Other Practice Details (Optional)
+                Interest Areas (Optional)
               </label>
               <div className="relative">
                 <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
@@ -763,8 +790,77 @@ const PartnerSettings = () => {
                       ? 'dark:bg-dark-bg-secondary dark:text-dark-text-primary' 
                       : 'bg-gray-50 dark:bg-dark-bg-primary dark:text-dark-text-primary cursor-not-allowed opacity-75'
                   }`}
-                  placeholder="Enter other significant work related details"
+                  placeholder="Enter interest areas"
                 />
+              </div>
+            </div>
+
+            {/* Language Preferences */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                Language Preferences
+              </label>
+              <div className="space-y-2">
+                {/* Selected Languages Display */}
+                {selectedLanguages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {selectedLanguages.map((language) => (
+                      <span
+                        key={language}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200"
+                      >
+                        {language}
+                        {isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveLanguage(language)}
+                            className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-primary-200 dark:hover:bg-primary-800"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Language Dropdown */}
+                {isEditing && (
+                  <div className="relative">
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-dark-text-tertiary z-10" />
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddLanguage(e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                        className={`w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-secondary dark:text-dark-text-primary appearance-none ${
+                          isEditing ? '' : 'bg-gray-50 cursor-not-allowed opacity-75'
+                        }`}
+                      >
+                        <option value="">Select a language to add</option>
+                        {availableLanguages
+                          .filter(lang => !selectedLanguages.includes(lang))
+                          .map((language) => (
+                            <option key={language} value={language}>
+                              {language}
+                            </option>
+                          ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <Plus className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {!isEditing && selectedLanguages.length === 0 && (
+                  <div className="text-sm text-gray-500 dark:text-dark-text-tertiary italic">
+                    No languages selected
+                  </div>
+                )}
               </div>
             </div>
 
@@ -891,127 +987,6 @@ const PartnerSettings = () => {
               </div>
             )}
 
-            {/* Appearance Settings */}
-            <div className="border-t border-gray-200 dark:border-dark-border pt-6 mt-6">
-              <div className="flex items-center mb-4">
-                <Sun className="h-6 w-6 mr-2 text-primary-600 dark:text-dark-primary-500" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
-                  Appearance
-                </h3>
-              </div>
-              <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
-                Customize how the application looks
-              </p>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border">
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-dark-text-primary">
-                    Dark Mode
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
-                    Toggle between light and dark themes
-                  </p>
-                </div>
-                <DarkModeToggle variant="switch" />
-              </div>
-            </div>
-
-            {/* Google Calendar Integration */}
-            <div className="border-t border-gray-200 pt-6">
-              <div className="flex items-center mb-4">
-                <CalendarIcon className="h-6 w-6 mr-2 text-primary-600" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">Google Calendar Integration</h3>
-              </div>
-              <p className="text-sm text-gray-600 dark:text-dark-text-primary mb-4">
-                Connect your Google Calendar to automatically sync appointments when you create or update them.
-              </p>
-
-              {loadingStatus ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-                </div>
-              ) : googleCalendarStatus?.connected ? (
-                <div className="space-y-4">
-                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        <span className="text-sm font-medium text-green-700 dark:text-green-400">Google Calendar Connected</span>
-                      </div>
-                      <button
-                        onClick={disconnectGoogleCalendar}
-                        className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center space-x-1"
-                      >
-                        <Unlink className="h-4 w-4" />
-                        <span>Disconnect</span>
-                      </button>
-                    </div>
-                    {googleCalendarStatus.connectedAt && (
-                      <p className="text-xs text-gray-600 dark:text-dark-text-secondary mt-2">
-                        Connected on {new Date(googleCalendarStatus.connectedAt).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-dark-text-primary">Sync Enabled</p>
-                      <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
-                        {googleCalendarStatus.syncEnabled
-                          ? 'Appointments will automatically sync to your Google Calendar'
-                          : 'Sync is currently disabled'}
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={googleCalendarStatus.syncEnabled}
-                        onChange={(e) => toggleSync(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                    </label>
-                  </div>
-
-                  {googleCalendarStatus.lastSyncedAt && (
-                    <p className="text-xs text-gray-500 dark:text-dark-text-tertiary">
-                      Last synced: {new Date(googleCalendarStatus.lastSyncedAt).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-primary-50 dark:bg-dark-bg-secondary border border-primary-200 dark:border-dark-border rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <AlertCircle className="h-5 w-5 text-primary-700 dark:text-dark-primary-500" />
-                        <span className="text-sm font-medium text-primary-800 dark:text-dark-text-primary">Not Connected</span>
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-dark-text-secondary mb-4">
-                        Connect your Google Calendar to automatically sync appointments when you create or update them.
-                      </p>
-                      <button
-                        onClick={connectGoogleCalendar}
-                        disabled={connectingCalendar}
-                        className="btn btn-primary flex items-center space-x-2"
-                      >
-                        {connectingCalendar ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Connecting...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Link2 className="h-4 w-4" />
-                            <span>Connect Google Calendar</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </form>
 

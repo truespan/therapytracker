@@ -433,6 +433,12 @@ export const mentalStatusAPI = {
   save: (userId, data) => api.post(`/users/${userId}/mental-status`, data)
 };
 
+// Plan of Assessment APIs
+export const planOfAssessmentAPI = {
+  get: (userId) => api.get(`/users/${userId}/plan-of-assessment`),
+  save: (userId, data) => api.post(`/users/${userId}/plan-of-assessment`, data)
+};
+
 // Background Image APIs
 export const backgroundAPI = {
   // Get all available background images

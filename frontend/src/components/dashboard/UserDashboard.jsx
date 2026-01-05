@@ -262,7 +262,7 @@ const UserDashboard = () => {
             }`}
           >
             <Settings className="h-5 w-5" />
-            <span className="text-xs">Settings</span>
+            <span className="text-xs">Edit Profile</span>
           </button>
         </nav>
       </div>
@@ -363,7 +363,7 @@ const UserDashboard = () => {
             }`}
           >
             <Settings className="inline h-5 w-5 mr-2" />
-            Settings
+            Edit Profile
           </button>
         </nav>
       </div>

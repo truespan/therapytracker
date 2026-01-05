@@ -857,7 +857,7 @@ const Home = () => {
               </div>
               <div>
                 <h4 className="font-semibold text-lg text-gray-900 dark:text-dark-text-primary mb-2">
-                  Blogs and News:
+                  Events and Announcements:
                 </h4>
                 <p className="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
                   Write your daily blogs, insights, and news for your patients.

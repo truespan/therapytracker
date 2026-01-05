@@ -13,6 +13,7 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     video_sessions_enabled: true,
     theraptrack_controlled: false,
     query_resolver: false,
+    for_new_therapists: false,
     number_of_therapists: '',
     photo_url: '',
     referral_code: '',
@@ -47,6 +48,7 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         video_sessions_enabled: organization.video_sessions_enabled ?? true,
         theraptrack_controlled: organization.theraptrack_controlled ?? false,
         query_resolver: organization.query_resolver ?? false,
+        for_new_therapists: organization.for_new_therapists ?? false,
         number_of_therapists: organization.number_of_therapists != null ? organization.number_of_therapists : '',
         photo_url: organization.photo_url || '',
         referral_code: referralCode || '',
@@ -81,6 +83,17 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
     // Prevent changes to referral_code if it's already set (read-only)
     if (name === 'referral_code' && codeGenerated) {
       return;
+    }
+    
+    // Handle for_new_therapists with warning
+    if (name === 'for_new_therapists' && checked && !formData.for_new_therapists) {
+      const confirmed = window.confirm(
+        '⚠️ Warning: Setting this organization as the default for new therapist signups will automatically remove this designation from any other organization that currently has it.\n\n' +
+        'Are you sure you want to proceed?'
+      );
+      if (!confirmed) {
+        return;
+      }
     }
     
     // Handle discount fields separately when in edit mode
@@ -433,6 +446,41 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
                     Enable this organization to respond to support chat queries from users. 
                     Only available for TheraPTrack controlled organizations.
                   </p>
+                </div>
+              </label>
+            </div>
+          )}
+
+          {/* For New Therapists - Only shown if TheraPTrack Controlled is enabled */}
+          {formData.theraptrack_controlled && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <div className="flex items-center h-5">
+                  <input
+                    type="checkbox"
+                    name="for_new_therapists"
+                    checked={formData.for_new_therapists}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center">
+                    <Shield className="h-4 w-4 text-amber-700 mr-2" />
+                    <span className="text-sm font-medium text-gray-900">
+                      Default for New Therapist Signups
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    When enabled, this organization will be used as the default for new therapist signups from the homepage. 
+                    Only one organization can have this setting enabled at a time. Enabling this will automatically disable it for other organizations.
+                  </p>
+                  {formData.for_new_therapists && (
+                    <p className="text-xs text-amber-700 mt-2 font-medium">
+                      ⚠️ Warning: This organization is currently set as the default for new therapist signups.
+                    </p>
+                  )}
                 </div>
               </label>
             </div>

@@ -138,7 +138,7 @@ const INITIAL_FORM_STATE = {
   // Section 15: Verbatim Report
   verbatim_report: '',
 
-  // Section 16: Behavior Observation (BO)
+  // Section 16: Behavior Observation
   behavior_observation: ''
 };
 
@@ -842,13 +842,13 @@ const MentalStatusExaminationForm = ({ userId, partnerId, userName }) => {
         )}
       </div>
 
-      {/* Section 16: Behavior Observation (BO) */}
+      {/* Section 16: Behavior Observation */}
       <div className="card">
         <button
           onClick={() => toggleSection(16)}
           className="w-full flex items-center justify-between text-left mb-4"
         >
-          <h3 className="text-lg font-semibold dark:text-white">16. Behavior Observation (BO)</h3>
+          <h3 className="text-lg font-semibold dark:text-white">16. Behavior Observation</h3>
           {expandedSections.has(16) ? <ChevronUp className="dark:text-white" /> : <ChevronDown className="dark:text-white" />}
         </button>
         {expandedSections.has(16) && (

@@ -20,6 +20,7 @@ const uploadController = require('../controllers/uploadController');
 const googleCalendarController = require('../controllers/googleCalendarController');
 const caseHistoryController = require('../controllers/caseHistoryController');
 const mentalStatusExaminationController = require('../controllers/mentalStatusExaminationController');
+const planOfAssessmentController = require('../controllers/planOfAssessmentController');
 const reportTemplateController = require('../controllers/reportTemplateController');
 const generatedReportController = require('../controllers/generatedReportController');
 const subscriptionPlanRoutes = require('./subscriptionPlanRoutes');
@@ -103,6 +104,10 @@ router.post('/users/:userId/case-history', authenticateToken, checkRole('partner
 // ==================== MENTAL STATUS EXAMINATION ROUTES ====================
 router.get('/users/:userId/mental-status', authenticateToken, checkRole('partner'), mentalStatusExaminationController.getMentalStatus);
 router.post('/users/:userId/mental-status', authenticateToken, checkRole('partner'), mentalStatusExaminationController.saveMentalStatus);
+
+// ==================== PLAN OF ASSESSMENT ROUTES ====================
+router.get('/users/:userId/plan-of-assessment', authenticateToken, checkRole('partner'), planOfAssessmentController.getPlanOfAssessment);
+router.post('/users/:userId/plan-of-assessment', authenticateToken, checkRole('partner'), planOfAssessmentController.savePlanOfAssessment);
 
 // ==================== ORGANIZATION ROUTES ====================
 // Public route for signup - get all organizations

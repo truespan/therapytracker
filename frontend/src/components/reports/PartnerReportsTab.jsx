@@ -14,11 +14,26 @@ const PartnerReportsTab = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [backgroundsLoaded, setBackgroundsLoaded] = useState(false);
+  const [defaultLoaded, setDefaultLoaded] = useState(false);
 
   useEffect(() => {
     loadBackgrounds();
     loadDefaultBackground();
   }, []);
+
+  // Set selected background after both loads complete
+  useEffect(() => {
+    if (backgroundsLoaded && defaultLoaded) {
+      if (defaultBackground) {
+        // If there's a default, use it
+        setSelectedBackground(defaultBackground);
+      } else if (backgrounds.length > 0) {
+        // If no default but backgrounds are loaded, select the first one
+        setSelectedBackground(backgrounds[0].filename);
+      }
+    }
+  }, [backgroundsLoaded, defaultLoaded, defaultBackground, backgrounds]);
 
   // Cleanup blob URLs on unmount
   useEffect(() => {
@@ -63,14 +78,11 @@ const PartnerReportsTab = () => {
         imageMap[filename] = url;
       });
       setBackgroundImages(imageMap);
-
-      // Auto-select first background if none selected
-      if (backgroundList.length > 0 && !selectedBackground) {
-        setSelectedBackground(backgroundList[0].filename);
-      }
+      setBackgroundsLoaded(true);
     } catch (err) {
       console.error('Failed to load backgrounds:', err);
       setError('Failed to load background images. Please try again.');
+      setBackgroundsLoaded(true);
     } finally {
       setLoading(false);
     }
@@ -81,9 +93,10 @@ const PartnerReportsTab = () => {
       const response = await backgroundAPI.getDefault(user.id);
       const defaultBg = response.data.default_background;
       setDefaultBackground(defaultBg);
-      setSelectedBackground(defaultBg);
     } catch (err) {
       console.error('Failed to load default background:', err);
+    } finally {
+      setDefaultLoaded(true);
     }
   };
 

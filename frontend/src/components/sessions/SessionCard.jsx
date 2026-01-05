@@ -1,14 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { therapySessionAPI, questionnaireAPI } from '../../services/api';
-import { Calendar, Clock, FileText, Edit, Trash2, Send, Tag, ClipboardList, Video, X, Plus, VideoIcon } from 'lucide-react';
+import { Calendar, Clock, FileText, Edit, Trash2, Send, Tag, ClipboardList, Video, X, Plus, VideoIcon, Check, Link2, ExternalLink } from 'lucide-react';
 import QuestionnaireViewModal from '../questionnaires/QuestionnaireViewModal';
+import GoogleDriveLinkModal from './GoogleDriveLinkModal';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 
-const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDeleted, onCreateNote, onViewNote, onGenerateReport, onScheduleVideo }) => {
+const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDeleted, onGenerateReport, onScheduleVideo, onNoteChanged }) => {
   const [showPaymentNotes, setShowPaymentNotes] = useState(false);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState(null);
   const [deleteConfirmQuestionnaire, setDeleteConfirmQuestionnaire] = useState(null);
   const [deletingQuestionnaire, setDeletingQuestionnaire] = useState(false);
+  const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
+  
+  // Session notes editing state
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [editNoteContent, setEditNoteContent] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const [showFullNote, setShowFullNote] = useState(false);
+  const noteTextareaRef = useRef(null);
+
+  const MAX_PREVIEW_LENGTH = 300;
+  const shouldTruncateNote = !isEditingNote && session.session_notes && session.session_notes.length > MAX_PREVIEW_LENGTH;
+
+  // Auto-focus textarea when entering edit mode
+  useEffect(() => {
+    if (isEditingNote && noteTextareaRef.current) {
+      noteTextareaRef.current.focus();
+      const length = noteTextareaRef.current.value.length;
+      noteTextareaRef.current.setSelectionRange(length, length);
+    }
+  }, [isEditingNote]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (isEditingNote && noteTextareaRef.current) {
+      noteTextareaRef.current.style.height = 'auto';
+      noteTextareaRef.current.style.height = noteTextareaRef.current.scrollHeight + 'px';
+    }
+  }, [isEditingNote, editNoteContent]);
 
   // Parse assigned questionnaires (they come as JSON from backend)
   const assignedQuestionnaires = session.assigned_questionnaires || [];
@@ -63,6 +92,75 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
     if (name.length <= maxLength) return name;
     return name.substring(0, maxLength) + '...';
   };
+
+  const handleStartEditNote = () => {
+    setIsEditingNote(true);
+    setEditNoteContent(session.session_notes || '');
+    setShowFullNote(false);
+  };
+
+  const handleCancelEditNote = () => {
+    setIsEditingNote(false);
+    setEditNoteContent('');
+    setShowFullNote(false);
+  };
+
+  const handleSaveNote = async () => {
+    const trimmedContent = editNoteContent.trim();
+
+    if (trimmedContent.length === 0) {
+      alert('Session note cannot be empty');
+      return;
+    }
+
+    if (trimmedContent.length > 10000) {
+      alert('Session note cannot exceed 10,000 characters');
+      return;
+    }
+
+    try {
+      setSavingNote(true);
+
+      await therapySessionAPI.update(session.id, {
+        session_notes: trimmedContent
+      });
+
+      setIsEditingNote(false);
+      setEditNoteContent('');
+
+      // Notify parent that note has changed
+      if (onNoteChanged) {
+        onNoteChanged();
+      }
+    } catch (err) {
+      console.error('Failed to save note:', err);
+      alert('Failed to save note: ' + (err.response?.data?.error || 'Unknown error'));
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  // Handle keyboard shortcuts for note editing
+  useEffect(() => {
+    if (!isEditingNote) return;
+
+    const handleKeyDown = (e) => {
+      // Ctrl+S / Cmd+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSaveNote();
+      }
+
+      // Escape to cancel
+      if (e.key === 'Escape') {
+        handleCancelEditNote();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditingNote]);
 
   return (
     <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
@@ -126,6 +224,23 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
               >
                 <Send className="h-4 w-4" />
               </button>
+              <button
+                onClick={() => setShowGoogleDriveModal(true)}
+                className={`p-2 rounded-lg transition-colors ${
+                  (() => {
+                    const links = session.google_drive_link;
+                    if (!links) return false;
+                    if (typeof links === 'string') return links.trim() !== '';
+                    if (Array.isArray(links)) return links.length > 0;
+                    return false;
+                  })()
+                    ? 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700'
+                }`}
+                title="Manage Google Drive Links"
+              >
+                <Link2 className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
@@ -148,26 +263,79 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
             </div>
           </div>
 
-          {/* Session Note and Report Actions */}
-          <div className="mb-3 pt-3 border-t border-gray-100 dark:border-gray-600 flex items-center space-x-3">
-            {session.session_notes && session.session_notes.trim().length > 0 ? (
+          {/* Session Notes Section */}
+          <div className="mb-3 pt-3 px-3 pb-3 -mx-3 border-t border-gray-100 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                <FileText className="h-4 w-4 mr-1.5" />
+                Session Notes
+              </h5>
+            {!isEditingNote && (
               <button
-                onClick={() => onViewNote?.(session.id)}
-                className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium flex items-center space-x-1"
+                onClick={handleStartEditNote}
+                className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900 rounded transition-colors"
+                title={session.session_notes ? "Edit Note" : "Add Note"}
               >
-                <FileText className="h-4 w-4" />
-                <span>View Notes</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => onCreateNote?.(session.id)}
-                className="text-sm px-3 py-1.5 bg-primary-50 dark:bg-gray-700 text-primary-700 dark:text-primary-300 rounded-lg hover:bg-primary-100 dark:hover:bg-gray-600 font-medium flex items-center space-x-1 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Take Notes</span>
+                {session.session_notes ? <Edit className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
               </button>
             )}
-            {onGenerateReport && (
+              {isEditingNote && (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleSaveNote}
+                    disabled={savingNote}
+                    className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center space-x-1 text-sm"
+                  >
+                    <Check className="h-4 w-4" />
+                    <span>{savingNote ? 'Saving...' : 'Save'}</span>
+                  </button>
+                  <button
+                    onClick={handleCancelEditNote}
+                    disabled={savingNote}
+                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 flex items-center space-x-1 text-sm"
+                  >
+                    <X className="h-4 w-4" />
+                    <span>Cancel</span>
+                  </button>
+                </div>
+              )}
+            </div>
+            {isEditingNote ? (
+              <textarea
+                ref={noteTextareaRef}
+                value={editNoteContent}
+                onChange={(e) => setEditNoteContent(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                placeholder="Enter session notes..."
+                rows="6"
+                disabled={savingNote}
+              />
+            ) : (
+              <div>
+                {session.session_notes && session.session_notes.trim().length > 0 ? (
+                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {shouldTruncateNote && !showFullNote
+                      ? session.session_notes.substring(0, MAX_PREVIEW_LENGTH) + '...'
+                      : session.session_notes}
+                  </p>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 italic text-sm">No notes yet. Click the edit button to add notes.</p>
+                )}
+                {shouldTruncateNote && (
+                  <button
+                    onClick={() => setShowFullNote(!showFullNote)}
+                    className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm mt-2 font-medium"
+                  >
+                    {showFullNote ? 'Show less' : 'Show more'}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Report Action */}
+          {onGenerateReport && (
+            <div className="mb-3 pt-3 border-t border-gray-100 dark:border-gray-600">
               <button
                 onClick={() => onGenerateReport()}
                 className="text-sm px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center space-x-1 transition-colors"
@@ -176,8 +344,8 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
                 <FileText className="h-4 w-4" />
                 <span>Create Report</span>
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Payment Notes */}
           {session.payment_notes && (
@@ -201,6 +369,55 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
               </div>
             </div>
           )}
+
+          {/* Google Drive Links */}
+          {(() => {
+            // Parse google_drive_link - handle both old format (string) and new format (array)
+            const parseLinks = (links) => {
+              if (!links) return [];
+              if (typeof links === 'string') {
+                if (links.trim() === '') return [];
+                return [{ url: links, label: '' }];
+              }
+              if (Array.isArray(links)) {
+                return links.filter(link => link && link.url);
+              }
+              return [];
+            };
+            
+            const driveLinks = parseLinks(session.google_drive_link);
+            
+            return driveLinks.length > 0 ? (
+              <div className="mb-3">
+                <div className="flex items-start text-sm">
+                  <Link2 className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Google Drive:</span>
+                    <div className="mt-1 space-y-1">
+                      {driveLinks.map((link, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          {link.label && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                              {link.label}:
+                            </span>
+                          )}
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline text-sm break-all"
+                          >
+                            {link.url}
+                          </a>
+                          <ExternalLink className="h-3 w-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null;
+          })()}
 
           {/* Created At Footer */}
           <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-600 text-xs text-gray-500 dark:text-gray-400">
@@ -311,6 +528,23 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
             >
               <Send className="h-4 w-4" />
             </button>
+            <button
+              onClick={() => setShowGoogleDriveModal(true)}
+              className={`p-2 rounded-lg transition-colors ${
+                (() => {
+                  const links = session.google_drive_link;
+                  if (!links) return false;
+                  if (typeof links === 'string') return links.trim() !== '';
+                  if (Array.isArray(links)) return links.length > 0;
+                  return false;
+                })()
+                  ? 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700'
+              }`}
+              title="Manage Google Drive Links"
+            >
+              <Link2 className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
@@ -356,26 +590,128 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
           </div>
         )}
 
-        {/* Session Note and Report Actions - Mobile */}
-        <div className="mb-3 pt-3 border-t border-gray-100 dark:border-gray-600 flex items-center space-x-3 flex-wrap">
-          {session.session_notes && session.session_notes.trim().length > 0 ? (
-            <button
-              onClick={() => onViewNote?.(session.id)}
-              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium flex items-center space-x-1"
-            >
-              <FileText className="h-4 w-4" />
-              <span>View Notes</span>
-            </button>
+        {/* Google Drive Links - Mobile */}
+        {(() => {
+          // Parse google_drive_link - handle both old format (string) and new format (array)
+          const parseLinks = (links) => {
+            if (!links) return [];
+            if (typeof links === 'string') {
+              if (links.trim() === '') return [];
+              return [{ url: links, label: '' }];
+            }
+            if (Array.isArray(links)) {
+              return links.filter(link => link && link.url);
+            }
+            return [];
+          };
+          
+          const driveLinks = parseLinks(session.google_drive_link);
+          
+          return driveLinks.length > 0 ? (
+            <div className="mb-3">
+              <div className="flex items-start text-sm">
+                <Link2 className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Google Drive:</span>
+                  <div className="mt-1 space-y-1">
+                    {driveLinks.map((link, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        {link.label && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            {link.label}:
+                          </span>
+                        )}
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline text-sm break-all"
+                        >
+                          {link.url}
+                        </a>
+                        <ExternalLink className="h-3 w-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null;
+        })()}
+
+        {/* Session Notes Section - Mobile */}
+        <div className="mb-3 pt-3 px-3 pb-3 -mx-3 border-t border-gray-100 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+              <FileText className="h-4 w-4 mr-1.5" />
+              Session Notes
+            </h5>
+            {!isEditingNote && (
+              <button
+                onClick={handleStartEditNote}
+                className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900 rounded transition-colors"
+                title={session.session_notes ? "Edit Note" : "Add Note"}
+              >
+                {session.session_notes ? <Edit className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+              </button>
+            )}
+            {isEditingNote && (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleSaveNote}
+                  disabled={savingNote}
+                  className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center space-x-1 text-sm"
+                >
+                  <Check className="h-4 w-4" />
+                  <span>{savingNote ? 'Saving...' : 'Save'}</span>
+                </button>
+                <button
+                  onClick={handleCancelEditNote}
+                  disabled={savingNote}
+                  className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 flex items-center space-x-1 text-sm"
+                >
+                  <X className="h-4 w-4" />
+                  <span>Cancel</span>
+                </button>
+              </div>
+            )}
+          </div>
+          {isEditingNote ? (
+            <textarea
+              ref={noteTextareaRef}
+              value={editNoteContent}
+              onChange={(e) => setEditNoteContent(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="Enter session notes..."
+              rows="6"
+              disabled={savingNote}
+            />
           ) : (
-            <button
-              onClick={() => onCreateNote?.(session.id)}
-              className="text-sm px-3 py-1.5 bg-primary-50 dark:bg-gray-700 text-primary-700 dark:text-primary-300 rounded-lg hover:bg-primary-100 dark:hover:bg-gray-600 font-medium flex items-center space-x-1 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Take Notes</span>
-            </button>
+            <div>
+              {session.session_notes && session.session_notes.trim().length > 0 ? (
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  {shouldTruncateNote && !showFullNote
+                    ? session.session_notes.substring(0, MAX_PREVIEW_LENGTH) + '...'
+                    : session.session_notes}
+                </p>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 italic text-sm">No notes yet. Click the edit button to add notes.</p>
+              )}
+              {shouldTruncateNote && (
+                <button
+                  onClick={() => setShowFullNote(!showFullNote)}
+                  className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm mt-2 font-medium"
+                >
+                  {showFullNote ? 'Show less' : 'Show more'}
+                </button>
+              )}
+            </div>
           )}
-          {onGenerateReport && (
+        </div>
+
+        {/* Report Action - Mobile */}
+        {onGenerateReport && (
+          <div className="mb-3 pt-3 border-t border-gray-100 dark:border-gray-600">
             <button
               onClick={() => onGenerateReport()}
               className="text-sm px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center space-x-1 transition-colors"
@@ -384,8 +720,8 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
               <FileText className="h-4 w-4" />
               <span>Create Report</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Assigned Questionnaires - Mobile (Below Payment) */}
         {assignedQuestionnaires.length > 0 && (
@@ -448,6 +784,21 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
         </div>
       </div>
 
+      {/* Google Drive Link Modal */}
+      {showGoogleDriveModal && (
+        <GoogleDriveLinkModal
+          session={session}
+          onClose={() => setShowGoogleDriveModal(false)}
+          onSuccess={() => {
+            setShowGoogleDriveModal(false);
+            // Reload session data by calling onNoteChanged which triggers a refresh
+            if (onNoteChanged) {
+              onNoteChanged();
+            }
+          }}
+        />
+      )}
+
       {/* Questionnaire View Modal */}
       <QuestionnaireViewModal
         isOpen={!!selectedQuestionnaire}
@@ -456,7 +807,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
         questionnaireName={selectedQuestionnaire?.name}
       />
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Dialog for Questionnaire */}
       {deleteConfirmQuestionnaire && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-md w-full p-6">
@@ -471,7 +822,7 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
               <button
                 onClick={() => setDeleteConfirmQuestionnaire(null)}
                 disabled={deletingQuestionnaire}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-gray-700 dark:text-dark-text-secondary bg-gray-100 dark:bg-dark-bg-secondary rounded-lg hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>

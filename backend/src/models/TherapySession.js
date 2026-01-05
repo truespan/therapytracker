@@ -23,6 +23,7 @@ class TherapySession {
       session_duration,
       session_notes,
       payment_notes,
+      google_drive_link,
       status
     } = sessionData;
 
@@ -47,9 +48,9 @@ class TherapySession {
     const query = `
       INSERT INTO therapy_sessions (
         appointment_id, partner_id, user_id,
-        session_title, session_date, session_duration, session_notes, payment_notes, session_number, status
+        session_title, session_date, session_duration, session_notes, payment_notes, google_drive_link, session_number, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `;
     const values = [
@@ -61,6 +62,7 @@ class TherapySession {
       session_duration || null,
       session_notes || null,
       payment_notes || null,
+      google_drive_link || null,
       session_number,
       sessionStatus
     ];
@@ -71,7 +73,7 @@ class TherapySession {
 
   // Create standalone session (no appointment required)
   static async createStandalone(sessionData) {
-    const { partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id, status } = sessionData;
+    const { partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, google_drive_link, video_session_id, status } = sessionData;
 
     // Get the next session number for this user-partner pair
     const session_number = await this.getNextSessionNumber(partner_id, user_id);
@@ -88,11 +90,11 @@ class TherapySession {
     }
 
     const query = `
-      INSERT INTO therapy_sessions (partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, video_session_id, session_number, status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      INSERT INTO therapy_sessions (partner_id, user_id, session_title, session_date, session_duration, session_notes, payment_notes, google_drive_link, video_session_id, session_number, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `;
-    const values = [partner_id, user_id, session_title, session_date, session_duration || null, session_notes || null, payment_notes || null, video_session_id || null, session_number, sessionStatus];
+    const values = [partner_id, user_id, session_title, session_date, session_duration || null, session_notes || null, payment_notes || null, google_drive_link || null, video_session_id || null, session_number, sessionStatus];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -111,6 +113,7 @@ class TherapySession {
         ts.session_duration,
         ts.session_notes,
         ts.payment_notes,
+        ts.google_drive_link,
         ts.session_number,
         CASE
           WHEN ts.status = 'cancelled' THEN 'cancelled'
@@ -149,6 +152,7 @@ class TherapySession {
         ts.session_duration,
         ts.session_notes,
         ts.payment_notes,
+        ts.google_drive_link,
         ts.session_number,
         CASE
           WHEN ts.status = 'cancelled' THEN 'cancelled'
@@ -187,6 +191,7 @@ class TherapySession {
         ts.session_duration,
         ts.session_notes,
         ts.payment_notes,
+        ts.google_drive_link,
         ts.session_number,
         CASE
           WHEN ts.status = 'cancelled' THEN 'cancelled'
@@ -239,6 +244,7 @@ class TherapySession {
         ts.session_duration,
         ts.session_notes,
         ts.payment_notes,
+        ts.google_drive_link,
         ts.session_number,
         ts.status,
         CASE
@@ -281,7 +287,7 @@ class TherapySession {
       LEFT JOIN questionnaires q ON uqa.questionnaire_id = q.id
       WHERE ts.partner_id = $1 AND ts.user_id = $2
       GROUP BY ts.id, ts.appointment_id, ts.video_session_id, ts.partner_id, ts.user_id, ts.session_title,
-               ts.session_date, ts.session_duration, ts.session_notes, ts.payment_notes, ts.session_number,
+               ts.session_date, ts.session_duration, ts.session_notes, ts.payment_notes, ts.google_drive_link, ts.session_number,
                ts.status, ts.created_at, ts.updated_at, u.name, a.appointment_date, a.title
       ORDER BY ts.session_date DESC
     `;
@@ -309,6 +315,7 @@ class TherapySession {
         ts.session_duration,
         ts.session_notes,
         ts.payment_notes,
+        ts.google_drive_link,
         ts.session_number,
         CASE
           WHEN ts.status = 'cancelled' THEN 'cancelled'
@@ -341,9 +348,12 @@ class TherapySession {
 
   // Update a session
   static async update(id, sessionData) {
-    const { session_title, session_date, session_duration, session_notes, payment_notes, status } = sessionData;
+    const { session_title, session_date, session_duration, session_notes, payment_notes, google_drive_link, status } = sessionData;
 
     // Build dynamic query to handle explicit null values for session_notes
+    // Check if google_drive_link was explicitly provided
+    const googleDriveLinkProvided = sessionData.hasOwnProperty('google_drive_link');
+    
     const query = `
       UPDATE therapy_sessions
       SET session_title = COALESCE($1, session_title),
@@ -354,6 +364,10 @@ class TherapySession {
             ELSE session_notes       -- Otherwise keep existing value
           END,
           payment_notes = COALESCE($5, payment_notes),
+          google_drive_link = CASE
+            WHEN $10 = true THEN COALESCE($9::jsonb, '[]'::jsonb)  -- If explicitly provided, use it (convert to jsonb)
+            ELSE google_drive_link  -- Otherwise keep existing value
+          END,
           status = COALESCE($8, status),
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $6
@@ -362,7 +376,12 @@ class TherapySession {
 
     // Check if session_notes was explicitly provided in the request
     const sessionNotesProvided = sessionData.hasOwnProperty('session_notes');
-    const values = [session_title, session_date, session_duration, session_notes, payment_notes, id, sessionNotesProvided, status];
+    // Convert google_drive_link to JSON string for PostgreSQL JSONB
+    // If it's an array, stringify it; if null/undefined, pass null
+    const googleDriveLinkJson = google_drive_link !== undefined && google_drive_link !== null 
+      ? JSON.stringify(google_drive_link) 
+      : null;
+    const values = [session_title, session_date, session_duration, session_notes, payment_notes, id, sessionNotesProvided, status, googleDriveLinkJson, googleDriveLinkProvided];
     const result = await db.query(query, values);
     return result.rows[0];
   }

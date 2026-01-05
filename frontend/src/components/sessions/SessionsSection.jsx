@@ -7,7 +7,7 @@ import EditSessionModal from './EditSessionModal';
 import AssignQuestionnaireToSessionModal from './AssignQuestionnaireToSessionModal';
 import ScheduleVideoForSessionModal from './ScheduleVideoForSessionModal';
 
-const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToNotes, onGenerateReport }, ref) => {
+const SessionsSection = forwardRef(({ partnerId, userId, userName, onGenerateReport, onNoteChanged }, ref) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -228,9 +228,8 @@ const SessionsSection = forwardRef(({ partnerId, userId, userName, onNavigateToN
                     onAssignQuestionnaire={handleAssignQuestionnaire}
                     onScheduleVideo={handleScheduleVideo}
                     onQuestionnaireDeleted={loadSessions}
-                    onCreateNote={onNavigateToNotes}
-                    onViewNote={onNavigateToNotes}
                     onGenerateReport={() => onGenerateReport(session.id)}
+                    onNoteChanged={onNoteChanged}
                   />
                 </div>
               ))}

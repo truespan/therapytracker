@@ -132,7 +132,7 @@ const VerifyEmail = () => {
                       <span className="font-medium text-gray-900">{partnerInfo.email}</span>
                     </div>
                     <div>
-                      <span className="text-gray-600">Partner ID:</span>{' '}
+                      <span className="text-gray-600">Therapist ID:</span>{' '}
                       <span className="font-medium text-primary-600">{partnerInfo.partner_id}</span>
                     </div>
                     <div className="pt-2 border-t border-gray-200">

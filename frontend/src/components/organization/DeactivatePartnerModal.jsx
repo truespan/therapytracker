@@ -99,7 +99,7 @@ const DeactivatePartnerModal = ({
             <div className="space-y-1 text-sm">
               <p><span className="font-medium">Name:</span> {partner?.name}</p>
               <p><span className="font-medium">Email:</span> {partner?.email}</p>
-              <p><span className="font-medium">Partner ID:</span> {partner?.partner_id}</p>
+              <p><span className="font-medium">Therapist ID:</span> {partner?.partner_id}</p>
               {hasClients && (
                 <p className="text-primary-600 font-medium mt-2">
                   <Users className="h-4 w-4 inline mr-1" />

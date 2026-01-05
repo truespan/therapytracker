@@ -112,7 +112,7 @@ const ReassignClientsModal = ({
             <h3 className="text-sm font-medium text-gray-900 mb-2">From Therapist</h3>
             <div className="space-y-1 text-sm">
               <p><span className="font-medium">Name:</span> {sourcePartner?.name}</p>
-              <p><span className="font-medium">Partner ID:</span> {sourcePartner?.partner_id}</p>
+              <p><span className="font-medium">Therapist ID:</span> {sourcePartner?.partner_id}</p>
               <p className="text-primary-600 font-medium">
                 {clients?.length || 0} client{clients?.length !== 1 ? 's' : ''} available
               </p>
