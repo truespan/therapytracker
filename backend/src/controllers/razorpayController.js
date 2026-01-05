@@ -381,6 +381,10 @@ const handleWebhook = async (req, res) => {
       await handleSubscriptionActivated(event);
     } else if (event.event === 'subscription.cancelled' || event.event === 'subscription.completed') {
       await handleSubscriptionCancelled(event);
+    } else if (event.event === 'subscription.paused') {
+      await handleSubscriptionPaused(event);
+    } else if (event.event === 'subscription.resumed') {
+      await handleSubscriptionResumed(event);
     }
 
     res.json({ received: true });
@@ -533,6 +537,22 @@ async function handleSubscriptionCancelled(event) {
   await RazorpaySubscription.update(subscription.id, {
     status: subscription.status,
     ended_at: new Date()
+  });
+}
+
+async function handleSubscriptionPaused(event) {
+  const subscription = event.payload.subscription.entity;
+  await RazorpaySubscription.update(subscription.id, {
+    status: subscription.status // Should be 'halted'
+  });
+}
+
+async function handleSubscriptionResumed(event) {
+  const subscription = event.payload.subscription.entity;
+  await RazorpaySubscription.update(subscription.id, {
+    status: subscription.status, // Should be 'active'
+    current_start: new Date(subscription.current_start * 1000),
+    current_end: new Date(subscription.current_end * 1000)
   });
 }
 
@@ -1191,6 +1211,177 @@ const verifyRemainingPayment = async (req, res) => {
   }
 };
 
+/**
+ * Pause a subscription
+ */
+const pauseSubscription = async (req, res) => {
+  try {
+    const userType = req.user.userType; // 'partner' or 'organization'
+    const userId = req.user.id;
+
+    // Get the subscription ID based on user type
+    let razorpaySubscriptionId = null;
+    let subscriptionRecord = null;
+
+    if (userType === 'partner') {
+      const PartnerSubscription = require('../models/PartnerSubscription');
+      const subscriptions = await PartnerSubscription.findByPartnerId(userId);
+      const activeSubscription = subscriptions.find(sub => 
+        sub.razorpay_subscription_id && 
+        sub.payment_status === 'paid'
+      );
+      
+      if (!activeSubscription || !activeSubscription.razorpay_subscription_id) {
+        return res.status(404).json({ 
+          error: 'No active paid subscription found to pause' 
+        });
+      }
+      
+      razorpaySubscriptionId = activeSubscription.razorpay_subscription_id;
+      subscriptionRecord = activeSubscription;
+    } else if (userType === 'organization') {
+      const Organization = require('../models/Organization');
+      const organization = await Organization.findById(userId);
+      
+      if (!organization || !organization.razorpay_subscription_id) {
+        return res.status(404).json({ 
+          error: 'No active subscription found to pause' 
+        });
+      }
+      
+      razorpaySubscriptionId = organization.razorpay_subscription_id;
+    } else {
+      return res.status(403).json({ 
+        error: 'Only partners and organizations can pause subscriptions' 
+      });
+    }
+
+    // Check current subscription status in Razorpay
+    const currentSubscription = await RazorpayService.fetchSubscription(razorpaySubscriptionId);
+    
+    if (currentSubscription.status === 'halted') {
+      return res.status(400).json({ 
+        error: 'Subscription is already paused' 
+      });
+    }
+    
+    if (currentSubscription.status !== 'active') {
+      return res.status(400).json({ 
+        error: `Cannot pause subscription with status: ${currentSubscription.status}. Only active subscriptions can be paused.` 
+      });
+    }
+
+    // Pause subscription in Razorpay
+    const pausedSubscription = await RazorpayService.pauseSubscription(razorpaySubscriptionId, {
+      pause_at: 'immediately' // Pause immediately
+    });
+
+    // Update subscription status in razorpay_subscriptions table
+    await RazorpaySubscription.update(razorpaySubscriptionId, {
+      status: pausedSubscription.status // Should be 'halted'
+    });
+
+    res.json({
+      message: 'Subscription paused successfully. No charges will be made while paused.',
+      subscription: {
+        id: pausedSubscription.id,
+        status: pausedSubscription.status
+      }
+    });
+  } catch (error) {
+    console.error('Pause subscription error:', error);
+    res.status(500).json({
+      error: 'Failed to pause subscription',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Resume a paused subscription
+ */
+const resumeSubscription = async (req, res) => {
+  try {
+    const userType = req.user.userType; // 'partner' or 'organization'
+    const userId = req.user.id;
+
+    // Get the subscription ID based on user type
+    let razorpaySubscriptionId = null;
+
+    if (userType === 'partner') {
+      const PartnerSubscription = require('../models/PartnerSubscription');
+      const subscriptions = await PartnerSubscription.findByPartnerId(userId);
+      const subscription = subscriptions.find(sub => 
+        sub.razorpay_subscription_id
+      );
+      
+      if (!subscription || !subscription.razorpay_subscription_id) {
+        return res.status(404).json({ 
+          error: 'No subscription found to resume' 
+        });
+      }
+      
+      razorpaySubscriptionId = subscription.razorpay_subscription_id;
+    } else if (userType === 'organization') {
+      const Organization = require('../models/Organization');
+      const organization = await Organization.findById(userId);
+      
+      if (!organization || !organization.razorpay_subscription_id) {
+        return res.status(404).json({ 
+          error: 'No subscription found to resume' 
+        });
+      }
+      
+      razorpaySubscriptionId = organization.razorpay_subscription_id;
+    } else {
+      return res.status(403).json({ 
+        error: 'Only partners and organizations can resume subscriptions' 
+      });
+    }
+
+    // Check current subscription status in Razorpay
+    const currentSubscription = await RazorpayService.fetchSubscription(razorpaySubscriptionId);
+    
+    if (currentSubscription.status === 'active') {
+      return res.status(400).json({ 
+        error: 'Subscription is already active' 
+      });
+    }
+    
+    if (currentSubscription.status !== 'halted') {
+      return res.status(400).json({ 
+        error: `Cannot resume subscription with status: ${currentSubscription.status}. Only paused (halted) subscriptions can be resumed.` 
+      });
+    }
+
+    // Resume subscription in Razorpay
+    const resumedSubscription = await RazorpayService.resumeSubscription(razorpaySubscriptionId);
+
+    // Update subscription status in database
+    await RazorpaySubscription.update(razorpaySubscriptionId, {
+      status: resumedSubscription.status, // Should be 'active'
+      current_start: new Date(resumedSubscription.current_start * 1000),
+      current_end: new Date(resumedSubscription.current_end * 1000)
+    });
+
+    res.json({
+      message: 'Subscription resumed successfully. Billing will continue from now.',
+      subscription: {
+        id: resumedSubscription.id,
+        status: resumedSubscription.status,
+        current_start: new Date(resumedSubscription.current_start * 1000),
+        current_end: new Date(resumedSubscription.current_end * 1000)
+      }
+    });
+  } catch (error) {
+    console.error('Resume subscription error:', error);
+    res.status(500).json({
+      error: 'Failed to resume subscription',
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   verifyPayment,
@@ -1200,6 +1391,8 @@ module.exports = {
   verifyBookingPayment,
   verifyBookingPaymentTestMode,
   createRemainingPaymentOrder,
-  verifyRemainingPayment
+  verifyRemainingPayment,
+  pauseSubscription,
+  resumeSubscription
 };
 

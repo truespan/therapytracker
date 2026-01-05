@@ -37,6 +37,12 @@ router.post('/create-remaining-payment-order', authenticateToken, razorpayContro
 // Verify remaining payment (requires authentication)
 router.post('/verify-remaining-payment', authenticateToken, razorpayController.verifyRemainingPayment);
 
+// Pause subscription (requires authentication)
+router.post('/subscription/pause', authenticateToken, razorpayController.pauseSubscription);
+
+// Resume subscription (requires authentication)
+router.post('/subscription/resume', authenticateToken, razorpayController.resumeSubscription);
+
 // Webhook endpoint (no authentication required, but verifies Razorpay signature)
 // Uses express.raw() to capture raw body for signature verification, then parses JSON
 router.post('/webhook', 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Phone, MapPin, Calendar, Award, FileText, CreditCard, Edit, X, Save, XCircle, Globe, Plus } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Award, FileText, CreditCard, Edit, X, Save, XCircle, Globe, Plus, Pause, Play } from 'lucide-react';
 import ImageUpload from '../common/ImageUpload';
 import CountryCodeSelect from '../common/CountryCodeSelect';
 import { partnerAPI, subscriptionPlanAPI, organizationAPI, razorpayAPI } from '../../services/api';
@@ -23,6 +23,8 @@ const PartnerSettings = () => {
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [showCancellationDialog, setShowCancellationDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [pausing, setPausing] = useState(false);
+  const [resuming, setResuming] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [originalFormData, setOriginalFormData] = useState(null);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
@@ -344,6 +346,70 @@ const PartnerSettings = () => {
       setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
     } finally {
       setCancelling(false);
+    }
+  };
+
+  // Handle subscription pause
+  const handlePauseSubscription = async () => {
+    if (!window.confirm('Are you sure you want to pause your subscription? You will not be charged during the pause period, but you will lose access to premium features. You can resume anytime.')) {
+      return;
+    }
+
+    try {
+      setPausing(true);
+      setSaveMessage({ type: '', text: '' });
+
+      await razorpayAPI.pauseSubscription();
+
+      setSaveMessage({
+        type: 'success',
+        text: 'Subscription paused successfully. No charges will be made while paused. You can resume anytime.'
+      });
+
+      // Refresh subscription data
+      await loadOrganizationSubscription();
+      await refreshUser();
+
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 8000);
+    } catch (err) {
+      console.error('Failed to pause subscription:', err);
+      setSaveMessage({
+        type: 'error',
+        text: err.response?.data?.error || 'Failed to pause subscription. Please try again.'
+      });
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
+    } finally {
+      setPausing(false);
+    }
+  };
+
+  // Handle subscription resume
+  const handleResumeSubscription = async () => {
+    try {
+      setResuming(true);
+      setSaveMessage({ type: '', text: '' });
+
+      await razorpayAPI.resumeSubscription();
+
+      setSaveMessage({
+        type: 'success',
+        text: 'Subscription resumed successfully. Billing will continue from now.'
+      });
+
+      // Refresh subscription data
+      await loadOrganizationSubscription();
+      await refreshUser();
+
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 8000);
+    } catch (err) {
+      console.error('Failed to resume subscription:', err);
+      setSaveMessage({
+        type: 'error',
+        text: err.response?.data?.error || 'Failed to resume subscription. Please try again.'
+      });
+      setTimeout(() => setSaveMessage({ type: '', text: '' }), 5000);
+    } finally {
+      setResuming(false);
     }
   };
 
@@ -1108,11 +1174,38 @@ const PartnerSettings = () => {
                   </span>
                 </button>
                 
+                {/* Pause/Resume Subscription Buttons - Only for paid subscriptions */}
+                {partnerSubscription?.razorpay_subscription_id && partnerSubscription?.payment_status === 'paid' && (
+                  <>
+                    {/* Check if subscription is paused (status would be 'halted' in Razorpay, but we'll check via API) */}
+                    {/* For now, we'll show pause button if subscription is active, resume if paused */}
+                    {/* The backend will handle the actual status check */}
+                    <button
+                      onClick={handlePauseSubscription}
+                      disabled={saving || cancelling || pausing || resuming}
+                      className="btn btn-secondary flex items-center space-x-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900"
+                      title="Pause your subscription temporarily. No charges will be made while paused."
+                    >
+                      <Pause className="h-4 w-4" />
+                      <span>{pausing ? 'Pausing...' : 'Pause Subscription'}</span>
+                    </button>
+                    <button
+                      onClick={handleResumeSubscription}
+                      disabled={saving || cancelling || pausing || resuming}
+                      className="btn btn-secondary flex items-center space-x-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900"
+                      title="Resume your paused subscription. Billing will continue from now."
+                    >
+                      <Play className="h-4 w-4" />
+                      <span>{resuming ? 'Resuming...' : 'Resume Subscription'}</span>
+                    </button>
+                  </>
+                )}
+
                 {/* Cancel Subscription Button */}
                 {canCancelSubscription(partnerSubscription) && (
                   <button
                     onClick={() => setShowCancellationDialog(true)}
-                    disabled={saving || cancelling}
+                    disabled={saving || cancelling || pausing || resuming}
                     className="btn btn-secondary flex items-center space-x-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
                   >
                     <XCircle className="h-4 w-4" />

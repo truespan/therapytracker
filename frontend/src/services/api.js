@@ -484,6 +484,8 @@ export const razorpayAPI = {
   createRemainingPaymentOrder: (data) => api.post('/razorpay/create-remaining-payment-order', data),
   verifyRemainingPayment: (data) => api.post('/razorpay/verify-remaining-payment', data),
   getPaymentHistory: () => api.get('/razorpay/payment-history'),
+  pauseSubscription: () => api.post('/razorpay/subscription/pause'),
+  resumeSubscription: () => api.post('/razorpay/subscription/resume'),
 };
 
 // Earnings APIs
