@@ -121,9 +121,9 @@ class WhatsAppService {
                                                    process.env.WHATSAPP_TEMPLATE_APPOINTMENT_BOOKED?.trim() || 
                                                    'theraptrack_appointment_is_booked';
       this.templateNames.appointmentReminder = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_REMINDER?.trim() || 
-                                               'theraptrack_appointment_reminder';
+                                               'theraptrack_appointment_reminder_new';
       this.templateNames.appointmentCancellation = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_CANCELLATION?.trim() || 
-                                                   'theraptrack_appointment_cancelled';
+                                                   'theraptrack_appointment_cancelled_new';
       this.templateNames.appointmentRescheduled = process.env.WHATSAPP_TEMPLATE_APPOINTMENT_RESCHEDULED?.trim() || 
                                                   'theraptrack_appointment_rescheduled';
       this.templateNames.therapistAppointmentNotification = process.env.WHATSAPP_TEMPLATE_THERAPIST_APPOINTMENT_NOTIFICATION?.trim() || 
@@ -1957,17 +1957,19 @@ Please prepare for the session and contact the client if needed.
 
   /**
    * Prepare template parameters for appointment cancellation notification
-   * Template expects 4 parameters:
+   * Template expects 5 parameters:
    * {{1}} - Client name
-   * {{2}} - "Therapy Session - Online" or "Therapy Session - In Person"
-   * {{3}} - Date formatted as "Sunday, 4 January 2026"
-   * {{4}} - Time formatted as "10 am"
+   * {{2}} - Therapist name
+   * {{3}} - "Therapy Session - Online" or "Therapy Session - In Person"
+   * {{4}} - Date formatted as "Sunday, 6 January 2026"
+   * {{5}} - Time formatted as "10 am"
    * @param {Object} appointmentData - Appointment details
    * @returns {Array} Template parameters array
    */
   prepareAppointmentCancellationTemplateParams(appointmentData) {
     const {
       userName,
+      therapistName,
       appointmentDate,
       appointmentTime,
       timezone,
@@ -2037,9 +2039,10 @@ Please prepare for the session and contact the client if needed.
     // Prepare parameters in the specified order
     const params = [
       String(userName || 'Client').trim(),                    // {{1}} - Client name
-      String(sessionType).trim(),                             // {{2}} - "Therapy Session - Online" or "Therapy Session - In Person"
-      String(displayDate || appointmentDate || 'Date TBD').trim(),  // {{3}} - Date (e.g., "Sunday, 4 January 2026")
-      String(displayTime || 'Time TBD').trim()                // {{4}} - Time (e.g., "10 am")
+      String(therapistName || 'Therapist').trim(),            // {{2}} - Therapist name
+      String(sessionType).trim(),                             // {{3}} - "Therapy Session - Online" or "Therapy Session - In Person"
+      String(displayDate || appointmentDate || 'Date TBD').trim(),  // {{4}} - Date (e.g., "Sunday, 6 January 2026")
+      String(displayTime || 'Time TBD').trim()                // {{5}} - Time (e.g., "10 am")
     ];
 
     // Validate all parameters are non-empty
@@ -2050,7 +2053,7 @@ Please prepare for the session and contact the client if needed.
       
       if (isEmpty || isInvalid) {
         console.error(`[WhatsApp Template] ⚠️  Cancellation parameter ${i + 1} is empty or invalid: "${param}"`);
-        const defaults = ['Client', 'Therapy Session - In Person', 'Date TBD', 'Time TBD'];
+        const defaults = ['Client', 'Therapist', 'Therapy Session - In Person', 'Date TBD', 'Time TBD'];
         params[i] = defaults[i] || 'N/A';
         console.log(`[WhatsApp Template] ✅ Cancellation parameter ${i + 1} set to default: "${params[i]}"`);
       }
@@ -2060,7 +2063,7 @@ Please prepare for the session and contact the client if needed.
     console.log('[WhatsApp Template] Final cancellation template parameters:', {
       count: params.length,
       params: params.map((p, i) => `{{${i + 1}}} = "${p}" (length: ${p.length})`),
-      order: '{{1}} Client Name, {{2}} Session Type, {{3}} Date, {{4}} Time'
+      order: '{{1}} Client Name, {{2}} Therapist Name, {{3}} Session Type, {{4}} Date, {{5}} Time'
     });
 
     return params;
@@ -2068,17 +2071,19 @@ Please prepare for the session and contact the client if needed.
 
   /**
    * Prepare template parameters for appointment reminder notification
-   * Template expects 4 parameters:
+   * Template expects 5 parameters:
    * {{1}} - Client name
-   * {{2}} - "Therapy Session - Online" or "Therapy Session - In Person"
-   * {{3}} - Date formatted as "Sunday, 4 January 2026"
-   * {{4}} - Time formatted as "10 am"
+   * {{2}} - Therapist name
+   * {{3}} - "Therapy Session - Online" or "Therapy Session - In Person"
+   * {{4}} - Date formatted as "Sunday, 6 January 2026"
+   * {{5}} - Time formatted as "10 am"
    * @param {Object} appointmentData - Appointment details
    * @returns {Array} Template parameters array
    */
   prepareAppointmentReminderTemplateParams(appointmentData) {
     const {
       userName,
+      therapistName,
       appointmentDate,
       appointmentTime,
       timezone,
@@ -2148,9 +2153,10 @@ Please prepare for the session and contact the client if needed.
     // Prepare parameters in the specified order
     const params = [
       String(userName || 'Client').trim(),                    // {{1}} - Client name
-      String(sessionType).trim(),                             // {{2}} - "Therapy Session - Online" or "Therapy Session - In Person"
-      String(displayDate || appointmentDate || 'Date TBD').trim(),  // {{3}} - Date (e.g., "Sunday, 4 January 2026")
-      String(displayTime || 'Time TBD').trim()                // {{4}} - Time (e.g., "10 am")
+      String(therapistName || 'Therapist').trim(),            // {{2}} - Therapist name
+      String(sessionType).trim(),                             // {{3}} - "Therapy Session - Online" or "Therapy Session - In Person"
+      String(displayDate || appointmentDate || 'Date TBD').trim(),  // {{4}} - Date (e.g., "Sunday, 6 January 2026")
+      String(displayTime || 'Time TBD').trim()                // {{5}} - Time (e.g., "10 am")
     ];
 
     // Validate all parameters are non-empty
@@ -2161,7 +2167,7 @@ Please prepare for the session and contact the client if needed.
       
       if (isEmpty || isInvalid) {
         console.error(`[WhatsApp Template] ⚠️  Reminder parameter ${i + 1} is empty or invalid: "${param}"`);
-        const defaults = ['Client', 'Therapy Session - In Person', 'Date TBD', 'Time TBD'];
+        const defaults = ['Client', 'Therapist', 'Therapy Session - In Person', 'Date TBD', 'Time TBD'];
         params[i] = defaults[i] || 'N/A';
         console.log(`[WhatsApp Template] ✅ Reminder parameter ${i + 1} set to default: "${params[i]}"`);
       }
@@ -2171,7 +2177,7 @@ Please prepare for the session and contact the client if needed.
     console.log('[WhatsApp Template] Final reminder template parameters:', {
       count: params.length,
       params: params.map((p, i) => `{{${i + 1}}} = "${p}" (length: ${p.length})`),
-      order: '{{1}} Client Name, {{2}} Session Type, {{3}} Date, {{4}} Time'
+      order: '{{1}} Client Name, {{2}} Therapist Name, {{3}} Session Type, {{4}} Date, {{5}} Time'
     });
 
     return params;
