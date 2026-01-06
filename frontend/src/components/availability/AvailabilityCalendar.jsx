@@ -188,53 +188,53 @@ const SlotCard = ({ slot, onEdit, onDelete, onCancelBooking, onDeleteSlotAndBook
     switch (status) {
       case 'available_online':
         return {
-          bg: 'bg-green-50 dark:bg-dark-bg-tertiary',
-          border: 'border-green-300 dark:border-green-700',
-          text: 'text-green-800 dark:text-green-300',
-          badge: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
+          bg: 'bg-orange-50 dark:bg-dark-bg-tertiary',
+          border: 'border-orange-300 dark:border-orange-700',
+          text: 'text-orange-800 dark:text-orange-300',
+          badge: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
         };
       case 'available_offline':
         return {
-          bg: 'bg-blue-50 dark:bg-dark-bg-tertiary',
-          border: 'border-blue-300 dark:border-blue-700',
-          text: 'text-blue-800 dark:text-blue-300',
-          badge: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
+          bg: 'bg-orange-50 dark:bg-dark-bg-tertiary',
+          border: 'border-orange-300 dark:border-orange-700',
+          text: 'text-orange-800 dark:text-orange-300',
+          badge: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
         };
       case 'not_available':
         return {
-          bg: 'bg-gray-50 dark:bg-dark-bg-tertiary',
-          border: 'border-gray-300 dark:border-dark-border',
-          text: 'text-gray-700 dark:text-dark-text-secondary',
-          badge: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-dark-text-secondary'
+          bg: 'bg-orange-50 dark:bg-dark-bg-tertiary',
+          border: 'border-orange-300 dark:border-orange-700',
+          text: 'text-orange-800 dark:text-orange-300',
+          badge: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
         };
       case 'booked':
         return {
-          bg: 'bg-yellow-50 dark:bg-dark-bg-tertiary',
-          border: 'border-yellow-300 dark:border-yellow-700',
-          text: 'text-yellow-800 dark:text-yellow-300',
-          badge: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300'
+          bg: 'bg-orange-50 dark:bg-dark-bg-tertiary',
+          border: 'border-orange-300 dark:border-orange-700',
+          text: 'text-orange-800 dark:text-orange-300',
+          badge: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
         };
       case 'confirmed':
         return {
-          bg: 'bg-green-50 dark:bg-dark-bg-tertiary',
-          border: 'border-green-300 dark:border-green-700',
-          text: 'text-green-800 dark:text-green-300',
-          badge: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
+          bg: 'bg-orange-50 dark:bg-dark-bg-tertiary',
+          border: 'border-orange-300 dark:border-orange-700',
+          text: 'text-orange-800 dark:text-orange-300',
+          badge: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
         };
       case 'confirmed_balance_pending':
       case 'confirmed_payment_pending':
         return {
-          bg: 'bg-glossyPink-50 dark:bg-dark-bg-tertiary',
-          border: 'border-glossyPink-300 dark:border-glossyPink-700',
-          text: 'text-glossyPink-800 dark:text-glossyPink-300',
-          badge: 'bg-glossyPink-100 dark:bg-glossyPink-900 text-glossyPink-800 dark:text-glossyPink-300'
+          bg: 'bg-orange-50 dark:bg-dark-bg-tertiary',
+          border: 'border-orange-300 dark:border-orange-700',
+          text: 'text-orange-800 dark:text-orange-300',
+          badge: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
         };
       default:
         return {
-          bg: 'bg-gray-50 dark:bg-dark-bg-tertiary',
-          border: 'border-gray-300 dark:border-dark-border',
-          text: 'text-gray-700 dark:text-dark-text-secondary',
-          badge: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-dark-text-secondary'
+          bg: 'bg-orange-50 dark:bg-dark-bg-tertiary',
+          border: 'border-orange-300 dark:border-orange-700',
+          text: 'text-orange-800 dark:text-orange-300',
+          badge: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-300'
         };
     }
   };
