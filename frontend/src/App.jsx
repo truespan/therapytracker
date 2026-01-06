@@ -107,12 +107,16 @@ function AppRoutes() {
     // Check if user is on Free Plan
     const isFreePlan = user?.subscription?.plan_name?.toLowerCase().includes('free');
     
-    if (isFreePlan) {
-      // Free Plan users: Logout immediately when they close the modal
+    // Check if trial has ended
+    const isOnTrialPlan = user?.subscription?.plan_duration_days && user?.subscription?.plan_duration_days > 0;
+    const isTrialEnded = isOnTrialPlan && user?.subscription_end_date && new Date(user.subscription_end_date) <= new Date();
+    
+    if (isFreePlan || isTrialEnded) {
+      // Free Plan users or ended trial users: Logout immediately when they close the modal
       logout();
       setShowSubscriptionModal(false);
     } else {
-      // Trial Plan users or no plans available: Just close the modal
+      // Active Trial Plan users or no plans available: Just close the modal
       setShowSubscriptionModal(false);
     }
   };

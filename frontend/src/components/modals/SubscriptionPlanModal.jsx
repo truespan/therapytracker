@@ -19,6 +19,29 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
   
   // Check if user is on Free Plan
   const isFreePlan = user?.subscription?.plan_name?.toLowerCase().includes('free');
+  
+  // Check if trial has ended
+  const isTrialEnded = isOnTrialPlan && user?.subscription_end_date && new Date(user.subscription_end_date) <= new Date();
+  
+  // Determine trial plan type (3-day or 7-day)
+  const getTrialPlanType = () => {
+    if (!isOnTrialPlan) return null;
+    
+    const planDurationDays = user?.subscription?.plan_duration_days;
+    const planName = user?.subscription?.plan_name?.toLowerCase() || '';
+    
+    // Check by plan_duration_days first (most reliable)
+    if (planDurationDays === 3) return '3-day';
+    if (planDurationDays === 7) return '7-day';
+    
+    // Fallback to plan_name if duration not available
+    if (planName.includes('3') || planName.includes('three')) return '3-day';
+    if (planName.includes('7') || planName.includes('seven')) return '7-day';
+    
+    return null;
+  };
+  
+  const trialPlanType = getTrialPlanType();
 
   useEffect(() => {
     if (isOpen) {
@@ -369,12 +392,16 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-6 py-6 text-white relative">
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-2">
-              {isOnTrialPlan 
+              {isTrialEnded && trialPlanType
+                ? `Your ${trialPlanType} trial has ended. To continue using all features, please upgrade to a paid plan.`
+                : isOnTrialPlan 
                 ? `You are in "${trialPlanName}" plan now. You can cancel and proceed.`
                 : 'Select Your Subscription Plan'}
             </h2>
             <p className="text-primary-100 dark:text-primary-200">
-              {isOnTrialPlan
+              {isTrialEnded && trialPlanType
+                ? 'Choose the plan that best fits your practice needs'
+                : isOnTrialPlan
                 ? 'You can upgrade to a paid plan anytime or continue with your trial'
                 : 'Choose the plan that best fits your practice needs'}
             </p>
