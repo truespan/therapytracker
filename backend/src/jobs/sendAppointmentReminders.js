@@ -9,6 +9,7 @@ const PartnerSubscription = require('../models/PartnerSubscription');
 /**
  * Cron job to send appointment reminders 4 hours before appointment time
  * Runs every 10 minutes to check for appointments needing reminders
+ * Query window: 3 hours 50 minutes to 4 hours 20 minutes (30-minute window)
  */
 const scheduleAppointmentReminders = () => {
   // Schedule: Run every 10 minutes

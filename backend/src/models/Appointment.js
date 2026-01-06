@@ -250,8 +250,8 @@ class Appointment {
       JOIN partners p ON a.partner_id = p.id
       WHERE a.status = 'scheduled'
         AND a.appointment_date > NOW()
-        AND a.appointment_date <= NOW() + INTERVAL '4 hours 10 minutes'
-        AND a.appointment_date >= NOW() + INTERVAL '4 hours'
+        AND a.appointment_date <= NOW() + INTERVAL '4 hours 20 minutes'
+        AND a.appointment_date >= NOW() + INTERVAL '3 hours 50 minutes'
         AND NOT EXISTS (
           SELECT 1 FROM whatsapp_notifications wn
           WHERE wn.appointment_id = a.id
