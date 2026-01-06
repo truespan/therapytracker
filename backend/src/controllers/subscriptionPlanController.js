@@ -76,6 +76,7 @@ const createPlan = async (req, res) => {
       plan_type,
       min_sessions,
       max_sessions,
+      max_appointments,
       has_video,
       has_whatsapp,
       has_advanced_assessments,
@@ -158,6 +159,13 @@ const createPlan = async (req, res) => {
       });
     }
 
+    // Validate max_appointments (can be NULL for unlimited)
+    if (max_appointments !== null && max_appointments !== undefined && max_appointments < 0) {
+      return res.status(400).json({
+        error: 'max_appointments must be >= 0 or NULL for unlimited'
+      });
+    }
+
     // Validate plan_duration_days (must be positive integer if provided)
     if (plan_duration_days !== null && plan_duration_days !== undefined) {
       if (typeof plan_duration_days !== 'number' || plan_duration_days < 1 || !Number.isInteger(plan_duration_days)) {
@@ -206,6 +214,7 @@ const createPlan = async (req, res) => {
       plan_type: plan_type || 'individual',
       min_sessions: parseInt(min_sessions),
       max_sessions: max_sessions === null || max_sessions === undefined ? null : parseInt(max_sessions),
+      max_appointments: max_appointments === null || max_appointments === undefined ? null : parseInt(max_appointments),
       has_video: has_video !== undefined ? has_video : false,
       has_whatsapp: has_whatsapp !== undefined ? has_whatsapp : false,
       has_advanced_assessments: has_advanced_assessments !== undefined ? has_advanced_assessments : false,
@@ -289,6 +298,15 @@ const updatePlan = async (req, res) => {
       if (maxSessions !== null && maxSessions !== undefined && maxSessions < minSessions) {
         return res.status(400).json({
           error: 'Invalid session limits. max_sessions must be >= min_sessions or NULL for unlimited'
+        });
+      }
+    }
+
+    // Validate max_appointments if provided (can be NULL for unlimited)
+    if (updateData.max_appointments !== undefined) {
+      if (updateData.max_appointments !== null && updateData.max_appointments < 0) {
+        return res.status(400).json({
+          error: 'max_appointments must be >= 0 or NULL for unlimited'
         });
       }
     }
@@ -415,6 +433,10 @@ const updatePlan = async (req, res) => {
     // Convert max_sessions if provided (allow NULL)
     if (updateData.max_sessions !== undefined) {
       updateData.max_sessions = updateData.max_sessions === null ? null : parseInt(updateData.max_sessions);
+    }
+    // Convert max_appointments if provided (allow NULL)
+    if (updateData.max_appointments !== undefined) {
+      updateData.max_appointments = updateData.max_appointments === null ? null : parseInt(updateData.max_appointments);
     }
     if (updateData.individual_yearly_enabled !== undefined) {
       updateData.individual_yearly_enabled = Boolean(updateData.individual_yearly_enabled);

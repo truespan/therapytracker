@@ -7,6 +7,7 @@ class SubscriptionPlan {
       plan_type,
       min_sessions,
       max_sessions,
+      max_appointments,
       has_video,
       has_whatsapp,
       has_advanced_assessments,
@@ -38,7 +39,7 @@ class SubscriptionPlan {
 
     const query = `
       INSERT INTO subscription_plans (
-        plan_name, plan_type, min_sessions, max_sessions, has_video,
+        plan_name, plan_type, min_sessions, max_sessions, max_appointments, has_video,
         has_whatsapp, has_advanced_assessments, has_report_generation,
         has_custom_branding, has_advanced_analytics, has_blogs_events_announcements, has_customized_feature_support,
         has_priority_support, has_email_support,
@@ -49,7 +50,7 @@ class SubscriptionPlan {
         individual_yearly_enabled, individual_quarterly_enabled, individual_monthly_enabled,
         organization_yearly_enabled, organization_quarterly_enabled, organization_monthly_enabled
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
       RETURNING *
     `;
 
@@ -58,6 +59,7 @@ class SubscriptionPlan {
       plan_type || 'individual',
       min_sessions,
       max_sessions !== undefined ? max_sessions : null,
+      max_appointments !== undefined ? max_appointments : null,
       has_video !== undefined ? has_video : false,
       has_whatsapp !== undefined ? has_whatsapp : false,
       has_advanced_assessments !== undefined ? has_advanced_assessments : false,
@@ -116,6 +118,7 @@ class SubscriptionPlan {
       plan_type,
       min_sessions,
       max_sessions,
+      max_appointments,
       has_video,
       has_whatsapp,
       has_advanced_assessments,
@@ -165,6 +168,10 @@ class SubscriptionPlan {
     if (max_sessions !== undefined) {
       updates.push(`max_sessions = $${paramIndex++}`);
       values.push(max_sessions === null ? null : max_sessions);
+    }
+    if (max_appointments !== undefined) {
+      updates.push(`max_appointments = $${paramIndex++}`);
+      values.push(max_appointments === null ? null : max_appointments);
     }
     if (has_video !== undefined) {
       updates.push(`has_video = $${paramIndex++}`);

@@ -23,6 +23,7 @@ const SubscriptionPlansTab = () => {
     plan_type: 'individual',
     min_sessions: '0',
     max_sessions: '',
+    max_appointments: '',
     has_video: false,
     has_whatsapp: false,
     has_advanced_assessments: false,
@@ -103,6 +104,7 @@ const SubscriptionPlansTab = () => {
       plan_type: 'individual',
       min_sessions: '0',
       max_sessions: '',
+      max_appointments: '',
       has_video: false,
       has_whatsapp: false,
       has_advanced_assessments: false,
@@ -151,6 +153,7 @@ const SubscriptionPlansTab = () => {
       plan_type: plan.plan_type || 'individual',
       min_sessions: plan.min_sessions !== null && plan.min_sessions !== undefined ? plan.min_sessions : '0',
       max_sessions: plan.max_sessions !== null && plan.max_sessions !== undefined ? plan.max_sessions : '',
+      max_appointments: plan.max_appointments !== null && plan.max_appointments !== undefined ? plan.max_appointments : '',
       has_video: plan.has_video || false,
       has_whatsapp: plan.has_whatsapp || false,
       has_advanced_assessments: plan.has_advanced_assessments || false,
@@ -231,6 +234,12 @@ const SubscriptionPlansTab = () => {
         return;
       }
 
+      if (formData.max_appointments && parseInt(formData.max_appointments) < 0) {
+        setError('Max appointments must be >= 0, or leave empty for unlimited');
+        setSaving(false);
+        return;
+      }
+
       // Validate organization plan therapist ranges
       if (formData.plan_type === 'organization') {
         if (!formData.min_therapists || !formData.max_therapists) {
@@ -270,6 +279,7 @@ const SubscriptionPlansTab = () => {
         plan_type: formData.plan_type,
         min_sessions: parseInt(formData.min_sessions),
         max_sessions: formData.max_sessions ? parseInt(formData.max_sessions) : null,
+        max_appointments: formData.max_appointments ? parseInt(formData.max_appointments) : null,
         has_video: formData.has_video,
         has_whatsapp: formData.has_whatsapp,
         has_advanced_assessments: formData.has_advanced_assessments,
@@ -682,6 +692,22 @@ const SubscriptionPlansTab = () => {
                     min="0"
                   />
                 </div>
+              </div>
+
+              {/* Appointment Limits */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  Max Appointments {formData.max_appointments === '' || formData.max_appointments === null ? '(Unlimited)' : ''}
+                </label>
+                <input
+                  type="number"
+                  name="max_appointments"
+                  value={formData.max_appointments}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-dark-bg-primary dark:text-dark-text-primary"
+                  placeholder="Leave empty for unlimited"
+                  min="0"
+                />
               </div>
 
               {/* Plan Duration */}
