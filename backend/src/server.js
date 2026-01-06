@@ -68,7 +68,8 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+// Bind to 0.0.0.0 to allow external connections (required for Render)
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 

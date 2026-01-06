@@ -17,3 +17,4 @@ END $$;
 -- Add comment for documentation
 COMMENT ON COLUMN therapy_sessions.google_drive_link IS 'Google Drive link to files associated with this therapy session';
 
+

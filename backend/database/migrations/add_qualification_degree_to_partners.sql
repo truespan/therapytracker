@@ -19,3 +19,4 @@ COMMENT ON COLUMN partners.qualification_degree IS 'Educational qualification/de
 -- Migration completed
 SELECT 'Qualification degree column added to partners table successfully' as message;
 
+
