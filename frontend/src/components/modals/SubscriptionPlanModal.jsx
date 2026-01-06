@@ -387,7 +387,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
       <div className="absolute inset-0 bg-black/40"></div>
 
       {/* Modal Content */}
-      <div className="relative bg-white dark:bg-dark-bg-secondary rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative bg-white dark:bg-dark-bg-secondary rounded-2xl shadow-2xl max-w-[95vw] w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-6 py-6 text-white relative">
           <div className="text-center">
@@ -469,7 +469,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           )}
 
           {!loading && !error && subscriptionPlans.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {subscriptionPlans
                 .filter(plan => {
                   // Filter out plans with ₹0 for the selected billing period

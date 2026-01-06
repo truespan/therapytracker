@@ -16,6 +16,17 @@ const createAppointment = async (req, res) => {
       return res.status(400).json({ error: 'partner_id, user_id, title, appointment_date, and end_date are required' });
     }
 
+    // Check max appointments limit
+    const subscription = await PartnerSubscription.getActiveSubscription(partner_id);
+    if (subscription && subscription.max_appointments !== null && subscription.max_appointments !== undefined) {
+      const currentMonthCount = await Appointment.countCurrentMonthAppointments(partner_id);
+      if (currentMonthCount >= subscription.max_appointments) {
+        return res.status(403).json({ 
+          error: `You have reached max appointments limit of ${subscription.max_appointments}` 
+        });
+      }
+    }
+
     // Check for conflicts
     const hasConflict = await Appointment.checkConflict(partner_id, appointment_date, end_date);
     if (hasConflict) {

@@ -74,6 +74,7 @@ function calculateBillingPeriodRange(billingPeriod, subscriptionStartDate, subsc
 
 /**
  * Check if partner has reached session limit
+ * Counts sessions created in current month, matching the appointments limit logic
  * @param {number} partnerId - Partner ID
  * @returns {Promise<Object>} { canCreate: boolean, currentCount: number, maxSessions: number|null, message: string }
  */
@@ -93,7 +94,7 @@ async function checkSessionLimit(partnerId) {
     }
 
     // If max_sessions is NULL, it means unlimited
-    if (subscription.max_sessions === null || subscription.max_sessions >= 999999) {
+    if (subscription.max_sessions === null || subscription.max_sessions === undefined) {
       return {
         canCreate: true,
         currentCount: 0,
@@ -102,19 +103,8 @@ async function checkSessionLimit(partnerId) {
       };
     }
 
-    // Calculate billing period date range
-    const { startDate, endDate } = calculateBillingPeriodRange(
-      subscription.billing_period || 'monthly',
-      subscription.subscription_start_date || subscription.assigned_at,
-      subscription.subscription_end_date
-    );
-
-    // Count sessions within billing period
-    const currentCount = await TherapySession.countSessionsByDateRange(
-      partnerId,
-      startDate,
-      endDate
-    );
+    // Count sessions created in current month (matching appointments logic)
+    const currentCount = await TherapySession.countCurrentMonthSessions(partnerId);
 
     // Check if limit is reached
     const canCreate = currentCount < subscription.max_sessions;
@@ -126,7 +116,7 @@ async function checkSessionLimit(partnerId) {
       planName: subscription.plan_name,
       message: canCreate 
         ? null 
-        : `You have reached your session limit of ${subscription.max_sessions} sessions for your ${subscription.plan_name}. Please upgrade your plan to create more sessions.`
+        : `You have reached max sessions limit of ${subscription.max_sessions}`
     };
   } catch (error) {
     console.error('Error checking session limit:', error);
@@ -186,12 +176,7 @@ const createTherapySession = async (req, res) => {
     const limitCheck = await checkSessionLimit(partner_id);
     if (!limitCheck.canCreate) {
       return res.status(403).json({
-        error: limitCheck.message,
-        sessionLimit: {
-          currentCount: limitCheck.currentCount,
-          maxSessions: limitCheck.maxSessions,
-          planName: limitCheck.planName
-        }
+        error: limitCheck.message || `You have reached max sessions limit of ${limitCheck.maxSessions}`
       });
     }
 
@@ -363,12 +348,7 @@ const createStandaloneSession = async (req, res) => {
     const limitCheck = await checkSessionLimit(partner_id);
     if (!limitCheck.canCreate) {
       return res.status(403).json({
-        error: limitCheck.message,
-        sessionLimit: {
-          currentCount: limitCheck.currentCount,
-          maxSessions: limitCheck.maxSessions,
-          planName: limitCheck.planName
-        }
+        error: limitCheck.message || `You have reached max sessions limit of ${limitCheck.maxSessions}`
       });
     }
 

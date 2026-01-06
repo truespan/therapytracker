@@ -236,6 +236,33 @@ class Appointment {
   }
 
   /**
+   * Count appointments and video sessions for a partner in the current month
+   * Counts all appointments and video sessions created this month, regardless of deletion status
+   * This enforces a true monthly limit - deleting appointments/video sessions doesn't free up slots
+   * @param {number} partnerId - Partner ID
+   * @returns {Promise<number>} Count of appointments and video sessions created in current month
+   */
+  static async countCurrentMonthAppointments(partnerId) {
+    const query = `
+      SELECT 
+        (SELECT COUNT(*) 
+         FROM appointments 
+         WHERE partner_id = $1
+           AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+           AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+        ) +
+        (SELECT COUNT(*) 
+         FROM video_sessions 
+         WHERE partner_id = $1
+           AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+           AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+        ) as count
+    `;
+    const result = await db.query(query, [partnerId]);
+    return parseInt(result.rows[0].count) || 0;
+  }
+
+  /**
    * Find appointments that need reminders (4 hours before appointment time)
    * Returns appointments scheduled between 4 hours and 4 hours 10 minutes from now
    * This gives a 10-minute window to send reminders

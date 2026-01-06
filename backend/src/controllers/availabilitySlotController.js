@@ -99,6 +99,18 @@ const createSlot = async (req, res) => {
       });
     }
 
+    // Check max appointments limit before creating slot
+    // Since booking a slot creates an appointment, we need to check the limit
+    const subscription = await PartnerSubscription.getActiveSubscription(partner_id);
+    if (subscription && subscription.max_appointments !== null && subscription.max_appointments !== undefined) {
+      const currentMonthCount = await Appointment.countCurrentMonthAppointments(partner_id);
+      if (currentMonthCount >= subscription.max_appointments) {
+        return res.status(403).json({ 
+          error: `You have reached max appointments limit of ${subscription.max_appointments}` 
+        });
+      }
+    }
+
     // Check for Google Calendar conflicts if creating an "available" slot
     let conflictWarning = null;
     if (status.startsWith('available')) {
@@ -463,6 +475,18 @@ const bookSlot = async (req, res) => {
     // If NO conflict, create appointment and sync to Google Calendar
     if (conflicts.length === 0) {
       try {
+        // Check max appointments limit
+        const subscription = await PartnerSubscription.getActiveSubscription(slot.partner_id);
+        if (subscription && subscription.max_appointments !== null && subscription.max_appointments !== undefined) {
+          const currentMonthCount = await Appointment.countCurrentMonthAppointments(slot.partner_id);
+          if (currentMonthCount >= subscription.max_appointments) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ 
+              error: `You have reached max appointments limit of ${subscription.max_appointments}` 
+            });
+          }
+        }
+
         // Use the start_datetime and end_datetime fields directly - they're already UTC timestamptz
         // No need to manually construct ISO strings which can introduce timezone bugs
         const startDatetime = new Date(slot.start_datetime);

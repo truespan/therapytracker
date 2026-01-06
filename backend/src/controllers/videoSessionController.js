@@ -1,5 +1,7 @@
 const VideoSession = require('../models/VideoSession');
 const googleCalendarService = require('../services/googleCalendarService');
+const PartnerSubscription = require('../models/PartnerSubscription');
+const Appointment = require('../models/Appointment');
 
 const createVideoSession = async (req, res) => {
   try {
@@ -20,6 +22,17 @@ const createVideoSession = async (req, res) => {
       return res.status(400).json({
         error: 'partner_id, user_id, title, session_date, and end_date are required'
       });
+    }
+
+    // Check max appointments limit (includes video sessions)
+    const subscription = await PartnerSubscription.getActiveSubscription(partner_id);
+    if (subscription && subscription.max_appointments !== null && subscription.max_appointments !== undefined) {
+      const currentMonthCount = await Appointment.countCurrentMonthAppointments(partner_id);
+      if (currentMonthCount >= subscription.max_appointments) {
+        return res.status(403).json({ 
+          error: `You have reached max appointments limit of ${subscription.max_appointments}` 
+        });
+      }
     }
 
     // Check for conflicts

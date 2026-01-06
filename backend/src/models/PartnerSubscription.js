@@ -347,6 +347,7 @@ class PartnerSubscription {
              sp.plan_name,
              sp.min_sessions,
              sp.max_sessions,
+             sp.max_appointments,
              sp.has_video,
              sp.plan_duration_days,
              sp.individual_monthly_price,

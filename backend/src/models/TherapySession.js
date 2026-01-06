@@ -462,6 +462,25 @@ class TherapySession {
    * @param {Date|null} endDate - End date (inclusive), null for no end limit
    * @returns {Promise<number>} Count of sessions
    */
+  /**
+   * Count therapy sessions for a partner in the current month
+   * Counts all sessions created this month, regardless of deletion status
+   * This enforces a true monthly limit - deleting sessions doesn't free up slots
+   * @param {number} partnerId - Partner ID
+   * @returns {Promise<number>} Count of sessions created in current month
+   */
+  static async countCurrentMonthSessions(partnerId) {
+    const query = `
+      SELECT COUNT(*) as count
+      FROM therapy_sessions
+      WHERE partner_id = $1
+        AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM CURRENT_DATE)
+        AND EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+    `;
+    const result = await db.query(query, [partnerId]);
+    return parseInt(result.rows[0].count) || 0;
+  }
+
   static async countSessionsByDateRange(partnerId, startDate = null, endDate = null) {
     let query = `
       SELECT COUNT(*) as session_count
