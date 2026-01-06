@@ -415,7 +415,16 @@ const getCurrentUser = async (req, res) => {
           // For partners in TheraPTrack orgs, attach subscription data
           if (org.theraptrack_controlled) {
             const PartnerSubscription = require('../models/PartnerSubscription');
-            const activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+            let activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+            
+            // Check if subscription expired and revert to Free Plan
+            if (activeSub && !PartnerSubscription.isActive(activeSub)) {
+              // Subscription expired, revert to Free Plan
+              console.log(`[getCurrentUser] Partner ${userDetails.id} subscription expired, reverting to Free Plan`);
+              await PartnerSubscription.revertToFreePlan(userDetails.id);
+              // Fetch the new Free Plan subscription
+              activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+            }
             
             if (activeSub) {
               userDetails.subscription = activeSub;
@@ -424,7 +433,7 @@ const getCurrentUser = async (req, res) => {
               userDetails.subscription_start_date = activeSub.subscription_start_date;
               userDetails.subscription_end_date = activeSub.subscription_end_date;
             } else {
-              // Ensure they have a subscription (Free Plan)
+              // No active subscription, ensure they get Free Plan
               await PartnerSubscription.getOrCreateFreePlan(userDetails.id);
               const freeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
               if (freeSub) {

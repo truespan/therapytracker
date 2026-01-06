@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { partnerAPI, chartAPI, questionnaireAPI, googleCalendarAPI } from '../../services/api';
 import QuestionnaireComparison from '../charts/QuestionnaireComparison';
@@ -49,10 +50,32 @@ const getImageUrl = (photoUrl) => {
 };
 
 const PartnerDashboard = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [sentCharts, setSentCharts] = useState([]);
+
+  // Check if user is on Free Plan and block dashboard access
+  useEffect(() => {
+    if (!user) return;
+
+    // Only check for partners in TheraPTrack-controlled organizations
+    if (user.userType === 'partner' && user.organization?.theraptrack_controlled === true) {
+      const isFreePlan = user?.subscription?.plan_name?.toLowerCase().includes('free');
+      const isOnTrialPlan = user?.subscription?.plan_duration_days && user?.subscription?.plan_duration_days > 0;
+      const isTrialEnded = isOnTrialPlan && user?.subscription_end_date && new Date(user.subscription_end_date) <= new Date();
+
+      // Block Free Plan users and ended trial users from accessing dashboard
+      if (isFreePlan || isTrialEnded) {
+        console.log('[PartnerDashboard] Blocking Free Plan or ended trial user from accessing dashboard');
+        // Logout and redirect to login
+        logout();
+        navigate('/login');
+        return;
+      }
+    }
+  }, [user, logout, navigate]);
 
   // Debug logging for production
   useEffect(() => {

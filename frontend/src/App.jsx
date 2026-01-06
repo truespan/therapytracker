@@ -33,7 +33,7 @@ import SubscriptionPlanModal from './components/modals/SubscriptionPlanModal';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -45,6 +45,19 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (allowedRoles && !allowedRoles.includes(user.userType)) {
     return <Navigate to="/" />;
+  }
+
+  // Block Free Plan users and ended trial users from accessing partner dashboard
+  if (user.userType === 'partner' && user.organization?.theraptrack_controlled === true) {
+    const isFreePlan = user?.subscription?.plan_name?.toLowerCase().includes('free');
+    const isOnTrialPlan = user?.subscription?.plan_duration_days && user?.subscription?.plan_duration_days > 0;
+    const isTrialEnded = isOnTrialPlan && user?.subscription_end_date && new Date(user.subscription_end_date) <= new Date();
+
+    if (isFreePlan || isTrialEnded) {
+      // Logout and redirect to login
+      logout();
+      return <Navigate to="/login" />;
+    }
   }
 
   return children;
