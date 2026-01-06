@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { authAPI } from '../../services/api';
+import { trackTermsAccepted } from '../../services/analytics';
 
 const TermsConditionsModal = ({ isOpen, user, onAccept }) => {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
@@ -40,6 +41,8 @@ const TermsConditionsModal = ({ isOpen, user, onAccept }) => {
       const response = await authAPI.acceptTerms();
       
       if (response.data && response.data.success) {
+        // Track terms acceptance
+        trackTermsAccepted();
         onAccept(response.data.user);
       } else {
         setError(response.data?.error || response.data?.message || 'Failed to accept terms. Please try again.');

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Activity, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { authAPI } from '../services/api';
+import { trackPasswordResetCompleted } from '../services/analytics';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -50,6 +51,8 @@ const ResetPassword = () => {
 
     try {
       await authAPI.resetPassword(token, formData.newPassword);
+      // Track password reset completion
+      trackPasswordResetCompleted();
       setSuccess(true);
       
       // Redirect to login after 3 seconds

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { authAPI, userAPI } from '../services/api';
+import { trackLogin, trackSignup, trackLogout, trackGoogleLogin, setUserProperties, clearUserProperties } from '../services/analytics';
 
 const AuthContext = createContext(null);
 
@@ -13,6 +14,9 @@ export const AuthProvider = ({ children }) => {
   const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
 
   const logout = useCallback((shouldNavigate = false) => {
+    // Track logout event
+    trackLogout();
+    
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('lastActivityTimestamp');
@@ -106,7 +110,10 @@ export const AuthProvider = ({ children }) => {
       }
       
       // User is still within inactivity timeout, restore session
-      setUser(JSON.parse(savedUser));
+      const restoredUser = JSON.parse(savedUser);
+      setUser(restoredUser);
+      // Set user properties for restored session
+      setUserProperties(restoredUser);
       // Update last activity timestamp to now since we're restoring the session
       localStorage.setItem('lastActivityTimestamp', Date.now().toString());
       
@@ -116,6 +123,8 @@ export const AuthProvider = ({ children }) => {
           const updatedUser = response.data.user;
           localStorage.setItem('user', JSON.stringify(updatedUser));
           setUser(updatedUser);
+          // Update user properties with refreshed data
+          setUserProperties(updatedUser);
           setLoading(false);
         })
         .catch(error => {
@@ -140,6 +149,10 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('lastActivityTimestamp', Date.now().toString());
       setUser(userData);
+      
+      // Track login event and set user properties
+      trackLogin('email');
+      setUserProperties(userData);
       
       return { success: true, user: userData };
     } catch (error) {
@@ -191,6 +204,10 @@ export const AuthProvider = ({ children }) => {
       setUser(finalUserData);
       console.log('[AuthContext] User state set with complete data');
       
+      // Track Google login event and set user properties
+      trackGoogleLogin();
+      setUserProperties(finalUserData);
+      
       return { success: true, user: finalUserData };
     } catch (error) {
       console.error('[AuthContext] Google login error:', error);
@@ -212,6 +229,10 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('lastActivityTimestamp', Date.now().toString());
       setUser(newUser);
       
+      // Track signup event and set user properties
+      trackSignup(newUser.userType || 'user');
+      setUserProperties(newUser);
+      
       return { success: true, user: newUser };
     } catch (error) {
       return { 
@@ -225,6 +246,8 @@ export const AuthProvider = ({ children }) => {
     const updatedUser = { ...user, ...updatedData };
     localStorage.setItem('user', JSON.stringify(updatedUser));
     setUser(updatedUser);
+    // Update user properties when user data changes
+    setUserProperties(updatedUser);
   };
 
   const refreshUser = async () => {
@@ -237,6 +260,8 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
+      // Update user properties when refreshing user data
+      setUserProperties(userData);
 
       return { success: true, user: userData };
     } catch (error) {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Activity, Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import { authAPI } from '../services/api';
+import { trackPasswordResetRequested } from '../services/analytics';
 
 const ForgotPassword = () => {
   const [identifier, setIdentifier] = useState('');
@@ -17,6 +18,8 @@ const ForgotPassword = () => {
 
     try {
       await authAPI.forgotPassword(identifier.trim());
+      // Track password reset request
+      trackPasswordResetRequested();
       setSuccess(true);
       setIdentifier('');
     } catch (err) {

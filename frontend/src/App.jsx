@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { trackPageView, trackDashboardViewed } from './services/analytics';
 import InactivityLogout from './components/InactivityLogout';
 import Navbar from './components/layout/Navbar';
 import AdminLayout from './components/layout/AdminLayout';
@@ -53,6 +54,24 @@ function AppRoutes() {
   const { user, updateUser, needsTermsAcceptance, needsSubscription, logout } = useAuth();
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const location = useLocation();
+
+  // Track page views on route changes
+  useEffect(() => {
+    const path = location.pathname;
+    const pageTitle = document.title;
+    
+    // Track page view with user context
+    trackPageView(path, pageTitle, {
+      user_type: user?.userType || 'anonymous',
+    });
+
+    // Track dashboard views specifically
+    if (path.includes('/dashboard')) {
+      const userType = user?.userType || 'anonymous';
+      trackDashboardViewed(userType);
+    }
+  }, [location.pathname, user?.userType]);
 
   // Check if modals need to be shown
   useEffect(() => {

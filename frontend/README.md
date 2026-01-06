@@ -84,7 +84,29 @@ Custom utility classes:
 
 ```
 REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_GA_MEASUREMENT_ID=G-XXXXXXXXXX  # Optional: Google Analytics 4 Measurement ID
 ```
+
+### Google Analytics Setup
+
+To enable Google Analytics tracking:
+
+1. **Create a GA4 Property** (if you don't have one):
+   - Go to https://analytics.google.com/
+   - Sign in with your Google account
+   - Click "Start measuring" or create a new property
+   - Follow the setup wizard to create a GA4 property
+
+2. **Get Your Measurement ID**:
+   - In GA4, go to Admin → Data Streams
+   - Click on your web stream (or create one)
+   - Copy the Measurement ID (format: `G-XXXXXXXXXX`)
+
+3. **Add to Environment Variables**:
+   - Add `REACT_APP_GA_MEASUREMENT_ID=G-XXXXXXXXXX` to your `.env` file
+   - Rebuild the application for changes to take effect
+
+**Note**: Analytics tracking is optional. If `REACT_APP_GA_MEASUREMENT_ID` is not provided, the app will function normally without tracking.
 
 ## Building for Production
 

@@ -3,6 +3,7 @@ import { Check, CreditCard, AlertCircle, Video, Calendar, X } from 'lucide-react
 import api from '../../services/api';
 import { razorpayAPI, subscriptionPlanAPI } from '../../services/api';
 import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
+import { trackSubscriptionSelected, trackSubscriptionStarted, trackSubscriptionUpgraded } from '../../services/analytics';
 
 const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }) => {
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
@@ -177,6 +178,14 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
             console.error('Failed to track payment completion:', trackErr);
           }
 
+          // Track subscription started in GA4
+          const previousPlan = user?.subscription?.plan_name;
+          const newPlan = selectedPlan.plan_name;
+          if (previousPlan && previousPlan !== newPlan) {
+            trackSubscriptionUpgraded(previousPlan, newPlan);
+          }
+          trackSubscriptionStarted(newPlan);
+
           // Call the callback with updated user data
           onSubscriptionComplete(response.data.user);
         } else {
@@ -215,6 +224,14 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           } catch (trackErr) {
             console.error('Failed to track payment completion:', trackErr);
           }
+
+          // Track subscription started in GA4
+          const previousPlan = user?.subscription?.plan_name;
+          const newPlan = selectedPlan.plan_name;
+          if (previousPlan && previousPlan !== newPlan) {
+            trackSubscriptionUpgraded(previousPlan, newPlan);
+          }
+          trackSubscriptionStarted(newPlan);
 
           // Call the callback with updated user data
           onSubscriptionComplete(response.data.user);
@@ -288,6 +305,14 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
             console.error('Failed to track payment completion:', trackErr);
             // Continue even if tracking fails
           }
+
+          // Track subscription started in GA4
+          const previousPlan = user?.subscription?.plan_name;
+          const newPlan = selectedPlan.plan_name;
+          if (previousPlan && previousPlan !== newPlan) {
+            trackSubscriptionUpgraded(previousPlan, newPlan);
+          }
+          trackSubscriptionStarted(newPlan);
 
           // Call the callback with updated user data
           onSubscriptionComplete(response.data.user);
@@ -432,7 +457,12 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                 return (
                   <div
                     key={plan.id}
-                    onClick={() => setSelectedPlan(plan)}
+                    onClick={() => {
+                      setSelectedPlan(plan);
+                      // Track plan selection
+                      const price = getPriceForPeriod(plan, selectedBillingPeriod);
+                      trackSubscriptionSelected(plan.plan_name, price);
+                    }}
                     className={`relative rounded-xl border-2 p-6 cursor-pointer transition-all hover:shadow-lg ${
                       isSelected
                         ? 'border-primary-600 dark:border-dark-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-xl'

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader, Activity, ArrowRight } from 'lucide-react';
 import { authAPI } from '../services/api';
+import { trackEmailVerified } from '../services/analytics';
 
 const VerifyEmail = () => {
   console.log('VerifyEmail component rendered!');
@@ -40,6 +41,9 @@ const VerifyEmail = () => {
         if (response.data.partner?.email_verified) {
           console.log('✅ Email verified successfully! Partner:', response.data.partner.name);
           console.log('✅ Redirecting to login page in 3 seconds...');
+
+          // Track email verification
+          trackEmailVerified();
 
           // Navigate to login page after a short delay to show success message
           setTimeout(() => {
