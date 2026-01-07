@@ -174,6 +174,11 @@ const PrivacyPolicy = () => {
               <p className="text-gray-700 dark:text-dark-text-secondary">
                 Our Service may contain links to third-party websites or services. We are not responsible for the privacy practices or content of such third parties. We encourage you to review the privacy policies of any third-party sites you visit.
               </p>
+              <ul className="list-disc pl-6 text-gray-700 dark:text-dark-text-secondary mb-4">
+                <li><strong>Google OAuth:</strong> Used for secure authentication</li>
+                <li><strong>Google OAuth:</strong> Used for Google Calendar integration</li>
+                <li><strong>Google Analytics:</strong> Used for analytics and reporting</li>
+              </ul>
             </section>
 
             <section className="mb-8">

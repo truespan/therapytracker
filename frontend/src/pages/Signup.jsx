@@ -244,7 +244,7 @@ const Signup = () => {
                 className="h-full w-full object-contain"
               />
             </button>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Create Patient Account</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Create Client Account</h2>
             <p className="text-sm sm:text-base text-gray-600 dark:text-dark-text-secondary mt-2">Join TheraP Track today</p>
           </div>
 

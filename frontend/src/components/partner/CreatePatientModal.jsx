@@ -117,7 +117,7 @@ const CreatePatientModal = ({ isOpen, onClose, partnerId, onSuccess }) => {
       }
     } catch (err) {
       console.error('Failed to create patient:', err);
-      setApiError(err.response?.data?.error || 'Failed to create patient account. Please try again.');
+      setApiError(err.response?.data?.error || 'Failed to create client account. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -149,7 +149,7 @@ const CreatePatientModal = ({ isOpen, onClose, partnerId, onSuccess }) => {
         <div className="sticky top-0 bg-white dark:bg-dark-bg-tertiary border-b border-gray-200 dark:border-dark-border px-6 py-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">
             <User className="h-6 w-6 mr-2 text-primary-600 dark:text-dark-primary-500" />
-            Create Patient Account
+            Create Client Account
           </h2>
           <button
             onClick={handleClose}
