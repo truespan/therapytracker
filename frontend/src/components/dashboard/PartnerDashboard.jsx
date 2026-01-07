@@ -896,6 +896,7 @@ const PartnerDashboard = () => {
             <button
               onClick={() => setShowCreatePatientModal(true)}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+              title="For adding existing clients who booked manually, not through the app."
             >
               <UserPlus className="h-5 w-5" />
               Create New Client

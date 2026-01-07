@@ -727,6 +727,17 @@ const checkAppointmentConflicts = async (req, res) => {
   }
 };
 
+const getCurrentMonthAppointmentCount = async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+    const count = await Appointment.countCurrentMonthAppointments(partnerId);
+    res.json({ count });
+  } catch (error) {
+    console.error('Get current month appointment count error:', error);
+    res.status(500).json({ error: 'Failed to fetch appointment count', details: error.message });
+  }
+};
+
 module.exports = {
   createAppointment,
   getAppointmentById,
@@ -735,5 +746,6 @@ module.exports = {
   updateAppointment,
   deleteAppointment,
   getUpcomingAppointments,
-  checkAppointmentConflicts
+  checkAppointmentConflicts,
+  getCurrentMonthAppointmentCount
 };

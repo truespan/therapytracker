@@ -99,17 +99,10 @@ const createSlot = async (req, res) => {
       });
     }
 
-    // Check max appointments limit before creating slot
-    // Since booking a slot creates an appointment, we need to check the limit
-    const subscription = await PartnerSubscription.getActiveSubscription(partner_id);
-    if (subscription && subscription.max_appointments !== null && subscription.max_appointments !== undefined) {
-      const currentMonthCount = await Appointment.countCurrentMonthAppointments(partner_id);
-      if (currentMonthCount >= subscription.max_appointments) {
-        return res.status(403).json({ 
-          error: `You have reached max appointments limit of ${subscription.max_appointments}` 
-        });
-      }
-    }
+    // NOTE:
+    // Do NOT cap availability slot creation based on max_appointments.
+    // max_appointments is enforced when a slot is actually booked (appointment creation),
+    // not when a therapist publishes/creates availability.
 
     // Check for Google Calendar conflicts if creating an "available" slot
     let conflictWarning = null;

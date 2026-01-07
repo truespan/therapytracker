@@ -270,6 +270,7 @@ export const appointmentAPI = {
       params: { days }
     });
   },
+  getCurrentMonthCount: (partnerId) => api.get(`/partners/${partnerId}/appointments/current-month-count`),
   getByUser: (userId) => api.get(`/users/${userId}/appointments`),
   update: (id, data) => api.put(`/appointments/${id}`, data),
   delete: (id) => api.delete(`/appointments/${id}`),

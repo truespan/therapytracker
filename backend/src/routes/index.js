@@ -183,6 +183,7 @@ router.get('/appointments/check-conflicts', authenticateToken, appointmentContro
 router.get('/appointments/:id', authenticateToken, appointmentController.getAppointmentById);
 router.get('/partners/:partnerId/appointments', authenticateToken, appointmentController.getPartnerAppointments);
 router.get('/partners/:partnerId/upcoming-appointments', authenticateToken, appointmentController.getUpcomingAppointments);
+router.get('/partners/:partnerId/appointments/current-month-count', authenticateToken, appointmentController.getCurrentMonthAppointmentCount);
 router.get('/users/:userId/appointments', authenticateToken, appointmentController.getUserAppointments);
 router.put('/appointments/:id', authenticateToken, appointmentController.updateAppointment);
 router.delete('/appointments/:id', authenticateToken, appointmentController.deleteAppointment);

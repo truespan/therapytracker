@@ -5,10 +5,13 @@ import AvailabilityCalendar from './AvailabilityCalendar';
 import ConflictWarningModal from './ConflictWarningModal';
 import BookingFeeCard from './BookingFeeCard';
 import DeleteWarningDialog from './DeleteWarningDialog';
-import { availabilityAPI } from '../../services/api';
+import MaxAppointmentsWarningDialog from './MaxAppointmentsWarningDialog';
+import { availabilityAPI, appointmentAPI } from '../../services/api';
 import { formatTime, getUserTimezone } from '../../utils/dateUtils';
+import { useAuth } from '../../context/AuthContext';
 
 const AvailabilityTab = ({ partnerId }) => {
+  const { user } = useAuth();
   const [slots, setSlots] = useState([]);
   const [formData, setFormData] = useState({
     date: '',
@@ -26,10 +29,73 @@ const AvailabilityTab = ({ partnerId }) => {
   const [deleteDialogAction, setDeleteDialogAction] = useState(null);
   const [paymentInfo, setPaymentInfo] = useState(null);
   const [loadingPaymentInfo, setLoadingPaymentInfo] = useState(false);
+  const [showMaxAppointmentsWarning, setShowMaxAppointmentsWarning] = useState(false);
+  const [maxAppointmentsWarningValue, setMaxAppointmentsWarningValue] = useState(null);
+  const [dontShowMaxAppointmentsWarningAgain, setDontShowMaxAppointmentsWarningAgain] = useState(false);
 
   useEffect(() => {
     loadSlots();
   }, [partnerId]);
+
+  const getMaxAppointmentsLimit = () => {
+    const raw = user?.subscription?.max_appointments;
+    if (raw === null || raw === undefined) return null;
+    const parsed = typeof raw === 'string' ? parseInt(raw, 10) : raw;
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const getMaxAppointmentsWarningDismissKey = (maxAppointments) => {
+    if (maxAppointments === null || maxAppointments === undefined) return null;
+    // Scope by partner + plan limit so upgrades (9 -> 25) can show again
+    return `availability:maxAppointmentsWarning:dismissed:${partnerId}:${maxAppointments}`;
+  };
+
+  const isMaxAppointmentsWarningDismissed = (maxAppointments) => {
+    const key = getMaxAppointmentsWarningDismissKey(maxAppointments);
+    if (!key) return false;
+    return localStorage.getItem(key) === 'true';
+  };
+
+  const getMonthKey = (slotDate) => {
+    if (!slotDate) return null;
+    const dateStr = typeof slotDate === 'string' ? slotDate.split('T')[0] : String(slotDate);
+    return dateStr.length >= 7 ? dateStr.slice(0, 7) : null; // YYYY-MM
+  };
+
+  const countAvailableSlotsInMonth = (monthKey) => {
+    if (!monthKey) return 0;
+    return slots.filter((s) => {
+      const status = s?.status || '';
+      if (!status.startsWith('available')) return false;
+      return getMonthKey(s?.slot_date) === monthKey;
+    }).length;
+  };
+
+  const checkAndShowMaxAppointmentsWarning = async () => {
+    const maxAppointments = getMaxAppointmentsLimit();
+    if (maxAppointments === null) return false;
+    if (isMaxAppointmentsWarningDismissed(maxAppointments)) return false;
+
+    try {
+      // Check current month appointment count
+      const response = await appointmentAPI.getCurrentMonthCount(partnerId);
+      const currentAppointmentCount = response.data.count || 0;
+
+      // Show warning if current appointment count has reached or exceeded the limit
+      // This means creating a new availability slot could lead to exceeding the limit
+      if (currentAppointmentCount >= maxAppointments) {
+        setMaxAppointmentsWarningValue(maxAppointments);
+        setDontShowMaxAppointmentsWarningAgain(false);
+        setShowMaxAppointmentsWarning(true);
+        return true;
+      }
+    } catch (error) {
+      console.error('Failed to check appointment count:', error);
+      // Don't block slot creation if we can't check the count
+    }
+
+    return false;
+  };
 
   /**
    * Load availability slots for next 4 weeks (28 days)
@@ -70,6 +136,22 @@ const AvailabilityTab = ({ partnerId }) => {
   const handleCreateSlot = async () => {
     try {
       setLoading(true);
+
+      // Check appointment count BEFORE creating the slot
+      const shouldShowWarning = await checkAndShowMaxAppointmentsWarning();
+      if (shouldShowWarning) {
+        // Store the slot data to create after warning is acknowledged
+        setPendingSlotData({
+          partner_id: partnerId,
+          slot_date: formData.date,
+          start_time: formData.start_time,
+          end_time: formData.end_time,
+          status: formData.status,
+          timezone: getUserTimezone()
+        });
+        setLoading(false);
+        return;
+      }
 
       const slotData = {
         partner_id: partnerId,
@@ -115,6 +197,38 @@ const AvailabilityTab = ({ partnerId }) => {
     alert('Availability slot created successfully (despite conflict)!');
     resetForm();
     loadSlots();
+  };
+
+  /**
+   * Proceed with slot creation after max appointments warning is acknowledged
+   */
+  const proceedWithSlotCreationAfterWarning = async () => {
+    if (!pendingSlotData) return;
+
+    try {
+      setLoading(true);
+      const response = await availabilityAPI.createSlot(pendingSlotData);
+
+      // Check if there's a conflict warning
+      if (response.data.conflict_warning && response.data.conflict_warning.has_conflict) {
+        setConflictWarning(response.data.conflict_warning);
+        setShowConflictModal(true);
+        setLoading(false);
+        return;
+      }
+
+      // Success - no conflict or slot created anyway
+      alert('Availability slot created successfully!');
+      resetForm();
+      loadSlots();
+    } catch (error) {
+      console.error('Failed to create slot:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to create availability slot';
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+      setPendingSlotData(null);
+    }
   };
 
   /**
@@ -400,6 +514,30 @@ const AvailabilityTab = ({ partnerId }) => {
           slot={deleteDialogSlot}
           paymentInfo={paymentInfo}
           actionType={deleteDialogAction}
+        />
+      )}
+
+      {/* Max Appointments Warning Dialog */}
+      {showMaxAppointmentsWarning && maxAppointmentsWarningValue !== null && (
+        <MaxAppointmentsWarningDialog
+          isOpen={showMaxAppointmentsWarning}
+          maxAppointments={maxAppointmentsWarningValue}
+          dontShowAgain={dontShowMaxAppointmentsWarningAgain}
+          onToggleDontShowAgain={setDontShowMaxAppointmentsWarningAgain}
+          onClose={async () => {
+            if (dontShowMaxAppointmentsWarningAgain) {
+              const key = getMaxAppointmentsWarningDismissKey(maxAppointmentsWarningValue);
+              if (key) localStorage.setItem(key, 'true');
+            }
+            setShowMaxAppointmentsWarning(false);
+            setMaxAppointmentsWarningValue(null);
+            setDontShowMaxAppointmentsWarningAgain(false);
+            
+            // If there's pending slot data, proceed with creation after warning is acknowledged
+            if (pendingSlotData) {
+              await proceedWithSlotCreationAfterWarning();
+            }
+          }}
         />
       )}
     </div>
