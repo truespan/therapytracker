@@ -16,3 +16,4 @@ CREATE INDEX IF NOT EXISTS idx_poa_user ON plan_of_assessments(user_id);
 CREATE INDEX IF NOT EXISTS idx_poa_partner ON plan_of_assessments(partner_id);
 
 
+

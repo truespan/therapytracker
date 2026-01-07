@@ -74,3 +74,4 @@ END $$;
 COMMENT ON COLUMN therapy_sessions.google_drive_link IS 'JSONB array of Google Drive links. Format: [{"url": "https://...", "label": "optional label"}, ...]';
 
 
+

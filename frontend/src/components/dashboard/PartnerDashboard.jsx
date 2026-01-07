@@ -56,26 +56,7 @@ const PartnerDashboard = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [sentCharts, setSentCharts] = useState([]);
 
-  // Check if user is on Free Plan and block dashboard access
-  useEffect(() => {
-    if (!user) return;
-
-    // Only check for partners in TheraPTrack-controlled organizations
-    if (user.userType === 'partner' && user.organization?.theraptrack_controlled === true) {
-      const isFreePlan = user?.subscription?.plan_name?.toLowerCase().includes('free');
-      const isOnTrialPlan = user?.subscription?.plan_duration_days && user?.subscription?.plan_duration_days > 0;
-      const isTrialEnded = isOnTrialPlan && user?.subscription_end_date && new Date(user.subscription_end_date) <= new Date();
-
-      // Block Free Plan users and ended trial users from accessing dashboard
-      if (isFreePlan || isTrialEnded) {
-        console.log('[PartnerDashboard] Blocking Free Plan or ended trial user from accessing dashboard');
-        // Logout and redirect to login
-        logout();
-        navigate('/login');
-        return;
-      }
-    }
-  }, [user, logout, navigate]);
+  // Free Plan users and ended trial users (who fall back to Free Plan) can access dashboard but will see subscription modal
 
   // Debug logging for production
   useEffect(() => {

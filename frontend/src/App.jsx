@@ -47,18 +47,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/" />;
   }
 
-  // Block Free Plan users and ended trial users from accessing partner dashboard
-  if (user.userType === 'partner' && user.organization?.theraptrack_controlled === true) {
-    const isFreePlan = user?.subscription?.plan_name?.toLowerCase().includes('free');
-    const isOnTrialPlan = user?.subscription?.plan_duration_days && user?.subscription?.plan_duration_days > 0;
-    const isTrialEnded = isOnTrialPlan && user?.subscription_end_date && new Date(user.subscription_end_date) <= new Date();
-
-    if (isFreePlan || isTrialEnded) {
-      // Logout and redirect to login
-      logout();
-      return <Navigate to="/login" />;
-    }
-  }
+  // Free Plan users and ended trial users (who fall back to Free Plan) can login but will see subscription modal
 
   return children;
 };

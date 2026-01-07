@@ -113,23 +113,6 @@ const PlanSelectionModal = ({
     return labels[period] || period;
   };
 
-  // Get original price for plans with discounts (only for monthly billing)
-  const getOriginalPrice = (plan) => {
-    // Only show original price for monthly billing period
-    if (selectedBillingPeriod !== 'monthly') return null;
-    
-    const planName = plan.plan_name?.toLowerCase() || '';
-    
-    if (planName.includes('starter plan')) {
-      return 499;
-    } else if (planName.includes('pro plan premium')) {
-      return 1299;
-    } else if (planName.includes('pro plan') && !planName.includes('premium')) {
-      return 899;
-    }
-    
-    return null;
-  };
 
   // Handle plan selection
   const handleSelectPlan = (plan) => {
@@ -222,37 +205,28 @@ const PlanSelectionModal = ({
 
                     {/* Pricing */}
                     <div className="mb-6">
-                      {(() => {
-                        const originalPrice = getOriginalPrice(plan);
-                        return (
-                          <>
-                            {originalPrice && (
-                              <div className="flex items-center space-x-2 mb-1">
-                                <span className="text-lg text-red-600 dark:text-red-400 line-through font-medium">
-                                  ₹{originalPrice.toFixed(2)}/ month
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex items-baseline">
-                              <span className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">
-                                {formatPrice(price)}
-                              </span>
-                              <span className="ml-2 text-gray-600 dark:text-dark-text-secondary">
-                                /{selectedBillingPeriod === 'yearly' ? 'year' : selectedBillingPeriod === 'quarterly' ? 'quarter' : 'month'}
-                              </span>
-                            </div>
-                            {userType === 'organization' && (
-                              <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-1">per therapist</p>
-                            )}
-                          </>
-                        );
-                      })()}
+                      <div className="flex items-baseline">
+                        <span className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">
+                          {formatPrice(price)}
+                        </span>
+                        <span className="ml-2 text-gray-600 dark:text-dark-text-secondary">
+                          /{selectedBillingPeriod === 'yearly' ? 'year' : selectedBillingPeriod === 'quarterly' ? 'quarter' : 'month'}
+                        </span>
+                      </div>
+                      {userType === 'organization' && (
+                        <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-1">per therapist</p>
+                      )}
                     </div>
 
                     {/* Features */}
                     <ul className="space-y-3 mb-6 flex-grow">
                       {/* Session Limit - Always shown */}
-                      <li className="flex items-start">
+                      <li className={`flex items-start ${(() => {
+                        const isUnlimited = plan.max_sessions === null || plan.max_sessions === undefined || plan.max_sessions >= 999999;
+                        const is0to9 = !isUnlimited && plan.min_sessions === 0 && plan.max_sessions === 9;
+                        const is0to25 = !isUnlimited && plan.min_sessions === 0 && plan.max_sessions === 25;
+                        return (isUnlimited || is0to9 || is0to25) ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : '';
+                      })()}`}>
                         <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
                         <span className="text-sm text-gray-700 dark:text-dark-text-secondary">{getSessionLimit(plan)}</span>
                       </li>
@@ -290,7 +264,7 @@ const PlanSelectionModal = ({
                       </li>
 
                       {/* Custom Branding - Always show */}
-                      <li className="flex items-start">
+                      <li className={`flex items-start ${plan.has_custom_branding ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
                         <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_custom_branding ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
                         <span className={`text-sm ${plan.has_custom_branding ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Custom branding {plan.has_custom_branding ? '' : 'not included'}
@@ -298,7 +272,7 @@ const PlanSelectionModal = ({
                       </li>
 
                       {/* Advanced Analytics - Always show */}
-                      <li className="flex items-start">
+                      <li className={`flex items-start ${plan.has_advanced_analytics ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
                         <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_advanced_analytics ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
                         <span className={`text-sm ${plan.has_advanced_analytics ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Advanced analytics {plan.has_advanced_analytics ? '' : 'not included'}
@@ -306,7 +280,7 @@ const PlanSelectionModal = ({
                       </li>
 
                       {/* Blogs, Events & Announcements - Always show */}
-                      <li className="flex items-start">
+                      <li className={`flex items-start ${plan.has_blogs_events_announcements ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
                         <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_blogs_events_announcements ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
                         <span className={`text-sm ${plan.has_blogs_events_announcements ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Blogs, Events & Announcements {plan.has_blogs_events_announcements ? '' : 'not included'}
@@ -314,7 +288,7 @@ const PlanSelectionModal = ({
                       </li>
 
                       {/* Customized Feature Support - Always show */}
-                      <li className="flex items-start">
+                      <li className={`flex items-start ${plan.has_customized_feature_support ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
                         <Check className={`h-5 w-5 mr-2 flex-shrink-0 mt-0.5 ${plan.has_customized_feature_support ? 'text-green-500 dark:text-green-400' : 'text-gray-300 dark:text-gray-500'}`} />
                         <span className={`text-sm ${plan.has_customized_feature_support ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Customized Feature Support {plan.has_customized_feature_support ? '' : 'not included'}
@@ -323,7 +297,7 @@ const PlanSelectionModal = ({
 
                       {/* Support Features - Always show */}
                       {isFeatureEnabled(plan.has_priority_support) ? (
-                        <li className="flex items-start">
+                        <li className="flex items-start bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md">
                           <Check className="h-5 w-5 text-green-500 dark:text-green-400 mr-2 flex-shrink-0 mt-0.5" />
                           <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
                             Priority support

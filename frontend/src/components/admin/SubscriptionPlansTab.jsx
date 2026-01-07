@@ -62,7 +62,11 @@ const SubscriptionPlansTab = () => {
     try {
       setLoading(true);
       const response = await subscriptionPlanAPI.getAll();
-      setPlans(response.data.plans || []);
+      const plansData = response.data.plans || [];
+      // Sort plans by plan_order in ascending order
+      // Plans with the same order number will stay together (stable sort)
+      plansData.sort((a, b) => (a.plan_order || 0) - (b.plan_order || 0));
+      setPlans(plansData);
     } catch (err) {
       console.error('Failed to load subscription plans:', err);
       setError('Failed to load subscription plans. Please try again.');

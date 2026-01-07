@@ -296,53 +296,52 @@ const login = async (req, res) => {
             partner_terms_accepted: userDetails.terms_accepted
           });
 
-          // For partners in TheraPTrack orgs, check if subscription expired
-          if (org.theraptrack_controlled) {
-            const PartnerSubscription = require('../models/PartnerSubscription');
-            let activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
-            
-            if (!activeSub || !PartnerSubscription.isActive(activeSub)) {
-              // Subscription expired, revert to Free Plan
-              console.log(`[LOGIN] Partner ${userDetails.id} subscription expired, reverting to Free Plan`);
-              await PartnerSubscription.revertToFreePlan(userDetails.id);
-              // Refresh partner data to include new subscription
-              userDetails = await Partner.findById(userDetails.id);
-              // Re-add organization object
-              userDetails.organization = {
-                id: org.id,
-                name: org.name,
-                theraptrack_controlled: org.theraptrack_controlled ?? false,
-                video_sessions_enabled: org.video_sessions_enabled ?? true
-              };
-              // Fetch the new Free Plan subscription
-              activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
-            }
-            
-            // Attach subscription data to userDetails
+          // For all partners (both TheraPTrack controlled and non-controlled orgs), attach subscription data
+          const PartnerSubscription = require('../models/PartnerSubscription');
+          let activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+          
+          // For all partners, check if subscription expired and revert to Free Plan if needed
+          if (!activeSub || !PartnerSubscription.isActive(activeSub)) {
+            // Subscription expired or doesn't exist, revert to Free Plan
+            console.log(`[LOGIN] Partner ${userDetails.id} subscription expired or missing, reverting to Free Plan`);
+            await PartnerSubscription.revertToFreePlan(userDetails.id);
+            // Refresh partner data to include new subscription
+            userDetails = await Partner.findById(userDetails.id);
+            // Re-add organization object
+            userDetails.organization = {
+              id: org.id,
+              name: org.name,
+              theraptrack_controlled: org.theraptrack_controlled ?? false,
+              video_sessions_enabled: org.video_sessions_enabled ?? true
+            };
+            // Fetch the new Free Plan subscription
+            activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+          }
+          
+          // Attach subscription data to userDetails (for both controlled and non-controlled orgs)
+          if (activeSub) {
+            console.log(`[LOGIN] Partner ${userDetails.id} subscription:`, {
+              plan_name: activeSub.plan_name,
+              plan_duration_days: activeSub.plan_duration_days,
+              subscription_plan_id: activeSub.subscription_plan_id,
+              subscription_end_date: activeSub.subscription_end_date,
+              is_trial: activeSub.plan_duration_days && activeSub.plan_duration_days > 0
+            });
+            userDetails.subscription = activeSub;
+            userDetails.subscription_plan_id = activeSub.subscription_plan_id;
+            userDetails.subscription_billing_period = activeSub.billing_period;
+            userDetails.subscription_start_date = activeSub.subscription_start_date;
+            userDetails.subscription_end_date = activeSub.subscription_end_date;
+          } else {
+            // No active subscription, ensure they get Free Plan
+            await PartnerSubscription.getOrCreateFreePlan(userDetails.id);
+            activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
             if (activeSub) {
-              console.log(`[LOGIN] Partner ${userDetails.id} subscription:`, {
-                plan_name: activeSub.plan_name,
-                plan_duration_days: activeSub.plan_duration_days,
-                subscription_plan_id: activeSub.subscription_plan_id,
-                subscription_end_date: activeSub.subscription_end_date,
-                is_trial: activeSub.plan_duration_days && activeSub.plan_duration_days > 0
-              });
               userDetails.subscription = activeSub;
               userDetails.subscription_plan_id = activeSub.subscription_plan_id;
               userDetails.subscription_billing_period = activeSub.billing_period;
               userDetails.subscription_start_date = activeSub.subscription_start_date;
               userDetails.subscription_end_date = activeSub.subscription_end_date;
-            } else {
-              // No active subscription, ensure they get Free Plan
-              await PartnerSubscription.getOrCreateFreePlan(userDetails.id);
-              activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
-              if (activeSub) {
-                userDetails.subscription = activeSub;
-                userDetails.subscription_plan_id = activeSub.subscription_plan_id;
-                userDetails.subscription_billing_period = activeSub.billing_period;
-                userDetails.subscription_start_date = activeSub.subscription_start_date;
-                userDetails.subscription_end_date = activeSub.subscription_end_date;
-              }
             }
           }
         }
@@ -412,37 +411,36 @@ const getCurrentUser = async (req, res) => {
             video_sessions_enabled: org.video_sessions_enabled ?? true
           };
           
-          // For partners in TheraPTrack orgs, attach subscription data
-          if (org.theraptrack_controlled) {
-            const PartnerSubscription = require('../models/PartnerSubscription');
-            let activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
-            
-            // Check if subscription expired and revert to Free Plan
-            if (activeSub && !PartnerSubscription.isActive(activeSub)) {
-              // Subscription expired, revert to Free Plan
-              console.log(`[getCurrentUser] Partner ${userDetails.id} subscription expired, reverting to Free Plan`);
-              await PartnerSubscription.revertToFreePlan(userDetails.id);
-              // Fetch the new Free Plan subscription
-              activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
-            }
-            
-            if (activeSub) {
-              userDetails.subscription = activeSub;
-              userDetails.subscription_plan_id = activeSub.subscription_plan_id;
-              userDetails.subscription_billing_period = activeSub.billing_period;
-              userDetails.subscription_start_date = activeSub.subscription_start_date;
-              userDetails.subscription_end_date = activeSub.subscription_end_date;
-            } else {
-              // No active subscription, ensure they get Free Plan
-              await PartnerSubscription.getOrCreateFreePlan(userDetails.id);
-              const freeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
-              if (freeSub) {
-                userDetails.subscription = freeSub;
-                userDetails.subscription_plan_id = freeSub.subscription_plan_id;
-                userDetails.subscription_billing_period = freeSub.billing_period;
-                userDetails.subscription_start_date = freeSub.subscription_start_date;
-                userDetails.subscription_end_date = freeSub.subscription_end_date;
-              }
+          // For all partners (both TheraPTrack controlled and non-controlled orgs), attach subscription data
+          const PartnerSubscription = require('../models/PartnerSubscription');
+          let activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+          
+          // For all partners, check if subscription expired and revert to Free Plan if needed
+          if (!activeSub || !PartnerSubscription.isActive(activeSub)) {
+            // Subscription expired or doesn't exist, revert to Free Plan
+            console.log(`[getCurrentUser] Partner ${userDetails.id} subscription expired or missing, reverting to Free Plan`);
+            await PartnerSubscription.revertToFreePlan(userDetails.id);
+            // Fetch the new Free Plan subscription
+            activeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+          }
+          
+          // Attach subscription data to userDetails (for both controlled and non-controlled orgs)
+          if (activeSub) {
+            userDetails.subscription = activeSub;
+            userDetails.subscription_plan_id = activeSub.subscription_plan_id;
+            userDetails.subscription_billing_period = activeSub.billing_period;
+            userDetails.subscription_start_date = activeSub.subscription_start_date;
+            userDetails.subscription_end_date = activeSub.subscription_end_date;
+          } else {
+            // No active subscription, ensure they get Free Plan
+            await PartnerSubscription.getOrCreateFreePlan(userDetails.id);
+            const freeSub = await PartnerSubscription.getActiveSubscription(userDetails.id);
+            if (freeSub) {
+              userDetails.subscription = freeSub;
+              userDetails.subscription_plan_id = freeSub.subscription_plan_id;
+              userDetails.subscription_billing_period = freeSub.billing_period;
+              userDetails.subscription_start_date = freeSub.subscription_start_date;
+              userDetails.subscription_end_date = freeSub.subscription_end_date;
             }
           }
         }

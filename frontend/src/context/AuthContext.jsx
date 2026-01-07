@@ -280,8 +280,8 @@ export const AuthProvider = ({ children }) => {
       theraptrack_controlled: user.userType === 'partner' ? user.organization?.theraptrack_controlled : user.theraptrack_controlled
     });
     
-    // Partners in TheraPTrack-controlled orgs need to accept terms
-    if (user.userType === 'partner' && user.organization?.theraptrack_controlled === true) {
+    // All partners (in both TheraPTrack-controlled and non-controlled orgs) need to accept terms
+    if (user.userType === 'partner') {
       const needsAcceptance = !user.terms_accepted;
       console.log('[needsTermsAcceptance] Partner needs acceptance:', needsAcceptance);
       return needsAcceptance;
@@ -308,20 +308,35 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
     
-    // Only partners in TheraPTrack-controlled orgs need individual subscriptions
-    if (user.userType === 'partner' && user.organization?.theraptrack_controlled === true) {
+    // Organizations with theraptrack_controlled = true bypass subscription requirements
+    if (user.userType === 'organization' && user.theraptrack_controlled === true) {
+      console.log('[needsSubscription] TheraPTrack controlled organization - bypassing subscription check');
+      return false;
+    }
+    
+    // All partners (in both TheraPTrack-controlled and non-controlled orgs) need individual subscriptions
+    if (user.userType === 'partner') {
       // Check if they have accepted terms first
       if (!user.terms_accepted) return false;
       
       // No subscription plan
       if (!user.subscription_plan_id) return true;
       
-      // Check if subscription has expired
+      // Check if on Free Plan FIRST (including those who fell back from expired paid plans)
+      // Free Plan users cannot bypass the modal - they must select a paid plan
+      const isFreePlan = user.subscription?.plan_name?.toLowerCase().includes('free');
+      if (isFreePlan) {
+        console.log('[needsSubscription] Free Plan user - showing modal (cannot bypass)');
+        return true;
+      }
+      
+      // Check if subscription has expired (paid plans that expired should fall back to Free Plan)
+      // This check handles cases where backend hasn't reverted yet or subscription_end_date indicates expiration
       if (user.subscription_end_date) {
         const endDate = new Date(user.subscription_end_date);
         const now = new Date();
         if (endDate <= now) {
-          console.log('[needsSubscription] Subscription expired, showing modal');
+          console.log('[needsSubscription] Subscription expired - should fall back to Free Plan, showing modal');
           return true;
         }
       }
@@ -335,14 +350,7 @@ export const AuthProvider = ({ children }) => {
         return true;
       }
       
-      // Check if on Free Plan (should select paid plan - modal not cancellable)
-      const isFreePlan = user.subscription?.plan_name?.toLowerCase().includes('free');
-      if (isFreePlan) {
-        // Free Plan users: Show modal (non-cancellable)
-        return true;
-      }
-      
-      // Paid Plan users: Don't show modal (they already have a paid subscription)
+      // Paid Plan users with active subscription: Don't show modal (they already have a paid subscription)
       return false;
     }
     

@@ -130,23 +130,6 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
     }
   };
 
-  // Get original/cancelled price for plans (only for monthly billing)
-  const getOriginalPrice = (plan) => {
-    // Only show original price for monthly billing period
-    if (selectedBillingPeriod !== 'monthly') return null;
-    
-    const planName = plan.plan_name?.toLowerCase() || '';
-    
-    if (planName.includes('starter plan')) {
-      return 499;
-    } else if (planName.includes('pro plan premium')) {
-      return 1299;
-    } else if (planName.includes('pro plan') && !planName.includes('premium')) {
-      return 899;
-    }
-    
-    return null;
-  };
 
   const handleSelectPlan = async () => {
     if (!selectedPlan) {
@@ -362,21 +345,23 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
 
   const handleClose = () => {
     // Allow closing if:
-    // 1. User is on a trial plan (can cancel and proceed), OR
-    // 2. User is on Free Plan (will trigger logout), OR
+    // 1. User is on an active trial plan (can cancel and proceed), OR
+    // 2. User is on Free Plan or ended trial (will trigger logout via cancel icon only), OR
     // 3. There are no paid plans available (prevents users from bypassing payment)
-    if (onClose && (isOnTrialPlan || isFreePlan || (subscriptionPlans.length === 0 && !loading))) {
+    const isActiveTrialPlan = isOnTrialPlan && !isTrialEnded;
+    if (onClose && (isActiveTrialPlan || isFreePlan || isTrialEnded || (subscriptionPlans.length === 0 && !loading))) {
       onClose();
     }
   };
 
   const handleBackdropClick = (e) => {
     // Only close if clicking the backdrop itself, not the modal content
-    // AND only if:
-    // 1. User is on a trial plan (can cancel and proceed), OR
-    // 2. User is on Free Plan (will trigger logout), OR
-    // 3. There are no paid plans available (prevents bypassing payment)
-    if (e.target === e.currentTarget && !processing && (isOnTrialPlan || isFreePlan || (subscriptionPlans.length === 0 && !loading))) {
+    // Free Plan users and ended trial users cannot close by clicking backdrop - must use cancel icon
+    // Allow closing for:
+    // 1. User is on an active trial plan (can cancel and proceed), OR
+    // 2. There are no paid plans available (prevents bypassing payment)
+    const isActiveTrialPlan = isOnTrialPlan && !isTrialEnded;
+    if (e.target === e.currentTarget && !processing && !isFreePlan && !isTrialEnded && (isActiveTrialPlan || (subscriptionPlans.length === 0 && !loading))) {
       handleClose();
     }
   };
@@ -392,22 +377,33 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-6 py-6 text-white relative">
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-2">
-              {isTrialEnded && trialPlanType
-                ? `Your ${trialPlanType} trial has ended. To continue using all features, please upgrade to a paid plan.`
+              {isFreePlan || isTrialEnded
+                ? "You've reached the limit of your current plan. Upgrade to continue using these features."
                 : isOnTrialPlan 
                 ? `You are in "${trialPlanName}" plan now. You can cancel and proceed.`
                 : 'Select Your Subscription Plan'}
             </h2>
             <p className="text-primary-100 dark:text-primary-200">
-              {isTrialEnded && trialPlanType
+              {isFreePlan || isTrialEnded
                 ? 'Choose the plan that best fits your practice needs'
                 : isOnTrialPlan
                 ? 'You can upgrade to a paid plan anytime or continue with your trial'
                 : 'Choose the plan that best fits your practice needs'}
             </p>
           </div>
-          {/* Close button - show for trial users, Free Plan users, or when no paid plans are available */}
-          {!loading && !error && (isOnTrialPlan || isFreePlan || subscriptionPlans.length === 0) && onClose && !processing && (
+          {/* Cancel icon - show for Free Plan users and ended trial users (logs out when clicked) */}
+          {!loading && !error && (isFreePlan || isTrialEnded) && onClose && !processing && (
+            <button
+              onClick={handleClose}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
+              aria-label="Cancel and logout"
+              title="Cancel and logout"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          )}
+          {/* Close button - show for active trial users or when no paid plans are available */}
+          {!loading && !error && !isFreePlan && !isTrialEnded && (isOnTrialPlan || subscriptionPlans.length === 0) && onClose && !processing && (
             <button
               onClick={handleClose}
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
@@ -506,32 +502,23 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                       <h3 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">
                         {plan.plan_name}
                       </h3>
-                      {(() => {
-                        const originalPrice = getOriginalPrice(plan);
-                        return (
-                          <>
-                            {originalPrice && (
-                              <div className="mb-1">
-                                <span className="text-lg text-red-600 dark:text-red-400 line-through font-medium">
-                                  ₹{originalPrice.toFixed(2)}/ month
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex items-baseline justify-center">
-                              <span className="text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
-                                ₹{price}
-                              </span>
-                              <span className="text-gray-600 dark:text-dark-text-secondary ml-2">
-                                / {getPeriodLabel(selectedBillingPeriod)}
-                              </span>
-                            </div>
-                          </>
-                        );
-                      })()}
+                      <div className="flex items-baseline justify-center">
+                        <span className="text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
+                          ₹{price}
+                        </span>
+                        <span className="text-gray-600 dark:text-dark-text-secondary ml-2">
+                          / {getPeriodLabel(selectedBillingPeriod)}
+                        </span>
+                      </div>
                     </div>
 
                     <ul className="space-y-3 mb-6">
-                      <li className="flex items-start space-x-2">
+                      <li className={`flex items-start space-x-2 ${(() => {
+                        const isUnlimited = plan.max_sessions === null || plan.max_sessions >= 999999;
+                        const is0to9 = !isUnlimited && plan.min_sessions === 0 && plan.max_sessions === 9;
+                        const is0to25 = !isUnlimited && plan.min_sessions === 0 && plan.max_sessions === 25;
+                        return (isUnlimited || is0to9 || is0to25) ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : '';
+                      })()}`}>
                         <Calendar className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
                         <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
                           {plan.max_sessions === null || plan.max_sessions >= 999999
@@ -563,32 +550,32 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                           Report generation {plan.has_report_generation ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className="flex items-start space-x-2">
+                      <li className={`flex items-start space-x-2 ${plan.has_custom_branding ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
                         <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_custom_branding ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
                         <span className={`text-sm ${plan.has_custom_branding ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Custom branding {plan.has_custom_branding ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className="flex items-start space-x-2">
+                      <li className={`flex items-start space-x-2 ${plan.has_advanced_analytics ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
                         <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_advanced_analytics ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
                         <span className={`text-sm ${plan.has_advanced_analytics ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Advanced analytics {plan.has_advanced_analytics ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className="flex items-start space-x-2">
+                      <li className={`flex items-start space-x-2 ${plan.has_blogs_events_announcements ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
                         <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_blogs_events_announcements ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
                         <span className={`text-sm ${plan.has_blogs_events_announcements ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Blogs, Events & Announcements {plan.has_blogs_events_announcements ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className="flex items-start space-x-2">
+                      <li className={`flex items-start space-x-2 ${plan.has_customized_feature_support ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
                         <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_customized_feature_support ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
                         <span className={`text-sm ${plan.has_customized_feature_support ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Customized Feature Support {plan.has_customized_feature_support ? '' : 'not included'}
                         </span>
                       </li>
                       {plan.has_priority_support && (
-                        <li className="flex items-start space-x-2">
+                        <li className="flex items-start space-x-2 bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md">
                           <Check className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
                           <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
                             Priority support
@@ -656,13 +643,13 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                 : 'Please select a plan to continue'}
             </p>
             <div className="flex items-center space-x-3">
-              {/* Show close button for trial users, Free Plan users, or when no plans available */}
-              {(isOnTrialPlan || isFreePlan || subscriptionPlans.length === 0) && onClose && !processing && (
+              {/* Show close button for active trial users, Free Plan users, ended trial users, or when no plans available */}
+              {((isOnTrialPlan && !isTrialEnded) || isFreePlan || isTrialEnded || subscriptionPlans.length === 0) && onClose && !processing && (
                 <button
                   onClick={handleClose}
                   className="px-6 py-3 rounded-lg font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
-                  {isOnTrialPlan ? 'Continue with Trial' : 'Close'}
+                  {(isOnTrialPlan && !isTrialEnded) ? 'Continue with Trial' : (isFreePlan || isTrialEnded) ? 'Cancel' : 'Close'}
                 </button>
               )}
               {subscriptionPlans.length > 0 && (
