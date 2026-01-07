@@ -66,7 +66,13 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !isPublicEndpoint) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      
+      // Only redirect if not already on login page to prevent full page reload
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/signup' && currentPath !== '/forgot-password') {
+        // Dispatch a custom event instead of using window.location to avoid page reload
+        window.dispatchEvent(new CustomEvent('unauthorized'));
+      }
     }
     return Promise.reject(error);
   }

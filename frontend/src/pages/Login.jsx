@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -22,9 +22,7 @@ const Login = () => {
   useEffect(() => {
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
-      // Clear the state to prevent message from showing on page refresh
-      navigate(location.pathname, { replace: true, state: {} });
-
+      
       // Auto-dismiss success message after 10 seconds
       const timer = setTimeout(() => {
         setSuccessMessage('');
@@ -32,7 +30,7 @@ const Login = () => {
 
       return () => clearTimeout(timer);
     }
-  }, [location, navigate]);
+  }, [location.state?.message]);
 
   // Force navigation when user is set (fallback if Navigate component doesn't trigger)
   useEffect(() => {

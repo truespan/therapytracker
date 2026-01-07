@@ -30,8 +30,24 @@ const InactivityLogout = () => {
       }
     };
 
-    // Listen for the custom event
+    // Handle unauthorized errors (401) from API calls
+    const handleUnauthorized = () => {
+      const publicRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/', '/privacy-policy', '/terms-of-service'];
+      const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
+      
+      if (!isPublicRoute) {
+        navigate('/login', { 
+          state: { 
+            message: 'Your session has expired. Please sign in again.' 
+          },
+          replace: true 
+        });
+      }
+    };
+
+    // Listen for the custom events
     window.addEventListener('userLoggedOut', handleInactivityLogout);
+    window.addEventListener('unauthorized', handleUnauthorized);
 
     // Also check if user was logged out (state changed from user to null)
     if (previousUserRef.current && !user && location.pathname !== '/login') {
@@ -53,6 +69,7 @@ const InactivityLogout = () => {
 
     return () => {
       window.removeEventListener('userLoggedOut', handleInactivityLogout);
+      window.removeEventListener('unauthorized', handleUnauthorized);
     };
   }, [user, navigate, location]);
 
