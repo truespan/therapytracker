@@ -5,6 +5,7 @@ import {
   CreditCard, Users, CheckCircle, XCircle, AlertCircle,
   Loader, Filter, Gift, X, Search
 } from 'lucide-react';
+import { detectUserLocale } from '../../utils/localeDetection';
 
 const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled, disableTherapistPlanChange }) => {
   const [partners, setPartners] = useState([]);
@@ -49,9 +50,17 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled, disab
 
   const loadTrialPlans = async () => {
     try {
+      // Detect user locale
+      const { locale, countryCode } = detectUserLocale();
+      
       // Use /active endpoint to get all active plans (not filtered by individual_monthly_enabled)
       // This ensures we get all trial plans including "1 Day Trial" even if individual_monthly_enabled is FALSE
-      const response = await api.get('/subscription-plans/active');
+      const response = await api.get('/subscription-plans/active', {
+        params: {
+          locale: locale,
+          country_code: countryCode
+        }
+      });
       if (response.data.success) {
         // Filter to trial plans (those with plan_duration_days > 0) or Free Plan
         // Use case-insensitive comparison and trim whitespace

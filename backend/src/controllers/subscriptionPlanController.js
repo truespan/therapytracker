@@ -21,14 +21,20 @@ const getAllPlans = async (req, res) => {
 };
 
 /**
- * Get active subscription plans only
+ * Get active subscription plans only (with locale support)
  */
 const getActivePlans = async (req, res) => {
   try {
-    const plans = await SubscriptionPlan.getActive();
+    const countryCode = req.countryCode || 'IN';
+    const locale = req.locale || 'en-IN';
+    
+    const plans = await SubscriptionPlan.getActiveWithLocale(countryCode, locale);
+    
     res.json({
       success: true,
-      plans
+      plans,
+      locale,
+      countryCode
     });
   } catch (error) {
     console.error('Error fetching active subscription plans:', error);
@@ -512,11 +518,13 @@ const deletePlan = async (req, res) => {
 };
 
 /**
- * Calculate organization price based on plan, number of therapists, and billing period
+ * Calculate organization price based on plan, number of therapists, and billing period (with locale support)
  */
 const calculateOrganizationPrice = async (req, res) => {
   try {
     const { plan_id, number_of_therapists, billing_period } = req.body;
+    const countryCode = req.countryCode || 'IN';
+    const locale = req.locale || 'en-IN';
 
     // Validate required fields
     if (!plan_id || number_of_therapists === undefined || !billing_period) {
@@ -540,16 +548,20 @@ const calculateOrganizationPrice = async (req, res) => {
       });
     }
 
-    // Calculate price
-    const totalPrice = await SubscriptionPlan.calculateOrganizationPrice(
+    // Get price with locale support
+    const priceInfo = await SubscriptionPlan.getPriceWithLocale(
       parseInt(plan_id),
-      parseInt(number_of_therapists),
-      billing_period
+      'organization',
+      billing_period,
+      countryCode,
+      locale
     );
+
+    // Calculate total price
+    const totalPrice = priceInfo.price * parseInt(number_of_therapists);
 
     // Get plan details for response
     const plan = await SubscriptionPlan.findById(plan_id);
-    const pricePerTherapist = await SubscriptionPlan.getPrice(plan_id, 'organization', billing_period);
 
     res.json({
       success: true,
@@ -557,8 +569,11 @@ const calculateOrganizationPrice = async (req, res) => {
       plan_name: plan?.plan_name,
       number_of_therapists: parseInt(number_of_therapists),
       billing_period,
-      price_per_therapist: pricePerTherapist,
-      total_price: totalPrice
+      price_per_therapist: priceInfo.price,
+      total_price: totalPrice,
+      currency: priceInfo.currency,
+      locale,
+      countryCode
     });
   } catch (error) {
     console.error('Error calculating organization price:', error);
@@ -570,22 +585,31 @@ const calculateOrganizationPrice = async (req, res) => {
 };
 
 /**
- * Get subscription plans available for individual therapists
+ * Get subscription plans available for individual therapists (with locale support)
  * Filters plans that have individual_monthly_enabled = TRUE
  */
 const getIndividualTherapistPlans = async (req, res) => {
   try {
-    const query = `
-      SELECT * FROM subscription_plans
-      WHERE individual_monthly_enabled = TRUE
-      AND is_active = TRUE
-      ORDER BY individual_monthly_price ASC, plan_name ASC
-    `;
-    const result = await db.query(query);
+    const countryCode = req.countryCode || 'IN';
+    const locale = req.locale || 'en-IN';
+    
+    const plans = await SubscriptionPlan.getIndividualPlansWithLocale(countryCode, locale, false);
+    
+    // Filter to only include plans with monthly billing enabled and sort by price
+    const filteredPlans = plans
+      .filter(plan => plan.individual_monthly_enabled !== false)
+      .sort((a, b) => {
+        const priceA = a.locale_individual_monthly_price || a.individual_monthly_price || 0;
+        const priceB = b.locale_individual_monthly_price || b.individual_monthly_price || 0;
+        if (priceA !== priceB) return priceA - priceB;
+        return a.plan_name.localeCompare(b.plan_name);
+      });
 
     res.json({
       success: true,
-      plans: result.rows
+      plans: filteredPlans,
+      locale,
+      countryCode
     });
   } catch (error) {
     console.error('Error fetching individual therapist plans:', error);
@@ -597,15 +621,21 @@ const getIndividualTherapistPlans = async (req, res) => {
 };
 
 /**
- * Get individual practitioner plans for selection modal
+ * Get individual practitioner plans for selection modal (with locale support)
  * Excludes Free Plan - users cannot downgrade to Free Plan
  */
 const getIndividualPlansForSelection = async (req, res) => {
   try {
-    const plans = await SubscriptionPlan.getIndividualPlans(true); // exclude Free Plan
+    const countryCode = req.countryCode || 'IN';
+    const locale = req.locale || 'en-IN';
+    
+    const plans = await SubscriptionPlan.getIndividualPlansWithLocale(countryCode, locale, true); // exclude Free Plan
+    
     res.json({
       success: true,
-      plans
+      plans,
+      locale,
+      countryCode
     });
   } catch (error) {
     console.error('Error fetching individual plans for selection:', error);
@@ -617,12 +647,14 @@ const getIndividualPlansForSelection = async (req, res) => {
 };
 
 /**
- * Get organization plans filtered by therapist count
+ * Get organization plans filtered by therapist count (with locale support)
  * Excludes Free Plan - organizations cannot downgrade to Free Plan
  */
 const getOrganizationPlansForSelection = async (req, res) => {
   try {
     const { therapist_count } = req.query;
+    const countryCode = req.countryCode || 'IN';
+    const locale = req.locale || 'en-IN';
 
     if (!therapist_count || therapist_count < 1) {
       return res.status(400).json({
@@ -630,7 +662,11 @@ const getOrganizationPlansForSelection = async (req, res) => {
       });
     }
 
-    const plans = await SubscriptionPlan.getOrganizationPlans(parseInt(therapist_count));
+    const plans = await SubscriptionPlan.getOrganizationPlansWithLocale(
+      parseInt(therapist_count),
+      countryCode,
+      locale
+    );
     
     // Filter out Free Plan
     const filteredPlans = plans.filter(plan => plan.plan_name.toLowerCase() !== 'free plan');
@@ -638,7 +674,9 @@ const getOrganizationPlansForSelection = async (req, res) => {
     res.json({
       success: true,
       plans: filteredPlans,
-      therapist_count: parseInt(therapist_count)
+      therapist_count: parseInt(therapist_count),
+      locale,
+      countryCode
     });
   } catch (error) {
     console.error('Error fetching organization plans for selection:', error);
@@ -724,6 +762,302 @@ const checkFirstLogin = async (req, res) => {
   }
 };
 
+/**
+ * Get all locale-specific pricing for a subscription plan
+ */
+const getPlanLocales = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const query = `
+      SELECT * FROM subscription_plan_locales
+      WHERE subscription_plan_id = $1
+      ORDER BY country_code, locale
+    `;
+    const result = await db.query(query, [planId]);
+    
+    res.json({
+      success: true,
+      locales: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching plan locales:', error);
+    res.status(500).json({
+      error: 'Failed to fetch plan locales',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Create or update locale-specific pricing for a subscription plan
+ */
+const upsertPlanLocale = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const {
+      country_code,
+      locale,
+      currency_code,
+      individual_yearly_price,
+      individual_quarterly_price,
+      individual_monthly_price,
+      organization_yearly_price,
+      organization_quarterly_price,
+      organization_monthly_price,
+      is_active
+    } = req.body;
+
+    // Validate required fields
+    if (!country_code || !locale || !currency_code) {
+      return res.status(400).json({
+        error: 'country_code, locale, and currency_code are required'
+      });
+    }
+
+    // Validate prices
+    const prices = [
+      individual_yearly_price,
+      individual_quarterly_price,
+      individual_monthly_price,
+      organization_yearly_price,
+      organization_quarterly_price,
+      organization_monthly_price
+    ];
+
+    if (prices.some(price => price === undefined || price === null || price < 0)) {
+      return res.status(400).json({
+        error: 'All price fields are required and must be >= 0'
+      });
+    }
+
+    // Enforce currency rules: India uses INR, all others use USD
+    if (country_code.toUpperCase() === 'IN') {
+      if (currency_code.toUpperCase() !== 'INR') {
+        return res.status(400).json({
+          error: 'India (IN) must use INR currency'
+        });
+      }
+    } else {
+      // All non-India countries must use USD
+      if (currency_code.toUpperCase() !== 'USD') {
+        return res.status(400).json({
+          error: 'All countries except India must use USD currency'
+        });
+      }
+    }
+
+    // Check if plan exists
+    const plan = await SubscriptionPlan.findById(planId);
+    if (!plan) {
+      return res.status(404).json({
+        error: 'Subscription plan not found'
+      });
+    }
+
+    // Upsert locale pricing (insert or update)
+    const query = `
+      INSERT INTO subscription_plan_locales (
+        subscription_plan_id, country_code, locale, currency_code,
+        individual_yearly_price, individual_quarterly_price, individual_monthly_price,
+        organization_yearly_price, organization_quarterly_price, organization_monthly_price,
+        is_active
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ON CONFLICT (subscription_plan_id, country_code, locale)
+      DO UPDATE SET
+        currency_code = EXCLUDED.currency_code,
+        individual_yearly_price = EXCLUDED.individual_yearly_price,
+        individual_quarterly_price = EXCLUDED.individual_quarterly_price,
+        individual_monthly_price = EXCLUDED.individual_monthly_price,
+        organization_yearly_price = EXCLUDED.organization_yearly_price,
+        organization_quarterly_price = EXCLUDED.organization_quarterly_price,
+        organization_monthly_price = EXCLUDED.organization_monthly_price,
+        is_active = EXCLUDED.is_active,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *
+    `;
+
+    const result = await db.query(query, [
+      planId,
+      country_code.toUpperCase(),
+      locale,
+      currency_code.toUpperCase(),
+      parseFloat(individual_yearly_price),
+      parseFloat(individual_quarterly_price),
+      parseFloat(individual_monthly_price),
+      parseFloat(organization_yearly_price),
+      parseFloat(organization_quarterly_price),
+      parseFloat(organization_monthly_price),
+      is_active !== undefined ? Boolean(is_active) : true
+    ]);
+
+    console.log(`[ADMIN] Locale pricing ${result.rows[0].id ? 'updated' : 'created'} for plan ${planId} (${country_code}-${locale})`);
+
+    res.json({
+      success: true,
+      message: 'Locale pricing saved successfully',
+      locale: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error upserting plan locale:', error);
+    
+    // Handle case where table doesn't exist yet
+    if (error.message.includes('subscription_plan_locales')) {
+      return res.status(500).json({
+        error: 'Locale pricing table not found. Please run the migration first.',
+        details: error.message
+      });
+    }
+    
+    res.status(500).json({
+      error: 'Failed to save locale pricing',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Delete locale-specific pricing for a subscription plan
+ */
+const deletePlanLocale = async (req, res) => {
+  try {
+    const { planId, localeId } = req.params;
+
+    const query = `
+      DELETE FROM subscription_plan_locales
+      WHERE id = $1 AND subscription_plan_id = $2
+      RETURNING *
+    `;
+    
+    const result = await db.query(query, [localeId, planId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Locale pricing not found'
+      });
+    }
+
+    console.log(`[ADMIN] Locale pricing deleted for plan ${planId} (ID: ${localeId})`);
+
+    res.json({
+      success: true,
+      message: 'Locale pricing deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting plan locale:', error);
+    res.status(500).json({
+      error: 'Failed to delete locale pricing',
+      details: error.message
+    });
+  }
+};
+
+/**
+ * Get all available country codes and locales (helper for dropdowns)
+ * All non-India locales use USD as currency
+ */
+const getAvailableLocales = async (req, res) => {
+  try {
+    // Comprehensive list of countries and locales
+    // India uses INR, all others use USD
+    const commonLocales = [
+      // India - uses INR
+      { country_code: 'IN', locale: 'en-IN', currency_code: 'INR', name: 'India' },
+      
+      // North America - all use USD
+      { country_code: 'US', locale: 'en-US', currency_code: 'USD', name: 'United States' },
+      { country_code: 'CA', locale: 'en-CA', currency_code: 'USD', name: 'Canada' },
+      { country_code: 'MX', locale: 'es-MX', currency_code: 'USD', name: 'Mexico' },
+      
+      // Europe - all use USD
+      { country_code: 'GB', locale: 'en-GB', currency_code: 'USD', name: 'United Kingdom' },
+      { country_code: 'IE', locale: 'en-IE', currency_code: 'USD', name: 'Ireland' },
+      { country_code: 'DE', locale: 'de-DE', currency_code: 'USD', name: 'Germany' },
+      { country_code: 'FR', locale: 'fr-FR', currency_code: 'USD', name: 'France' },
+      { country_code: 'ES', locale: 'es-ES', currency_code: 'USD', name: 'Spain' },
+      { country_code: 'IT', locale: 'it-IT', currency_code: 'USD', name: 'Italy' },
+      { country_code: 'NL', locale: 'nl-NL', currency_code: 'USD', name: 'Netherlands' },
+      { country_code: 'BE', locale: 'nl-BE', currency_code: 'USD', name: 'Belgium' },
+      { country_code: 'CH', locale: 'de-CH', currency_code: 'USD', name: 'Switzerland' },
+      { country_code: 'AT', locale: 'de-AT', currency_code: 'USD', name: 'Austria' },
+      { country_code: 'SE', locale: 'sv-SE', currency_code: 'USD', name: 'Sweden' },
+      { country_code: 'NO', locale: 'nb-NO', currency_code: 'USD', name: 'Norway' },
+      { country_code: 'DK', locale: 'da-DK', currency_code: 'USD', name: 'Denmark' },
+      { country_code: 'FI', locale: 'fi-FI', currency_code: 'USD', name: 'Finland' },
+      { country_code: 'PL', locale: 'pl-PL', currency_code: 'USD', name: 'Poland' },
+      { country_code: 'PT', locale: 'pt-PT', currency_code: 'USD', name: 'Portugal' },
+      { country_code: 'GR', locale: 'el-GR', currency_code: 'USD', name: 'Greece' },
+      { country_code: 'CZ', locale: 'cs-CZ', currency_code: 'USD', name: 'Czech Republic' },
+      { country_code: 'RO', locale: 'ro-RO', currency_code: 'USD', name: 'Romania' },
+      { country_code: 'HU', locale: 'hu-HU', currency_code: 'USD', name: 'Hungary' },
+      
+      // Asia Pacific - all use USD except India
+      { country_code: 'AU', locale: 'en-AU', currency_code: 'USD', name: 'Australia' },
+      { country_code: 'NZ', locale: 'en-NZ', currency_code: 'USD', name: 'New Zealand' },
+      { country_code: 'JP', locale: 'ja-JP', currency_code: 'USD', name: 'Japan' },
+      { country_code: 'CN', locale: 'zh-CN', currency_code: 'USD', name: 'China' },
+      { country_code: 'HK', locale: 'zh-HK', currency_code: 'USD', name: 'Hong Kong' },
+      { country_code: 'TW', locale: 'zh-TW', currency_code: 'USD', name: 'Taiwan' },
+      { country_code: 'SG', locale: 'en-SG', currency_code: 'USD', name: 'Singapore' },
+      { country_code: 'MY', locale: 'ms-MY', currency_code: 'USD', name: 'Malaysia' },
+      { country_code: 'TH', locale: 'th-TH', currency_code: 'USD', name: 'Thailand' },
+      { country_code: 'PH', locale: 'en-PH', currency_code: 'USD', name: 'Philippines' },
+      { country_code: 'ID', locale: 'id-ID', currency_code: 'USD', name: 'Indonesia' },
+      { country_code: 'VN', locale: 'vi-VN', currency_code: 'USD', name: 'Vietnam' },
+      { country_code: 'KR', locale: 'ko-KR', currency_code: 'USD', name: 'South Korea' },
+      { country_code: 'PK', locale: 'ur-PK', currency_code: 'USD', name: 'Pakistan' },
+      { country_code: 'BD', locale: 'bn-BD', currency_code: 'USD', name: 'Bangladesh' },
+      { country_code: 'LK', locale: 'si-LK', currency_code: 'USD', name: 'Sri Lanka' },
+      { country_code: 'NP', locale: 'ne-NP', currency_code: 'USD', name: 'Nepal' },
+      
+      // Middle East & Africa - all use USD
+      { country_code: 'AE', locale: 'ar-AE', currency_code: 'USD', name: 'United Arab Emirates' },
+      { country_code: 'SA', locale: 'ar-SA', currency_code: 'USD', name: 'Saudi Arabia' },
+      { country_code: 'IL', locale: 'he-IL', currency_code: 'USD', name: 'Israel' },
+      { country_code: 'TR', locale: 'tr-TR', currency_code: 'USD', name: 'Turkey' },
+      { country_code: 'ZA', locale: 'en-ZA', currency_code: 'USD', name: 'South Africa' },
+      { country_code: 'EG', locale: 'ar-EG', currency_code: 'USD', name: 'Egypt' },
+      { country_code: 'KE', locale: 'en-KE', currency_code: 'USD', name: 'Kenya' },
+      { country_code: 'NG', locale: 'en-NG', currency_code: 'USD', name: 'Nigeria' },
+      
+      // Latin America - all use USD
+      { country_code: 'BR', locale: 'pt-BR', currency_code: 'USD', name: 'Brazil' },
+      { country_code: 'AR', locale: 'es-AR', currency_code: 'USD', name: 'Argentina' },
+      { country_code: 'CL', locale: 'es-CL', currency_code: 'USD', name: 'Chile' },
+      { country_code: 'CO', locale: 'es-CO', currency_code: 'USD', name: 'Colombia' },
+      { country_code: 'PE', locale: 'es-PE', currency_code: 'USD', name: 'Peru' },
+      { country_code: 'VE', locale: 'es-VE', currency_code: 'USD', name: 'Venezuela' },
+      { country_code: 'EC', locale: 'es-EC', currency_code: 'USD', name: 'Ecuador' },
+      { country_code: 'UY', locale: 'es-UY', currency_code: 'USD', name: 'Uruguay' },
+      { country_code: 'PY', locale: 'es-PY', currency_code: 'USD', name: 'Paraguay' },
+      { country_code: 'BO', locale: 'es-BO', currency_code: 'USD', name: 'Bolivia' },
+      { country_code: 'CR', locale: 'es-CR', currency_code: 'USD', name: 'Costa Rica' },
+      { country_code: 'PA', locale: 'es-PA', currency_code: 'USD', name: 'Panama' },
+      { country_code: 'GT', locale: 'es-GT', currency_code: 'USD', name: 'Guatemala' },
+      { country_code: 'DO', locale: 'es-DO', currency_code: 'USD', name: 'Dominican Republic' },
+      { country_code: 'CU', locale: 'es-CU', currency_code: 'USD', name: 'Cuba' },
+      
+      // Other regions
+      { country_code: 'RU', locale: 'ru-RU', currency_code: 'USD', name: 'Russia' },
+      { country_code: 'UA', locale: 'uk-UA', currency_code: 'USD', name: 'Ukraine' }
+    ];
+
+    // Sort by name for easier selection
+    commonLocales.sort((a, b) => a.name.localeCompare(b.name));
+
+    res.json({
+      success: true,
+      locales: commonLocales
+    });
+  } catch (error) {
+    console.error('Error fetching available locales:', error);
+    res.status(500).json({
+      error: 'Failed to fetch available locales',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllPlans,
   getActivePlans,
@@ -736,7 +1070,11 @@ module.exports = {
   getIndividualPlansForSelection,
   getOrganizationPlansForSelection,
   logSubscriptionEvent,
-  checkFirstLogin
+  checkFirstLogin,
+  getPlanLocales,
+  upsertPlanLocale,
+  deletePlanLocale,
+  getAvailableLocales
 };
 
 

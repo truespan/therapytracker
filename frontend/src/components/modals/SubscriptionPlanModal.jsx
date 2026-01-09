@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { razorpayAPI, subscriptionPlanAPI } from '../../services/api';
 import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 import { trackSubscriptionSelected, trackSubscriptionStarted, trackSubscriptionUpgraded } from '../../services/analytics';
+import { detectUserLocale, formatCurrency } from '../../utils/localeDetection';
 
 const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }) => {
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
@@ -77,16 +78,36 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
     try {
       setLoading(true);
       setError('');
-      const response = await api.get('/subscription-plans/individual');
+      
+      // Detect user locale
+      const { locale, countryCode } = detectUserLocale();
+      
+      // Pass locale as query parameter
+      const response = await api.get('/subscription-plans/individual/selection', {
+        params: {
+          locale: locale,
+          country_code: countryCode
+        }
+      });
+      
       if (response.data.success) {
+        const plans = response.data.plans.map(plan => ({
+          ...plan,
+          // Use locale-specific prices if available, otherwise fall back to global prices
+          individual_monthly_price: plan.locale_individual_monthly_price || plan.individual_monthly_price,
+          individual_quarterly_price: plan.locale_individual_quarterly_price || plan.individual_quarterly_price,
+          individual_yearly_price: plan.locale_individual_yearly_price || plan.individual_yearly_price,
+          currency_code: plan.currency_code || 'INR'
+        }));
+        
         // Filter out Free Plan and plans with ₹0 pricing - only show paid plans
-        const paidPlans = response.data.plans.filter(plan => {
+        const paidPlans = plans.filter(plan => {
           // Exclude plans with "free" in the name
           if (plan.plan_name.toLowerCase().includes('free')) {
             return false;
           }
           
-          // Exclude plans where all pricing is ₹0
+          // Exclude plans where all pricing is 0 for the selected currency
           const hasNonZeroPrice = 
             (plan.individual_monthly_price && plan.individual_monthly_price > 0) ||
             (plan.individual_quarterly_price && plan.individual_quarterly_price > 0) ||
@@ -94,6 +115,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           
           return hasNonZeroPrice;
         });
+        
         setSubscriptionPlans(paidPlans);
       } else {
         setError('Failed to load subscription plans. Please try again.');
@@ -109,13 +131,17 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
   const getPriceForPeriod = (plan, period) => {
     switch (period) {
       case 'yearly':
-        return plan.individual_yearly_price;
+        return plan.locale_individual_yearly_price || plan.individual_yearly_price;
       case 'quarterly':
-        return plan.individual_quarterly_price;
+        return plan.locale_individual_quarterly_price || plan.individual_quarterly_price;
       case 'monthly':
       default:
-        return plan.individual_monthly_price;
+        return plan.locale_individual_monthly_price || plan.individual_monthly_price;
     }
+  };
+
+  const getCurrencyCode = (plan) => {
+    return plan.currency_code || 'INR';
   };
 
   const getPeriodLabel = (period) => {
@@ -504,7 +530,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                       </h3>
                       <div className="flex items-baseline justify-center">
                         <span className="text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
-                          ₹{price}
+                          {formatCurrency(price, getCurrencyCode(plan), detectUserLocale().locale)}
                         </span>
                         <span className="text-gray-600 dark:text-dark-text-secondary ml-2">
                           / {getPeriodLabel(selectedBillingPeriod)}

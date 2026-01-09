@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { subscriptionPlanAPI } from '../../services/api';
-import { Plus, Edit2, Trash2, Save, X, AlertCircle, CheckCircle, Check, X as XIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, AlertCircle, CheckCircle, Check, X as XIcon, Globe } from 'lucide-react';
+import LocalePricingModal from './LocalePricingModal';
 
 const SubscriptionPlansTab = () => {
   const [plans, setPlans] = useState([]);
@@ -16,6 +17,8 @@ const SubscriptionPlansTab = () => {
   const [defaultPlan, setDefaultPlan] = useState(null);
   const [selectedDefaultPlan, setSelectedDefaultPlan] = useState('');
   const [savingDefault, setSavingDefault] = useState(false);
+  const [selectedPlanForLocales, setSelectedPlanForLocales] = useState(null);
+  const [showLocaleModal, setShowLocaleModal] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -569,6 +572,16 @@ const SubscriptionPlansTab = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedPlanForLocales(plan);
+                            setShowLocaleModal(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          title="Manage Locale Pricing"
+                        >
+                          <Globe className="h-5 w-5" />
+                        </button>
                         <button
                           onClick={() => handleEdit(plan)}
                           className="text-primary-700 hover:text-primary-900 p-1 rounded hover:bg-primary-50"
@@ -1154,6 +1167,21 @@ const SubscriptionPlansTab = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Locale Pricing Modal */}
+      {showLocaleModal && selectedPlanForLocales && (
+        <LocalePricingModal
+          isOpen={showLocaleModal}
+          plan={selectedPlanForLocales}
+          onClose={() => {
+            setShowLocaleModal(false);
+            setSelectedPlanForLocales(null);
+          }}
+          onSave={() => {
+            loadPlans(); // Refresh plans if needed
+          }}
+        />
       )}
     </div>
   );

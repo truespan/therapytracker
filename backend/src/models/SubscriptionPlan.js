@@ -408,6 +408,216 @@ class SubscriptionPlan {
     const result = await db.query(query, [planId, therapistCount]);
     return result.rows[0].count > 0;
   }
+
+  /**
+   * Get price for a specific plan, user type, billing period, and locale
+   * Falls back to global pricing if locale-specific pricing not found
+   * @param {number} planId - Plan ID
+   * @param {string} userType - 'individual' or 'organization'
+   * @param {string} billingPeriod - 'yearly', 'quarterly', or 'monthly'
+   * @param {string} countryCode - ISO 3166-1 alpha-2 country code (e.g., 'US', 'IN')
+   * @param {string} locale - Locale string (e.g., 'en-US', 'en-IN')
+   * @returns {Promise<Object>} Object with price and currency_code
+   */
+  static async getPriceWithLocale(planId, userType, billingPeriod, countryCode = 'IN', locale = 'en-IN') {
+    const plan = await this.findById(planId);
+    if (!plan) {
+      throw new Error('Subscription plan not found');
+    }
+
+    // Try to get locale-specific pricing first
+    const localeQuery = `
+      SELECT ${userType}_${billingPeriod}_price as price, currency_code
+      FROM subscription_plan_locales
+      WHERE subscription_plan_id = $1 
+      AND country_code = $2 
+      AND locale = $3 
+      AND is_active = TRUE
+    `;
+    
+    try {
+      const localeResult = await db.query(localeQuery, [planId, countryCode, locale]);
+      
+      if (localeResult.rows.length > 0) {
+        return {
+          price: parseFloat(localeResult.rows[0].price),
+          currency: localeResult.rows[0].currency_code
+        };
+      }
+    } catch (error) {
+      // If table doesn't exist yet (during migration), fall back to global pricing
+      console.warn('Locale pricing table may not exist, falling back to global pricing:', error.message);
+    }
+    
+    // Fallback to global pricing
+    const priceColumn = `${userType}_${billingPeriod}_price`;
+    const price = plan[priceColumn];
+    
+    if (price === undefined || price === null) {
+      throw new Error(`Price not found for ${userType} ${billingPeriod}`);
+    }
+
+    return {
+      price: parseFloat(price),
+      currency: countryCode === 'IN' ? 'INR' : 'USD' // Default currency based on country
+    };
+  }
+
+  /**
+   * Get all active plans with locale-specific pricing
+   * Falls back to global pricing if locale-specific pricing not found
+   * @param {string} countryCode - ISO 3166-1 alpha-2 country code
+   * @param {string} locale - Locale string
+   * @returns {Promise<Array>} Array of plans with locale-specific pricing
+   */
+  static async getActiveWithLocale(countryCode = 'IN', locale = 'en-IN') {
+    const query = `
+      WITH locale_prices AS (
+        SELECT 
+          sp.*,
+          COALESCE(
+            spl.individual_yearly_price,
+            sp.individual_yearly_price
+          ) as locale_individual_yearly_price,
+          COALESCE(
+            spl.individual_quarterly_price,
+            sp.individual_quarterly_price
+          ) as locale_individual_quarterly_price,
+          COALESCE(
+            spl.individual_monthly_price,
+            sp.individual_monthly_price
+          ) as locale_individual_monthly_price,
+          COALESCE(
+            spl.organization_yearly_price,
+            sp.organization_yearly_price
+          ) as locale_organization_yearly_price,
+          COALESCE(
+            spl.organization_quarterly_price,
+            sp.organization_quarterly_price
+          ) as locale_organization_quarterly_price,
+          COALESCE(
+            spl.organization_monthly_price,
+            sp.organization_monthly_price
+          ) as locale_organization_monthly_price,
+          COALESCE(spl.currency_code, CASE WHEN $1 = 'IN' THEN 'INR' ELSE 'USD' END) as currency_code
+        FROM subscription_plans sp
+        LEFT JOIN subscription_plan_locales spl 
+          ON sp.id = spl.subscription_plan_id 
+          AND spl.country_code = $1 
+          AND spl.locale = $2
+          AND spl.is_active = TRUE
+        WHERE sp.is_active = TRUE
+      )
+      SELECT * FROM locale_prices
+      ORDER BY plan_order ASC, plan_name ASC
+    `;
+    
+    try {
+      const result = await db.query(query, [countryCode, locale]);
+      return result.rows;
+    } catch (error) {
+      // If table doesn't exist yet, fall back to regular getActive
+      if (error.message.includes('subscription_plan_locales')) {
+        console.warn('Locale pricing table may not exist, falling back to global pricing:', error.message);
+        return this.getActive();
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get individual plans with locale-specific pricing
+   * Falls back to global pricing if locale-specific pricing not found
+   * @param {string} countryCode - ISO 3166-1 alpha-2 country code
+   * @param {string} locale - Locale string
+   * @param {boolean} excludeFreePlan - Whether to exclude Free Plan from results
+   * @returns {Promise<Array>} Array of individual plans with locale-specific pricing
+   */
+  static async getIndividualPlansWithLocale(countryCode = 'IN', locale = 'en-IN', excludeFreePlan = false) {
+    let query = `
+      WITH locale_prices AS (
+        SELECT 
+          sp.*,
+          COALESCE(spl.individual_yearly_price, sp.individual_yearly_price) as locale_individual_yearly_price,
+          COALESCE(spl.individual_quarterly_price, sp.individual_quarterly_price) as locale_individual_quarterly_price,
+          COALESCE(spl.individual_monthly_price, sp.individual_monthly_price) as locale_individual_monthly_price,
+          COALESCE(spl.currency_code, CASE WHEN $1 = 'IN' THEN 'INR' ELSE 'USD' END) as currency_code
+        FROM subscription_plans sp
+        LEFT JOIN subscription_plan_locales spl 
+          ON sp.id = spl.subscription_plan_id 
+          AND spl.country_code = $1 
+          AND spl.locale = $2
+          AND spl.is_active = TRUE
+        WHERE (sp.plan_type = 'individual' OR sp.plan_type = 'common') 
+          AND sp.is_active = TRUE
+    `;
+    
+    if (excludeFreePlan) {
+      query += ` AND sp.plan_name != 'Free Plan'`;
+    }
+    
+    query += ` ) SELECT * FROM locale_prices ORDER BY plan_order ASC`;
+    
+    try {
+      const result = await db.query(query, [countryCode, locale]);
+      return result.rows;
+    } catch (error) {
+      // If table doesn't exist yet, fall back to regular getIndividualPlans
+      if (error.message.includes('subscription_plan_locales')) {
+        console.warn('Locale pricing table may not exist, falling back to global pricing:', error.message);
+        return this.getIndividualPlans(excludeFreePlan);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get organization plans with locale-specific pricing
+   * Falls back to global pricing if locale-specific pricing not found
+   * @param {number} therapistCount - Number of therapists in organization
+   * @param {string} countryCode - ISO 3166-1 alpha-2 country code
+   * @param {string} locale - Locale string
+   * @returns {Promise<Array>} Array of organization plans with locale-specific pricing
+   */
+  static async getOrganizationPlansWithLocale(therapistCount, countryCode = 'IN', locale = 'en-IN') {
+    const query = `
+      WITH locale_prices AS (
+        SELECT 
+          sp.*,
+          COALESCE(spl.organization_yearly_price, sp.organization_yearly_price) as locale_organization_yearly_price,
+          COALESCE(spl.organization_quarterly_price, sp.organization_quarterly_price) as locale_organization_quarterly_price,
+          COALESCE(spl.organization_monthly_price, sp.organization_monthly_price) as locale_organization_monthly_price,
+          COALESCE(spl.currency_code, CASE WHEN $1 = 'IN' THEN 'INR' ELSE 'USD' END) as currency_code
+        FROM subscription_plans sp
+        LEFT JOIN subscription_plan_locales spl 
+          ON sp.id = spl.subscription_plan_id 
+          AND spl.country_code = $1 
+          AND spl.locale = $2
+          AND spl.is_active = TRUE
+        WHERE (
+          sp.plan_type = 'common' OR
+          (sp.plan_type = 'organization'
+           AND sp.min_therapists <= $3
+           AND sp.max_therapists >= $3)
+        )
+        AND sp.is_active = TRUE
+      )
+      SELECT * FROM locale_prices
+      ORDER BY plan_order ASC
+    `;
+    
+    try {
+      const result = await db.query(query, [countryCode, locale, therapistCount]);
+      return result.rows;
+    } catch (error) {
+      // If table doesn't exist yet, fall back to regular getOrganizationPlans
+      if (error.message.includes('subscription_plan_locales')) {
+        console.warn('Locale pricing table may not exist, falling back to global pricing:', error.message);
+        return this.getOrganizationPlans(therapistCount);
+      }
+      throw error;
+    }
+  }
 }
 
 module.exports = SubscriptionPlan;

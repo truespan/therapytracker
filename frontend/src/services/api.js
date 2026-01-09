@@ -214,20 +214,44 @@ export const adminAPI = {
 
 // Subscription Plan APIs
 export const subscriptionPlanAPI = {
-  getAll: () => api.get('/subscription-plans'),
-  getActive: () => api.get('/subscription-plans/active'),
+  getAll: (locale, countryCode) => {
+    const params = {};
+    if (locale) params.locale = locale;
+    if (countryCode) params.country_code = countryCode;
+    return api.get('/subscription-plans', { params });
+  },
+  getActive: (locale, countryCode) => {
+    const params = {};
+    if (locale) params.locale = locale;
+    if (countryCode) params.country_code = countryCode;
+    return api.get('/subscription-plans/active', { params });
+  },
   getById: (id) => api.get(`/subscription-plans/${id}`),
   create: (data) => api.post('/subscription-plans', data),
   update: (id, data) => api.put(`/subscription-plans/${id}`, data),
   delete: (id) => api.delete(`/subscription-plans/${id}`),
   calculatePrice: (data) => api.post('/subscription-plans/calculate', data),
-  getIndividualPlansForSelection: () => api.get('/subscription-plans/individual/selection'),
-  getOrganizationPlansForSelection: (therapistCount) =>
-    api.get(`/subscription-plans/organization/selection?therapist_count=${therapistCount}`),
+  getIndividualPlansForSelection: (locale, countryCode) => {
+    const params = {};
+    if (locale) params.locale = locale;
+    if (countryCode) params.country_code = countryCode;
+    return api.get('/subscription-plans/individual/selection', { params });
+  },
+  getOrganizationPlansForSelection: (therapistCount, locale, countryCode) => {
+    const params = { therapist_count: therapistCount };
+    if (locale) params.locale = locale;
+    if (countryCode) params.country_code = countryCode;
+    return api.get('/subscription-plans/organization/selection', { params });
+  },
   logEvent: (data) => api.post('/subscription-plans/log-event', data),
   checkFirstLogin: () => api.get('/subscription-plans/check-first-login'),
   getDefaultPlan: () => api.get('/admin/default-subscription-plan'),
-  setDefaultPlan: (planId) => api.post('/admin/default-subscription-plan', { plan_id: planId })
+  setDefaultPlan: (planId) => api.post('/admin/default-subscription-plan', { plan_id: planId }),
+  // Locale pricing management
+  getPlanLocales: (planId) => api.get(`/subscription-plans/${planId}/locales`),
+  upsertPlanLocale: (planId, data) => api.post(`/subscription-plans/${planId}/locales`, data),
+  deletePlanLocale: (planId, localeId) => api.delete(`/subscription-plans/${planId}/locales/${localeId}`),
+  getAvailableLocales: () => api.get('/subscription-plans/locales/available')
 };
 
 // Report Template APIs (for partners)
