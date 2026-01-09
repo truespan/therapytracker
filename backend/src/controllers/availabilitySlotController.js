@@ -92,6 +92,32 @@ const createSlot = async (req, res) => {
       });
     }
 
+    // Validate and normalize status value
+    // Map legacy 'not_available' to 'not_available_offline' (default)
+    const validStatuses = [
+      'available_online',
+      'available_offline',
+      'not_available_online',
+      'not_available_offline',
+      'booked',
+      'confirmed',
+      'confirmed_balance_pending',
+      'confirmed_payment_pending'
+    ];
+
+    let normalizedStatus = status;
+    if (status === 'not_available') {
+      // Default to offline for backward compatibility
+      normalizedStatus = 'not_available_offline';
+      console.warn('Status "not_available" mapped to "not_available_offline" for backward compatibility');
+    }
+
+    if (!validStatuses.includes(normalizedStatus)) {
+      return res.status(400).json({
+        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
     // Validate start_time < end_time
     if (start_time >= end_time) {
       return res.status(400).json({
@@ -138,7 +164,7 @@ const createSlot = async (req, res) => {
       slot_date,
       start_time,
       end_time,
-      status,
+      status: normalizedStatus,
       timezone // Pass timezone for proper UTC conversion
     });
 
@@ -264,6 +290,33 @@ const updateSlot = async (req, res) => {
       });
     }
 
+    // Validate and normalize status value if provided
+    let normalizedStatus = status;
+    if (status) {
+      const validStatuses = [
+        'available_online',
+        'available_offline',
+        'not_available_online',
+        'not_available_offline',
+        'booked',
+        'confirmed',
+        'confirmed_balance_pending',
+        'confirmed_payment_pending'
+      ];
+
+      if (status === 'not_available') {
+        // Default to offline for backward compatibility
+        normalizedStatus = 'not_available_offline';
+        console.warn('Status "not_available" mapped to "not_available_offline" for backward compatibility');
+      }
+
+      if (!validStatuses.includes(normalizedStatus)) {
+        return res.status(400).json({
+          error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+        });
+      }
+    }
+
     // Validate start_time < end_time if both provided
     if (start_time && end_time && start_time >= end_time) {
       return res.status(400).json({
@@ -273,7 +326,8 @@ const updateSlot = async (req, res) => {
 
     // Re-check conflicts if becoming available
     let conflictWarning = null;
-    if (status && status.startsWith('available')) {
+    const statusToCheck = normalizedStatus || status || slot.status;
+    if (statusToCheck && statusToCheck.startsWith('available')) {
       const checkDate = slot_date || slot.slot_date;
       const checkStartTime = start_time || slot.start_time;
       const checkEndTime = end_time || slot.end_time;
@@ -306,7 +360,7 @@ const updateSlot = async (req, res) => {
       slot_date,
       start_time,
       end_time,
-      status
+      status: normalizedStatus
     });
 
     // Update conflict tracking
