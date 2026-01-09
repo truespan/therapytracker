@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Check, CreditCard } from 'lucide-react';
+import { formatCurrency, detectUserLocale } from '../../utils/localeDetection';
 
 const PlanSelectionModal = ({
   currentPlanId,
@@ -76,13 +77,12 @@ const PlanSelectionModal = ({
     });
   }, [plans, currentPlanId, selectedBillingPeriod, userType]);
 
-  // Format price in INR
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(price);
+  // Format price based on plan's currency and user's locale
+  const formatPrice = (price, plan) => {
+    // Determine currency: INR for India, USD for others
+    const { countryCode } = detectUserLocale();
+    const currencyCode = countryCode === 'IN' ? 'INR' : (plan?.currency_code || 'USD');
+    return formatCurrency(price, currencyCode);
   };
 
   // Helper function to check boolean values (handles both boolean and string types)
@@ -207,7 +207,7 @@ const PlanSelectionModal = ({
                     <div className="mb-6">
                       <div className="flex items-baseline">
                         <span className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">
-                          {formatPrice(price)}
+                          {formatPrice(price, plan)}
                         </span>
                         <span className="ml-2 text-gray-600 dark:text-dark-text-secondary">
                           /{selectedBillingPeriod === 'yearly' ? 'year' : selectedBillingPeriod === 'quarterly' ? 'quarter' : 'month'}

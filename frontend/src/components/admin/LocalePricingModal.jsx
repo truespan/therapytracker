@@ -39,8 +39,12 @@ const LocalePricingModal = ({ isOpen, plan, onClose, onSave }) => {
         subscriptionPlanAPI.getPlanLocales(plan.id),
         subscriptionPlanAPI.getAvailableLocales()
       ]);
-      setLocales(localesRes.data.locales || []);
-      setAvailableLocales(availableRes.data.locales || []);
+      // Filter out India locale pricing - India should use global pricing only
+      const filteredLocales = (localesRes.data.locales || []).filter(l => l.country_code !== 'IN');
+      setLocales(filteredLocales);
+      // Filter out India from available locales
+      const filteredAvailable = (availableRes.data.locales || []).filter(l => l.country_code !== 'IN');
+      setAvailableLocales(filteredAvailable);
     } catch (err) {
       console.error('Failed to load locale data:', err);
       setError(err.response?.data?.error || 'Failed to load locale pricing');
@@ -159,10 +163,16 @@ const LocalePricingModal = ({ isOpen, plan, onClose, onSave }) => {
   if (!isOpen) return null;
 
   // Find used locales to filter available options
+  // EXCLUDE INDIA - India should always use global pricing, not locale-specific pricing
   const usedLocales = locales.map(l => `${l.country_code}-${l.locale}`);
-  const filteredAvailableLocales = availableLocales.filter(l => 
-    !usedLocales.includes(`${l.country_code}-${l.locale}`) || editingLocale
-  );
+  const filteredAvailableLocales = availableLocales.filter(l => {
+    // Exclude India (IN) - India uses global pricing
+    if (l.country_code === 'IN') {
+      return false;
+    }
+    // Filter out already used locales (unless editing)
+    return !usedLocales.includes(`${l.country_code}-${l.locale}`) || editingLocale;
+  });
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -174,7 +184,7 @@ const LocalePricingModal = ({ isOpen, plan, onClose, onSave }) => {
               Locale Pricing - {plan?.plan_name}
             </h2>
             <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">
-              Manage pricing for different countries and locales
+              Manage pricing for different countries and locales. <strong>Note:</strong> India (IN) uses global pricing from the plan settings and cannot be managed here.
             </p>
           </div>
           <button

@@ -830,20 +830,18 @@ const upsertPlanLocale = async (req, res) => {
       });
     }
 
-    // Enforce currency rules: India uses INR, all others use USD
+    // Prevent India locale pricing - India should use global pricing only
     if (country_code.toUpperCase() === 'IN') {
-      if (currency_code.toUpperCase() !== 'INR') {
-        return res.status(400).json({
-          error: 'India (IN) must use INR currency'
-        });
-      }
-    } else {
-      // All non-India countries must use USD
-      if (currency_code.toUpperCase() !== 'USD') {
-        return res.status(400).json({
-          error: 'All countries except India must use USD currency'
-        });
-      }
+      return res.status(400).json({
+        error: 'India (IN) locale pricing is not allowed. India uses global pricing from the subscription plan. Please use the Edit button on the plan to modify India pricing.'
+      });
+    }
+    
+    // All non-India countries must use USD
+    if (currency_code.toUpperCase() !== 'USD') {
+      return res.status(400).json({
+        error: 'All countries except India must use USD currency'
+      });
     }
 
     // Check if plan exists

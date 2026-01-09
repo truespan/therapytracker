@@ -81,6 +81,12 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
       
       // Detect user locale
       const { locale, countryCode } = detectUserLocale();
+      console.log('🔍 [fetchSubscriptionPlans] START - Detected locale:', locale, 'countryCode:', countryCode);
+      
+      // Sanity check - ensure countryCode is detected correctly
+      if (!countryCode) {
+        console.error('❌ [fetchSubscriptionPlans] ERROR: countryCode is undefined!');
+      }
       
       // Pass locale as query parameter
       const response = await api.get('/subscription-plans/individual/selection', {
@@ -91,14 +97,44 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
       });
       
       if (response.data.success) {
-        const plans = response.data.plans.map(plan => ({
-          ...plan,
-          // Use locale-specific prices if available, otherwise fall back to global prices
-          individual_monthly_price: plan.locale_individual_monthly_price || plan.individual_monthly_price,
-          individual_quarterly_price: plan.locale_individual_quarterly_price || plan.individual_quarterly_price,
-          individual_yearly_price: plan.locale_individual_yearly_price || plan.individual_yearly_price,
-          currency_code: plan.currency_code || 'INR'
-        }));
+        console.log('🔍 [fetchSubscriptionPlans] Detected locale:', locale, 'countryCode:', countryCode);
+        console.log('🔍 [fetchSubscriptionPlans] API Response plans (first plan):', response.data.plans[0] ? {
+          name: response.data.plans[0].plan_name,
+          original_currency_code: response.data.plans[0].currency_code,
+          locale_prices: {
+            monthly: response.data.plans[0].locale_individual_monthly_price,
+            quarterly: response.data.plans[0].locale_individual_quarterly_price,
+            yearly: response.data.plans[0].locale_individual_yearly_price
+          }
+        } : 'No plans');
+        
+        // Force currency code based on user's country - override any backend value
+        const plans = response.data.plans.map(plan => {
+          // Force INR for India, USD for others - regardless of what backend returns
+          const forcedCurrencyCode = countryCode === 'IN' ? 'INR' : 'USD';
+          
+          console.log('🔍 [fetchSubscriptionPlans] Processing plan:', plan.plan_name, {
+            original_currency_code: plan.currency_code,
+            forced_currency_code: forcedCurrencyCode,
+            countryCode: countryCode
+          });
+          
+          return {
+            ...plan,
+            // Use locale-specific prices if available, otherwise fall back to global prices
+            individual_monthly_price: plan.locale_individual_monthly_price || plan.individual_monthly_price,
+            individual_quarterly_price: plan.locale_individual_quarterly_price || plan.individual_quarterly_price,
+            individual_yearly_price: plan.locale_individual_yearly_price || plan.individual_yearly_price,
+            // ALWAYS override currency_code based on user's country
+            currency_code: forcedCurrencyCode
+          };
+        });
+        
+        console.log('🔍 [fetchSubscriptionPlans] Final plans with currency:', plans.map(p => ({
+          name: p.plan_name,
+          currency: p.currency_code,
+          monthly_price: p.individual_monthly_price
+        })));
         
         // Filter out Free Plan and plans with ₹0 pricing - only show paid plans
         const paidPlans = plans.filter(plan => {
@@ -141,7 +177,15 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
   };
 
   const getCurrencyCode = (plan) => {
-    return plan.currency_code || 'INR';
+    // ALWAYS check user's country and force correct currency - don't trust plan.currency_code
+    // This ensures India always gets INR, others always get USD
+    const { countryCode } = detectUserLocale();
+    const forcedCurrency = countryCode === 'IN' ? 'INR' : 'USD';
+    
+    console.log('🔍 [getCurrencyCode] Plan currency_code:', plan?.currency_code, 'Detected countryCode:', countryCode, 'Forced currency:', forcedCurrency, 'for plan:', plan?.plan_name);
+    
+    // Return forced currency based on country, ignoring plan's currency_code
+    return forcedCurrency;
   };
 
   const getPeriodLabel = (period) => {
@@ -530,7 +574,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                       </h3>
                       <div className="flex items-baseline justify-center">
                         <span className="text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
-                          {formatCurrency(price, getCurrencyCode(plan), detectUserLocale().locale)}
+                          {formatCurrency(price, getCurrencyCode(plan))}
                         </span>
                         <span className="text-gray-600 dark:text-dark-text-secondary ml-2">
                           / {getPeriodLabel(selectedBillingPeriod)}
