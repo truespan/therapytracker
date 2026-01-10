@@ -1161,14 +1161,19 @@ const PartnerSettings = () => {
                     setShowPlanModal(true);
                   }}
                   disabled={loadingPlans || saving || !organizationSubscription?.theraptrack_controlled}
-                  className="btn btn-primary flex items-center space-x-2"
+                  className="btn btn-primary flex items-center justify-center space-x-2 px-4 py-2 min-w-[155px] md:min-w-[190px] w-[155px] md:w-[190px] whitespace-nowrap"
                 >
                   <CreditCard className="h-4 w-4" />
                   <span>
                     {loadingPlans 
                       ? 'Loading Plans...' 
                       : (partnerSubscription && partnerSubscription.plan_name)
-                        ? 'Upgrade Plan'
+                        ? (
+                          <>
+                            <span className="md:hidden">Upgrade</span>
+                            <span className="hidden md:inline">Upgrade Plan</span>
+                          </>
+                        )
                         : 'Select Plan'
                     }
                   </span>
@@ -1183,7 +1188,7 @@ const PartnerSettings = () => {
                     <button
                       onClick={handlePauseSubscription}
                       disabled={saving || cancelling || pausing || resuming}
-                      className="btn btn-secondary flex items-center space-x-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900"
+                      className="btn btn-secondary flex items-center space-x-2 px-4 py-2 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900"
                       title="Pause your subscription temporarily. No charges will be made while paused."
                     >
                       <Pause className="h-4 w-4" />
@@ -1192,7 +1197,7 @@ const PartnerSettings = () => {
                     <button
                       onClick={handleResumeSubscription}
                       disabled={saving || cancelling || pausing || resuming}
-                      className="btn btn-secondary flex items-center space-x-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900"
+                      className="btn btn-secondary flex items-center space-x-2 px-4 py-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900"
                       title="Resume your paused subscription. Billing will continue from now."
                     >
                       <Play className="h-4 w-4" />
@@ -1206,7 +1211,7 @@ const PartnerSettings = () => {
                   <button
                     onClick={() => setShowCancellationDialog(true)}
                     disabled={saving || cancelling || pausing || resuming}
-                    className="btn btn-secondary flex items-center space-x-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
+                    className="flex items-center justify-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors duration-200 bg-gray-50 text-gray-600 hover:bg-gray-100 active:bg-gray-200 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:bg-dark-bg-secondary dark:text-gray-400 dark:hover:bg-dark-bg-primary dark:active:bg-dark-bg-tertiary dark:focus:ring-gray-600 min-w-[155px] md:min-w-[190px] w-[155px] md:w-[190px] whitespace-nowrap"
                   >
                     <XCircle className="h-4 w-4" />
                     <span>Cancel Subscription</span>
