@@ -53,19 +53,19 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md">
+    <nav className="bg-white dark:bg-dark-bg-secondary shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo - Responsive */}
           <Link to={getDashboardLink()} className="flex items-center space-x-2">
-            <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center p-1.5 shadow-md">
+            <div className="h-10 w-10 bg-white dark:bg-dark-bg-secondary rounded-full flex items-center justify-center p-1.5 shadow-md">
               <img
                 src="/TheraPTrackLogoBgRemoved.png"
                 alt="TheraP Track Logo"
                 className="h-full w-full object-contain"
               />
             </div>
-            <span className="text-lg sm:text-xl font-bold text-gray-900">
+            <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-dark-text-primary">
               TheraP Track
             </span>
           </Link>
@@ -74,11 +74,11 @@ const Navbar = () => {
             <>
               {/* Desktop Menu - Hidden on mobile */}
               <div className="hidden md:flex items-center space-x-4">
-                <div className="flex items-center space-x-2 text-gray-700">
+                <div className="flex items-center space-x-2 text-gray-700 dark:text-dark-text-primary">
                   <User className="h-5 w-5" />
                   <span className="font-medium">{getUsername()}</span>
                   {getRoleText() && (
-                    <span className="text-sm text-gray-500">({getRoleText()})</span>
+                    <span className="text-sm text-gray-500 dark:text-dark-text-tertiary">({getRoleText()})</span>
                   )}
                 </div>
                 <button
@@ -93,7 +93,7 @@ const Navbar = () => {
               {/* Mobile Hamburger Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                className="md:hidden p-2 rounded-lg text-gray-600 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary transition-colors"
                 aria-label="Toggle menu"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -104,14 +104,14 @@ const Navbar = () => {
 
         {/* Mobile Menu Dropdown */}
         {user && mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4 space-y-3">
-            <div className="px-4 py-2 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-2 text-gray-700">
+          <div className="md:hidden border-t border-gray-200 dark:border-dark-border py-4 space-y-3">
+            <div className="px-4 py-2 bg-gray-50 dark:bg-dark-bg-tertiary rounded-lg">
+              <div className="flex items-center space-x-2 text-gray-700 dark:text-dark-text-primary">
                 <User className="h-5 w-5" />
                 <div>
                   <p className="font-medium">{getUsername()}</p>
                   {getRoleText() && (
-                    <p className="text-sm text-gray-500">{getRoleText()}</p>
+                    <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">{getRoleText()}</p>
                   )}
                 </div>
               </div>
@@ -119,20 +119,20 @@ const Navbar = () => {
 
             {/* Partner ID Section - Only for partners */}
             {user.userType === 'partner' && user.partner_id && (
-              <div className="px-4 py-3 bg-primary-50 border-2 border-primary-500 rounded-lg">
+              <div className="px-4 py-3 bg-primary-50 dark:bg-dark-bg-tertiary border-2 border-primary-500 dark:border-dark-primary-500 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-umbra-900 mb-0.5">Therapist ID: <span className="text-base font-bold text-primary-500">{user.partner_id}</span></p>
+                    <p className="text-sm text-umbra-900 dark:text-dark-text-primary mb-0.5">Therapist ID: <span className="text-base font-bold text-primary-500 dark:text-dark-primary-500">{user.partner_id}</span></p>
                   </div>
                   <button
                     onClick={handleCopyPartnerId}
-                    className="p-2 hover:bg-primary-100 rounded transition-colors"
+                    className="p-2 hover:bg-primary-100 dark:hover:bg-dark-bg-secondary rounded transition-colors"
                     title="Copy Partner ID"
                   >
                     {copied ? (
                       <Check className="h-5 w-5 text-success-500" />
                     ) : (
-                      <Copy className="h-5 w-5 text-primary-500" />
+                      <Copy className="h-5 w-5 text-primary-500 dark:text-dark-primary-500" />
                     )}
                   </button>
                 </div>
