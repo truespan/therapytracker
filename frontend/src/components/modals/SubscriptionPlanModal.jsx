@@ -442,18 +442,18 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
       <div className="absolute inset-0 bg-black/40"></div>
 
       {/* Modal Content */}
-      <div className="relative bg-white dark:bg-dark-bg-secondary rounded-2xl shadow-2xl max-w-[95vw] w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="relative bg-white dark:bg-dark-bg-secondary rounded-lg md:rounded-2xl shadow-2xl max-w-[95vw] w-full max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-6 py-6 text-white relative">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold mb-2">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-4 py-4 md:px-6 md:py-6 text-white relative">
+          <div className="text-center pr-8 md:pr-0">
+            <h2 className="text-lg md:text-2xl lg:text-3xl font-bold mb-1 md:mb-2">
               {isFreePlan || isTrialEnded
                 ? "You've reached the limit of your current plan. Upgrade to continue using these features."
                 : isOnTrialPlan 
                 ? `You are in "${trialPlanName}" plan now. You can cancel and proceed.`
                 : 'Select Your Subscription Plan'}
             </h2>
-            <p className="text-primary-100 dark:text-primary-200">
+            <p className="text-sm md:text-base text-primary-100 dark:text-primary-200">
               {isFreePlan || isTrialEnded
                 ? 'Choose the plan that best fits your practice needs'
                 : isOnTrialPlan
@@ -465,33 +465,33 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           {!loading && !error && (isFreePlan || isTrialEnded) && onClose && !processing && (
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
+              className="absolute top-2 right-2 md:top-4 md:right-4 p-1.5 md:p-2 rounded-full hover:bg-white/20 transition-colors"
               aria-label="Cancel and logout"
               title="Cancel and logout"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5 md:h-6 md:w-6" />
             </button>
           )}
           {/* Close button - show for active trial users or when no paid plans are available */}
           {!loading && !error && !isFreePlan && !isTrialEnded && (isOnTrialPlan || subscriptionPlans.length === 0) && onClose && !processing && (
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
+              className="absolute top-2 right-2 md:top-4 md:right-4 p-1.5 md:p-2 rounded-full hover:bg-white/20 transition-colors"
               aria-label="Close modal"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5 md:h-6 md:w-6" />
             </button>
           )}
         </div>
 
         {/* Billing Period Selector */}
-        <div className="px-6 pt-6 pb-4 bg-gray-50 dark:bg-dark-bg-tertiary border-b border-gray-200 dark:border-dark-border">
-          <div className="flex justify-center space-x-2">
+        <div className="px-3 md:px-6 pt-3 md:pt-6 pb-3 md:pb-4 bg-gray-50 dark:bg-dark-bg-tertiary border-b border-gray-200 dark:border-dark-border">
+          <div className="flex justify-center space-x-1 md:space-x-2 flex-wrap gap-2 md:gap-0">
             {['monthly', 'quarterly', 'yearly'].map((period) => (
               <button
                 key={period}
                 onClick={() => setSelectedBillingPeriod(period)}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1.5 md:px-6 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
                   selectedBillingPeriod === period
                     ? 'bg-primary-600 text-white shadow-lg'
                     : 'bg-white dark:bg-dark-bg-secondary text-gray-700 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-primary'
@@ -499,7 +499,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
               >
                 {period.charAt(0).toUpperCase() + period.slice(1)}
                 {period === 'yearly' && (
-                  <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
+                  <span className="ml-1 md:ml-2 text-xs bg-green-500 text-white px-1.5 md:px-2 py-0.5 rounded-full">
                     Save 20%
                   </span>
                 )}
@@ -509,7 +509,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3 md:p-6">
           {loading && (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-dark-primary-500 mb-4"></div>
@@ -535,7 +535,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           )}
 
           {!loading && !error && subscriptionPlans.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
               {subscriptionPlans
                 .filter(plan => {
                   // Filter out plans with ₹0 for the selected billing period
@@ -556,106 +556,106 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                       const price = getPriceForPeriod(plan, selectedBillingPeriod);
                       trackSubscriptionSelected(plan.plan_name, price);
                     }}
-                    className={`relative rounded-xl border-2 p-6 cursor-pointer transition-all hover:shadow-lg ${
+                    className={`relative rounded-lg md:rounded-xl border-2 p-4 md:p-6 cursor-pointer transition-all hover:shadow-lg ${
                       isSelected
                         ? 'border-primary-600 dark:border-dark-primary-500 bg-primary-50 dark:bg-primary-900/20 shadow-xl'
                         : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-bg-tertiary hover:border-primary-300 dark:hover:border-dark-primary-700'
                     }`}
                   >
                     {isSelected && (
-                      <div className="absolute -top-3 -right-3 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full p-2 shadow-lg">
-                        <Check className="h-5 w-5" />
+                      <div className="absolute -top-2 -right-2 md:-top-3 md:-right-3 bg-primary-600 dark:bg-dark-primary-600 text-white rounded-full p-1.5 md:p-2 shadow-lg">
+                        <Check className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
                     )}
 
-                    <div className="text-center mb-4">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary mb-2">
+                    <div className="text-center mb-3 md:mb-4">
+                      <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-dark-text-primary mb-1 md:mb-2">
                         {plan.plan_name}
                       </h3>
                       <div className="flex items-baseline justify-center">
-                        <span className="text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
+                        <span className="text-2xl md:text-4xl font-bold text-primary-600 dark:text-dark-primary-500">
                           {formatCurrency(price, getCurrencyCode(plan))}
                         </span>
-                        <span className="text-gray-600 dark:text-dark-text-secondary ml-2">
+                        <span className="text-sm md:text-base text-gray-600 dark:text-dark-text-secondary ml-1 md:ml-2">
                           / {getPeriodLabel(selectedBillingPeriod)}
                         </span>
                       </div>
                     </div>
 
-                    <ul className="space-y-3 mb-6">
-                      <li className={`flex items-start space-x-2 ${(() => {
+                    <ul className="space-y-2 md:space-y-3 mb-4 md:mb-6">
+                      <li className={`flex items-start space-x-1.5 md:space-x-2 ${(() => {
                         const isUnlimited = plan.max_sessions === null || plan.max_sessions >= 999999;
                         const is0to9 = !isUnlimited && plan.min_sessions === 0 && plan.max_sessions === 9;
                         const is0to25 = !isUnlimited && plan.min_sessions === 0 && plan.max_sessions === 25;
-                        return (isUnlimited || is0to9 || is0to25) ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : '';
+                        return (isUnlimited || is0to9 || is0to25) ? 'bg-yellow-50 dark:bg-blue-800/40 p-1.5 md:p-2 rounded-md' : '';
                       })()}`}>
-                        <Calendar className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                        <Calendar className="h-4 w-4 md:h-5 md:w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-xs md:text-sm text-gray-700 dark:text-dark-text-secondary">
                           {plan.max_sessions === null || plan.max_sessions >= 999999
                             ? 'Unlimited sessions'
                             : `${plan.min_sessions}-${plan.max_sessions} sessions/month`}
                         </span>
                       </li>
-                      <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_video ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
-                        <span className={`text-sm ${plan.has_video ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
+                      <li className="flex items-start space-x-1.5 md:space-x-2">
+                        <Check className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-0.5 ${plan.has_video ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-xs md:text-sm ${plan.has_video ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Video sessions {plan.has_video ? 'enabled' : 'not included'}
                         </span>
                       </li>
-                      <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_whatsapp ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
-                        <span className={`text-sm ${plan.has_whatsapp ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
+                      <li className="flex items-start space-x-1.5 md:space-x-2">
+                        <Check className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-0.5 ${plan.has_whatsapp ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-xs md:text-sm ${plan.has_whatsapp ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           WhatsApp messaging {plan.has_whatsapp ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_advanced_assessments ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
-                        <span className={`text-sm ${plan.has_advanced_assessments ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
+                      <li className="flex items-start space-x-1.5 md:space-x-2">
+                        <Check className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-0.5 ${plan.has_advanced_assessments ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-xs md:text-sm ${plan.has_advanced_assessments ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Advanced assessments {plan.has_advanced_assessments ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className="flex items-start space-x-2">
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_report_generation ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
-                        <span className={`text-sm ${plan.has_report_generation ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
+                      <li className="flex items-start space-x-1.5 md:space-x-2">
+                        <Check className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-0.5 ${plan.has_report_generation ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-xs md:text-sm ${plan.has_report_generation ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Report generation {plan.has_report_generation ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className={`flex items-start space-x-2 ${plan.has_custom_branding ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_custom_branding ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
-                        <span className={`text-sm ${plan.has_custom_branding ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
+                      <li className={`flex items-start space-x-1.5 md:space-x-2 ${plan.has_custom_branding ? 'bg-yellow-50 dark:bg-blue-800/40 p-1.5 md:p-2 rounded-md' : ''}`}>
+                        <Check className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-0.5 ${plan.has_custom_branding ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-xs md:text-sm ${plan.has_custom_branding ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Custom branding {plan.has_custom_branding ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className={`flex items-start space-x-2 ${plan.has_advanced_analytics ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_advanced_analytics ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
-                        <span className={`text-sm ${plan.has_advanced_analytics ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
+                      <li className={`flex items-start space-x-1.5 md:space-x-2 ${plan.has_advanced_analytics ? 'bg-yellow-50 dark:bg-blue-800/40 p-1.5 md:p-2 rounded-md' : ''}`}>
+                        <Check className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-0.5 ${plan.has_advanced_analytics ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-xs md:text-sm ${plan.has_advanced_analytics ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Advanced analytics {plan.has_advanced_analytics ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className={`flex items-start space-x-2 ${plan.has_blogs_events_announcements ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_blogs_events_announcements ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
-                        <span className={`text-sm ${plan.has_blogs_events_announcements ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
+                      <li className={`flex items-start space-x-1.5 md:space-x-2 ${plan.has_blogs_events_announcements ? 'bg-yellow-50 dark:bg-blue-800/40 p-1.5 md:p-2 rounded-md' : ''}`}>
+                        <Check className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-0.5 ${plan.has_blogs_events_announcements ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-xs md:text-sm ${plan.has_blogs_events_announcements ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Blogs, Events & Announcements {plan.has_blogs_events_announcements ? '' : 'not included'}
                         </span>
                       </li>
-                      <li className={`flex items-start space-x-2 ${plan.has_customized_feature_support ? 'bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md' : ''}`}>
-                        <Check className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.has_customized_feature_support ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
-                        <span className={`text-sm ${plan.has_customized_feature_support ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
+                      <li className={`flex items-start space-x-1.5 md:space-x-2 ${plan.has_customized_feature_support ? 'bg-yellow-50 dark:bg-blue-800/40 p-1.5 md:p-2 rounded-md' : ''}`}>
+                        <Check className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 mt-0.5 ${plan.has_customized_feature_support ? 'text-primary-600 dark:text-dark-primary-500' : 'text-gray-300 dark:text-gray-500'}`} />
+                        <span className={`text-xs md:text-sm ${plan.has_customized_feature_support ? 'text-gray-700 dark:text-dark-text-secondary' : 'text-gray-400 dark:text-gray-400'}`}>
                           Customized Feature Support {plan.has_customized_feature_support ? '' : 'not included'}
                         </span>
                       </li>
                       {plan.has_priority_support && (
-                        <li className="flex items-start space-x-2 bg-yellow-50 dark:bg-blue-800/40 p-2 rounded-md">
-                          <Check className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                        <li className="flex items-start space-x-1.5 md:space-x-2 bg-yellow-50 dark:bg-blue-800/40 p-1.5 md:p-2 rounded-md">
+                          <Check className="h-4 w-4 md:h-5 md:w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
+                          <span className="text-xs md:text-sm text-gray-700 dark:text-dark-text-secondary">
                             Priority support
                           </span>
                         </li>
                       )}
                       {plan.has_email_support && !plan.has_priority_support && (
-                        <li className="flex items-start space-x-2">
-                          <Check className="h-5 w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-gray-700 dark:text-dark-text-secondary">
+                        <li className="flex items-start space-x-1.5 md:space-x-2">
+                          <Check className="h-4 w-4 md:h-5 md:w-5 text-primary-600 dark:text-dark-primary-500 flex-shrink-0 mt-0.5" />
+                          <span className="text-xs md:text-sm text-gray-700 dark:text-dark-text-secondary">
                             Chat and Email support
                           </span>
                         </li>
@@ -663,7 +663,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                     </ul>
 
                     {isFreePlan && (
-                      <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="mt-3 md:mt-4 p-2 md:p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                         <p className="text-xs text-amber-800 dark:text-amber-200">
                           Perfect for getting started with TheraP Track
                         </p>
@@ -694,16 +694,16 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 dark:border-dark-border px-6 py-4 bg-gray-50 dark:bg-dark-bg-tertiary">
+        <div className="border-t border-gray-200 dark:border-dark-border px-3 md:px-6 py-3 md:py-4 bg-gray-50 dark:bg-dark-bg-tertiary">
           {error && (
-            <div className="mb-4 p-3 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-error-600 dark:text-error-400 flex-shrink-0" />
-              <span className="text-sm text-error-700 dark:text-error-300">{error}</span>
+            <div className="mb-3 md:mb-4 p-2 md:p-3 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="h-4 w-4 md:h-5 md:w-5 text-error-600 dark:text-error-400 flex-shrink-0" />
+              <span className="text-xs md:text-sm text-error-700 dark:text-error-300">{error}</span>
             </div>
           )}
 
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600 dark:text-dark-text-tertiary">
+          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 md:gap-0">
+            <p className="text-xs md:text-sm text-gray-600 dark:text-dark-text-tertiary text-center md:text-left mb-1 md:mb-0">
               {isOnTrialPlan
                 ? `Currently on: ${trialPlanName}`
                 : selectedPlan
@@ -712,12 +712,12 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                 ? 'No plans available'
                 : 'Please select a plan to continue'}
             </p>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center space-y-2 md:space-y-0 md:space-x-3">
               {/* Show close button for active trial users, Free Plan users, ended trial users, or when no plans available */}
               {((isOnTrialPlan && !isTrialEnded) || isFreePlan || isTrialEnded || subscriptionPlans.length === 0) && onClose && !processing && (
                 <button
                   onClick={handleClose}
-                  className="px-6 py-3 rounded-lg font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
                   {(isOnTrialPlan && !isTrialEnded) ? 'Continue with Trial' : (isFreePlan || isTrialEnded) ? 'Cancel' : 'Close'}
                 </button>
@@ -726,7 +726,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                 <button
                   onClick={handleSelectPlan}
                   disabled={!selectedPlan || processing}
-                  className={`px-8 py-3 rounded-lg font-semibold text-white transition-all flex items-center space-x-2 ${
+                  className={`w-full md:w-auto px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-sm md:text-base font-semibold text-white transition-all flex items-center justify-center space-x-2 ${
                     selectedPlan && !processing
                       ? 'bg-primary-600 hover:bg-primary-700 dark:bg-dark-primary-600 dark:hover:bg-dark-primary-700 shadow-lg hover:shadow-xl'
                       : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
@@ -734,12 +734,12 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                 >
                   {processing ? (
                     <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-b-2 border-white"></div>
                       <span>Processing...</span>
                     </>
                   ) : (
                     <>
-                      <CreditCard className="h-5 w-5" />
+                      <CreditCard className="h-4 w-4 md:h-5 md:w-5" />
                       <span>{isOnTrialPlan ? 'Upgrade Now' : 'Select & Pay'}</span>
                     </>
                   )}
