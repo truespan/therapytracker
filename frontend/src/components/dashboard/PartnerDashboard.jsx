@@ -483,8 +483,8 @@ const PartnerDashboard = () => {
       </div>
 
       {/* Mobile Welcome Section - Mobile only (hidden on desktop) */}
-      <div className="lg:hidden mb-6">
-        <div className="flex items-start space-x-3">
+      <div className="lg:hidden mb-4">
+        <div className="flex items-start space-x-3 mb-3">
           {/* Profile Picture */}
           <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
             {user.photo_url ? (
@@ -506,18 +506,31 @@ const PartnerDashboard = () => {
           <div className="flex-1">
             <h1 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
             <p className="text-sm text-gray-600 dark:text-dark-text-secondary">{user.qualification || 'Manage your clients'}</p>
-            
-            {/* Appearance Settings */}
-            <div className="mt-2">
-              <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border w-fit">
-                <div className="flex items-center space-x-2">
-                  <Sun className="h-3 w-3 text-primary-600 dark:text-dark-primary-500" />
-                  <span className="text-xs font-medium text-gray-700 dark:text-dark-text-primary">Dark Mode</span>
-                </div>
-                <DarkModeToggle variant="switch" />
-              </div>
-            </div>
           </div>
+        </div>
+        
+        {/* Mode Toggle and Share Link Bar - Mobile only */}
+        <div className="flex items-center justify-between mb-3">
+          <DarkModeToggle variant="button" showLabel />
+          {/* Show button only on mobile (below sm), not on tablet */}
+          {user.partner_id && (
+            <button
+              onClick={handleShareSignupUrl}
+              className="sm:hidden flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+            >
+              {copiedSignupUrl ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  URL Copied!
+                </>
+              ) : (
+                <>
+                  <Share className="h-4 w-4" />
+                  Share Signup & Appointment link
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -605,29 +618,7 @@ const PartnerDashboard = () => {
 
       {/* Scrollable Tabs - Mobile & Tablet */}
       <div className="lg:hidden border-b border-gray-200 dark:border-dark-border mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="border-b border-gray-200 dark:border-dark-border py-3 px-4 -mx-4 sm:mx-0 sm:px-0 flex items-center justify-between">
-          <DarkModeToggle variant="button" showLabel />
-          {/* Show button next to Dark Mode only on mobile (below sm), not on tablet */}
-          {user.partner_id && (
-            <button
-              onClick={handleShareSignupUrl}
-              className="sm:hidden flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
-            >
-              {copiedSignupUrl ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  URL Copied!
-                </>
-              ) : (
-                <>
-                  <Share className="h-4 w-4" />
-                  Share Signup & Appointment link
-                </>
-              )}
-            </button>
-          )}
-        </div>
-        <nav className="flex space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
+        <nav className="flex space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px pt-1">
           <button
             onClick={() => setActiveTab('appointments')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
