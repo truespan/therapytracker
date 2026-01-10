@@ -516,7 +516,7 @@ const PartnerDashboard = () => {
           {user.partner_id && (
             <button
               onClick={handleShareSignupUrl}
-              className="sm:hidden flex items-center gap-2 px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+              className="sm:hidden flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium dark:bg-dark-bg-secondary dark:text-dark-text-primary dark:hover:bg-dark-bg-tertiary"
             >
               {copiedSignupUrl ? (
                 <>
