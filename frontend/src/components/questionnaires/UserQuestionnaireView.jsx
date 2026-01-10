@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { questionnaireAPI } from '../../services/api';
 import { calculatePillDisplay } from '../../utils/textMeasurement';
 
-const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onCancel }) => {
+const UserQuestionnaireView = ({ assignmentId, viewOnly = false, showTotalSum = true, onComplete, onCancel }) => {
   const [assignment, setAssignment] = useState(null);
   const [responses, setResponses] = useState({});
   const [textResponse, setTextResponse] = useState('');
@@ -526,8 +526,8 @@ const UserQuestionnaireView = ({ assignmentId, viewOnly = false, onComplete, onC
           })()}
         </div>
 
-        {/* Total Sum - Only show in viewOnly mode when responses are submitted */}
-        {viewOnly && Object.keys(responses).length > 0 && (
+        {/* Total Sum - Only show in viewOnly mode when responses are submitted AND showTotalSum is true (therapist view) */}
+        {viewOnly && showTotalSum && Object.keys(responses).length > 0 && (
           <div className="mb-6 p-4 bg-primary-50 border-2 border-primary-200 rounded-lg">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-gray-800">Total Sum:</span>

@@ -712,6 +712,7 @@ const UserDashboard = () => {
                 <UserQuestionnaireView
                   assignmentId={selectedAssignment.id}
                   viewOnly={selectedAssignment.status === 'completed'}
+                  showTotalSum={false}
                   onComplete={() => {
                     loadQuestionnaireAssignments();
                     setSelectedAssignment(null);

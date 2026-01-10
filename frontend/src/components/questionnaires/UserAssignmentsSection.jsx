@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { questionnaireAPI } from '../../services/api';
-import { ChevronDown, ChevronUp, ClipboardList, CheckCircle, Clock, Calendar, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, ClipboardList, CheckCircle, Clock, Calendar, Trash2, X, ExternalLink } from 'lucide-react';
+import QuestionnaireViewModal from './QuestionnaireViewModal';
 
 const UserAssignmentsSection = ({ userId, userName }) => {
   const [assignments, setAssignments] = useState([]);
@@ -8,6 +9,7 @@ const UserAssignmentsSection = ({ userId, userName }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [viewingAssignment, setViewingAssignment] = useState(null);
 
   useEffect(() => {
     if (userId) {
@@ -187,7 +189,13 @@ const UserAssignmentsSection = ({ userId, userName }) => {
                         >
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <p className="font-medium text-gray-900 dark:text-white">{assignment.name}</p>
+                              <div 
+                                onClick={() => setViewingAssignment(assignment)}
+                                className="inline-flex items-center gap-1.5 font-medium text-primary-600 dark:text-primary-400 cursor-pointer underline hover:text-primary-700 dark:hover:text-primary-300 transition-colors group"
+                              >
+                                <span>{assignment.name}</span>
+                                <ExternalLink className="h-3.5 w-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
+                              </div>
                               {assignment.description && (
                                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{assignment.description}</p>
                               )}
@@ -229,6 +237,16 @@ const UserAssignmentsSection = ({ userId, userName }) => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Questionnaire View Modal */}
+      {viewingAssignment && (
+        <QuestionnaireViewModal
+          isOpen={!!viewingAssignment}
+          onClose={() => setViewingAssignment(null)}
+          assignmentId={viewingAssignment.id}
+          questionnaireName={viewingAssignment.name}
+        />
       )}
     </div>
   );

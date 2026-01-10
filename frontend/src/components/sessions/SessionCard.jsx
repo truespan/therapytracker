@@ -455,15 +455,18 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
                   {/* Clickable questionnaire name */}
                   <button
                     onClick={() => setSelectedQuestionnaire(questionnaire)}
-                    className={`flex-1 text-left transition-colors ${
+                    className={`flex-1 text-left transition-colors inline-flex items-center gap-1.5 ${
                       questionnaire.status === 'pending'
                         ? 'text-gray-500 cursor-not-allowed'
-                        : 'text-gray-700 hover:text-primary-600 hover:underline cursor-pointer'
+                        : 'text-primary-600 dark:text-primary-400 underline hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer group'
                     }`}
                     disabled={questionnaire.status === 'pending'}
                     title={questionnaire.status === 'pending' ? 'Waiting for client to complete' : 'Click to view'}
                   >
-                    {truncateQuestionnaireName(questionnaire.name)}
+                    <span>{truncateQuestionnaireName(questionnaire.name)}</span>
+                    {questionnaire.status !== 'pending' && (
+                      <ExternalLink className="h-3 w-3 opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                    )}
                   </button>
 
                   {/* Delete Icon */}
@@ -753,15 +756,18 @@ const SessionCard = ({ session, onEdit, onAssignQuestionnaire, onQuestionnaireDe
                   {/* Clickable questionnaire name */}
                   <button
                     onClick={() => setSelectedQuestionnaire(questionnaire)}
-                    className={`flex-1 text-left transition-colors ${
+                    className={`flex-1 text-left transition-colors inline-flex items-center gap-1.5 ${
                       questionnaire.status === 'pending'
                         ? 'text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                        : 'text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:underline cursor-pointer'
+                        : 'text-primary-600 dark:text-primary-400 underline hover:text-primary-700 dark:hover:text-primary-300 cursor-pointer group'
                     }`}
                     disabled={questionnaire.status === 'pending'}
                     title={questionnaire.status === 'pending' ? 'Waiting for client to complete' : 'Click to view'}
                   >
-                    {truncateQuestionnaireName(questionnaire.name)}
+                    <span>{truncateQuestionnaireName(questionnaire.name)}</span>
+                    {questionnaire.status !== 'pending' && (
+                      <ExternalLink className="h-3 w-3 opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                    )}
                   </button>
 
                   {/* Delete Icon */}
