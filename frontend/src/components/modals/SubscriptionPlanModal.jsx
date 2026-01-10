@@ -445,8 +445,14 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
       <div className="relative bg-white dark:bg-dark-bg-secondary rounded-lg md:rounded-2xl shadow-2xl max-w-[95vw] w-full max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 dark:from-dark-primary-600 dark:to-dark-primary-700 px-4 py-4 md:px-6 md:py-6 text-white relative">
-          <div className="text-center pr-8 md:pr-0">
-            <h2 className="text-lg md:text-2xl lg:text-3xl font-bold mb-1 md:mb-2">
+          <div className="text-center pr-10 md:pr-0">
+            <h2 className={`font-bold mb-1 md:mb-2 ${
+              isOnTrialPlan
+                ? 'text-sm md:text-2xl lg:text-3xl'
+                : isFreePlan || isTrialEnded
+                ? 'text-base md:text-2xl lg:text-3xl'
+                : 'text-lg md:text-2xl lg:text-3xl'
+            }`}>
               {isFreePlan || isTrialEnded
                 ? "You've reached the limit of your current plan. Upgrade to continue using these features."
                 : isOnTrialPlan 
@@ -465,7 +471,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           {!loading && !error && (isFreePlan || isTrialEnded) && onClose && !processing && (
             <button
               onClick={handleClose}
-              className="absolute top-2 right-2 md:top-4 md:right-4 p-1.5 md:p-2 rounded-full hover:bg-white/20 transition-colors"
+              className="absolute top-2 right-2 md:top-4 md:right-4 p-2 md:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10 flex items-center justify-center"
               aria-label="Cancel and logout"
               title="Cancel and logout"
             >
@@ -476,7 +482,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           {!loading && !error && !isFreePlan && !isTrialEnded && (isOnTrialPlan || subscriptionPlans.length === 0) && onClose && !processing && (
             <button
               onClick={handleClose}
-              className="absolute top-2 right-2 md:top-4 md:right-4 p-1.5 md:p-2 rounded-full hover:bg-white/20 transition-colors"
+              className="absolute top-2 right-2 md:top-4 md:right-4 p-2 md:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10 flex items-center justify-center"
               aria-label="Close modal"
             >
               <X className="h-5 w-5 md:h-6 md:w-6" />
@@ -719,7 +725,8 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                   onClick={handleClose}
                   className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 rounded-lg text-sm md:text-base font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
-                  {(isOnTrialPlan && !isTrialEnded) ? 'Continue with Trial' : (isFreePlan || isTrialEnded) ? 'Cancel' : 'Close'}
+                  <span className="md:hidden">{(isOnTrialPlan && !isTrialEnded) ? 'Continue' : (isFreePlan || isTrialEnded) ? 'Cancel' : 'Close'}</span>
+                  <span className="hidden md:inline">{(isOnTrialPlan && !isTrialEnded) ? 'Continue with Trial' : (isFreePlan || isTrialEnded) ? 'Cancel' : 'Close'}</span>
                 </button>
               )}
               {subscriptionPlans.length > 0 && (
@@ -740,7 +747,14 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4 md:h-5 md:w-5" />
-                      <span>{isOnTrialPlan ? 'Upgrade Now' : 'Select & Pay'}</span>
+                      {isOnTrialPlan ? (
+                        <>
+                          <span className="md:hidden">Upgrade</span>
+                          <span className="hidden md:inline">Upgrade Now</span>
+                        </>
+                      ) : (
+                        <span>Select & Pay</span>
+                      )}
                     </>
                   )}
                 </button>
