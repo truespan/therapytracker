@@ -44,15 +44,15 @@ const DarkModeToggle = ({ variant = 'switch', className = '', showLabel = false 
   return (
     <button
       onClick={toggleTheme}
-      className={`flex items-center space-x-3 w-full px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-bg-secondary transition-colors ${className}`}
+      className={`flex items-center space-x-2 sm:space-x-3 w-fit sm:w-full px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-bg-secondary transition-colors ${className}`}
       aria-label="Toggle dark mode"
     >
       {isDark ? (
-        <Moon className="h-5 w-5 text-gray-600 dark:text-dark-text-secondary" />
+        <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 dark:text-dark-text-secondary flex-shrink-0" />
       ) : (
-        <Sun className="h-5 w-5 text-gray-600" />
+        <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
       )}
-      <span className="text-sm font-medium text-gray-700 dark:text-dark-text-primary">
+      <span className="text-sm font-medium text-gray-700 dark:text-dark-text-primary whitespace-nowrap">
         {isDark ? 'Dark Mode' : 'Light Mode'}
       </span>
     </button>
