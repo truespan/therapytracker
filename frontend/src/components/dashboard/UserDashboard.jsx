@@ -378,71 +378,69 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* Mobile Welcome & Link Therapist Button */}
+      {/* Mobile Welcome Section */}
       <div className="lg:hidden mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
             <p className="text-gray-600 dark:text-dark-text-secondary mt-1 text-sm">Track your therapy progress</p>
           </div>
-          {/* Link Therapist Button - Show if only one therapist */}
-          {partners.length === 1 && (
-            <button
-              onClick={() => setShowLinkTherapistModal(true)}
-              className="btn btn-secondary text-sm"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Link Another Therapist
-            </button>
-          )}
         </div>
         
-        {/* Google Calendar Connect Button - Mobile only */}
-        <div className="mb-3">
-          {loadingCalendarStatus ? (
-            <div className="flex items-center justify-center py-1">
-              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
-            </div>
-          ) : googleCalendarStatus?.connected ? (
-            <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                <span className="text-xs font-medium text-green-700 dark:text-green-400">GCal Connected</span>
+        {/* Dark Mode, Connect GCal, and Link Therapist Buttons - Mobile only */}
+        <div className="flex items-center justify-between mb-3">
+          <DarkModeToggle variant="button" showLabel />
+          <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+            {/* Google Calendar Connect Button */}
+            {loadingCalendarStatus ? (
+              <div className="flex items-center justify-center py-1 px-2">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
               </div>
+            ) : googleCalendarStatus?.connected ? (
               <button
                 onClick={disconnectGoogleCalendar}
-                className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+                title="Disconnect Google Calendar"
               >
-                Disconnect
+                <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                <span>GCal</span>
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={connectGoogleCalendar}
-              disabled={connectingCalendar}
-              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium disabled:opacity-50"
-            >
-              {connectingCalendar ? (
-                <>
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                  <span>Connecting...</span>
-                </>
-              ) : (
-                <>
-                  <CalendarIcon className="h-3 w-3" />
-                  <span>Connect GCal</span>
-                </>
-              )}
-            </button>
-          )}
+            ) : (
+              <button
+                onClick={connectGoogleCalendar}
+                disabled={connectingCalendar}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 whitespace-nowrap"
+              >
+                {connectingCalendar ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
+                    <span>Connecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    <span>Connect GCal</span>
+                  </>
+                )}
+              </button>
+            )}
+            
+            {/* Link Therapist Button - Show if only one therapist */}
+            {partners.length === 1 && (
+              <button
+                onClick={() => setShowLinkTherapistModal(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 min-w-0 max-w-full"
+              >
+                <UserPlus className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="truncate">Link Another Therapist</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Scrollable Tabs - Mobile & Tablet */}
       <div className="lg:hidden border-b border-gray-200 dark:border-dark-border mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="border-b border-gray-200 dark:border-dark-border py-3 px-4 -mx-4 sm:mx-0 sm:px-0">
-          <DarkModeToggle variant="button" showLabel />
-        </div>
         <nav className="flex space-x-6 overflow-x-auto scrollbar-thin scroll-smooth pb-px">
           <button
             onClick={() => setActiveTab('overview')}
