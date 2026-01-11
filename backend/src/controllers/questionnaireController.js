@@ -380,7 +380,8 @@ exports.assignQuestionnaire = async (req, res) => {
 exports.getUserAssignments = async (req, res) => {
   try {
     const userId = req.user.userType === 'user' ? req.user.id : req.params.userId;
-    const assignments = await QuestionnaireAssignment.findByUser(userId);
+    const partnerId = req.query.partnerId ? parseInt(req.query.partnerId) : null;
+    const assignments = await QuestionnaireAssignment.findByUser(userId, partnerId);
     res.json(assignments);
   } catch (error) {
     console.error('Error getting user assignments:', error);

@@ -139,8 +139,8 @@ class VideoSession {
     return result.rows;
   }
 
-  static async findByUser(userId) {
-    const query = `
+  static async findByUser(userId, partnerId = null) {
+    let query = `
       SELECT 
         vs.*, 
         p.name as partner_name, 
@@ -152,9 +152,17 @@ class VideoSession {
       JOIN partners p ON vs.partner_id = p.id
       LEFT JOIN therapy_sessions ts ON vs.id = ts.video_session_id
       WHERE vs.user_id = $1 AND vs.status IN ('scheduled', 'in_progress')
-      ORDER BY vs.session_date ASC
     `;
-    const result = await db.query(query, [userId]);
+    const values = [userId];
+    
+    if (partnerId) {
+      query += ` AND vs.partner_id = $2`;
+      values.push(partnerId);
+    }
+    
+    query += ` ORDER BY vs.session_date ASC`;
+    
+    const result = await db.query(query, values);
     return result.rows;
   }
 

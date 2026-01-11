@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-do
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
-import { Activity, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Activity, AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
@@ -48,6 +48,7 @@ const Signup = () => {
 
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -150,7 +151,18 @@ const Signup = () => {
       const result = await signup(submitData);
 
       if (result.success) {
-        navigate(`/${result.user.userType}/dashboard`);
+        // If this is linking to a new therapist, show success message briefly before navigating
+        if (result.isLinking) {
+          // Show success message
+          setSuccessMessage(result.message || 'Linked to new therapist successfully!');
+          // Navigate after a brief delay to show the message
+          setTimeout(() => {
+            navigate(`/${result.user.userType}/dashboard`);
+          }, 1500);
+        } else {
+          // Normal signup - navigate immediately
+          navigate(`/${result.user.userType}/dashboard`);
+        }
       } else {
         setApiError(result.error);
       }
@@ -253,6 +265,13 @@ const Signup = () => {
               <strong>Note:</strong> This signup is for patients/clients only and not for Therapists.
             </p>
           </div>
+
+          {successMessage && (
+            <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center space-x-2 text-green-700 dark:text-green-300">
+              <CheckCircle className="h-5 w-5 flex-shrink-0" />
+              <span className="text-sm">{successMessage}</span>
+            </div>
+          )}
 
           {apiError && (
             <div className="mb-4 p-3 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg flex items-center space-x-2 text-error-700 dark:text-error-300">

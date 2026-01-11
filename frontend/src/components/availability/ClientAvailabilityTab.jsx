@@ -5,7 +5,7 @@ import BookingConfirmationModal from './BookingConfirmationModal';
 import { availabilityAPI, appointmentAPI, partnerAPI, razorpayAPI } from '../../services/api';
 import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 
-const ClientAvailabilityTab = ({ userId, partners }) => {
+const ClientAvailabilityTab = ({ userId, partners, defaultPartnerId = null }) => {
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -16,11 +16,18 @@ const ClientAvailabilityTab = ({ userId, partners }) => {
   const [feeSettings, setFeeSettings] = useState(null);
 
   useEffect(() => {
-    // Auto-select partner if only one exists
-    if (partners && partners.length === 1) {
+    // Use defaultPartnerId if provided, otherwise auto-select partner if only one exists
+    if (defaultPartnerId && partners) {
+      const partner = partners.find(p => p.id === defaultPartnerId);
+      if (partner) {
+        setSelectedPartner(partner);
+      } else if (partners.length === 1) {
+        setSelectedPartner(partners[0]);
+      }
+    } else if (partners && partners.length === 1) {
       setSelectedPartner(partners[0]);
     }
-  }, [partners]);
+  }, [partners, defaultPartnerId]);
 
   useEffect(() => {
     if (selectedPartner) {

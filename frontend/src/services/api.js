@@ -99,6 +99,7 @@ export const userAPI = {
   getProfile: (id) => api.get(`/users/${id}/profile`),
   getPartners: (id) => api.get(`/users/${id}/partners`),
   assignToPartner: (userId, partnerId) => api.post('/users/assign-partner', { userId, partnerId }),
+  linkToTherapist: (partnerId) => api.post('/users/link-therapist', { partner_id: partnerId }),
 };
 
 // Partner APIs
@@ -301,7 +302,11 @@ export const appointmentAPI = {
     });
   },
   getCurrentMonthCount: (partnerId) => api.get(`/partners/${partnerId}/appointments/current-month-count`),
-  getByUser: (userId) => api.get(`/users/${userId}/appointments`),
+  getByUser: (userId, partnerId = null) => {
+    const params = {};
+    if (partnerId) params.partnerId = partnerId;
+    return api.get(`/users/${userId}/appointments`, { params });
+  },
   update: (id, data) => api.put(`/appointments/${id}`, data),
   delete: (id) => api.delete(`/appointments/${id}`),
   checkConflicts: (partnerId, appointmentDate, endDate, excludeId = null) => {
@@ -342,8 +347,16 @@ export const availabilityAPI = {
 export const chartAPI = {
   shareChart: (data) => api.post('/charts/share', data),
   shareQuestionnaireChart: (data) => api.post('/charts/share-questionnaire', data),
-  getUserCharts: (userId) => api.get(`/charts/user/${userId}`),
-  getLatestUserChart: (userId) => api.get(`/charts/user/${userId}/latest`),
+  getUserCharts: (userId, partnerId = null) => {
+    const params = {};
+    if (partnerId) params.partnerId = partnerId;
+    return api.get(`/charts/user/${userId}`, { params });
+  },
+  getLatestUserChart: (userId, partnerId = null) => {
+    const params = {};
+    if (partnerId) params.partnerId = partnerId;
+    return api.get(`/charts/user/${userId}/latest`, { params });
+  },
   getPartnerUserCharts: (partnerId, userId) => api.get(`/charts/partner/${partnerId}/user/${userId}`),
   deleteChart: (id) => api.delete(`/charts/${id}`)
 };
@@ -363,7 +376,11 @@ export const therapySessionAPI = {
     return api.get(`/partners/${partnerId}/therapy-sessions`, { params });
   },
   getByPartnerAndUser: (partnerId, userId) => api.get(`/partners/${partnerId}/users/${userId}/therapy-sessions`),
-  getByUser: (userId) => api.get(`/users/${userId}/therapy-sessions`),
+  getByUser: (userId, partnerId = null) => {
+    const params = {};
+    if (partnerId) params.partnerId = partnerId;
+    return api.get(`/users/${userId}/therapy-sessions`, { params });
+  },
   update: (id, data) => api.put(`/therapy-sessions/${id}`, data),
   // delete method removed - therapy sessions cannot be deleted to maintain historical records
 
@@ -384,7 +401,11 @@ export const videoSessionAPI = {
     if (endDate) params.end_date = endDate;
     return api.get(`/partners/${partnerId}/video-sessions`, { params });
   },
-  getByUser: (userId) => api.get(`/users/${userId}/video-sessions`),
+  getByUser: (userId, partnerId = null) => {
+    const params = {};
+    if (partnerId) params.partnerId = partnerId;
+    return api.get(`/users/${userId}/video-sessions`, { params });
+  },
   update: (id, data) => api.put(`/video-sessions/${id}`, data),
   updateStatus: (id, status) => api.put(`/video-sessions/${id}`, { status }),
   updateStatus: (id, status) => api.put(`/video-sessions/${id}`, { status }),
@@ -420,7 +441,11 @@ export const questionnaireAPI = {
 
   // Assignment management
   assign: (data) => api.post('/questionnaires/assign', data),
-  getUserAssignments: (userId) => api.get(`/questionnaires/assignments/user/${userId}`),
+  getUserAssignments: (userId, partnerId = null) => {
+    const params = {};
+    if (partnerId) params.partnerId = partnerId;
+    return api.get(`/questionnaires/assignments/user/${userId}`, { params });
+  },
   getPartnerAssignments: (partnerId) => api.get(`/questionnaires/assignments/partner/${partnerId}`),
   getAssignment: (id) => api.get(`/questionnaires/assignments/${id}`),
   deleteAssignment: (id) => api.delete(`/questionnaires/assignments/${id}`),
@@ -504,6 +529,37 @@ export const blogAPI = {
   create: (data) => api.post('/blogs', data),
   update: (id, data) => api.put(`/blogs/${id}`, data),
   delete: (id) => api.delete(`/blogs/${id}`)
+};
+
+// Event API
+export const eventAPI = {
+  // User routes (clients)
+  getUserEvents: (partnerId = null) => {
+    const params = {};
+    if (partnerId) params.partnerId = partnerId;
+    return api.get('/user/events', { params });
+  },
+  getEventById: (id) => api.get(`/events/${id}`),
+  enrollInEvent: (eventId) => api.post(`/events/${eventId}/enroll`),
+  // Partner routes (therapists)
+  getPartnerEvents: () => api.get('/partner/events'),
+  createEvent: (data) => api.post('/events', data),
+  updateEvent: (id, data) => api.put(`/events/${id}`, data),
+  deleteEvent: (id) => api.delete(`/events/${id}`),
+  getEventEnrollments: (eventId) => api.get(`/events/${eventId}/enrollments`),
+  // Check if partner has events
+  checkPartnerHasEvents: (partnerId) => api.get(`/partners/${partnerId}/has-events`)
+};
+
+// Review API
+export const reviewAPI = {
+  // Client routes
+  createReview: (data) => api.post('/reviews', data),
+  getClientReview: (therapistId) => api.get(`/reviews/client/${therapistId}`),
+  getPublishedReviews: (therapistId) => api.get(`/reviews/published/${therapistId}`),
+  // Therapist routes
+  getTherapistReviews: () => api.get('/reviews'),
+  togglePublishStatus: (reviewId) => api.put(`/reviews/${reviewId}/publish`)
 };
 
 // Razorpay Payment APIs

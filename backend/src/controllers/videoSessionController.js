@@ -147,7 +147,8 @@ const getPartnerVideoSessions = async (req, res) => {
 const getUserVideoSessions = async (req, res) => {
   try {
     const { userId } = req.params;
-    const sessions = await VideoSession.findByUser(userId);
+    const partnerId = req.query.partnerId ? parseInt(req.query.partnerId) : null;
+    const sessions = await VideoSession.findByUser(userId, partnerId);
     
     // Remove password hashes from response
     const sanitizedSessions = sessions.map(({ password, ...session }) => session);

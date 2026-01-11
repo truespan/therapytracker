@@ -70,30 +70,87 @@ const signup = async (req, res) => {
     // If email is not provided, use phone number as username
     const usernameForAuth = email || userData.contact;
 
-    // Check if email already exists (if email is provided)
+    // Check if user credentials already exist - if so, verify password and link to new therapist
+    let existingAuth = null;
     if (email) {
-      const existingAuth = await Auth.findByEmail(email);
-      if (existingAuth) {
-        return res.status(409).json({ error: 'Email already registered' });
-      }
+      existingAuth = await Auth.findByEmail(email);
+    }
+    if (!existingAuth) {
+      existingAuth = await Auth.findByEmailOrPhone(userData.contact);
+    }
+    if (!existingAuth) {
+      existingAuth = await Auth.findByEmail(usernameForAuth);
     }
 
-    // Check if phone number already exists in users table
-    const existingUserByPhone = await User.findByContact(userData.contact);
-    if (existingUserByPhone) {
-      // Check if this phone number already has auth credentials
-      const existingAuthByPhone = await Auth.findByEmailOrPhone(userData.contact);
-      if (existingAuthByPhone) {
-        return res.status(409).json({ error: 'Phone number already registered' });
-      }
-    }
+    // If existing auth found, handle accordingly
+    if (existingAuth) {
+      // Only allow linking for existing users
+      if (existingAuth.user_type === 'user' && userType === 'user') {
+        // Verify password
+        const isValidPassword = await bcrypt.compare(password, existingAuth.password_hash);
+        if (!isValidPassword) {
+          return res.status(409).json({ 
+            error: 'You already have an account. Please use your existing username and password to sign in.' 
+          });
+        }
 
-    // Check if username (email or phone) already exists in auth_credentials
-    const existingAuthByUsername = await Auth.findByEmail(usernameForAuth);
-    if (existingAuthByUsername) {
-      return res.status(409).json({ 
-        error: email ? 'Email already registered' : 'Phone number already registered' 
-      });
+        // Password matches - link existing user to new therapist
+        if (!userData.partner_id) {
+          return res.status(400).json({ 
+            error: 'Partner ID is required for user signup' 
+          });
+        }
+        
+        // Verify Partner ID exists
+        const partnerToAssign = await Partner.findByPartnerId(userData.partner_id);
+        if (!partnerToAssign) {
+          return res.status(400).json({ 
+            error: 'Invalid Partner ID. Please check and try again.' 
+          });
+        }
+
+        // Check if user is already linked to this therapist
+        const existingAssignment = await User.assignToPartner(existingAuth.reference_id, partnerToAssign.id);
+        if (!existingAssignment) {
+          // Already linked, proceed to login
+          console.log(`[SIGNUP] User ${existingAuth.reference_id} already linked to partner ${partnerToAssign.id}`);
+        } else {
+          console.log(`[SIGNUP] Linked existing user ${existingAuth.reference_id} to new partner ${partnerToAssign.id}`);
+        }
+
+        // Get user details
+        const userDetails = await User.findById(existingAuth.reference_id);
+
+        // Generate JWT token for auto-login
+        const token = jwt.sign(
+          { 
+            id: existingAuth.reference_id, 
+            email: existingAuth.email,
+            userType: existingAuth.user_type 
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: '7d' }
+        );
+
+        console.log(`[SIGNUP] Auto-login successful for existing user: ${existingAuth.email || userData.contact}`);
+
+        return res.status(200).json({
+          message: 'Linked to new therapist successfully',
+          isLinking: true,
+          token,
+          user: {
+            id: existingAuth.reference_id,
+            email: userDetails.email || null,
+            userType: existingAuth.user_type,
+            ...userDetails
+          }
+        });
+      } else {
+        // Existing auth for non-user type or mismatched userType - return error
+        return res.status(409).json({ 
+          error: email ? 'Email already registered' : 'Phone number already registered'
+        });
+      }
     }
 
     // Hash password

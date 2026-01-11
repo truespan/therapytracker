@@ -222,18 +222,20 @@ export const AuthProvider = ({ children }) => {
   const signup = async (userData) => {
     try {
       const response = await authAPI.signup(userData);
-      const { token, user: newUser } = response.data;
+      const { token, user: newUser, message, isLinking } = response.data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(newUser));
       localStorage.setItem('lastActivityTimestamp', Date.now().toString());
       setUser(newUser);
       
-      // Track signup event and set user properties
-      trackSignup(newUser.userType || 'user');
+      // Track signup event (not linking) and set user properties
+      if (!isLinking) {
+        trackSignup(newUser.userType || 'user');
+      }
       setUserProperties(newUser);
       
-      return { success: true, user: newUser };
+      return { success: true, user: newUser, isLinking, message };
     } catch (error) {
       return { 
         success: false, 

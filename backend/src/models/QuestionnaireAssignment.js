@@ -15,20 +15,29 @@ class QuestionnaireAssignment {
   }
 
   // Find assignments for a user
-  static async findByUser(userId) {
+  static async findByUser(userId, partnerId = null) {
     try {
-      const result = await db.query(
-        `SELECT uqa.*, q.name, q.description, p.name as partner_name,
+      let query = `
+        SELECT uqa.*, q.name, q.description, p.name as partner_name,
          COUNT(DISTINCT uqr.id) as response_count
          FROM user_questionnaire_assignments uqa
          JOIN questionnaires q ON uqa.questionnaire_id = q.id
          JOIN partners p ON uqa.partner_id = p.id
          LEFT JOIN user_questionnaire_responses uqr ON uqa.id = uqr.assignment_id
          WHERE uqa.user_id = $1
+      `;
+      const values = [userId];
+      
+      if (partnerId) {
+        query += ` AND uqa.partner_id = $2`;
+        values.push(partnerId);
+      }
+      
+      query += `
          GROUP BY uqa.id, q.name, q.description, p.name
-         ORDER BY uqa.assigned_at DESC`,
-        [userId]
-      );
+         ORDER BY uqa.assigned_at DESC`;
+      
+      const result = await db.query(query, values);
       return result.rows;
     } catch (error) {
       throw new Error(`Error finding assignments by user: ${error.message}`);

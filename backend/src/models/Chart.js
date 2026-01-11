@@ -50,17 +50,25 @@ class Chart {
     return chart;
   }
 
-  static async findByUserId(userId) {
-    const query = `
+  static async findByUserId(userId, partnerId = null) {
+    let query = `
       SELECT sc.*, p.name as partner_name, q.name as questionnaire_name
       FROM shared_charts sc
       JOIN partners p ON sc.partner_id = p.id
       LEFT JOIN questionnaires q ON sc.questionnaire_id = q.id
       WHERE sc.user_id = $1
         AND sc.chart_type = 'questionnaire_comparison'
-      ORDER BY sc.sent_at DESC
     `;
-    const result = await db.query(query, [userId]);
+    const values = [userId];
+    
+    if (partnerId) {
+      query += ` AND sc.partner_id = $2`;
+      values.push(partnerId);
+    }
+    
+    query += ` ORDER BY sc.sent_at DESC`;
+    
+    const result = await db.query(query, values);
 
     // Parse JSON for each chart
     return result.rows.map(chart => {
@@ -75,18 +83,25 @@ class Chart {
   }
 
   // Get the latest shared chart for a user (for overview notification)
-  static async getLatestByUserId(userId) {
-    const query = `
+  static async getLatestByUserId(userId, partnerId = null) {
+    let query = `
       SELECT sc.*, p.name as partner_name, q.name as questionnaire_name
       FROM shared_charts sc
       JOIN partners p ON sc.partner_id = p.id
       LEFT JOIN questionnaires q ON sc.questionnaire_id = q.id
       WHERE sc.user_id = $1
         AND sc.chart_type = 'questionnaire_comparison'
-      ORDER BY sc.sent_at DESC
-      LIMIT 1
     `;
-    const result = await db.query(query, [userId]);
+    const values = [userId];
+    
+    if (partnerId) {
+      query += ` AND sc.partner_id = $2`;
+      values.push(partnerId);
+    }
+    
+    query += ` ORDER BY sc.sent_at DESC LIMIT 1`;
+    
+    const result = await db.query(query, values);
 
     if (result.rows.length === 0) {
       return null;

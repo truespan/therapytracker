@@ -471,7 +471,8 @@ const getPartnerAppointments = async (req, res) => {
 const getUserAppointments = async (req, res) => {
   try {
     const { userId } = req.params;
-    const appointments = await Appointment.findByUser(userId);
+    const partnerId = req.query.partnerId ? parseInt(req.query.partnerId) : null;
+    const appointments = await Appointment.findByUser(userId, partnerId);
     res.json({ appointments });
   } catch (error) {
     console.error('Get user appointments error:', error);

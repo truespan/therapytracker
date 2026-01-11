@@ -67,10 +67,13 @@ router.put('/users/:id', authenticateToken, userController.updateUser);
 router.get('/users/:id/profile', authenticateToken, userController.getUserProfile);
 router.get('/users/:id/partners', authenticateToken, userController.getUserPartners);
 router.post('/users/assign-partner', authenticateToken, checkRole('partner', 'organization'), userController.assignUserToPartner);
+router.post('/users/link-therapist', authenticateToken, checkRole('user'), userController.linkToTherapist);
 
 // ==================== UPLOAD ROUTES ====================
+const { uploadEventImage } = require('../middleware/upload');
 router.post('/upload/profile-picture', authenticateToken, upload.single('profilePicture'), uploadController.uploadProfilePicture);
 router.delete('/upload/profile-picture', authenticateToken, uploadController.deleteProfilePicture);
+router.post('/upload/event-image', authenticateToken, uploadEventImage.single('eventImage'), uploadController.uploadEventImage);
 
 // ==================== PARTNER ROUTES ====================
 router.get('/partners/:id', authenticateToken, partnerController.getPartnerById);
@@ -369,6 +372,32 @@ router.post('/contact', contactController.submitContact);
 // ==================== BLOG ROUTES ====================
 const blogRoutes = require('./blogRoutes');
 router.use('/blogs', blogRoutes);
+
+// ==================== EVENT ROUTES ====================
+const eventController = require('../controllers/eventController');
+// User routes (clients)
+router.get('/user/events', authenticateToken, checkRole('user'), eventController.getUserEvents);
+router.get('/events/:id', authenticateToken, eventController.getEventById);
+router.post('/events/:event_id/enroll', authenticateToken, checkRole('user'), eventController.enrollInEvent);
+// Partner routes (therapists)
+router.get('/partner/events', authenticateToken, checkRole('partner'), eventController.getPartnerEvents);
+router.post('/events', authenticateToken, checkRole('partner'), eventController.createEvent);
+router.put('/events/:id', authenticateToken, checkRole('partner'), eventController.updateEvent);
+router.delete('/events/:id', authenticateToken, checkRole('partner'), eventController.deleteEvent);
+router.get('/events/:event_id/enrollments', authenticateToken, checkRole('partner'), eventController.getEventEnrollments);
+// Check if partner has events (used to show Events tab to clients)
+router.get('/partners/:partner_id/has-events', authenticateToken, eventController.checkPartnerHasEvents);
+
+// ==================== REVIEW ROUTES ====================
+const reviewController = require('../controllers/reviewController');
+// Client routes (submit/update review)
+router.post('/reviews', authenticateToken, checkRole('user'), reviewController.createReview);
+router.get('/reviews/client/:therapistId', authenticateToken, checkRole('user'), reviewController.getClientReview);
+// Therapist routes (manage reviews)
+router.get('/reviews', authenticateToken, checkRole('partner'), reviewController.getTherapistReviews);
+router.put('/reviews/:id/publish', authenticateToken, checkRole('partner'), reviewController.togglePublishStatus);
+// Public route (get published reviews)
+router.get('/reviews/published/:therapistId', authenticateToken, reviewController.getPublishedReviews);
 
 // ==================== SUPPORT CHAT ROUTES ====================
 const supportController = require('../controllers/supportController');

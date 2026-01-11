@@ -644,87 +644,129 @@ async function handlePayoutProcessed(event) {
  */
 const createBookingOrder = async (req, res) => {
   try {
-    const { slot_id, partner_id } = req.body;
+    const { slot_id, partner_id, amount, currency, notes } = req.body;
     const userId = req.user.id;
 
-    if (!slot_id || !partner_id) {
+    // Check if this is an event enrollment payment
+    let paymentType = 'booking_fee';
+    let eventId = null;
+    if (notes && notes.payment_type === 'event_enrollment') {
+      paymentType = 'event_enrollment';
+      eventId = notes.event_id;
+      if (!eventId || !amount) {
+        return res.status(400).json({
+          error: 'event_id and amount are required for event enrollment payment'
+        });
+      }
+    } else if (!slot_id || !partner_id) {
       return res.status(400).json({
-        error: 'slot_id and partner_id are required'
+        error: 'slot_id and partner_id are required for booking payment'
       });
     }
 
-    // Get partner fee settings
-    const Partner = require('../models/Partner');
-    const feeSettings = await Partner.getFeeSettings(partner_id);
-    
-    if (!feeSettings) {
-      return res.status(404).json({ error: 'Partner not found' });
-    }
+    let bookingFee = 0;
+    let orderCurrency = 'INR';
+    let receipt = '';
 
-    const bookingFee = feeSettings.booking_fee || 0;
-    const currency = feeSettings.fee_currency || 'INR';
+    if (paymentType === 'event_enrollment') {
+      // For event enrollment, use provided amount
+      bookingFee = amount;
+      orderCurrency = currency || 'INR';
+      receipt = `event_${eventId}_${Date.now()}`;
+    } else {
+      // Get partner fee settings for booking
+      const Partner = require('../models/Partner');
+      const feeSettings = await Partner.getFeeSettings(partner_id);
+      
+      if (!feeSettings) {
+        return res.status(404).json({ error: 'Partner not found' });
+      }
+
+      bookingFee = feeSettings.booking_fee || 0;
+      orderCurrency = feeSettings.fee_currency || 'INR';
+      receipt = `booking_${slot_id}_${Date.now()}`;
+    }
 
     // Check if we're in test mode
     const isTestMode = RazorpayService.isTestMode();
 
-    // If test mode and booking fee exists, skip payment and return test mode flag
+    // If test mode and fee exists, skip payment and return test mode flag
     if (isTestMode && bookingFee > 0) {
-      console.log(`[CREATE_BOOKING_ORDER] Test mode detected - skipping payment for slot ${slot_id}`);
+      const logMessage = paymentType === 'event_enrollment' 
+        ? `[CREATE_BOOKING_ORDER] Test mode detected - skipping payment for event ${eventId}`
+        : `[CREATE_BOOKING_ORDER] Test mode detected - skipping payment for slot ${slot_id}`;
+      console.log(logMessage);
       return res.status(201).json({
         message: 'Test mode: Payment skipped',
         test_mode: true,
         skip_payment: true,
-        order: null,
-        feeDetails: {
-          session_fee: feeSettings.session_fee,
-          booking_fee: feeSettings.booking_fee,
-          currency: currency
-        }
+        order: null
       });
     }
 
     if (bookingFee <= 0) {
       return res.status(400).json({
-        error: 'No booking fee configured for this therapist'
+        error: paymentType === 'event_enrollment' 
+          ? 'Event fee must be greater than 0'
+          : 'No booking fee configured for this therapist'
       });
     }
 
     // Create Razorpay order
     const amountInPaise = Math.round(bookingFee * 100); // Convert to smallest currency unit
-    const receipt = `booking_${slot_id}_${Date.now()}`;
 
-    const razorpayOrder = await RazorpayService.createOrder({
-      amount: amountInPaise,
-      currency: currency,
-      receipt: receipt,
-      notes: {
+    // Prepare notes based on payment type
+    let orderNotes = {};
+    if (paymentType === 'event_enrollment') {
+      orderNotes = {
+        event_id: eventId,
+        user_id: userId,
+        payment_type: 'event_enrollment'
+      };
+      // Get partner_id from event
+      const Event = require('../models/Event');
+      const event = await Event.findById(eventId);
+      if (event) {
+        orderNotes.partner_id = event.partner_id;
+      }
+    } else {
+      orderNotes = {
         slot_id: slot_id,
         partner_id: partner_id,
         user_id: userId,
         payment_type: 'booking_fee'
-      }
+      };
+    }
+
+    const razorpayOrder = await RazorpayService.createOrder({
+      amount: amountInPaise,
+      currency: orderCurrency,
+      receipt: receipt,
+      notes: orderNotes
     });
 
-    // Prepare notes object - validate required fields
-    const orderNotes = {
-      slot_id,
-      partner_id,
-      payment_type: 'booking_fee'
-    };
-
     // Validate that notes contain required fields
-    if (!orderNotes.partner_id) {
-      console.error('[CREATE_BOOKING_ORDER] Warning: partner_id is missing in notes', { slot_id, partner_id, userId });
-    }
-    if (!orderNotes.slot_id) {
-      console.error('[CREATE_BOOKING_ORDER] Warning: slot_id is missing in notes', { slot_id, partner_id, userId });
+    if (paymentType === 'event_enrollment') {
+      if (!orderNotes.event_id) {
+        console.error('[CREATE_BOOKING_ORDER] Warning: event_id is missing in notes', { eventId, userId });
+      }
+      if (!orderNotes.partner_id) {
+        console.error('[CREATE_BOOKING_ORDER] Warning: partner_id is missing in notes (event enrollment)', { eventId, userId });
+      }
+    } else {
+      if (!orderNotes.partner_id) {
+        console.error('[CREATE_BOOKING_ORDER] Warning: partner_id is missing in notes', { slot_id, partner_id, userId });
+      }
+      if (!orderNotes.slot_id) {
+        console.error('[CREATE_BOOKING_ORDER] Warning: slot_id is missing in notes', { slot_id, partner_id, userId });
+      }
     }
 
     // Save order to database
     const dbOrder = await RazorpayOrder.create({
       razorpay_order_id: razorpayOrder.id,
       amount: bookingFee,
-      currency: currency,
+      currency: orderCurrency,
       receipt: receipt,
       status: razorpayOrder.status,
       customer_id: userId,
@@ -837,10 +879,13 @@ const verifyBookingPayment = async (req, res) => {
     // Fetch payment details from Razorpay
     const payment = await RazorpayService.fetchPayment(razorpay_payment_id);
 
-    // Get order from database
-    const dbOrder = await RazorpayOrder.findByOrderId(razorpay_order_id);
-    if (!dbOrder) {
-      return res.status(404).json({ error: 'Order not found' });
+    // Get payment type from order notes (dbOrder was already fetched above)
+    let paymentType = 'booking_fee';
+    let eventId = null;
+    if (dbOrder.notes) {
+      const orderNotes = typeof dbOrder.notes === 'string' ? JSON.parse(dbOrder.notes) : dbOrder.notes;
+      paymentType = orderNotes.payment_type || 'booking_fee';
+      eventId = orderNotes.event_id || null;
     }
 
     // Save payment to database
@@ -851,13 +896,14 @@ const verifyBookingPayment = async (req, res) => {
       currency: payment.currency,
       status: payment.status,
       payment_method: payment.method,
-      description: 'Booking fee payment',
+      description: paymentType === 'event_enrollment' ? 'Event enrollment payment' : 'Booking fee payment',
       customer_id: dbOrder.customer_id,
       customer_type: 'user',
       metadata: {
         ...payment,
-        slot_id: slot_id,
-        payment_type: 'booking_fee'
+        slot_id: effectiveSlotId,
+        event_id: eventId,
+        payment_type: paymentType
       }
     });
 
@@ -878,11 +924,11 @@ const verifyBookingPayment = async (req, res) => {
         }
         const partnerIdFromMetadata = orderMetadata.partner_id;
         
-        // Try to find appointment_id from slot_id if available
+        // Try to find appointment_id from slot_id if available (only for booking payments)
         let appointmentId = null;
-        if (slot_id) {
+        if (paymentType === 'booking_fee' && effectiveSlotId) {
           const slotQuery = `SELECT appointment_id FROM availability_slots WHERE id = $1`;
-          const slotResult = await db.query(slotQuery, [slot_id]);
+          const slotResult = await db.query(slotQuery, [effectiveSlotId]);
           if (slotResult.rows[0] && slotResult.rows[0].appointment_id) {
             appointmentId = slotResult.rows[0].appointment_id;
           }
@@ -900,14 +946,15 @@ const verifyBookingPayment = async (req, res) => {
               console.log(`[EARNINGS] Earnings record already exists for payment ${payment.id}, skipping creation in verifyBookingPayment`);
             } else {
               // Create earnings record - 100% goes to partner
+              // For event enrollment, we still create earnings but without appointment_id
               await Earnings.create({
                 recipient_id: partner.id,
                 recipient_type: 'partner',
                 razorpay_payment_id: payment.id,
-                amount: dbPayment.amount, // Full booking fee amount
+                amount: dbPayment.amount, // Full fee amount
                 currency: dbPayment.currency,
                 status: 'pending', // Waiting for Razorpay settlement
-                appointment_id: appointmentId,
+                appointment_id: appointmentId, // null for event enrollment
                 payout_date: null // Will be set when settled
               });
 
@@ -930,14 +977,20 @@ const verifyBookingPayment = async (req, res) => {
       }
     }
 
+    const successMessage = paymentType === 'event_enrollment' 
+      ? 'Event enrollment payment verified successfully'
+      : 'Booking payment verified successfully';
+
     res.json({
-      message: 'Booking payment verified successfully',
+      message: successMessage,
+      success: true,
       payment: {
         id: dbPayment.id,
         status: dbPayment.status,
         amount: dbPayment.amount
       },
-      booking_confirmed: payment.status === 'captured' || payment.status === 'authorized'
+      booking_confirmed: payment.status === 'captured' || payment.status === 'authorized',
+      enrollment_confirmed: paymentType === 'event_enrollment' && (payment.status === 'captured' || payment.status === 'authorized')
     });
   } catch (error) {
     console.error('Verify booking payment error:', error);

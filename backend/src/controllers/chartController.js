@@ -58,6 +58,7 @@ const shareChart = async (req, res) => {
 const getUserCharts = async (req, res) => {
   try {
     const { userId } = req.params;
+    const partnerId = req.query.partnerId ? parseInt(req.query.partnerId) : null;
 
     // Verify user exists
     const user = await User.findById(userId);
@@ -65,7 +66,7 @@ const getUserCharts = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const charts = await Chart.findByUserId(userId);
+    const charts = await Chart.findByUserId(userId, partnerId);
     res.json({ charts });
   } catch (error) {
     console.error('Get user charts error:', error);
@@ -76,6 +77,7 @@ const getUserCharts = async (req, res) => {
 const getLatestUserChart = async (req, res) => {
   try {
     const { userId } = req.params;
+    const partnerId = req.query.partnerId ? parseInt(req.query.partnerId) : null;
 
     // Verify user exists
     const user = await User.findById(userId);
@@ -83,7 +85,7 @@ const getLatestUserChart = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const latestChart = await Chart.getLatestByUserId(userId);
+    const latestChart = await Chart.getLatestByUserId(userId, partnerId);
     res.json({ chart: latestChart });
   } catch (error) {
     console.error('Get latest user chart error:', error);

@@ -23,7 +23,8 @@ import AvailabilityTab from '../availability/AvailabilityTab';
 import EarningsTab from '../earnings/EarningsTab';
 import BlogManagement from '../blogs/BlogManagement';
 import SupportDashboard from '../support/SupportDashboard';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, UserPlus, Share, CalendarClock, Edit, Headphones, Sun, Calendar as CalendarIcon, AlertCircle, Link2, Unlink } from 'lucide-react';
+import ReviewsTab from '../reviews/ReviewsTab';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, UserPlus, Share, CalendarClock, Edit, Headphones, Sun, Calendar as CalendarIcon, AlertCircle, Link2, Unlink, Star } from 'lucide-react';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 import CreatePatientModal from '../partner/CreatePatientModal';
 import EditClientModal from '../partner/EditClientModal';
@@ -689,9 +690,20 @@ const PartnerDashboard = () => {
               }`}
             >
               <FileText className="h-5 w-5" />
-              <span className="text-xs">Blogs</span>
+              <span className="text-xs">Events</span>
             </button>
           )}
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+              activeTab === 'reviews'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
+            }`}
+          >
+            <Star className="h-5 w-5" />
+            <span className="text-xs">Reviews</span>
+          </button>
           <button
             onClick={() => setActiveTab('calendar')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
@@ -816,9 +828,20 @@ const PartnerDashboard = () => {
               }`}
             >
               <FileText className="inline h-5 w-5 mr-2" />
-              Blogs
+              Events
             </button>
           )}
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'reviews'
+                ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary'
+            }`}
+          >
+            <Star className="inline h-5 w-5 mr-2" />
+            Reviews
+          </button>
           <button
             onClick={() => setActiveTab('calendar')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -1264,6 +1287,11 @@ const PartnerDashboard = () => {
       {/* Blogs Tab */}
       {activeTab === 'blogs' && user?.can_post_blogs && (
         <BlogManagement />
+      )}
+
+      {/* Reviews Tab */}
+      {activeTab === 'reviews' && (
+        <ReviewsTab />
       )}
 
       {/* Calendar Tab */}

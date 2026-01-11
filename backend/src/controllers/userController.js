@@ -197,11 +197,61 @@ const assignUserToPartner = async (req, res) => {
   }
 };
 
+const linkToTherapist = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { partner_id } = req.body;
+
+    if (!partner_id) {
+      return res.status(400).json({ error: 'partner_id is required' });
+    }
+
+    // Verify partner exists
+    const Partner = require('../models/Partner');
+    const partner = await Partner.findByPartnerId(partner_id);
+    if (!partner) {
+      return res.status(400).json({ 
+        error: 'Invalid Partner ID. Please check and try again.' 
+      });
+    }
+
+    // Check if user is already linked to this therapist
+    const existingPartners = await User.getPartners(userId);
+    const alreadyLinked = existingPartners.some(p => p.id === partner.id);
+    
+    if (alreadyLinked) {
+      return res.status(409).json({ 
+        error: 'You are already linked to this therapist' 
+      });
+    }
+
+    // Link user to therapist
+    const assignment = await User.assignToPartner(userId, partner.id);
+    
+    if (!assignment) {
+      // Already linked (edge case - should not happen due to check above, but handle gracefully)
+      return res.status(200).json({ 
+        message: 'You are already linked to this therapist',
+        partner: partner
+      });
+    }
+
+    res.status(200).json({ 
+      message: 'Successfully linked to therapist',
+      partner: partner
+    });
+  } catch (error) {
+    console.error('Link to therapist error:', error);
+    res.status(500).json({ error: 'Failed to link to therapist', details: error.message });
+  }
+};
+
 module.exports = {
   getUserById,
   updateUser,
   getUserProfile,
   getUserPartners,
-  assignUserToPartner
+  assignUserToPartner,
+  linkToTherapist
 };
 

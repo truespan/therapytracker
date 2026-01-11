@@ -29,6 +29,13 @@ const ChatWidget = () => {
   // Load conversation
   useEffect(() => {
     if (!isEligible()) return;
+    
+    // Check if token is available before making API calls
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('No authentication token available, skipping conversation load');
+      return;
+    }
 
     const loadConversation = async () => {
       try {
@@ -37,7 +44,10 @@ const ChatWidget = () => {
         // Load initial messages to set last read
         await loadMessagesForUnread(response.data.conversation.id);
       } catch (err) {
-        console.error('Failed to load conversation:', err);
+        // Only log error if it's not a 401 (unauthorized) - that's expected if token is missing/invalid
+        if (err.response?.status !== 401) {
+          console.error('Failed to load conversation:', err);
+        }
       }
     };
 
@@ -47,6 +57,13 @@ const ChatWidget = () => {
   // Load messages for unread count tracking
   const loadMessagesForUnread = async (conversationId) => {
     if (!conversationId) return;
+    
+    // Check if token is available before making API calls
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return; // Silently skip if no token
+    }
+    
     try {
       const response = await supportAPI.getConversationMessages(conversationId);
       const loadedMessages = response.data.messages || [];
@@ -62,7 +79,10 @@ const ChatWidget = () => {
             try {
               await supportAPI.markMessagesAsRead(conversationId);
             } catch (err) {
-              console.error('Failed to mark messages as read:', err);
+              // Only log non-401 errors
+              if (err.response?.status !== 401) {
+                console.error('Failed to mark messages as read:', err);
+              }
             }
           }
         } else {
@@ -74,7 +94,10 @@ const ChatWidget = () => {
         }
       }
     } catch (err) {
-      console.error('Failed to load messages:', err);
+      // Only log non-401 errors - 401 is expected if user is not authenticated
+      if (err.response?.status !== 401) {
+        console.error('Failed to load messages:', err);
+      }
     }
   };
 

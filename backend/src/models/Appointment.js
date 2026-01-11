@@ -38,15 +38,22 @@ class Appointment {
     return result.rows;
   }
 
-  static async findByUser(userId) {
-    const query = `
+  static async findByUser(userId, partnerId = null) {
+    let query = `
       SELECT a.*, p.name as partner_name
       FROM appointments a
       JOIN partners p ON a.partner_id = p.id
       WHERE a.user_id = $1 AND a.status = 'scheduled'
-      ORDER BY a.appointment_date ASC
     `;
-    const result = await db.query(query, [userId]);
+    const values = [userId];
+    
+    if (partnerId) {
+      query += ` AND a.partner_id = $2`;
+      values.push(partnerId);
+    }
+    
+    query += ` ORDER BY a.appointment_date ASC`;
+    const result = await db.query(query, values);
     return result.rows;
   }
 

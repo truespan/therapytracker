@@ -143,7 +143,36 @@ const deleteProfilePicture = async (req, res) => {
   }
 };
 
+// Upload event image
+const uploadEventImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Get photo URL - Cloudinary provides full URL, local storage needs path
+    const imageUrl = req.file.path || `/uploads/event-images/${req.file.filename}`;
+
+    res.json({
+      message: 'Event image uploaded successfully',
+      image_url: imageUrl
+    });
+
+  } catch (error) {
+    console.error('Error uploading event image:', error);
+    // Clean up uploaded file if there's an error (only for local storage)
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({
+      error: 'Failed to upload event image',
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   uploadProfilePicture,
-  deleteProfilePicture
+  deleteProfilePicture,
+  uploadEventImage
 };

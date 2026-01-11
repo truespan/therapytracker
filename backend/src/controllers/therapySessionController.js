@@ -260,7 +260,8 @@ const getPartnerTherapySessions = async (req, res) => {
 const getUserTherapySessions = async (req, res) => {
   try {
     const { userId } = req.params;
-    const sessions = await TherapySession.findByUser(userId);
+    const partnerId = req.query.partnerId ? parseInt(req.query.partnerId) : null;
+    const sessions = await TherapySession.findByUser(userId, partnerId);
     res.json({ sessions });
   } catch (error) {
     console.error('Get user therapy sessions error:', error);

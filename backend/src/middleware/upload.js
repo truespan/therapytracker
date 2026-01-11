@@ -65,7 +65,7 @@ if (isCloudinaryConfigured()) {
   });
 }
 
-// Configure multer
+// Configure multer for profile pictures
 const upload = multer({
   storage: storage,
   limits: {
@@ -74,4 +74,48 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
+// Configure multer for event images (same config but different folder)
+let eventStorage;
+if (isCloudinaryConfigured()) {
+  eventStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+      folder: 'therapy-tracker/event-images',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      transformation: [{ width: 1200, height: 800, crop: 'limit' }],
+      public_id: (req, file) => {
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 15);
+        return `event-${timestamp}-${random}`;
+      }
+    }
+  });
+} else {
+  const fs = require('fs');
+  const uploadsDir = path.join(__dirname, '../../uploads/event-images');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  eventStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 15);
+      const ext = path.extname(file.originalname);
+      cb(null, `event-${timestamp}-${random}${ext}`);
+    }
+  });
+}
+
+const uploadEventImage = multer({
+  storage: eventStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: fileFilter
+});
+
 module.exports = upload;
+module.exports.uploadEventImage = uploadEventImage;

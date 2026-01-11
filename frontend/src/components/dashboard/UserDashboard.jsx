@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { appointmentAPI, chartAPI, videoSessionAPI, questionnaireAPI, userAPI, generatedReportAPI } from '../../services/api';
+import { appointmentAPI, chartAPI, videoSessionAPI, questionnaireAPI, userAPI, generatedReportAPI, eventAPI } from '../../services/api';
 import SharedChartViewer from '../charts/SharedChartViewer';
 import VideoSessionJoin from '../video/VideoSessionJoin';
 import UserQuestionnaireView from '../questionnaires/UserQuestionnaireView';
@@ -9,7 +9,8 @@ import UserReportsTab from '../reports/UserReportsTab';
 import ClientAvailabilityTab from '../availability/ClientAvailabilityTab';
 import TherapistProfileTab from '../profile/TherapistProfileTab';
 import UserSettings from '../user/UserSettings';
-import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock, Settings } from 'lucide-react';
+import ClientEventsTab from '../events/ClientEventsTab';
+import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock, Settings, CalendarDays, UserPlus } from 'lucide-react';
 import { canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
 import { format } from 'date-fns';
 import DarkModeToggle from '../common/DarkModeToggle';
@@ -29,6 +30,12 @@ const UserDashboard = () => {
   const [latestSharedChart, setLatestSharedChart] = useState(null);
   const [reportsCount, setReportsCount] = useState(0);
   const [partners, setPartners] = useState([]);
+  const [hasEventsTab, setHasEventsTab] = useState(false);
+  const [selectedPartnerId, setSelectedPartnerId] = useState(null);
+  const [showLinkTherapistModal, setShowLinkTherapistModal] = useState(false);
+  const [linkTherapistPartnerId, setLinkTherapistPartnerId] = useState('');
+  const [linkTherapistError, setLinkTherapistError] = useState('');
+  const [linkTherapistLoading, setLinkTherapistLoading] = useState(false);
 
   // Format date and time in user's local timezone to match therapist dashboard
   const formatDateTime = (dateString) => {
@@ -43,15 +50,85 @@ const UserDashboard = () => {
     });
   };
 
+  // Initialize selected partner from localStorage or default to first partner
   useEffect(() => {
-    loadData();
-    loadAppointments();
-    loadQuestionnaireAssignments();
-    checkVideoSessionsAccess();
-    loadLatestChart();
-    loadReportsCount();
+    if (partners.length > 0) {
+      const savedPartnerId = localStorage.getItem(`selectedPartnerId_${user.id}`);
+      const partnerId = savedPartnerId ? parseInt(savedPartnerId) : (partners[0]?.id || null);
+      if (partnerId && partners.some(p => p.id === partnerId)) {
+        setSelectedPartnerId(partnerId);
+      } else if (partners.length > 0) {
+        setSelectedPartnerId(partners[0].id);
+      }
+    }
+  }, [partners, user.id]);
+
+  // Load all data when partner selection changes
+  useEffect(() => {
+    if (selectedPartnerId !== null) {
+      localStorage.setItem(`selectedPartnerId_${user.id}`, selectedPartnerId.toString());
+      loadAllData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPartnerId, user.id]);
+
+  // Initial load
+  useEffect(() => {
     loadPartners();
   }, [user.id]);
+
+  const loadAllData = async () => {
+    if (selectedPartnerId === null) return;
+    
+    await Promise.all([
+      loadData(),
+      loadAppointments(),
+      loadQuestionnaireAssignments(),
+      checkVideoSessionsAccess(),
+      loadLatestChart(),
+      loadReportsCount(),
+    ]);
+  };
+
+  const checkForEvents = async (partnersList) => {
+    try {
+      const partnersToCheck = partnersList || partners;
+      if (partnersToCheck.length > 0) {
+        console.log('[Events] Checking events for partners:', partnersToCheck.map(p => ({ id: p.id, name: p.name })));
+        const checks = await Promise.all(
+          partnersToCheck.map(async (partner) => {
+            try {
+              const result = await eventAPI.checkPartnerHasEvents(partner.id);
+              console.log(`[Events] Partner ${partner.id} (${partner.name}):`, result.data);
+              return result;
+            } catch (err) {
+              console.error(`[Events] Error checking partner ${partner.id}:`, err);
+              return { data: { hasEvents: false } };
+            }
+          })
+        );
+        const hasEvents = checks.some(check => check.data && check.data.hasEvents);
+        console.log('[Events] Final result - hasEventsTab:', hasEvents);
+        setHasEventsTab(hasEvents);
+      } else {
+        console.log('[Events] No partners found, hiding Events tab');
+        setHasEventsTab(false);
+      }
+    } catch (err) {
+      console.error('[Events] Failed to check for events:', err);
+      setHasEventsTab(false);
+    }
+  };
+
+  useEffect(() => {
+    // Check for events after partners are loaded
+    if (partners.length > 0) {
+      checkForEvents(partners);
+    } else {
+      setHasEventsTab(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partners]);
 
   const checkVideoSessionsAccess = async () => {
     try {
@@ -71,7 +148,7 @@ const UserDashboard = () => {
 
   const loadData = async () => {
     try {
-      const chartsResponse = await chartAPI.getUserCharts(user.id);
+      const chartsResponse = await chartAPI.getUserCharts(user.id, selectedPartnerId);
       setSharedCharts(chartsResponse.data.charts || []);
       setLoading(false);
     } catch (err) {
@@ -82,7 +159,7 @@ const UserDashboard = () => {
 
   const loadAppointments = async () => {
     try {
-      const response = await appointmentAPI.getByUser(user.id);
+      const response = await appointmentAPI.getByUser(user.id, selectedPartnerId);
       setAppointments(response.data.appointments || []);
     } catch (err) {
       console.error('Failed to load appointments:', err);
@@ -91,7 +168,7 @@ const UserDashboard = () => {
 
   const loadVideoSessions = async () => {
     try {
-      const response = await videoSessionAPI.getByUser(user.id);
+      const response = await videoSessionAPI.getByUser(user.id, selectedPartnerId);
       setVideoSessions(response.data.sessions || []);
     } catch (err) {
       console.error('Failed to load video sessions:', err);
@@ -100,7 +177,7 @@ const UserDashboard = () => {
 
   const loadQuestionnaireAssignments = async () => {
     try {
-      const response = await questionnaireAPI.getUserAssignments(user.id);
+      const response = await questionnaireAPI.getUserAssignments(user.id, selectedPartnerId);
       setQuestionnaireAssignments(response.data || []);
     } catch (err) {
       console.error('Failed to load questionnaire assignments:', err);
@@ -109,7 +186,7 @@ const UserDashboard = () => {
 
   const loadLatestChart = async () => {
     try {
-      const response = await chartAPI.getLatestUserChart(user.id);
+      const response = await chartAPI.getLatestUserChart(user.id, selectedPartnerId);
       setLatestSharedChart(response.data.chart || null);
     } catch (err) {
       console.error('Failed to load latest shared chart:', err);
@@ -129,17 +206,63 @@ const UserDashboard = () => {
     try {
       const response = await userAPI.getPartners(user.id);
       setPartners(response.data.partners || []);
+      // The useEffect hook will handle checking for events when partners state updates
     } catch (err) {
       console.error('Failed to load partners:', err);
     }
   };
 
-  if (loading) {
+  const handleLinkTherapist = async () => {
+    if (!linkTherapistPartnerId.trim()) {
+      setLinkTherapistError('Partner ID is required');
+      return;
+    }
+
+    setLinkTherapistLoading(true);
+    setLinkTherapistError('');
+
+    try {
+      await userAPI.linkToTherapist(linkTherapistPartnerId.trim().toUpperCase());
+      // Reload partners list
+      await loadPartners();
+      // Close modal and reset form
+      setShowLinkTherapistModal(false);
+      setLinkTherapistPartnerId('');
+    } catch (err) {
+      setLinkTherapistError(err.response?.data?.error || 'Failed to link to therapist');
+    } finally {
+      setLinkTherapistLoading(false);
+    }
+  };
+
+  if (loading && partners.length === 0) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <Activity className="h-12 w-12 text-primary-600 mx-auto mb-4 animate-pulse" />
           <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't show dashboard if no partners and still loading
+  if (partners.length === 0 && !loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="card text-center py-12">
+          <UserIcon className="h-16 w-16 text-gray-400 dark:text-dark-text-tertiary mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-2">No Therapists Linked</h3>
+          <p className="text-gray-600 dark:text-dark-text-secondary mb-6">
+            You need to link to a therapist to get started.
+          </p>
+          <button
+            onClick={() => setShowLinkTherapistModal(true)}
+            className="btn btn-primary"
+          >
+            <UserPlus className="h-5 w-5 mr-2" />
+            Link to Therapist
+          </button>
         </div>
       </div>
     );
@@ -157,10 +280,75 @@ const UserDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Therapist Selector - Show only if user has multiple therapists */}
+      {partners.length > 1 && (
+        <div className="mb-6 card">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                Select Therapist
+              </label>
+              <select
+                value={selectedPartnerId || ''}
+                onChange={(e) => setSelectedPartnerId(parseInt(e.target.value))}
+                className="input w-full sm:w-auto"
+              >
+                {partners.map((partner) => (
+                  <option key={partner.id} value={partner.id}>
+                    {partner.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => setShowLinkTherapistModal(true)}
+              className="btn btn-secondary"
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              Link New Therapist
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Welcome Section - Hidden on mobile, visible on desktop */}
       <div className="hidden lg:block mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
-        <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Track your therapy progress</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
+            <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Track your therapy progress</p>
+          </div>
+          {/* Link Therapist Button - Show if only one therapist */}
+          {partners.length === 1 && (
+            <button
+              onClick={() => setShowLinkTherapistModal(true)}
+              className="btn btn-secondary"
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              Link Another Therapist
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Welcome & Link Therapist Button */}
+      <div className="lg:hidden mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
+            <p className="text-gray-600 dark:text-dark-text-secondary mt-1 text-sm">Track your therapy progress</p>
+          </div>
+          {/* Link Therapist Button - Show if only one therapist */}
+          {partners.length === 1 && (
+            <button
+              onClick={() => setShowLinkTherapistModal(true)}
+              className="btn btn-secondary text-sm"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Link Another Therapist
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Scrollable Tabs - Mobile & Tablet */}
@@ -242,6 +430,19 @@ const UserDashboard = () => {
               </span>
             )}
           </button>
+          {hasEventsTab && (
+            <button
+              onClick={() => setActiveTab('events')}
+              className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
+                activeTab === 'events'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 dark:text-dark-text-tertiary'
+              }`}
+            >
+              <CalendarDays className="h-5 w-5" />
+              <span className="text-xs">Events</span>
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('therapist')}
             className={`py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex flex-col items-center gap-1 flex-shrink-0 ${
@@ -343,6 +544,19 @@ const UserDashboard = () => {
               </span>
             )}
           </button>
+          {hasEventsTab && (
+            <button
+              onClick={() => setActiveTab('events')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'events'
+                  ? 'border-primary-600 text-primary-600 dark:border-dark-primary-500 dark:text-dark-primary-500'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-dark-text-tertiary dark:hover:text-dark-text-secondary dark:hover:border-dark-border'
+              }`}
+            >
+              <CalendarDays className="inline h-5 w-5 mr-2" />
+              Events
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('therapist')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -610,7 +824,7 @@ const UserDashboard = () => {
 
       {/* Availability Tab */}
       {activeTab === 'availability' && (
-        <ClientAvailabilityTab userId={user.id} partners={partners} />
+        <ClientAvailabilityTab userId={user.id} partners={partners} defaultPartnerId={selectedPartnerId} />
       )}
 
       {activeTab === 'video' && videoSessionsEnabled && (
@@ -823,12 +1037,79 @@ const UserDashboard = () => {
         <UserReportsTab userId={user.id} onReportViewed={loadReportsCount} />
       )}
 
+      {/* Events Tab */}
+      {activeTab === 'events' && hasEventsTab && (
+        <ClientEventsTab userId={user.id} partnerId={selectedPartnerId} />
+      )}
+
       {activeTab === 'therapist' && (
-        <TherapistProfileTab userId={user.id} />
+        <TherapistProfileTab userId={user.id} partnerId={selectedPartnerId} />
       )}
 
       {activeTab === 'settings' && (
         <UserSettings />
+      )}
+
+      {/* Link Therapist Modal */}
+      {showLinkTherapistModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary mb-4">
+              Link to New Therapist
+            </h2>
+            <p className="text-gray-600 dark:text-dark-text-secondary mb-4">
+              Enter the Partner ID provided by your therapist to link your account.
+            </p>
+            
+            {linkTherapistError && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+                {linkTherapistError}
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                Partner ID
+              </label>
+              <input
+                type="text"
+                value={linkTherapistPartnerId}
+                onChange={(e) => {
+                  setLinkTherapistPartnerId(e.target.value.toUpperCase());
+                  setLinkTherapistError('');
+                }}
+                placeholder="e.g., AB12345"
+                maxLength="7"
+                className="input w-full"
+                disabled={linkTherapistLoading}
+              />
+              <p className="text-xs text-gray-500 dark:text-dark-text-tertiary mt-1">
+                Enter the 7-character Partner ID (2 letters + 5 digits)
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowLinkTherapistModal(false);
+                  setLinkTherapistPartnerId('');
+                  setLinkTherapistError('');
+                }}
+                className="btn btn-secondary"
+                disabled={linkTherapistLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLinkTherapist}
+                className="btn btn-primary"
+                disabled={linkTherapistLoading || !linkTherapistPartnerId.trim()}
+              >
+                {linkTherapistLoading ? 'Linking...' : 'Link Therapist'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -302,8 +302,8 @@ class TherapySession {
   }
 
   // Get all sessions for a user
-  static async findByUser(userId) {
-    const query = `
+  static async findByUser(userId, partnerId = null) {
+    let query = `
       SELECT 
         ts.id,
         ts.appointment_id,
@@ -340,9 +340,17 @@ class TherapySession {
       JOIN partners p ON ts.partner_id = p.id
       LEFT JOIN appointments a ON ts.appointment_id = a.id
       WHERE ts.user_id = $1
-      ORDER BY ts.session_date DESC
     `;
-    const result = await db.query(query, [userId]);
+    const values = [userId];
+    
+    if (partnerId) {
+      query += ` AND ts.partner_id = $2`;
+      values.push(partnerId);
+    }
+    
+    query += ` ORDER BY ts.session_date DESC`;
+    
+    const result = await db.query(query, values);
     return result.rows;
   }
 
