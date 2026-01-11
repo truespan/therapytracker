@@ -515,7 +515,7 @@ const PartnerDashboard = () => {
           <DarkModeToggle variant="button" showLabel />
           {/* Show buttons only on mobile (below sm), not on tablet */}
           {user.partner_id && (
-            <div className="sm:hidden flex items-center gap-2">
+            <div className="sm:hidden flex items-center gap-2 min-w-0 flex-1 justify-end">
               {/* Google Calendar Connect Button */}
               {loadingCalendarStatus ? (
                 <div className="flex items-center justify-center py-1 px-2">
@@ -553,17 +553,17 @@ const PartnerDashboard = () => {
               {/* Share Signup & Appointment Link Button */}
               <button
                 onClick={handleShareSignupUrl}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 min-w-0 max-w-full"
               >
                 {copiedSignupUrl ? (
                   <>
-                    <Check className="h-3.5 w-3.5" />
-                    <span>URL Copied!</span>
+                    <Check className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">URL Copied!</span>
                   </>
                 ) : (
                   <>
-                    <Share className="h-3.5 w-3.5" />
-                    <span>Share Signup & Appointment link</span>
+                    <Share className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">Share Signup & Appointment link</span>
                   </>
                 )}
               </button>
