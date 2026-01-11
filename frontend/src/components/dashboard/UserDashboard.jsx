@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { appointmentAPI, chartAPI, videoSessionAPI, questionnaireAPI, userAPI, generatedReportAPI, eventAPI } from '../../services/api';
+import { appointmentAPI, chartAPI, videoSessionAPI, questionnaireAPI, userAPI, generatedReportAPI, eventAPI, googleCalendarAPI } from '../../services/api';
 import SharedChartViewer from '../charts/SharedChartViewer';
 import VideoSessionJoin from '../video/VideoSessionJoin';
 import UserQuestionnaireView from '../questionnaires/UserQuestionnaireView';
@@ -10,7 +10,7 @@ import ClientAvailabilityTab from '../availability/ClientAvailabilityTab';
 import TherapistProfileTab from '../profile/TherapistProfileTab';
 import UserSettings from '../user/UserSettings';
 import ClientEventsTab from '../events/ClientEventsTab';
-import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock, Settings, CalendarDays, UserPlus } from 'lucide-react';
+import { Activity, Calendar, BarChart3, Video, Clock, User as UserIcon, FileText, FileCheck, CalendarClock, Settings, CalendarDays, UserPlus, CheckCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { canJoinSession, formatTimeUntilSession } from '../../utils/jitsiHelper';
 import { format } from 'date-fns';
 import DarkModeToggle from '../common/DarkModeToggle';
@@ -36,6 +36,11 @@ const UserDashboard = () => {
   const [linkTherapistPartnerId, setLinkTherapistPartnerId] = useState('');
   const [linkTherapistError, setLinkTherapistError] = useState('');
   const [linkTherapistLoading, setLinkTherapistLoading] = useState(false);
+  
+  // Google Calendar state
+  const [googleCalendarStatus, setGoogleCalendarStatus] = useState(null);
+  const [connectingCalendar, setConnectingCalendar] = useState(false);
+  const [loadingCalendarStatus, setLoadingCalendarStatus] = useState(true);
 
   // Format date and time in user's local timezone to match therapist dashboard
   const formatDateTime = (dateString) => {
@@ -75,7 +80,49 @@ const UserDashboard = () => {
   // Initial load
   useEffect(() => {
     loadPartners();
+    checkGoogleCalendarStatus();
   }, [user.id]);
+  
+  const checkGoogleCalendarStatus = async () => {
+    try {
+      setLoadingCalendarStatus(true);
+      const response = await googleCalendarAPI.getStatus();
+      setGoogleCalendarStatus(response.data);
+    } catch (err) {
+      console.error('Failed to check Google Calendar status:', err);
+      setGoogleCalendarStatus({ connected: false });
+    } finally {
+      setLoadingCalendarStatus(false);
+    }
+  };
+
+  const connectGoogleCalendar = async () => {
+    try {
+      setConnectingCalendar(true);
+      const response = await googleCalendarAPI.initiateAuth();
+      // Redirect to Google OAuth page
+      window.location.href = response.data.authUrl;
+    } catch (err) {
+      console.error('Failed to initiate Google Calendar auth:', err);
+      alert('Failed to connect Google Calendar. Please try again.');
+      setConnectingCalendar(false);
+    }
+  };
+
+  const disconnectGoogleCalendar = async () => {
+    if (!window.confirm('Are you sure you want to disconnect Google Calendar? Appointments will no longer sync automatically.')) {
+      return;
+    }
+
+    try {
+      await googleCalendarAPI.disconnect();
+      setGoogleCalendarStatus({ connected: false });
+      alert('Google Calendar disconnected successfully.');
+    } catch (err) {
+      console.error('Failed to disconnect Google Calendar:', err);
+      alert('Failed to disconnect Google Calendar. Please try again.');
+    }
+  };
 
   const loadAllData = async () => {
     if (selectedPartnerId === null) return;
@@ -346,6 +393,46 @@ const UserDashboard = () => {
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Link Another Therapist
+            </button>
+          )}
+        </div>
+        
+        {/* Google Calendar Connect Button - Mobile only */}
+        <div className="mb-3">
+          {loadingCalendarStatus ? (
+            <div className="flex items-center justify-center py-1">
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
+            </div>
+          ) : googleCalendarStatus?.connected ? (
+            <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                <span className="text-xs font-medium text-green-700 dark:text-green-400">GCal Connected</span>
+              </div>
+              <button
+                onClick={disconnectGoogleCalendar}
+                className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+              >
+                Disconnect
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={connectGoogleCalendar}
+              disabled={connectingCalendar}
+              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium disabled:opacity-50"
+            >
+              {connectingCalendar ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                  <span>Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <CalendarIcon className="h-3 w-3" />
+                  <span>Connect GCal</span>
+                </>
+              )}
             </button>
           )}
         </div>
