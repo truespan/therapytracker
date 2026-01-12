@@ -36,12 +36,18 @@ const PublicTherapistProfile = () => {
       ]);
 
       setTherapist(profileResponse.data.partner);
-      setAvailability(availabilityResponse.data.slots || []);
+      // Ensure slots array is always set (even if empty)
+      const slots = availabilityResponse.data.slots || [];
+      console.log('Loaded slots:', slots.length, slots);
+      setAvailability(slots);
       setReviews(reviewsResponse.data.reviews || []);
       setFeeSettings(feeSettingsResponse.data.feeSettings);
     } catch (err) {
       console.error('Failed to load therapist data:', err);
       setError(err.response?.data?.error || 'Failed to load therapist profile. Please check the link.');
+      // Set empty arrays on error to prevent blank page
+      setAvailability([]);
+      setReviews([]);
     } finally {
       setLoading(false);
     }
@@ -84,7 +90,10 @@ const PublicTherapistProfile = () => {
       setBookingLoading(false);
       alert('Booking confirmed successfully! Your appointment has been scheduled.');
       // Reload availability to show updated slots
-      loadTherapistData();
+      // Add a small delay to ensure backend has processed the booking
+      setTimeout(() => {
+        loadTherapistData();
+      }, 1000);
     }
   };
 
