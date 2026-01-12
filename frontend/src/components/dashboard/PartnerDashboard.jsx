@@ -626,15 +626,15 @@ const PartnerDashboard = () => {
         
         {/* Share Availability-Public Link Button - Mobile only (below Share Signup link) */}
         {user.partner_id && (
-          <div className="sm:hidden mt-2">
+          <div className="sm:hidden mt-2 flex justify-end">
             <button
               onClick={handleCopyProfileUrl}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 min-w-0 w-full"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap max-w-full"
             >
               {copiedProfileUrl ? (
                 <>
                   <Check className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="truncate">URL Copied!</span>
+                  <span>URL Copied!</span>
                 </>
               ) : (
                 <>
