@@ -526,7 +526,7 @@ const PartnerDashboard = () => {
                   ) : (
                     <>
                       <Link2 className="h-4 w-4" />
-                      Share Profile Link
+                      Share Availability-Public Link
                     </>
                   )}
                 </button>
@@ -720,7 +720,7 @@ const PartnerDashboard = () => {
                 ) : (
                   <>
                     <Link2 className="h-4 w-4" />
-                    Share Profile Link
+                    Share Availability-Public Link
                   </>
                 )}
               </button>
