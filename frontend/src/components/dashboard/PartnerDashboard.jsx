@@ -76,6 +76,7 @@ const PartnerDashboard = () => {
   const [showEditClientModal, setShowEditClientModal] = useState(false);
   const [copiedSignupUrl, setCopiedSignupUrl] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [copiedProfileUrl, setCopiedProfileUrl] = useState(false);
 
   // Questionnaire state
   const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
@@ -298,6 +299,36 @@ const PartnerDashboard = () => {
     }
   };
 
+  const handleCopyProfileUrl = async () => {
+    if (!user.partner_id) return;
+    
+    const baseUrl = window.location.origin;
+    const profileUrl = `${baseUrl}/therapist/${user.partner_id}`;
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      setCopiedProfileUrl(true);
+      setTimeout(() => setCopiedProfileUrl(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = profileUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopiedProfileUrl(true);
+        setTimeout(() => setCopiedProfileUrl(false), 2000);
+      } catch (fallbackErr) {
+        console.error('Fallback copy failed:', fallbackErr);
+        alert('Please copy this link manually: ' + profileUrl);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   const checkGoogleCalendarStatus = async () => {
     try {
       setLoadingCalendarStatus(true);
@@ -479,6 +510,28 @@ const PartnerDashboard = () => {
                 </button>
               )}
             </div>
+            
+            {/* Share Profile Link */}
+            {user.partner_id && (
+              <div className="w-full mt-2">
+                <button
+                  onClick={handleCopyProfileUrl}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                >
+                  {copiedProfileUrl ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Profile Link Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="h-4 w-4" />
+                      Share Profile Link
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -650,6 +703,28 @@ const PartnerDashboard = () => {
                 </>
               )}
             </button>
+          )}
+          
+          {/* Share Profile Link - Tablet */}
+          {user.partner_id && (
+            <div className="w-full mt-2">
+              <button
+                onClick={handleCopyProfileUrl}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+              >
+                {copiedProfileUrl ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Profile Link Copied!
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="h-4 w-4" />
+                    Share Profile Link
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </div>
       )}

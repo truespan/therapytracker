@@ -27,6 +27,7 @@ import EarningsUtilityTab from './components/admin/EarningsUtilityTab';
 import WhatsAppSettingsTab from './components/admin/WhatsAppSettingsTab';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import PublicTherapistProfile from './pages/PublicTherapistProfile';
 import ChatWidget from './components/support/ChatWidget';
 import TermsConditionsModal from './components/modals/TermsConditionsModal';
 import SubscriptionPlanModal from './components/modals/SubscriptionPlanModal';
@@ -187,6 +188,7 @@ function AppRoutes() {
       <Route path="/auth/google/callback" element={<GoogleCalendarCallback />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
+      <Route path="/therapist/:partner_id" element={<PublicTherapistProfile />} />
       
       {/* Admin Routes - Use AdminLayout instead of Navbar */}
       <Route

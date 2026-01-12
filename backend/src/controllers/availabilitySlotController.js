@@ -270,6 +270,42 @@ const getClientSlots = async (req, res) => {
 };
 
 /**
+ * Get published slots by partner_id (public endpoint - no authentication required)
+ */
+const getPublicSlotsByPartnerId = async (req, res) => {
+  try {
+    const { partner_id } = req.params;
+    
+    // Find partner by partner_id
+    const partner = await Partner.findByPartnerId(partner_id);
+    if (!partner) {
+      return res.status(404).json({ error: 'Therapist not found' });
+    }
+
+    // Get next 4 weeks (28 days) using dateUtils
+    const dateUtils = require('../utils/dateUtils');
+    const today = dateUtils.getCurrentUTC();
+    const startDate = dateUtils.formatDate(today);
+
+    const fourWeeksLater = dateUtils.addDays(today, 27);
+    const endDate = dateUtils.formatDate(fourWeeksLater);
+
+    const slots = await AvailabilitySlot.findPublishedByPartner(partner.id, startDate, endDate);
+
+    res.json({
+      slots,
+      date_range: { start_date: startDate, end_date: endDate }
+    });
+  } catch (error) {
+    console.error('Get public slots error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch availability slots',
+      details: error.message
+    });
+  }
+};
+
+/**
  * Update a slot
  */
 const updateSlot = async (req, res) => {
@@ -942,6 +978,326 @@ const getPaymentInfo = async (req, res) => {
   }
 };
 
+/**
+ * Book a slot publicly (without authentication) - creates user account and books slot
+ * This is called after payment verification
+ */
+const bookSlotPublic = async (req, res) => {
+  const client = await db.getClient();
+
+  try {
+    const { slot_id, clientData } = req.body;
+    const { name, age, sex, location, contact, whatsapp_number, email } = clientData;
+
+    // Validation
+    if (!slot_id || !name || !age || !sex || !contact || !whatsapp_number) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: slot_id, name, age, sex, contact, and whatsapp_number are required' 
+      });
+    }
+
+    // Validate age
+    const ageNum = parseInt(age);
+    if (isNaN(ageNum) || ageNum < 1 || ageNum > 150) {
+      return res.status(400).json({ error: 'Invalid age. Must be between 1 and 150.' });
+    }
+
+    // Validate contact format
+    const phoneRegex = /^\+\d{1,4}\d{7,15}$/;
+    if (!phoneRegex.test(contact)) {
+      return res.status(400).json({ error: 'Invalid contact number format. Must include country code (e.g., +919876543210)' });
+    }
+
+    if (!phoneRegex.test(whatsapp_number)) {
+      return res.status(400).json({ error: 'Invalid WhatsApp number format. Must include country code (e.g., +919876543210)' });
+    }
+
+    // Validate email if provided
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+    }
+
+    // Ensure timezone is set to UTC for this transaction
+    await client.query('SET timezone = "UTC"');
+    await client.query('BEGIN');
+
+    // Lock the slot row
+    const lockQuery = `
+      SELECT *,
+        TO_CHAR(slot_date, 'YYYY-MM-DD') as slot_date_formatted,
+        TO_CHAR(start_time, 'HH24:MI') as start_time_formatted,
+        TO_CHAR(end_time, 'HH24:MI') as end_time_formatted
+      FROM availability_slots
+      WHERE id = $1
+      FOR UPDATE
+    `;
+    const lockResult = await client.query(lockQuery, [slot_id]);
+    const slot = lockResult.rows[0];
+
+    if (!slot) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Slot not found' });
+    }
+
+    // Verify slot is available and published
+    const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+    if (bookedStatuses.includes(slot.status)) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Slot is already booked' });
+    }
+
+    if (!slot.is_available || !slot.is_published) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Slot is not available for booking' });
+    }
+
+    // Check if user already exists (by contact or email)
+    let userId = null;
+    let isExistingUser = false;
+
+    // Check by contact first
+    const existingUserByContact = await User.findByContact(contact);
+    if (existingUserByContact) {
+      userId = existingUserByContact.id;
+      isExistingUser = true;
+      // Update user if needed (whatsapp_number, email, location)
+      await User.update(userId, {
+        whatsapp_number: whatsapp_number || existingUserByContact.whatsapp_number,
+        email: email || existingUserByContact.email,
+        address: location || existingUserByContact.address
+      });
+    } else if (email) {
+      // Check by email if contact not found
+      const existingUserByEmail = await User.findByEmail(email);
+      if (existingUserByEmail) {
+        userId = existingUserByEmail.id;
+        isExistingUser = true;
+        // Update user if needed
+        await User.update(userId, {
+          whatsapp_number: whatsapp_number || existingUserByEmail.whatsapp_number,
+          address: location || existingUserByEmail.address
+        });
+      }
+    }
+
+    // Create new user if doesn't exist
+    if (!userId) {
+      try {
+        const newUser = await User.create({
+          name,
+          age: ageNum,
+          sex,
+          email: email || null,
+          contact,
+          whatsapp_number,
+          address: location || null
+        }, client);
+        userId = newUser.id;
+      } catch (createError) {
+        await client.query('ROLLBACK');
+        if (createError.code === '23505' && createError.constraint === 'users_contact_unique') {
+          // Contact already exists - try to find and use existing user
+          const existingUser = await User.findByContact(contact);
+          if (existingUser) {
+            userId = existingUser.id;
+            isExistingUser = true;
+            // Update user info
+            await User.update(userId, {
+              whatsapp_number: whatsapp_number || existingUser.whatsapp_number,
+              email: email || existingUser.email,
+              address: location || existingUser.address
+            });
+            // Restart transaction
+            await client.query('BEGIN');
+          } else {
+            return res.status(400).json({ error: 'A user with this contact number already exists' });
+          }
+        } else {
+          throw createError;
+        }
+      }
+    }
+
+    // Link user to partner if not already linked
+    await User.assignToPartner(userId, slot.partner_id, client);
+
+    // Check for Google Calendar conflicts
+    const conflicts = await AvailabilitySlot.checkGoogleCalendarConflict(
+      slot.partner_id,
+      slot.start_datetime,
+      slot.end_datetime
+    );
+
+    let appointmentId = null;
+    let googleConflict = false;
+
+    // If NO conflict, create appointment and sync to Google Calendar
+    if (conflicts.length === 0) {
+      try {
+        // Check max appointments limit
+        const subscription = await PartnerSubscription.getActiveSubscription(slot.partner_id);
+        if (subscription && subscription.max_appointments !== null && subscription.max_appointments !== undefined) {
+          const currentMonthCount = await Appointment.countCurrentMonthAppointments(slot.partner_id);
+          if (currentMonthCount >= subscription.max_appointments) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ 
+              error: `Therapist has reached maximum appointments limit` 
+            });
+          }
+        }
+
+        const startDatetime = new Date(slot.start_datetime);
+        const endDatetime = new Date(slot.end_datetime);
+
+        const dateUtils = require('../utils/dateUtils');
+        const durationMinutes = dateUtils.differenceInMinutes(endDatetime, startDatetime);
+
+        const appointmentTitle = `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`;
+        const appointmentData = {
+          partner_id: slot.partner_id,
+          user_id: userId,
+          title: appointmentTitle,
+          appointment_date: startDatetime.toISOString(),
+          end_date: endDatetime.toISOString(),
+          duration_minutes: durationMinutes,
+          notes: `Booked via public profile - availability slot #${slot_id}`,
+          timezone: 'UTC'
+        };
+        
+        // Create appointment using raw query within transaction
+        const appointmentQuery = `
+          INSERT INTO appointments (partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes, timezone)
+          VALUES ($1, $2, $3, $4::timestamptz, $5::timestamptz, $6, $7, $8)
+          RETURNING *
+        `;
+        const appointmentValues = [
+          appointmentData.partner_id,
+          appointmentData.user_id,
+          appointmentData.title,
+          appointmentData.appointment_date,
+          appointmentData.end_date,
+          appointmentData.duration_minutes,
+          appointmentData.notes,
+          appointmentData.timezone
+        ];
+        const appointmentResult = await client.query(appointmentQuery, appointmentValues);
+        const appointment = appointmentResult.rows[0];
+        appointmentId = appointment.id;
+
+        // Sync to Google Calendar (non-blocking)
+        try {
+          await googleCalendarService.syncAppointmentToGoogle(appointment.id);
+        } catch (gcalError) {
+          console.error('Google Calendar sync failed:', gcalError.message);
+        }
+      } catch (appointmentError) {
+        console.error('Appointment creation error:', appointmentError);
+        await client.query('ROLLBACK');
+        return res.status(500).json({
+          error: 'Failed to create appointment',
+          details: appointmentError.message
+        });
+      }
+    } else {
+      googleConflict = true;
+    }
+
+    // Get partner fee settings - for public bookings, full session fee is collected
+    const partner = await Partner.findById(slot.partner_id);
+    const sessionFee = partner ? (parseFloat(partner.session_fee) || 0) : 0;
+    
+    // Since full session fee is collected upfront, status is 'confirmed'
+    const bookingStatus = sessionFee > 0 ? 'confirmed' : 'booked';
+
+    // Update slot with booking
+    const updateQuery = `
+      UPDATE availability_slots
+      SET status = $4,
+          is_available = FALSE,
+          booked_by_user_id = $1,
+          booked_at = CURRENT_TIMESTAMP,
+          appointment_id = $2,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+      RETURNING *
+    `;
+    const updateResult = await client.query(updateQuery, [userId, appointmentId, slot_id, bookingStatus]);
+    const bookedSlot = updateResult.rows[0];
+
+    await client.query('COMMIT');
+
+    // Send WhatsApp notifications (non-blocking) - after transaction commits
+    if (appointmentId && !googleConflict) {
+      // Get duration for notification
+      const startDatetime = new Date(slot.start_datetime);
+      const endDatetime = new Date(slot.end_datetime);
+      const dateUtils = require('../utils/dateUtils');
+      const durationMinutes = dateUtils.differenceInMinutes(endDatetime, startDatetime);
+      
+      // Async notification - don't await to avoid blocking response
+      setImmediate(async () => {
+        try {
+          const user = await User.findById(userId);
+          const partner = await Partner.findById(slot.partner_id);
+          
+          const partnerHasWhatsApp = await checkPartnerWhatsAppAccess(slot.partner_id);
+          if (!partnerHasWhatsApp) {
+            console.log(`[WhatsApp] WhatsApp not enabled for partner ${slot.partner_id}`);
+          } else {
+            let organizationHasWhatsApp = true;
+            if (partner && partner.organization_id) {
+              organizationHasWhatsApp = await checkOrganizationWhatsAppAccess(partner.organization_id);
+            }
+
+            if (partnerHasWhatsApp && organizationHasWhatsApp) {
+              // Send notification to client using WhatsApp number if available, otherwise contact
+              const clientContact = user.whatsapp_number || user.contact;
+              if (clientContact) {
+                await whatsappService.sendBookingConfirmation({
+                  to: clientContact,
+                  userName: user.name,
+                  therapistName: partner.name,
+                  appointmentDate: new Date(slot.start_datetime),
+                  appointmentDuration: durationMinutes || 60,
+                  isOnline: slot.location_type === 'online'
+                });
+              }
+            }
+          }
+        } catch (whatsappError) {
+          console.error('WhatsApp notification failed:', whatsappError);
+          // Don't fail booking if WhatsApp fails
+        }
+      });
+    }
+
+    res.json({
+      message: 'Booking confirmed successfully',
+      booking: {
+        slot_id: bookedSlot.id,
+        appointment_id: appointmentId,
+        user_id: userId,
+        status: bookingStatus,
+        google_conflict: googleConflict,
+        is_existing_user: isExistingUser
+      }
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('Public booking error:', error);
+    res.status(500).json({
+      error: 'Failed to complete booking',
+      details: error.message
+    });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   createSlot,
   getPartnerSlots,
@@ -951,5 +1307,7 @@ module.exports = {
   publishSlots,
   bookSlot,
   cancelBooking,
-  getPaymentInfo
+  getPaymentInfo,
+  getPublicSlotsByPartnerId,
+  bookSlotPublic
 };

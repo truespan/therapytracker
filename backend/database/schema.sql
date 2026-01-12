@@ -50,6 +50,7 @@ CREATE TABLE users (
     age INTEGER NOT NULL CHECK (age > 0),
     email VARCHAR(255),
     contact VARCHAR(50) NOT NULL UNIQUE,
+    whatsapp_number VARCHAR(50),
     address TEXT,
     photo_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

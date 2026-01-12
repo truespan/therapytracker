@@ -161,6 +161,42 @@ const getPublishedReviews = async (req, res) => {
   }
 };
 
+// Get published reviews by partner_id (public endpoint - no authentication required)
+const getPublishedReviewsByPartnerId = async (req, res) => {
+  try {
+    const { partner_id } = req.params;
+    
+    // Find partner by partner_id
+    const Partner = require('../models/Partner');
+    const partner = await Partner.findByPartnerId(partner_id);
+    if (!partner) {
+      return res.status(404).json({ error: 'Therapist not found' });
+    }
+
+    const result = await db.query(
+      `SELECT 
+        tr.id,
+        tr.rating,
+        tr.feedback_text,
+        tr.created_at,
+        tr.updated_at,
+        u.name as client_name
+       FROM therapist_reviews tr
+       JOIN users u ON tr.client_id = u.id
+       WHERE tr.therapist_id = $1 AND tr.is_published = true
+       ORDER BY tr.created_at DESC`,
+      [partner.id]
+    );
+
+    res.status(200).json({
+      reviews: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching published reviews by partner_id:', error);
+    res.status(500).json({ error: 'Failed to fetch published reviews' });
+  }
+};
+
 // Get client's review for a specific therapist (to check if they already reviewed)
 const getClientReview = async (req, res) => {
   try {
@@ -191,5 +227,6 @@ module.exports = {
   getTherapistReviews,
   togglePublishStatus,
   getPublishedReviews,
-  getClientReview
+  getClientReview,
+  getPublishedReviewsByPartnerId
 };

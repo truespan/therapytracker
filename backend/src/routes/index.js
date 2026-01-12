@@ -29,6 +29,8 @@ const partnerSubscriptionController = require('../controllers/partnerSubscriptio
 const availabilitySlotController = require('../controllers/availabilitySlotController');
 const whatsappController = require('../controllers/whatsappController');
 const vonageWebhookController = require('../controllers/vonageWebhookController');
+const reviewController = require('../controllers/reviewController');
+const razorpayController = require('../controllers/razorpayController');
 
 // Debug routes (for timezone diagnostics)
 const debugRoutes = require('./debug');
@@ -76,6 +78,15 @@ router.delete('/upload/profile-picture', authenticateToken, uploadController.del
 router.post('/upload/event-image', authenticateToken, uploadEventImage.single('eventImage'), uploadController.uploadEventImage);
 
 // ==================== PARTNER ROUTES ====================
+// Public routes (no authentication required)
+router.get('/public/partners/:partner_id', partnerController.getPartnerByPartnerId);
+router.get('/public/partners/:partner_id/availability', availabilitySlotController.getPublicSlotsByPartnerId);
+router.get('/public/partners/:partner_id/reviews', reviewController.getPublishedReviewsByPartnerId);
+router.get('/public/partners/:partner_id/fee-settings', partnerController.getFeeSettingsByPartnerId);
+router.post('/public/razorpay/create-booking-order', razorpayController.createPublicBookingOrder);
+router.post('/public/razorpay/verify-booking-payment', razorpayController.verifyPublicBookingPayment);
+
+// Protected routes
 router.get('/partners/:id', authenticateToken, partnerController.getPartnerById);
 router.put('/partners/:id', authenticateToken, partnerController.updatePartner);
 router.get('/partners/:id/users', authenticateToken, partnerController.getPartnerUsers);
@@ -389,7 +400,6 @@ router.get('/events/:event_id/enrollments', authenticateToken, checkRole('partne
 router.get('/partners/:partner_id/has-events', authenticateToken, eventController.checkPartnerHasEvents);
 
 // ==================== REVIEW ROUTES ====================
-const reviewController = require('../controllers/reviewController');
 // Client routes (submit/update review)
 router.post('/reviews', authenticateToken, checkRole('user'), reviewController.createReview);
 router.get('/reviews/client/:therapistId', authenticateToken, checkRole('user'), reviewController.getClientReview);

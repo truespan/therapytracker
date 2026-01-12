@@ -800,7 +800,7 @@ const createBookingOrder = async (req, res) => {
       feeDetails: {
         session_fee: feeSettings.session_fee,
         booking_fee: feeSettings.booking_fee,
-        currency: currency
+        currency: orderCurrency
       }
     });
   } catch (error) {
@@ -808,6 +808,118 @@ const createBookingOrder = async (req, res) => {
     res.status(500).json({
       error: 'Failed to create booking order',
       message: error.message
+    });
+  }
+};
+
+/**
+ * Create a Razorpay order for public booking (collects full session fee upfront)
+ */
+const createPublicBookingOrder = async (req, res) => {
+  try {
+    const { slot_id, partner_id, clientData } = req.body;
+
+    if (!slot_id || !partner_id || !clientData) {
+      return res.status(400).json({
+        error: 'slot_id, partner_id, and clientData are required'
+      });
+    }
+
+    // Validate client data
+    const { name, age, sex, contact, whatsapp_number } = clientData;
+    if (!name || !age || !sex || !contact || !whatsapp_number) {
+      return res.status(400).json({
+        error: 'Missing required client information: name, age, sex, contact, and whatsapp_number are required'
+      });
+    }
+
+    // Find partner by partner_id to get actual partner ID
+    const Partner = require('../models/Partner');
+    const partner = await Partner.findByPartnerId(partner_id);
+    if (!partner) {
+      return res.status(404).json({ error: 'Therapist not found' });
+    }
+
+    // Get partner fee settings - we collect full session fee upfront
+    const feeSettings = await Partner.getFeeSettings(partner.id);
+    if (!feeSettings) {
+      return res.status(404).json({ error: 'Fee settings not found' });
+    }
+
+    const sessionFee = parseFloat(feeSettings.session_fee) || 0;
+    const orderCurrency = feeSettings.fee_currency || 'INR';
+
+    // Check if we're in test mode
+    const isTestMode = RazorpayService.isTestMode();
+
+    // If test mode and fee exists, skip payment and return test mode flag
+    if (isTestMode && sessionFee > 0) {
+      console.log(`[CREATE_PUBLIC_BOOKING_ORDER] Test mode detected - skipping payment for slot ${slot_id}`);
+      return res.status(201).json({
+        message: 'Test mode: Payment skipped',
+        test_mode: true,
+        skip_payment: true,
+        order: null,
+        slot_id,
+        partner_id: partner.id
+      });
+    }
+
+    if (sessionFee <= 0) {
+      return res.status(400).json({
+        error: 'No session fee configured for this therapist'
+      });
+    }
+
+    // Create Razorpay order for full session fee
+    const amountInPaise = Math.round(sessionFee * 100); // Convert to smallest currency unit
+    const receipt = `public_booking_${slot_id}_${Date.now()}`;
+
+    // Store client data in order notes for after-payment processing
+    const orderNotes = {
+      slot_id: slot_id,
+      partner_id: partner.id,
+      payment_type: 'public_booking',
+      client_data: clientData
+    };
+
+    const razorpayOrder = await RazorpayService.createOrder({
+      amount: amountInPaise,
+      currency: orderCurrency,
+      receipt: receipt,
+      notes: orderNotes
+    });
+
+    // Save order to database (no customer_id since it's public booking)
+    const dbOrder = await RazorpayOrder.create({
+      razorpay_order_id: razorpayOrder.id,
+      amount: sessionFee,
+      currency: orderCurrency,
+      receipt: receipt,
+      status: razorpayOrder.status,
+      customer_id: null,
+      customer_type: 'public',
+      notes: orderNotes
+    });
+
+    console.log(`[CREATE_PUBLIC_BOOKING_ORDER] Order ${razorpayOrder.id} created successfully with notes:`, JSON.stringify(dbOrder.notes));
+
+    res.status(201).json({
+      message: 'Booking order created successfully',
+      order: {
+        id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        receipt: razorpayOrder.receipt,
+        status: razorpayOrder.status,
+        key_id: process.env.RAZORPAY_KEY_ID
+      }
+    });
+  } catch (error) {
+    console.error('Create public booking order error:', error);
+    res.status(500).json({
+      error: 'Failed to create booking order',
+      details: error.message
     });
   }
 };
@@ -879,13 +991,24 @@ const verifyBookingPayment = async (req, res) => {
     // Fetch payment details from Razorpay
     const payment = await RazorpayService.fetchPayment(razorpay_payment_id);
 
-    // Get payment type from order notes (dbOrder was already fetched above)
+    // Get order from database
+    const dbOrder = await RazorpayOrder.findByRazorpayOrderId(razorpay_order_id);
+    if (!dbOrder) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Get payment type from order notes
     let paymentType = 'booking_fee';
     let eventId = null;
+    let effectiveSlotId = slot_id; // Use slot_id from request body
     if (dbOrder.notes) {
       const orderNotes = typeof dbOrder.notes === 'string' ? JSON.parse(dbOrder.notes) : dbOrder.notes;
       paymentType = orderNotes.payment_type || 'booking_fee';
       eventId = orderNotes.event_id || null;
+      // Use slot_id from order notes if available, otherwise use from request
+      if (orderNotes.slot_id) {
+        effectiveSlotId = orderNotes.slot_id;
+      }
     }
 
     // Save payment to database
@@ -996,6 +1119,352 @@ const verifyBookingPayment = async (req, res) => {
     console.error('Verify booking payment error:', error);
     res.status(500).json({
       error: 'Failed to verify booking payment',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Verify public booking payment and complete booking
+ */
+const verifyPublicBookingPayment = async (req, res) => {
+  try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        error: 'razorpay_order_id, razorpay_payment_id, and razorpay_signature are required'
+      });
+    }
+
+    // Verify signature
+    const isValid = RazorpayService.verifyPaymentSignature(
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    );
+
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid payment signature' });
+    }
+
+    // Fetch payment details from Razorpay
+    const payment = await RazorpayService.fetchPayment(razorpay_payment_id);
+
+    // Get order from database
+    const dbOrder = await RazorpayOrder.findByRazorpayOrderId(razorpay_order_id);
+    if (!dbOrder) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Verify payment type
+    const orderNotes = typeof dbOrder.notes === 'string' ? JSON.parse(dbOrder.notes) : dbOrder.notes;
+    if (orderNotes.payment_type !== 'public_booking') {
+      return res.status(400).json({ error: 'Invalid payment type for this endpoint' });
+    }
+
+    // Check if payment is already captured/authorized
+    if (payment.status !== 'captured' && payment.status !== 'authorized') {
+      return res.status(400).json({
+        error: `Payment status is ${payment.status}. Only captured or authorized payments can be verified.`
+      });
+    }
+
+    // Check if payment already exists in database
+    const existingPayment = await RazorpayPayment.findByRazorpayPaymentId(razorpay_payment_id);
+    if (existingPayment) {
+      return res.status(400).json({
+        error: 'This payment has already been processed'
+      });
+    }
+
+    // Save payment to database
+    const dbPayment = await RazorpayPayment.create({
+      razorpay_payment_id: payment.id,
+      razorpay_order_id: razorpay_order_id,
+      amount: payment.amount / 100, // Convert from paise to currency unit
+      currency: payment.currency,
+      status: payment.status,
+      method: payment.method,
+      customer_id: null,
+      customer_type: 'public',
+      notes: orderNotes
+    });
+
+    // Extract client data and slot_id from order notes
+    const clientData = orderNotes.client_data;
+    const slot_id = orderNotes.slot_id;
+
+    if (!clientData || !slot_id) {
+      return res.status(400).json({
+        error: 'Missing client data or slot_id in order notes'
+      });
+    }
+
+    // Import required modules for booking
+    const AvailabilitySlot = require('../models/AvailabilitySlot');
+    const Appointment = require('../models/Appointment');
+    const User = require('../models/User');
+    const Partner = require('../models/Partner');
+    const PartnerSubscription = require('../models/PartnerSubscription');
+    const googleCalendarService = require('../services/googleCalendarService');
+    const whatsappService = require('../services/whatsappService');
+    const db = require('../config/database');
+    const client = await db.getClient();
+
+    try {
+      const { name, age, sex, location, contact, whatsapp_number, email } = clientData;
+
+      // Validate age
+      const ageNum = parseInt(age);
+      if (isNaN(ageNum) || ageNum < 1 || ageNum > 150) {
+        await client.release();
+        return res.status(400).json({ error: 'Invalid age in client data' });
+      }
+
+      await client.query('SET timezone = "UTC"');
+      await client.query('BEGIN');
+
+      // Lock the slot row
+      const lockQuery = `
+        SELECT * FROM availability_slots
+        WHERE id = $1
+        FOR UPDATE
+      `;
+      const lockResult = await client.query(lockQuery, [slot_id]);
+      const slot = lockResult.rows[0];
+
+      if (!slot) {
+        await client.query('ROLLBACK');
+        await client.release();
+        return res.status(404).json({ error: 'Slot not found' });
+      }
+
+      // Verify slot is still available
+      const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+      if (bookedStatuses.includes(slot.status)) {
+        await client.query('ROLLBACK');
+        await client.release();
+        return res.status(400).json({ error: 'Slot is already booked' });
+      }
+
+      // Check if user exists, create if not
+      let userId = null;
+      let isExistingUser = false;
+      const existingUserByContact = await User.findByContact(contact);
+      if (existingUserByContact) {
+        userId = existingUserByContact.id;
+        isExistingUser = true;
+        await User.update(userId, {
+          whatsapp_number: whatsapp_number || existingUserByContact.whatsapp_number,
+          email: email || existingUserByContact.email,
+          address: location || existingUserByContact.address
+        });
+      } else if (email) {
+        const existingUserByEmail = await User.findByEmail(email);
+        if (existingUserByEmail) {
+          userId = existingUserByEmail.id;
+          isExistingUser = true;
+          await User.update(userId, {
+            whatsapp_number: whatsapp_number || existingUserByEmail.whatsapp_number,
+            address: location || existingUserByEmail.address
+          });
+        }
+      }
+
+      if (!userId) {
+        const newUser = await User.create({
+          name,
+          age: ageNum,
+          sex,
+          email: email || null,
+          contact,
+          whatsapp_number,
+          address: location || null
+        }, client);
+        userId = newUser.id;
+      }
+
+      // Link user to partner
+      await User.assignToPartner(userId, slot.partner_id, client);
+
+      // Create appointment
+      const conflicts = await AvailabilitySlot.checkGoogleCalendarConflict(
+        slot.partner_id,
+        slot.start_datetime,
+        slot.end_datetime
+      );
+
+      let appointmentId = null;
+      if (conflicts.length === 0) {
+        const subscription = await PartnerSubscription.getActiveSubscription(slot.partner_id);
+        if (subscription && subscription.max_appointments !== null && subscription.max_appointments !== undefined) {
+          const Appointment = require('../models/Appointment');
+          const currentMonthCount = await Appointment.countCurrentMonthAppointments(slot.partner_id);
+          if (currentMonthCount >= subscription.max_appointments) {
+            await client.query('ROLLBACK');
+            await client.release();
+            return res.status(403).json({ 
+              error: `Therapist has reached maximum appointments limit` 
+            });
+          }
+        }
+
+        const startDatetime = new Date(slot.start_datetime);
+        const endDatetime = new Date(slot.end_datetime);
+        const dateUtils = require('../utils/dateUtils');
+        const durationMinutes = dateUtils.differenceInMinutes(endDatetime, startDatetime);
+
+        const appointmentTitle = `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`;
+        const appointmentQuery = `
+          INSERT INTO appointments (partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes, timezone)
+          VALUES ($1, $2, $3, $4::timestamptz, $5::timestamptz, $6, $7, $8)
+          RETURNING *
+        `;
+        const appointmentValues = [
+          slot.partner_id,
+          userId,
+          appointmentTitle,
+          startDatetime.toISOString(),
+          endDatetime.toISOString(),
+          durationMinutes,
+          `Booked via public profile - availability slot #${slot_id}`,
+          'UTC'
+        ];
+        const appointmentResult = await client.query(appointmentQuery, appointmentValues);
+        appointmentId = appointmentResult.rows[0].id;
+
+        // Sync to Google Calendar (non-blocking)
+        setImmediate(async () => {
+          try {
+            await googleCalendarService.syncAppointmentToGoogle(appointmentId);
+          } catch (gcalError) {
+            console.error('Google Calendar sync failed:', gcalError.message);
+          }
+        });
+      }
+
+      // Update slot status to confirmed (full payment received)
+      const updateQuery = `
+        UPDATE availability_slots
+        SET status = 'confirmed',
+            is_available = FALSE,
+            booked_by_user_id = $1,
+            booked_at = CURRENT_TIMESTAMP,
+            appointment_id = $2,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $3
+        RETURNING *
+      `;
+      await client.query(updateQuery, [userId, appointmentId, slot_id]);
+
+      await client.query('COMMIT');
+      await client.release();
+
+      // Send WhatsApp notifications (non-blocking)
+      if (appointmentId) {
+        setImmediate(async () => {
+          try {
+            const user = await User.findById(userId);
+            const partner = await Partner.findById(slot.partner_id);
+            
+            // Check WhatsApp access - inline check similar to availabilitySlotController
+            let partnerHasWhatsApp = false;
+            let organizationHasWhatsApp = true;
+            
+            try {
+              // Check partner subscription for WhatsApp access
+              const PartnerSubscription = require('../models/PartnerSubscription');
+              const subscription = await PartnerSubscription.getActiveSubscription(slot.partner_id);
+              
+              if (subscription && subscription.plan_name) {
+                const planName = subscription.plan_name.toLowerCase();
+                // WhatsApp enabled for Premium and Enterprise plans
+                partnerHasWhatsApp = ['premium', 'enterprise'].includes(planName);
+              }
+              
+              // Check organization subscription if partner belongs to one
+              if (partnerHasWhatsApp && partner && partner.organization_id) {
+                const OrganizationSubscription = require('../models/OrganizationSubscription');
+                const orgSubscription = await OrganizationSubscription.getActiveSubscription(partner.organization_id);
+                if (orgSubscription && orgSubscription.plan_name) {
+                  const orgPlanName = orgSubscription.plan_name.toLowerCase();
+                  organizationHasWhatsApp = ['premium', 'enterprise'].includes(orgPlanName);
+                }
+              }
+            } catch (whatsappCheckError) {
+              console.log('WhatsApp access check error:', whatsappCheckError.message);
+              partnerHasWhatsApp = false;
+            }
+            
+            if (partnerHasWhatsApp && organizationHasWhatsApp) {
+              const clientContact = user.whatsapp_number || user.contact;
+              if (clientContact) {
+                const startDatetime = new Date(slot.start_datetime);
+                const endDatetime = new Date(slot.end_datetime);
+                const dateUtils = require('../utils/dateUtils');
+                const durationMinutes = dateUtils.differenceInMinutes(endDatetime, startDatetime);
+                
+                await whatsappService.sendBookingConfirmation({
+                  to: clientContact,
+                  userName: user.name,
+                  therapistName: partner.name,
+                  appointmentDate: startDatetime,
+                  appointmentDuration: durationMinutes || 60,
+                  isOnline: slot.location_type === 'online'
+                });
+              }
+            }
+          } catch (whatsappError) {
+            console.error('WhatsApp notification failed:', whatsappError);
+          }
+        });
+      }
+
+      res.json({
+        message: 'Payment verified and booking confirmed successfully',
+        success: true,
+        payment: {
+          id: dbPayment.id,
+          status: dbPayment.status,
+          amount: dbPayment.amount
+        },
+        booking: {
+          slot_id: slot_id,
+          appointment_id: appointmentId,
+          user_id: userId,
+          status: 'confirmed',
+          is_existing_user: isExistingUser
+        },
+        booking_confirmed: true
+      });
+
+    } catch (bookingError) {
+      try {
+        await client.query('ROLLBACK').catch(() => {});
+      } catch (rollbackError) {
+        // Ignore rollback errors
+      }
+      try {
+        await client.release();
+      } catch (releaseError) {
+        // Ignore release errors
+      }
+      console.error('Error completing booking after payment:', bookingError);
+      return res.status(500).json({
+        error: 'Payment verified but failed to complete booking',
+        details: bookingError.message
+      });
+    }
+
+  } catch (error) {
+    console.error('Verify public booking payment error:', error);
+    res.status(500).json({
+      error: 'Failed to verify payment',
       message: error.message
     });
   }
@@ -1445,6 +1914,8 @@ module.exports = {
   verifyBookingPaymentTestMode,
   createRemainingPaymentOrder,
   verifyRemainingPayment,
+  createPublicBookingOrder,
+  verifyPublicBookingPayment,
   pauseSubscription,
   resumeSubscription
 };

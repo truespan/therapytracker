@@ -2,13 +2,13 @@ const db = require('../config/database');
 
 class User {
   static async create(userData, client = null) {
-    const { name, sex, age, email, contact, address, photo_url } = userData;
+    const { name, sex, age, email, contact, whatsapp_number, address, photo_url } = userData;
     const query = `
-      INSERT INTO users (name, sex, age, email, contact, address, photo_url)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO users (name, sex, age, email, contact, whatsapp_number, address, photo_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
-    const values = [name, sex, age, email, contact, address, photo_url];
+    const values = [name, sex, age, email, contact, whatsapp_number || null, address, photo_url];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
     return result.rows[0];
@@ -33,7 +33,7 @@ class User {
   }
 
   static async update(id, userData) {
-    const { name, sex, age, email, contact, address, photo_url } = userData;
+    const { name, sex, age, email, contact, whatsapp_number, address, photo_url } = userData;
     const query = `
       UPDATE users 
       SET name = COALESCE($1, name),
@@ -41,12 +41,13 @@ class User {
           age = COALESCE($3, age),
           email = COALESCE($4, email),
           contact = COALESCE($5, contact),
-          address = COALESCE($6, address),
-          photo_url = COALESCE($7, photo_url)
-      WHERE id = $8
+          whatsapp_number = COALESCE($6, whatsapp_number),
+          address = COALESCE($7, address),
+          photo_url = COALESCE($8, photo_url)
+      WHERE id = $9
       RETURNING *
     `;
-    const values = [name, sex, age, email, contact, address, photo_url, id];
+    const values = [name, sex, age, email, contact, whatsapp_number, address, photo_url, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }

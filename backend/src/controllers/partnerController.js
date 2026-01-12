@@ -538,6 +538,79 @@ const getFeeSettings = async (req, res) => {
   }
 };
 
+// Get partner profile by partner_id (public endpoint)
+const getPartnerByPartnerId = async (req, res) => {
+  try {
+    const { partner_id } = req.params;
+    const partner = await Partner.findByPartnerId(partner_id);
+
+    if (!partner) {
+      return res.status(404).json({ error: 'Therapist not found' });
+    }
+
+    // Return only public information (exclude sensitive data)
+    const publicProfile = {
+      id: partner.id,
+      name: partner.name,
+      qualification: partner.qualification,
+      qualification_degree: partner.qualification_degree,
+      license_id: partner.license_id,
+      photo_url: partner.photo_url,
+      work_experience: partner.work_experience,
+      other_practice_details: partner.other_practice_details,
+      fee_min: partner.fee_min,
+      fee_max: partner.fee_max,
+      fee_currency: partner.fee_currency,
+      language_preferences: partner.language_preferences,
+      sex: partner.sex,
+      age: partner.age,
+      email: partner.email,
+      contact: partner.contact,
+      partner_id: partner.partner_id
+    };
+
+    res.json({ partner: publicProfile });
+  } catch (error) {
+    console.error('Get partner by partner_id error:', error);
+    res.status(500).json({ error: 'Failed to fetch therapist profile', details: error.message });
+  }
+};
+
+// Get fee settings by partner_id (public endpoint)
+const getFeeSettingsByPartnerId = async (req, res) => {
+  try {
+    const { partner_id } = req.params;
+    
+    // Find partner by partner_id
+    const partner = await Partner.findByPartnerId(partner_id);
+    
+    if (!partner) {
+      return res.status(404).json({ error: 'Therapist not found' });
+    }
+
+    // Get fee settings using partner's id
+    const feeSettings = await Partner.getFeeSettings(partner.id);
+
+    if (!feeSettings) {
+      return res.status(404).json({ error: 'Fee settings not found' });
+    }
+
+    res.json({
+      feeSettings: {
+        session_fee: feeSettings.session_fee,
+        booking_fee: feeSettings.booking_fee,
+        fee_currency: feeSettings.fee_currency || 'INR'
+      }
+    });
+  } catch (error) {
+    console.error('Get fee settings by partner_id error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch fee settings',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getPartnerById,
   updatePartner,
@@ -551,6 +624,8 @@ module.exports = {
   getDefaultReportBackground,
   cancelSubscription,
   updateFeeSettings,
-  getFeeSettings
+  getFeeSettings,
+  getPartnerByPartnerId,
+  getFeeSettingsByPartnerId
 };
 

@@ -27,6 +27,8 @@ api.interceptors.request.use(
                              config.url.includes('/auth/reset-password') ||
                              config.url.includes('/google-calendar/callback') ||
                              config.url.includes('/contact') ||
+                             config.url.includes('/public/partners') ||
+                             config.url.includes('/public/razorpay') ||
                              (config.url.includes('/blogs') && config.method === 'get' && !config.url.includes('/blogs/my/blogs'));
 
     if (token && !isPublicEndpoint) {
@@ -61,6 +63,8 @@ api.interceptors.response.use(
                              error.config?.url?.includes('/auth/reset-password') ||
                              error.config?.url?.includes('/google-calendar/callback') ||
                              error.config?.url?.includes('/contact') ||
+                             error.config?.url?.includes('/public/partners') ||
+                             error.config?.url?.includes('/public/razorpay') ||
                              (error.config?.url?.includes('/blogs') && error.config?.method === 'get' && !error.config?.url?.includes('/blogs/my/blogs'));
 
     if (error.response?.status === 401 && !isPublicEndpoint) {
@@ -618,6 +622,24 @@ export const whatsappAPI = {
   getLogById: (id) => api.get(`/whatsapp/logs/${id}`),
   resendNotification: (id) => api.post(`/whatsapp/logs/${id}/resend`),
   getStatistics: (days = 30) => api.get('/whatsapp/statistics', { params: { days } }),
+};
+
+// Public Partner APIs (no authentication required)
+export const publicPartnerAPI = {
+  getProfileByPartnerId: (partnerId) => api.get(`/public/partners/${partnerId}`),
+  getAvailabilityByPartnerId: (partnerId) => api.get(`/public/partners/${partnerId}/availability`),
+  getReviewsByPartnerId: (partnerId) => api.get(`/public/partners/${partnerId}/reviews`),
+  getFeeSettingsByPartnerId: (partnerId) => api.get(`/public/partners/${partnerId}/fee-settings`),
+};
+
+// Public Booking APIs (no authentication required)
+export const publicBookingAPI = {
+  createBookingOrder: (partnerId, slotId, clientData) => api.post('/public/razorpay/create-booking-order', {
+    partner_id: partnerId,
+    slot_id: slotId,
+    clientData
+  }),
+  verifyBookingPayment: (paymentData) => api.post('/public/razorpay/verify-booking-payment', paymentData),
 };
 
 export default api;
