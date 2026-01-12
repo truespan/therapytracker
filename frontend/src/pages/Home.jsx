@@ -568,7 +568,7 @@ const Home = () => {
           <div className="absolute -top-[75px] right-6 hidden lg:block">
             <div className="group relative inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20 hover:bg-white/20 transition-all duration-300 cursor-help">
               <Shield className="h-5 w-5 text-yellow-300" />
-              <span className="text-sm font-medium text-white">HIPAA-Aligned Security & Privacy</span>
+              <span className="text-sm font-medium text-white">HIPAA-Ready Security & Privacy</span>
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-80 p-3 bg-gray-900 text-white text-sm rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 pointer-events-none">
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -mb-1">
                   <div className="w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-gray-900"></div>
@@ -606,7 +606,7 @@ const Home = () => {
               onClick={() => setShowTherapistSignupModal(true)}
               className="bg-primary-700 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-primary-600 transition border-2 border-white/20 shadow-lg hover:shadow-xl"
             >
-              Join Us
+              Create Therapist Account
             </button>
           </div>
         </div>
