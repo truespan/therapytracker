@@ -327,38 +327,6 @@ const UserDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Therapist Selector - Show only if user has multiple therapists */}
-      {partners.length > 1 && (
-        <div className="mb-6 card">
-          <div className="flex flex-row items-end gap-4">
-            <button
-              onClick={() => setShowLinkTherapistModal(true)}
-              className="btn btn-secondary flex-shrink-0"
-            >
-              <UserPlus className="h-5 w-5 mr-2" />
-              <span className="hidden sm:inline">Link New Therapist</span>
-              <span className="sm:hidden">Link New</span>
-            </button>
-            <div className="flex-1 flex flex-col min-w-0">
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                Select Therapist
-              </label>
-              <select
-                value={selectedPartnerId || ''}
-                onChange={(e) => setSelectedPartnerId(parseInt(e.target.value))}
-                className="input w-full"
-              >
-                {partners.map((partner) => (
-                  <option key={partner.id} value={partner.id}>
-                    {partner.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Welcome Section - Hidden on mobile, visible on desktop */}
       <div className="hidden lg:block mb-8">
         <div className="flex items-start justify-between">
@@ -366,16 +334,6 @@ const UserDashboard = () => {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
             <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Track your therapy progress</p>
           </div>
-          {/* Link Therapist Button - Show if only one therapist */}
-          {partners.length === 1 && (
-            <button
-              onClick={() => setShowLinkTherapistModal(true)}
-              className="btn btn-secondary"
-            >
-              <UserPlus className="h-5 w-5 mr-2" />
-              Link Another Therapist
-            </button>
-          )}
         </div>
       </div>
 
@@ -388,10 +346,20 @@ const UserDashboard = () => {
           </div>
         </div>
         
-        {/* Dark Mode, Connect GCal, and Link Therapist Buttons - Mobile only */}
+        {/* Dark Mode, Link New, and Connect GCal Buttons - Mobile only */}
         <div className="flex items-center justify-between mb-3">
           <DarkModeToggle variant="button" showLabel />
           <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+            {/* Link New Button - Show if multiple therapists */}
+            {partners.length > 1 && (
+              <button
+                onClick={() => setShowLinkTherapistModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>Link New</span>
+              </button>
+            )}
             {/* Google Calendar Connect Button */}
             {loadingCalendarStatus ? (
               <div className="flex items-center justify-center py-1 px-2">
@@ -439,6 +407,37 @@ const UserDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Link New Button and Select Therapist - Show under Welcome section */}
+      {partners.length > 1 && (
+        <div className="mb-6 card">
+          <div className="flex flex-row items-end gap-4">
+            <button
+              onClick={() => setShowLinkTherapistModal(true)}
+              className="btn btn-secondary flex-shrink-0"
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              Link New Therapist
+            </button>
+            <div className="flex-1 flex flex-col min-w-0">
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                Select Therapist
+              </label>
+              <select
+                value={selectedPartnerId || ''}
+                onChange={(e) => setSelectedPartnerId(parseInt(e.target.value))}
+                className="input w-full"
+              >
+                {partners.map((partner) => (
+                  <option key={partner.id} value={partner.id}>
+                    {partner.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Scrollable Tabs - Mobile & Tablet */}
       <div className="lg:hidden border-b border-gray-200 dark:border-dark-border mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
