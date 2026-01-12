@@ -337,8 +337,8 @@ const ClientAvailabilityTab = ({ userId, partners, defaultPartnerId = null }) =>
         </p>
       </div>
 
-      {/* Partner Selector (if multiple partners) */}
-      {partners.length > 1 && (
+      {/* Partner Selector (if multiple partners) - Hidden when user has exactly 2 therapists (already shown in dashboard) */}
+      {partners.length > 2 && (
         <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-md p-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-primary mb-2">
             Select Therapist
