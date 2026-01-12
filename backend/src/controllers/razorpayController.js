@@ -898,7 +898,7 @@ const createPublicBookingOrder = async (req, res) => {
       receipt: receipt,
       status: razorpayOrder.status,
       customer_id: null,
-      customer_type: 'public',
+      customer_type: null, // NULL for public bookings (customer will be created after payment)
       notes: orderNotes
     });
 
@@ -1191,7 +1191,7 @@ const verifyPublicBookingPayment = async (req, res) => {
       status: payment.status,
       method: payment.method,
       customer_id: null,
-      customer_type: 'public',
+      customer_type: null, // NULL for public bookings (customer will be created after payment)
       notes: orderNotes
     });
 
