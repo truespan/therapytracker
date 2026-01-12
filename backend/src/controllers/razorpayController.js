@@ -1365,158 +1365,124 @@ const verifyPublicBookingPayment = async (req, res) => {
       await client.query('COMMIT');
       await client.release();
 
-      // Send WhatsApp notifications (non-blocking) - similar to regular booking flow
+      // Send WhatsApp notifications (non-blocking) - no subscription checks, send to all
       if (appointmentId) {
         setImmediate(async () => {
           try {
             const user = await User.findById(userId);
             const partner = await Partner.findById(slot.partner_id);
             
-            // Check WhatsApp access - inline check similar to availabilitySlotController
-            let partnerHasWhatsApp = false;
-            let organizationHasWhatsApp = true;
-            
-            try {
-              // Check partner subscription for WhatsApp access
-              const PartnerSubscription = require('../models/PartnerSubscription');
-              const subscription = await PartnerSubscription.getActiveSubscription(slot.partner_id);
+            // Send notification to client using WhatsApp number or contact
+            const clientContact = user.whatsapp_number || user.contact;
+            if (clientContact) {
+              const startDatetime = new Date(slot.start_datetime);
+              const endDatetime = new Date(slot.end_datetime);
+              const dateUtils = require('../utils/dateUtils');
+              const durationMinutes = dateUtils.differenceInMinutes(endDatetime, startDatetime);
               
-              if (subscription && subscription.plan_name) {
-                const planName = subscription.plan_name.toLowerCase();
-                // WhatsApp enabled for Premium and Enterprise plans
-                partnerHasWhatsApp = ['premium', 'enterprise'].includes(planName);
-              }
+              console.log(`[WhatsApp] Preparing to send client notification for public booking slot ${slot_id}`);
+              console.log(`[WhatsApp] Client details:`, {
+                userId: userId,
+                userName: user.name,
+                contact: user.contact,
+                whatsappNumber: user.whatsapp_number,
+                contactUsed: clientContact
+              });
               
-              // Check organization subscription if partner belongs to one
-              if (partnerHasWhatsApp && partner && partner.organization_id) {
-                const OrganizationSubscription = require('../models/OrganizationSubscription');
-                const orgSubscription = await OrganizationSubscription.getActiveSubscription(partner.organization_id);
-                if (orgSubscription && orgSubscription.plan_name) {
-                  const orgPlanName = orgSubscription.plan_name.toLowerCase();
-                  organizationHasWhatsApp = ['premium', 'enterprise'].includes(orgPlanName);
-                }
-              }
-            } catch (whatsappCheckError) {
-              console.log('WhatsApp access check error:', whatsappCheckError.message);
-              partnerHasWhatsApp = false;
-            }
-            
-            // Only send notifications if both partner and organization (if applicable) have WhatsApp access
-            if (partnerHasWhatsApp && organizationHasWhatsApp) {
-              // Send notification to client using WhatsApp number or contact
-              const clientContact = user.whatsapp_number || user.contact;
-              if (clientContact) {
-                const startDatetime = new Date(slot.start_datetime);
-                const endDatetime = new Date(slot.end_datetime);
-                const dateUtils = require('../utils/dateUtils');
-                const durationMinutes = dateUtils.differenceInMinutes(endDatetime, startDatetime);
-                
-                console.log(`[WhatsApp] Preparing to send client notification for public booking slot ${slot_id}`);
-                console.log(`[WhatsApp] Client details:`, {
-                  userId: userId,
-                  userName: user.name,
-                  contact: user.contact,
-                  whatsappNumber: user.whatsapp_number,
-                  contactUsed: clientContact
-                });
-                
-                const bookingAmount = partner ? (parseFloat(partner.session_fee) || 0) : 0;
-                const feeCurrency = partner ? (partner.fee_currency || 'INR') : 'INR';
-                
-                const clientAppointmentData = {
-                  userName: user.name,
-                  therapistName: partner ? partner.name : 'Your therapist',
-                  appointmentDate: slot.start_datetime,
-                  appointmentTime: new Date(slot.start_datetime).toLocaleTimeString('en-IN', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true,
-                    timeZone: 'Asia/Kolkata'
-                  }),
-                  timezone: 'UTC',
-                  appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
-                  duration: durationMinutes || 60,
-                  bookingAmount: bookingAmount,
-                  feeCurrency: feeCurrency
-                };
-                
-                try {
-                  const clientResult = await whatsappService.sendAppointmentConfirmation(
-                    clientContact,
-                    clientAppointmentData,
-                    appointmentId,
-                    userId
-                  );
-                  
-                  if (clientResult.success) {
-                    console.log(`[WhatsApp] ✅ Client notification sent successfully for public booking slot ${slot_id}`);
-                  } else {
-                    console.error(`[WhatsApp] ❌ Failed to send client notification for public booking slot ${slot_id}:`, clientResult.error);
-                  }
-                } catch (clientError) {
-                  console.error(`[WhatsApp] ❌ Exception sending client notification for public booking slot ${slot_id}:`, clientError);
-                }
-              } else {
-                console.warn(`[WhatsApp] ⚠️  Skipping client notification for public booking slot ${slot_id}: No contact number available`);
-              }
+              const bookingAmount = partner ? (parseFloat(partner.session_fee) || 0) : 0;
+              const feeCurrency = partner ? (partner.fee_currency || 'INR') : 'INR';
               
-              // Send notification to therapist (with delay)
-              if (partner && partner.contact) {
-                // Format date as "Sunday, 4 January 2026"
-                const appointmentDateObj = new Date(slot.start_datetime);
-                const formattedDate = appointmentDateObj.toLocaleDateString('en-IN', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  timeZone: 'Asia/Kolkata'
-                });
-                
-                // Format time as "10 am" (remove :00 minutes)
-                const timeString = appointmentDateObj.toLocaleTimeString('en-IN', {
-                  hour: 'numeric',
+              const clientAppointmentData = {
+                userName: user.name,
+                therapistName: partner ? partner.name : 'Your therapist',
+                appointmentDate: slot.start_datetime,
+                appointmentTime: new Date(slot.start_datetime).toLocaleTimeString('en-IN', {
+                  hour: '2-digit',
                   minute: '2-digit',
                   hour12: true,
                   timeZone: 'Asia/Kolkata'
-                });
-                // Convert "10:00 am" to "10 am", keep "10:30 am" as is
-                const formattedTime = timeString.replace(':00 ', ' ').toLowerCase();
-
-                // Prepare template parameters in the specified order
-                const therapistTemplateParams = [
-                  partner.name, // Parameter 1: Therapist name
-                  user ? user.name : 'Client', // Parameter 2: Client name
-                  `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'Offline'}`, // Parameter 3: Event name
-                  formattedDate, // Parameter 4: Date (e.g., "Sunday, 4 January 2026")
-                  formattedTime // Parameter 5: Time (e.g., "10 am")
-                ];
-
-                // Get template name from WhatsApp service (uses environment variable)
-                const templateName = whatsappService.templateNames.therapistAppointmentNotification || 'theraptrack_therapist_appointment_notification';
-
-                // Send therapist notification after a few seconds delay
-                setTimeout(async () => {
-                  try {
-                    const therapistResult = await whatsappService.sendTherapistAppointmentNotificationTemplate(
-                      partner.contact,
-                      templateName,
-                      therapistTemplateParams,
-                      appointmentId,
-                      slot.partner_id
-                    );
-
-                    if (therapistResult.success) {
-                      console.log(`[WhatsApp] ✅ Therapist notification sent successfully for public booking slot ${slot_id} (delayed)`);
-                    } else {
-                      console.error(`[WhatsApp] ❌ Failed to send therapist notification for public booking slot ${slot_id}:`, therapistResult.error);
-                    }
-                  } catch (therapistError) {
-                    console.error(`[WhatsApp] ❌ Exception sending delayed therapist notification for public booking slot ${slot_id}:`, therapistError);
-                  }
-                }, 3000); // 3 seconds delay
+                }),
+                timezone: 'UTC',
+                appointmentType: `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'In-Person'}`,
+                duration: durationMinutes || 60,
+                bookingAmount: bookingAmount,
+                feeCurrency: feeCurrency
+              };
+              
+              try {
+                const clientResult = await whatsappService.sendAppointmentConfirmation(
+                  clientContact,
+                  clientAppointmentData,
+                  appointmentId,
+                  userId
+                );
+                
+                if (clientResult.success) {
+                  console.log(`[WhatsApp] ✅ Client notification sent successfully for public booking slot ${slot_id}`);
+                } else {
+                  console.error(`[WhatsApp] ❌ Failed to send client notification for public booking slot ${slot_id}:`, clientResult.error);
+                }
+              } catch (clientError) {
+                console.error(`[WhatsApp] ❌ Exception sending client notification for public booking slot ${slot_id}:`, clientError);
               }
             } else {
-              console.log(`[WhatsApp] WhatsApp not enabled for partner ${slot.partner_id} - skipping notifications`);
+              console.warn(`[WhatsApp] ⚠️  Skipping client notification for public booking slot ${slot_id}: No contact number available`);
+            }
+            
+            // Send notification to therapist (with delay)
+            if (partner && partner.contact) {
+              // Format date as "Sunday, 4 January 2026"
+              const appointmentDateObj = new Date(slot.start_datetime);
+              const formattedDate = appointmentDateObj.toLocaleDateString('en-IN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZone: 'Asia/Kolkata'
+              });
+              
+              // Format time as "10 am" (remove :00 minutes)
+              const timeString = appointmentDateObj.toLocaleTimeString('en-IN', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Kolkata'
+              });
+              // Convert "10:00 am" to "10 am", keep "10:30 am" as is
+              const formattedTime = timeString.replace(':00 ', ' ').toLowerCase();
+
+              // Prepare template parameters in the specified order
+              const therapistTemplateParams = [
+                partner.name, // Parameter 1: Therapist name
+                user ? user.name : 'Client', // Parameter 2: Client name
+                `Therapy Session - ${slot.location_type === 'online' ? 'Online' : 'Offline'}`, // Parameter 3: Event name
+                formattedDate, // Parameter 4: Date (e.g., "Sunday, 4 January 2026")
+                formattedTime // Parameter 5: Time (e.g., "10 am")
+              ];
+
+              // Get template name from WhatsApp service (uses environment variable)
+              const templateName = whatsappService.templateNames.therapistAppointmentNotification || 'theraptrack_therapist_appointment_notification';
+
+              // Send therapist notification after a few seconds delay
+              setTimeout(async () => {
+                try {
+                  const therapistResult = await whatsappService.sendTherapistAppointmentNotificationTemplate(
+                    partner.contact,
+                    templateName,
+                    therapistTemplateParams,
+                    appointmentId,
+                    slot.partner_id
+                  );
+
+                  if (therapistResult.success) {
+                    console.log(`[WhatsApp] ✅ Therapist notification sent successfully for public booking slot ${slot_id} (delayed)`);
+                  } else {
+                    console.error(`[WhatsApp] ❌ Failed to send therapist notification for public booking slot ${slot_id}:`, therapistResult.error);
+                  }
+                } catch (therapistError) {
+                  console.error(`[WhatsApp] ❌ Exception sending delayed therapist notification for public booking slot ${slot_id}:`, therapistError);
+                }
+              }, 3000); // 3 seconds delay
             }
           } catch (whatsappError) {
             console.error('WhatsApp notification failed:', whatsappError);
