@@ -339,17 +339,35 @@ const UserDashboard = () => {
 
       {/* Mobile Welcome Section */}
       <div className="lg:hidden mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
             <p className="text-gray-600 dark:text-dark-text-secondary mt-1 text-sm">Track your therapy progress</p>
           </div>
+          {/* Select Therapist - Show next to Welcome on mobile */}
+          {partners.length > 1 && (
+            <div className="flex-shrink-0">
+              <select
+                value={selectedPartnerId || ''}
+                onChange={(e) => setSelectedPartnerId(parseInt(e.target.value))}
+                className="input text-sm"
+              >
+                {partners.map((partner) => (
+                  <option key={partner.id} value={partner.id}>
+                    {partner.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
         
         {/* Dark Mode, Link New, and Connect GCal Buttons - Mobile only */}
-        <div className="flex items-center justify-between mb-3">
-          <DarkModeToggle variant="button" showLabel />
-          <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+        <div className="flex items-center mb-3">
+          <div className="flex-shrink-0">
+            <DarkModeToggle variant="button" showLabel />
+          </div>
+          <div className="flex-1 flex items-center justify-center">
             {/* Link New Button - Show if multiple therapists */}
             {partners.length > 1 && (
               <button
@@ -360,6 +378,18 @@ const UserDashboard = () => {
                 <span>Link New</span>
               </button>
             )}
+            {/* Link Another Therapist Button - Show if only one therapist */}
+            {partners.length === 1 && (
+              <button
+                onClick={() => setShowLinkTherapistModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span>Link Another</span>
+              </button>
+            )}
+          </div>
+          <div className="flex-shrink-0">
             {/* Google Calendar Connect Button */}
             {loadingCalendarStatus ? (
               <div className="flex items-center justify-center py-1 px-2">
@@ -393,48 +423,28 @@ const UserDashboard = () => {
                 )}
               </button>
             )}
-            
-            {/* Link Therapist Button - Show if only one therapist */}
-            {partners.length === 1 && (
-              <button
-                onClick={() => setShowLinkTherapistModal(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 min-w-0 max-w-full"
-              >
-                <UserPlus className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="truncate">Link Another Therapist</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Link New Button and Select Therapist - Show under Welcome section */}
+      {/* Select Therapist - Show under Welcome section for desktop */}
       {partners.length > 1 && (
-        <div className="mb-6 card">
-          <div className="flex flex-row items-end gap-4">
-            <button
-              onClick={() => setShowLinkTherapistModal(true)}
-              className="btn btn-secondary flex-shrink-0"
+        <div className="hidden lg:block mb-6 card">
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+              Select Therapist
+            </label>
+            <select
+              value={selectedPartnerId || ''}
+              onChange={(e) => setSelectedPartnerId(parseInt(e.target.value))}
+              className="input w-auto max-w-md"
             >
-              <UserPlus className="h-5 w-5 mr-2" />
-              Link New Therapist
-            </button>
-            <div className="flex-1 flex flex-col min-w-0">
-              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                Select Therapist
-              </label>
-              <select
-                value={selectedPartnerId || ''}
-                onChange={(e) => setSelectedPartnerId(parseInt(e.target.value))}
-                className="input w-full"
-              >
-                {partners.map((partner) => (
-                  <option key={partner.id} value={partner.id}>
-                    {partner.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {partners.map((partner) => (
+                <option key={partner.id} value={partner.id}>
+                  {partner.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       )}
