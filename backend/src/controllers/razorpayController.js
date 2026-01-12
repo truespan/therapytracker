@@ -992,7 +992,7 @@ const verifyBookingPayment = async (req, res) => {
     const payment = await RazorpayService.fetchPayment(razorpay_payment_id);
 
     // Get order from database
-    const dbOrder = await RazorpayOrder.findByRazorpayOrderId(razorpay_order_id);
+    const dbOrder = await RazorpayOrder.findByOrderId(razorpay_order_id);
     if (!dbOrder) {
       return res.status(404).json({ error: 'Order not found' });
     }
@@ -1156,7 +1156,7 @@ const verifyPublicBookingPayment = async (req, res) => {
     const payment = await RazorpayService.fetchPayment(razorpay_payment_id);
 
     // Get order from database
-    const dbOrder = await RazorpayOrder.findByRazorpayOrderId(razorpay_order_id);
+    const dbOrder = await RazorpayOrder.findByOrderId(razorpay_order_id);
     if (!dbOrder) {
       return res.status(404).json({ error: 'Order not found' });
     }
