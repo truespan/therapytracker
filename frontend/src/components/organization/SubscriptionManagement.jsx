@@ -62,13 +62,11 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled, disab
         }
       });
       if (response.data.success) {
-        // Filter to trial plans (those with plan_duration_days > 0) or Free Plan
-        // Use case-insensitive comparison and trim whitespace
+        // Filter to plans that have "Trial" word mentioned in their name
+        // Use case-insensitive comparison
         const availablePlans = response.data.plans.filter(p => {
           const planName = (p.plan_name || '').toLowerCase().trim();
-          const isFreePlan = planName === 'free plan';
-          const isTrialPlan = p.plan_duration_days && p.plan_duration_days > 0;
-          return isFreePlan || isTrialPlan;
+          return planName.includes('trial');
         });
         setTrialPlans(availablePlans);
       }
