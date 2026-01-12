@@ -6,7 +6,6 @@ import { CurrencyIcon } from '../../utils/currencyIcon';
 const BookingFeeCard = ({ partnerId }) => {
   const [feeData, setFeeData] = useState({
     session_fee: '',
-    booking_fee: '',
     fee_currency: 'INR'
   });
   const [loading, setLoading] = useState(false);
@@ -40,12 +39,10 @@ const BookingFeeCard = ({ partnerId }) => {
       const response = await partnerAPI.getFeeSettings(partnerId);
       
       const sessionFee = response.data.feeSettings.session_fee;
-      const bookingFee = response.data.feeSettings.booking_fee;
-      const hasFees = (sessionFee !== null && sessionFee !== '') || (bookingFee !== null && bookingFee !== '');
+      const hasFees = sessionFee !== null && sessionFee !== '';
       
       setFeeData({
         session_fee: sessionFee || '',
-        booking_fee: bookingFee || '',
         fee_currency: response.data.feeSettings.fee_currency || 'INR'
       });
       
@@ -82,20 +79,14 @@ const BookingFeeCard = ({ partnerId }) => {
 
     // Validation
     const sessionFee = parseFloat(feeData.session_fee);
-    const bookingFee = parseFloat(feeData.booking_fee);
 
-    if (feeData.session_fee && (isNaN(sessionFee) || sessionFee < 0)) {
-      setError('Session fee must be a valid non-negative number');
+    if (!feeData.session_fee) {
+      setError('Please enter the fee per session');
       return;
     }
 
-    if (feeData.booking_fee && (isNaN(bookingFee) || bookingFee < 0)) {
-      setError('Booking fee must be a valid non-negative number');
-      return;
-    }
-
-    if (!feeData.session_fee && !feeData.booking_fee) {
-      setError('Please enter at least one fee amount');
+    if (isNaN(sessionFee) || sessionFee < 0) {
+      setError('Fee per session must be a valid non-negative number');
       return;
     }
 
@@ -104,7 +95,7 @@ const BookingFeeCard = ({ partnerId }) => {
 
       const payload = {
         session_fee: feeData.session_fee ? parseFloat(feeData.session_fee) : null,
-        booking_fee: feeData.booking_fee ? parseFloat(feeData.booking_fee) : null,
+        booking_fee: null,
         fee_currency: feeData.fee_currency
       };
 
@@ -189,16 +180,6 @@ const BookingFeeCard = ({ partnerId }) => {
                     {selectedCurrency?.symbol}{feeData.session_fee !== '' && feeData.session_fee !== null ? parseFloat(feeData.session_fee).toFixed(2) : '0.00'}
                   </div>
                 </div>
-
-                {/* Booking Fee Display */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                    Booking Fee
-                  </label>
-                  <div className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md bg-gray-50 dark:bg-dark-bg-tertiary text-gray-700 dark:text-dark-text-primary">
-                    {selectedCurrency?.symbol}{feeData.booking_fee !== '' && feeData.booking_fee !== null ? parseFloat(feeData.booking_fee).toFixed(2) : '0.00'}
-                  </div>
-                </div>
               </div>
 
               {/* Edit Button */}
@@ -255,30 +236,6 @@ const BookingFeeCard = ({ partnerId }) => {
                     />
                   </div>
                 </div>
-
-                {/* Booking Fee */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
-                    Booking Fee
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-dark-text-tertiary">
-                      {selectedCurrency?.symbol}
-                    </span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={feeData.booking_fee}
-                      onChange={(e) => handleChange('booking_fee', e.target.value)}
-                      placeholder="0.00"
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
-                    Booking fee can be a percentage of the total session fee
-                  </p>
-                </div>
               </div>
 
               {/* Submit Button */}
@@ -295,12 +252,6 @@ const BookingFeeCard = ({ partnerId }) => {
                 </button>
               </div>
 
-              {/* Info Note */}
-              <div className="mt-4 p-3 bg-blue-50 dark:bg-dark-bg-tertiary border border-blue-200 dark:border-blue-800 rounded-md">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  <strong>Note:</strong> Booking fee can be a percentage of the total session fee
-                </p>
-              </div>
             </form>
           )}
         </>
