@@ -6,7 +6,7 @@ import {
   UserPlus, ArrowRightLeft, CheckCircle, XCircle, Mail,
   AlertCircle, Send, Trash2, Settings, Calendar as CalendarIcon,
   Clock, Video as VideoIcon, User as UserIcon, ClipboardList, CreditCard, Link as LinkIcon, Copy,
-  Headphones
+  Headphones, Search
 } from 'lucide-react';
 import CreatePartnerModal from '../organization/CreatePartnerModal';
 import EditPartnerModal from '../organization/EditPartnerModal';
@@ -49,6 +49,7 @@ const OrganizationDashboard = () => {
   const [partners, setPartners] = useState([]);
   const [filteredPartners, setFilteredPartners] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [partnerClients, setPartnerClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -108,9 +109,27 @@ const OrganizationDashboard = () => {
   }, [user.id]);
 
   useEffect(() => {
-    // Show all partners without filtering
-    setFilteredPartners(partners);
-  }, [partners]);
+    // Filter partners by search query
+    if (!searchQuery.trim()) {
+      setFilteredPartners(partners);
+    } else {
+      const query = searchQuery.toLowerCase().trim();
+      const filtered = partners.filter(partner =>
+        partner.name.toLowerCase().includes(query)
+      );
+      setFilteredPartners(filtered);
+    }
+  }, [partners, searchQuery]);
+
+  // Clear selected partner if it's no longer in filtered results
+  useEffect(() => {
+    if (selectedPartner && filteredPartners.length > 0 && !filteredPartners.find(p => p.id === selectedPartner.id)) {
+      setSelectedPartner(null);
+      setPartnerClients([]);
+      setSelectedClient(null);
+      setClientSessions([]);
+    }
+  }, [filteredPartners, selectedPartner]);
 
   // Handle redirect if activeView is set to a hidden tab
   useEffect(() => {
@@ -739,6 +758,27 @@ const OrganizationDashboard = () => {
               <UserCheck className="h-5 w-5 mr-2" />
               Select Therapist
             </h2>
+
+            {/* Search Field */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search therapists by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary placeholder-gray-400 dark:placeholder-gray-500"
+                />
+              </div>
+              {searchQuery && (
+                <p className="mt-2 text-sm text-gray-600 dark:text-dark-text-secondary">
+                  {filteredPartners.length === 0 
+                    ? 'No therapists found matching your search.' 
+                    : `Found ${filteredPartners.length} therapist${filteredPartners.length !== 1 ? 's' : ''} matching "${searchQuery}"`}
+                </p>
+              )}
+            </div>
 
             {filteredPartners.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
