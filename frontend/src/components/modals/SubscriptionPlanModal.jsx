@@ -262,12 +262,14 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           }
           trackSubscriptionStarted(newPlan);
 
-          // Call the callback with updated user data
+          // Reset processing state first
+          setProcessing(false);
+          // Call the callback with updated user data (this will close the modal)
           onSubscriptionComplete(response.data.user);
         } else {
           setError('Failed to activate subscription. Please try again.');
+          setProcessing(false);
         }
-        setProcessing(false);
         return;
       }
 
@@ -309,9 +311,10 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           }
           trackSubscriptionStarted(newPlan);
 
-          // Call the callback with updated user data
-          onSubscriptionComplete(response.data.user);
+          // Reset processing state first
           setProcessing(false);
+          // Call the callback with updated user data (this will close the modal)
+          onSubscriptionComplete(response.data.user);
         } else {
           setError('Failed to activate subscription. Please try again.');
           setProcessing(false);
@@ -392,9 +395,10 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
           }
           trackSubscriptionStarted(newPlan);
 
-          // Call the callback with updated user data
-          onSubscriptionComplete(response.data.user);
+          // Reset processing state first
           setProcessing(false);
+          // Call the callback with updated user data (this will close the modal)
+          onSubscriptionComplete(response.data.user);
         } else {
           setError('Payment successful but subscription activation failed. Please contact support.');
           setProcessing(false);

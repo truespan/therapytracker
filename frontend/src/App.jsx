@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -57,6 +57,7 @@ function AppRoutes() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const location = useLocation();
+  const subscriptionJustCompletedRef = useRef(false);
 
   // Track page views on route changes
   useEffect(() => {
@@ -77,6 +78,25 @@ function AppRoutes() {
 
   // Check if modals need to be shown
   useEffect(() => {
+    // Don't auto-show subscription modal if we just completed a subscription
+    if (subscriptionJustCompletedRef.current) {
+      // Reset flag after a small delay to allow state to settle
+      const timer = setTimeout(() => {
+        subscriptionJustCompletedRef.current = false;
+      }, 500);
+      // Don't update modal state if subscription just completed
+      if (user) {
+        const needsTerms = needsTermsAcceptance(user);
+        setShowTermsModal(needsTerms);
+        // Explicitly keep subscription modal closed
+        setShowSubscriptionModal(false);
+      } else {
+        setShowTermsModal(false);
+        setShowSubscriptionModal(false);
+      }
+      return () => clearTimeout(timer);
+    }
+    
     if (user) {
       const needsTerms = needsTermsAcceptance(user);
       const needsSub = needsSubscription(user);
@@ -100,9 +120,12 @@ function AppRoutes() {
   };
 
   const handleSubscriptionComplete = (updatedUser) => {
-    // Update user in context
-    updateUser(updatedUser);
+    // Set flag to prevent useEffect from reopening modal
+    subscriptionJustCompletedRef.current = true;
+    // Close modal first to prevent flicker from useEffect re-evaluation
     setShowSubscriptionModal(false);
+    // Update user in context after closing modal
+    updateUser(updatedUser);
   };
 
   const handleSubscriptionClose = () => {
