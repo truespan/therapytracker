@@ -330,15 +330,23 @@ const UserDashboard = () => {
       {/* Therapist Selector - Show only if user has multiple therapists */}
       {partners.length > 1 && (
         <div className="mb-6 card">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex-1">
+          <div className="flex flex-row items-end gap-4">
+            <button
+              onClick={() => setShowLinkTherapistModal(true)}
+              className="btn btn-secondary flex-shrink-0"
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              <span className="hidden sm:inline">Link New Therapist</span>
+              <span className="sm:hidden">Link New</span>
+            </button>
+            <div className="flex-1 flex flex-col min-w-0">
               <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
                 Select Therapist
               </label>
               <select
                 value={selectedPartnerId || ''}
                 onChange={(e) => setSelectedPartnerId(parseInt(e.target.value))}
-                className="input w-full sm:w-auto"
+                className="input w-full"
               >
                 {partners.map((partner) => (
                   <option key={partner.id} value={partner.id}>
@@ -347,13 +355,6 @@ const UserDashboard = () => {
                 ))}
               </select>
             </div>
-            <button
-              onClick={() => setShowLinkTherapistModal(true)}
-              className="btn btn-secondary"
-            >
-              <UserPlus className="h-5 w-5 mr-2" />
-              Link New Therapist
-            </button>
           </div>
         </div>
       )}
