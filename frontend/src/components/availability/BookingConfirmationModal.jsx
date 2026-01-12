@@ -1,9 +1,51 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Calendar, Clock, Video, MapPin, User, X } from 'lucide-react';
 import { formatTime } from '../../utils/dateUtils';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 
 const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, onCancel, loading }) => {
+  const backdropRef = useRef(null);
+
+  // Handle modal opening - ensure modal is visible and prevent body scroll
+  useEffect(() => {
+    if (slot) {
+      // Prevent body scroll when modal is open
+      const originalOverflow = document.body.style.overflow;
+      const originalPosition = document.body.style.position;
+      const scrollY = window.scrollY;
+      
+      document.body.style.overflow = 'hidden';
+      // On mobile, prevent scroll jumping
+      if (window.innerWidth <= 768) {
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+      }
+      
+      // Ensure backdrop scrolls to top and modal is visible
+      const timer = setTimeout(() => {
+        if (backdropRef.current) {
+          backdropRef.current.scrollTop = 0;
+          backdropRef.current.scrollTo({ top: 0, behavior: 'auto' });
+        }
+        if (window.scrollY > 0 && window.innerWidth > 768) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 10);
+
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = originalOverflow;
+        if (window.innerWidth <= 768) {
+          document.body.style.position = originalPosition;
+          document.body.style.top = '';
+          document.body.style.width = '';
+          window.scrollTo(0, scrollY);
+        }
+      };
+    }
+  }, [slot]);
+
   if (!slot) return null;
 
   const formattedDate = new Date(slot.slot_date + 'T00:00:00').toLocaleDateString('en-US', {
@@ -38,8 +80,11 @@ const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, o
   const hasFees = sessionFee > 0 || bookingFee > 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-md w-full">
+    <div 
+      ref={backdropRef}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-4 sm:pt-8 pb-4 sm:pb-8 overflow-y-auto"
+    >
+      <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-md w-full my-auto max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)]">
         {/* Header */}
         <div className="bg-primary-50 dark:bg-dark-bg-secondary border-b border-primary-200 dark:border-dark-border px-6 py-4">
           <div className="flex items-center justify-between">

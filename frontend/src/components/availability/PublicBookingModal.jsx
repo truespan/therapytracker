@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Clock, Video, MapPin, User, X, AlertCircle } from 'lucide-react';
 import { formatTime } from '../../utils/dateUtils';
 import { CurrencyIcon } from '../../utils/currencyIcon';
@@ -18,6 +18,52 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
   const [errors, setErrors] = useState({});
   const [countryCode, setCountryCode] = useState('+91');
   const [whatsappCountryCode, setWhatsappCountryCode] = useState('+91');
+  const modalRef = useRef(null);
+  const backdropRef = useRef(null);
+
+  // Handle modal opening - ensure modal is visible and prevent body scroll
+  useEffect(() => {
+    if (slot) {
+      // Prevent body scroll when modal is open
+      const originalOverflow = document.body.style.overflow;
+      const originalPosition = document.body.style.position;
+      const scrollY = window.scrollY;
+      
+      document.body.style.overflow = 'hidden';
+      // On mobile, prevent scroll jumping
+      if (window.innerWidth <= 768) {
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+      }
+      
+      // Ensure backdrop scrolls to top and modal is visible
+      const timer = setTimeout(() => {
+        if (backdropRef.current) {
+          // Force backdrop to scroll to top
+          backdropRef.current.scrollTop = 0;
+          // Also scroll the backdrop element into view
+          backdropRef.current.scrollTo({ top: 0, behavior: 'auto' });
+        }
+        // Scroll window to top to ensure modal is fully visible on desktop
+        if (window.scrollY > 0 && window.innerWidth > 768) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 10);
+
+      return () => {
+        clearTimeout(timer);
+        // Restore body scroll when modal closes
+        document.body.style.overflow = originalOverflow;
+        if (window.innerWidth <= 768) {
+          document.body.style.position = originalPosition;
+          document.body.style.top = '';
+          document.body.style.width = '';
+          window.scrollTo(0, scrollY);
+        }
+      };
+    }
+  }, [slot]);
 
   if (!slot) return null;
 
@@ -199,10 +245,16 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-2xl w-full my-8">
+    <div 
+      ref={backdropRef}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4 pt-4 sm:pt-8 pb-4 sm:pb-8 overflow-y-auto"
+    >
+      <div 
+        ref={modalRef}
+        className="bg-white dark:bg-dark-bg-primary rounded-lg shadow-xl max-w-2xl w-full max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)] flex flex-col"
+      >
         {/* Header */}
-        <div className="bg-primary-50 dark:bg-dark-bg-secondary border-b border-primary-200 dark:border-dark-border px-6 py-4">
+        <div className="bg-primary-50 dark:bg-dark-bg-secondary border-b border-primary-200 dark:border-dark-border px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-primary-900 dark:text-dark-text-primary">
               Book Appointment
@@ -218,8 +270,8 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit}>
-          <div className="px-6 py-5 space-y-6">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="px-6 py-5 space-y-6 overflow-y-auto flex-1">
             {/* Slot Information */}
             <div className="bg-blue-50 dark:bg-dark-bg-secondary border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
               {/* Therapist */}
@@ -473,7 +525,7 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
           </div>
 
           {/* Footer */}
-          <div className="bg-gray-50 dark:bg-dark-bg-secondary px-6 py-4 border-t border-gray-200 dark:border-dark-border">
+          <div className="bg-gray-50 dark:bg-dark-bg-secondary px-6 py-4 border-t border-gray-200 dark:border-dark-border flex-shrink-0">
             <div className="flex gap-3 justify-end">
               <button
                 type="button"
