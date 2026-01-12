@@ -328,11 +328,75 @@ const UserDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Welcome Section - Hidden on mobile, visible on desktop */}
-      <div className="hidden lg:block mb-8">
+      <div className="hidden md:block mb-8">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">Welcome, {user.name}</h1>
             <p className="text-gray-600 dark:text-dark-text-secondary mt-1">Track your therapy progress</p>
+            
+            {/* Dark Mode Toggle */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg border border-gray-200 dark:border-dark-border w-fit">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-dark-text-primary">Dark Mode</span>
+                </div>
+                <DarkModeToggle variant="switch" />
+              </div>
+            </div>
+          </div>
+          
+          {/* Link Another Therapist and Connect Google Calendar - Desktop/Tablet only */}
+          <div className="flex flex-col items-end gap-3">
+            {/* Link Another Therapist Button */}
+            <button
+              onClick={() => setShowLinkTherapistModal(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium whitespace-nowrap w-full"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>Link Another Therapist</span>
+            </button>
+            
+            {/* Connect Google Calendar Button */}
+            {loadingCalendarStatus ? (
+              <div className="flex items-center justify-center py-2 px-4">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+              </div>
+            ) : googleCalendarStatus?.connected ? (
+              <div className="space-y-2 w-full">
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span className="text-xs font-medium text-green-700 dark:text-green-400">Calendar Connected</span>
+                    </div>
+                    <button
+                      onClick={disconnectGoogleCalendar}
+                      className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center space-x-1"
+                    >
+                      <span>Disconnect</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={connectGoogleCalendar}
+                disabled={connectingCalendar}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium disabled:opacity-50 whitespace-nowrap w-full justify-center"
+              >
+                {connectingCalendar ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Connecting...</span>
+                  </>
+                ) : (
+                  <>
+                    <CalendarIcon className="h-4 w-4" />
+                    <span>Connect Google Calendar</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
