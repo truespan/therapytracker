@@ -311,8 +311,10 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
 
           // Call the callback with updated user data
           onSubscriptionComplete(response.data.user);
+          setProcessing(false);
         } else {
           setError('Failed to activate subscription. Please try again.');
+          setProcessing(false);
         }
         return;
       }
@@ -392,8 +394,10 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
 
           // Call the callback with updated user data
           onSubscriptionComplete(response.data.user);
+          setProcessing(false);
         } else {
           setError('Payment successful but subscription activation failed. Please contact support.');
+          setProcessing(false);
         }
       } catch (verifyError) {
         // Payment verification failed
@@ -747,7 +751,7 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4 md:h-5 md:w-5" />
-                      {isOnTrialPlan ? (
+                      {isOnTrialPlan && !isTrialEnded ? (
                         <>
                           <span className="md:hidden">Upgrade</span>
                           <span className="hidden md:inline">Upgrade Now</span>
