@@ -1175,7 +1175,7 @@ const verifyPublicBookingPayment = async (req, res) => {
     }
 
     // Check if payment already exists in database
-    const existingPayment = await RazorpayPayment.findByRazorpayPaymentId(razorpay_payment_id);
+    const existingPayment = await RazorpayPayment.findByPaymentId(razorpay_payment_id);
     if (existingPayment) {
       return res.status(400).json({
         error: 'This payment has already been processed'
