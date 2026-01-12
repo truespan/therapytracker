@@ -270,7 +270,17 @@ const getClientSlots = async (req, res) => {
 };
 
 /**
+ * Mask user name for privacy (shows first letter and asterisks)
+ */
+const maskUserName = (name) => {
+  if (!name) return null;
+  if (name.length <= 1) return '*';
+  return name.charAt(0).toUpperCase() + '*'.repeat(Math.min(name.length - 1, 5));
+};
+
+/**
  * Get published slots by partner_id (public endpoint - no authentication required)
+ * Includes booked slots with masked user names for privacy
  */
 const getPublicSlotsByPartnerId = async (req, res) => {
   try {
@@ -292,8 +302,24 @@ const getPublicSlotsByPartnerId = async (req, res) => {
 
     const slots = await AvailabilitySlot.findPublishedByPartner(partner.id, startDate, endDate);
 
+    // Process slots to mask booked user names
+    const processedSlots = slots.map(slot => {
+      const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+      const isBooked = bookedStatuses.includes(slot.status);
+      
+      // Mask user name for privacy in public view
+      const maskedSlot = { ...slot };
+      if (isBooked && slot.booked_by_user_name) {
+        maskedSlot.booked_by_user_name = maskUserName(slot.booked_by_user_name);
+      } else if (isBooked) {
+        maskedSlot.booked_by_user_name = 'Booked';
+      }
+      
+      return maskedSlot;
+    });
+
     res.json({
-      slots,
+      slots: processedSlots,
       date_range: { start_date: startDate, end_date: endDate }
     });
   } catch (error) {

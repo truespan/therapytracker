@@ -1402,12 +1402,15 @@ const verifyPublicBookingPayment = async (req, res) => {
             }
             
             if (partnerHasWhatsApp && organizationHasWhatsApp) {
+              // Use WhatsApp number if available, otherwise fall back to contact
               const clientContact = user.whatsapp_number || user.contact;
               if (clientContact) {
                 const startDatetime = new Date(slot.start_datetime);
                 const endDatetime = new Date(slot.end_datetime);
                 const dateUtils = require('../utils/dateUtils');
                 const durationMinutes = dateUtils.differenceInMinutes(endDatetime, startDatetime);
+                
+                console.log(`[WhatsApp] Sending booking confirmation to: ${clientContact} (WhatsApp: ${user.whatsapp_number ? 'Yes' : 'No, using contact'})`);
                 
                 await whatsappService.sendBookingConfirmation({
                   to: clientContact,
@@ -1417,6 +1420,8 @@ const verifyPublicBookingPayment = async (req, res) => {
                   appointmentDuration: durationMinutes || 60,
                   isOnline: slot.location_type === 'online'
                 });
+              } else {
+                console.log(`[WhatsApp] No contact number available for user ${userId}`);
               }
             }
           } catch (whatsappError) {

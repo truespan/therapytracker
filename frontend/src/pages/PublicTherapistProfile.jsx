@@ -95,12 +95,10 @@ const PublicTherapistProfile = () => {
     setBookingLoading(false);
   };
 
-  // Filter available slots for calendar display
+  // Get all published slots for calendar display (including booked slots)
   const getAvailableSlotsForCalendar = () => {
-    return availability.filter(slot => 
-      slot.is_available && slot.is_published && 
-      (slot.status === 'available_online' || slot.status === 'available_offline')
-    );
+    // Return all published slots - includes both available and booked slots
+    return availability.filter(slot => slot.is_published);
   };
 
   // Calculate average rating

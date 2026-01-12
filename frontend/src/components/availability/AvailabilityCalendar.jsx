@@ -324,12 +324,14 @@ const SlotCard = ({ slot, onEdit, onDelete, onCancelBooking, onDeleteSlotAndBook
       </div>
 
       {/* Booked Info */}
-      {(bookedStatuses.includes(slot.status)) && viewMode === 'partner' && (
+      {bookedStatuses.includes(slot.status) && (
         <div className="mt-1 pt-1 border-t border-yellow-200 dark:border-yellow-800">
           <div className="flex items-center text-xs text-yellow-900 dark:text-yellow-300">
             <User className="h-3 w-3 mr-1 flex-shrink-0" />
             <span className="font-medium truncate">
-              {slot.booked_by_user_name || 'Client'}
+              {viewMode === 'partner' 
+                ? (slot.booked_by_user_name || 'Client')
+                : (slot.booked_by_user_name || 'Booked')}
             </span>
           </div>
         </div>
