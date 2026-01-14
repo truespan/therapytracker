@@ -45,9 +45,26 @@ const InactivityLogout = () => {
       }
     };
 
+    // Handle subscription expired errors (403) from API calls
+    const handleSubscriptionExpired = (event) => {
+      const publicRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/', '/privacy-policy', '/terms-of-service'];
+      const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
+      
+      if (!isPublicRoute) {
+        const message = event.detail?.message || 'Your subscription has expired. Please log in again to renew or select a plan.';
+        navigate('/login', { 
+          state: { 
+            message: message
+          },
+          replace: true 
+        });
+      }
+    };
+
     // Listen for the custom events
     window.addEventListener('userLoggedOut', handleInactivityLogout);
     window.addEventListener('unauthorized', handleUnauthorized);
+    window.addEventListener('subscriptionExpired', handleSubscriptionExpired);
 
     // Also check if user was logged out (state changed from user to null)
     if (previousUserRef.current && !user && location.pathname !== '/login') {
@@ -70,6 +87,7 @@ const InactivityLogout = () => {
     return () => {
       window.removeEventListener('userLoggedOut', handleInactivityLogout);
       window.removeEventListener('unauthorized', handleUnauthorized);
+      window.removeEventListener('subscriptionExpired', handleSubscriptionExpired);
     };
   }, [user, navigate, location]);
 

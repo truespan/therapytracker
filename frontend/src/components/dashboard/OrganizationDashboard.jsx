@@ -786,26 +786,33 @@ const OrganizationDashboard = () => {
                 <p className="text-sm">No therapists found</p>
               </div>
             ) : (
-              <select
-                value={selectedPartner?.id || ''}
-                onChange={(e) => {
-                  const partner = filteredPartners.find(p => p.id === parseInt(e.target.value));
-                  if (partner) {
-                    handlePartnerSelect(partner);
-                  } else {
-                    setSelectedPartner(null);
-                    setPartnerClients([]);
-                  }
-                }}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary"
-              >
-                <option value="" className="bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary">-- Select a therapist --</option>
+              <div className="max-h-60 overflow-y-auto border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg-secondary">
                 {filteredPartners.map((partner) => (
-                  <option key={partner.id} value={partner.id} className="bg-white dark:bg-dark-bg-secondary text-gray-900 dark:text-dark-text-primary">
-                    {partner.name} - ID: {partner.partner_id} ({partnerClientCounts[partner.id] || 0} client{partnerClientCounts[partner.id] !== 1 ? 's' : ''})
-                  </option>
+                  <div
+                    key={partner.id}
+                    onClick={() => handlePartnerSelect(partner)}
+                    className={`px-4 py-3 cursor-pointer transition-colors border-b border-gray-200 dark:border-dark-border last:border-b-0 ${
+                      selectedPartner?.id === partner.id
+                        ? 'bg-primary-50 dark:bg-primary-900/20 border-l-4 border-l-primary-600 dark:border-l-primary-500'
+                        : 'hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900 dark:text-dark-text-primary">
+                          {partner.name}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-dark-text-secondary mt-1">
+                          ID: <span className="font-mono">{partner.partner_id}</span> • {partnerClientCounts[partner.id] || 0} client{partnerClientCounts[partner.id] !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                      {selectedPartner?.id === partner.id && (
+                        <CheckCircle className="h-5 w-5 text-primary-600 dark:text-primary-500 flex-shrink-0 ml-2" />
+                      )}
+                    </div>
+                  </div>
                 ))}
-              </select>
+              </div>
             )}
           </div>
 

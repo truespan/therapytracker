@@ -67,6 +67,7 @@ api.interceptors.response.use(
                              error.config?.url?.includes('/public/razorpay') ||
                              (error.config?.url?.includes('/blogs') && error.config?.method === 'get' && !error.config?.url?.includes('/blogs/my/blogs'));
 
+    // Handle 401 unauthorized errors (invalid/expired token)
     if (error.response?.status === 401 && !isPublicEndpoint) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -76,6 +77,21 @@ api.interceptors.response.use(
       if (currentPath !== '/login' && currentPath !== '/signup' && currentPath !== '/forgot-password') {
         // Dispatch a custom event instead of using window.location to avoid page reload
         window.dispatchEvent(new CustomEvent('unauthorized'));
+      }
+    }
+    
+    // Handle 403 subscription expired errors
+    if (error.response?.status === 403 && error.response?.data?.code === 'SUBSCRIPTION_EXPIRED') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Only redirect if not already on login page
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/signup') {
+        // Dispatch custom event for subscription expired
+        window.dispatchEvent(new CustomEvent('subscriptionExpired', { 
+          detail: { message: error.response?.data?.error }
+        }));
       }
     }
     return Promise.reject(error);
