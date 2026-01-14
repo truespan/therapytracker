@@ -133,14 +133,40 @@ const createSlot = async (req, res) => {
     // Check for Google Calendar conflicts if creating an "available" slot
     let conflictWarning = null;
     if (status.startsWith('available')) {
-      const start_datetime = `${slot_date} ${start_time}`;
-      const end_datetime = `${slot_date} ${end_time}`;
+      // Use dateUtils to properly construct UTC timestamps for conflict checking
+      const dateUtils = require('../utils/dateUtils');
+      const userTimezone = timezone || 'UTC';
+      
+      const startDateObj = dateUtils.combineDateAndTime(slot_date, start_time, userTimezone);
+      const endDateObj = dateUtils.combineDateAndTime(slot_date, end_time, userTimezone);
+      
+      const start_datetime = dateUtils.formatForPostgres(startDateObj);
+      const end_datetime = dateUtils.formatForPostgres(endDateObj);
+
+      console.log('\n=== CONFLICT CHECK DEBUG ===');
+      console.log('Input:', { slot_date, start_time, end_time, timezone: userTimezone });
+      console.log('Checking conflicts for:', { start_datetime, end_datetime });
+      console.log('===========================\n');
 
       const conflicts = await AvailabilitySlot.checkGoogleCalendarConflict(
         partner_id,
         start_datetime,
         end_datetime
       );
+
+      console.log('\n=== CONFLICT CHECK RESULTS ===');
+      console.log('Found conflicts:', conflicts.length);
+      if (conflicts.length > 0) {
+        conflicts.forEach(c => {
+          console.log('Conflict:', {
+            title: c.title,
+            start: c.appointment_date || c.session_date,
+            end: c.end_date,
+            type: c.conflict_type
+          });
+        });
+      }
+      console.log('==============================\n');
 
       if (conflicts.length > 0) {
         conflictWarning = {
@@ -394,14 +420,40 @@ const updateSlot = async (req, res) => {
       const checkStartTime = start_time || slot.start_time;
       const checkEndTime = end_time || slot.end_time;
 
-      const start_datetime = `${checkDate} ${checkStartTime}`;
-      const end_datetime = `${checkDate} ${checkEndTime}`;
+      // Use dateUtils to properly construct UTC timestamps for conflict checking
+      const dateUtils = require('../utils/dateUtils');
+      const userTimezone = req.body.timezone || 'UTC';
+      
+      const startDateObj = dateUtils.combineDateAndTime(checkDate, checkStartTime, userTimezone);
+      const endDateObj = dateUtils.combineDateAndTime(checkDate, checkEndTime, userTimezone);
+      
+      const start_datetime = dateUtils.formatForPostgres(startDateObj);
+      const end_datetime = dateUtils.formatForPostgres(endDateObj);
+
+      console.log('\n=== UPDATE SLOT CONFLICT CHECK ===');
+      console.log('Input:', { checkDate, checkStartTime, checkEndTime, timezone: userTimezone });
+      console.log('Checking conflicts for:', { start_datetime, end_datetime });
+      console.log('==================================\n');
 
       const conflicts = await AvailabilitySlot.checkGoogleCalendarConflict(
         slot.partner_id,
         start_datetime,
         end_datetime
       );
+
+      console.log('\n=== UPDATE CONFLICT RESULTS ===');
+      console.log('Found conflicts:', conflicts.length);
+      if (conflicts.length > 0) {
+        conflicts.forEach(c => {
+          console.log('Conflict:', {
+            title: c.title,
+            start: c.appointment_date || c.session_date,
+            end: c.end_date,
+            type: c.conflict_type
+          });
+        });
+      }
+      console.log('===============================\n');
 
       if (conflicts.length > 0) {
         conflictWarning = {
