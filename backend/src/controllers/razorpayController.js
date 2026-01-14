@@ -1310,7 +1310,7 @@ const verifyPublicBookingPayment = async (req, res) => {
       const hasCredentials = await Auth.hasCredentials(userId);
       if (!hasCredentials) {
         needsAccountSetup = true;
-        const setupTokenRecord = await AccountSetup.createToken(userId);
+        const setupTokenRecord = await AccountSetup.createToken(userId, client);
         setupToken = setupTokenRecord.token;
       }
 
