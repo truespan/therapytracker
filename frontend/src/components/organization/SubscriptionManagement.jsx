@@ -346,22 +346,24 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled, disab
                               {getBillingPeriodLabel(subscription.billing_period)}
                             </span>
                           </div>
-                          {subscription.subscription_start_date && (
-                            <div className="flex items-center space-x-2">
-                              <span className="text-gray-600 dark:text-dark-text-secondary">Plan start date and time:</span>
-                              <span className="font-medium text-gray-900 dark:text-dark-text-primary">
-                                {formatDateTime(subscription.subscription_start_date)}
-                              </span>
-                            </div>
-                          )}
-                          {subscription.subscription_end_date && (
-                            <div className="flex items-center space-x-2">
-                              <span className="text-gray-600 dark:text-dark-text-secondary">Plan end date and time:</span>
-                              <span className="font-medium text-gray-900 dark:text-dark-text-primary">
-                                {formatDateTime(subscription.subscription_end_date)}
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-600 dark:text-dark-text-secondary">Plan start date and time:</span>
+                            <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                              {subscription.subscription_start_date 
+                                ? formatDateTime(subscription.subscription_start_date)
+                                : subscription.assigned_at 
+                                  ? formatDateTime(subscription.assigned_at)
+                                  : 'Not available'}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-600 dark:text-dark-text-secondary">Plan end date and time:</span>
+                            <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                              {subscription.subscription_end_date 
+                                ? formatDateTime(subscription.subscription_end_date)
+                                : 'No expiration'}
+                            </span>
+                          </div>
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500 dark:text-dark-text-tertiary">No plan assigned</p>
