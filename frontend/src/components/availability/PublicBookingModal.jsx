@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Video, MapPin, User, X, AlertCircle } from 'lucide-react';
 import { formatTime } from '../../utils/dateUtils';
 import { CurrencyIcon } from '../../utils/currencyIcon';
@@ -6,6 +7,7 @@ import { publicBookingAPI } from '../../services/api';
 import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 
 const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfirm, onCancel, loading }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -229,7 +231,18 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
       });
 
       if (verifyResponse.data.booking_confirmed) {
-        onConfirm(null, true); // Pass true to indicate success
+        // Navigate to payment success page with payment details
+        navigate('/payment-success', {
+          state: {
+            payment: verifyResponse.data.payment,
+            booking: {
+              slot_id: slot.id,
+              appointment_id: verifyResponse.data.booking?.appointment_id,
+              is_public_booking: true
+            }
+          },
+          replace: true
+        });
       } else {
         throw new Error('Payment verification failed');
       }

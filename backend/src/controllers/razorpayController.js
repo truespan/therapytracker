@@ -1116,8 +1116,10 @@ const verifyBookingPayment = async (req, res) => {
       success: true,
       payment: {
         id: dbPayment.id,
+        razorpay_payment_id: dbPayment.razorpay_payment_id,
         status: dbPayment.status,
-        amount: dbPayment.amount
+        amount: dbPayment.amount,
+        currency: dbPayment.currency
       },
       booking_confirmed: payment.status === 'captured' || payment.status === 'authorized',
       enrollment_confirmed: paymentType === 'event_enrollment' && (payment.status === 'captured' || payment.status === 'authorized')
@@ -1298,6 +1300,19 @@ const verifyPublicBookingPayment = async (req, res) => {
 
       // Link user to partner
       await User.assignToPartner(userId, slot.partner_id, client);
+
+      // Check if user has auth credentials, generate setup token if not
+      const Auth = require('../models/Auth');
+      const AccountSetup = require('../models/AccountSetup');
+      let setupToken = null;
+      let needsAccountSetup = false;
+      
+      const hasCredentials = await Auth.hasCredentials(userId);
+      if (!hasCredentials) {
+        needsAccountSetup = true;
+        const setupTokenRecord = await AccountSetup.createToken(userId);
+        setupToken = setupTokenRecord.token;
+      }
 
       // Create appointment
       const conflicts = await AvailabilitySlot.checkGoogleCalendarConflict(
@@ -1502,15 +1517,19 @@ const verifyPublicBookingPayment = async (req, res) => {
         success: true,
         payment: {
           id: dbPayment.id,
+          razorpay_payment_id: dbPayment.razorpay_payment_id,
           status: dbPayment.status,
-          amount: dbPayment.amount
+          amount: dbPayment.amount,
+          currency: dbPayment.currency
         },
         booking: {
           slot_id: slot_id,
           appointment_id: appointmentId,
           user_id: userId,
           status: 'confirmed',
-          is_existing_user: isExistingUser
+          is_existing_user: isExistingUser,
+          needs_account_setup: needsAccountSetup,
+          setup_token: setupToken
         },
         booking_confirmed: true
       });
@@ -1790,8 +1809,10 @@ const verifyRemainingPayment = async (req, res) => {
       message: 'Remaining payment verified successfully',
       payment: {
         id: dbPayment.id,
+        razorpay_payment_id: dbPayment.razorpay_payment_id,
         status: dbPayment.status,
-        amount: dbPayment.amount
+        amount: dbPayment.amount,
+        currency: dbPayment.currency
       },
       payment_confirmed: payment.status === 'captured' || payment.status === 'authorized',
       slot_status: payment.status === 'captured' || payment.status === 'authorized' ? 'confirmed' : slot.status

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { eventAPI, razorpayAPI } from '../../services/api';
 import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 import { useAuth } from '../../context/AuthContext';
@@ -6,6 +7,7 @@ import { Calendar, MapPin, DollarSign, User as UserIcon, CheckCircle, Clock, Ale
 import { format } from 'date-fns';
 
 const ClientEventsTab = ({ userId, partnerId = null }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,8 +102,17 @@ const ClientEventsTab = ({ userId, partnerId = null }) => {
 
         if (verifyResponse.data.success) {
           // Payment verified, enrollment is confirmed by backend
-          await loadEvents(); // Reload to update UI
-          alert('Payment successful! You have been enrolled in the event.');
+          // Navigate to payment success page with payment details
+          navigate('/payment-success', {
+            state: {
+              payment: verifyResponse.data.payment,
+              event: {
+                id: event.id,
+                title: event.title
+              }
+            },
+            replace: true
+          });
         } else {
           throw new Error('Payment verification failed');
         }

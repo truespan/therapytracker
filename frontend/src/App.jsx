@@ -12,6 +12,7 @@ import Signup from './pages/Signup';
 import TherapistSignup from './pages/TherapistSignup';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import SetupAccount from './pages/SetupAccount';
 import VerifyEmail from './pages/VerifyEmail';
 import GoogleCalendarCallback from './pages/GoogleCalendarCallback';
 import UserDashboardPage from './pages/UserDashboardPage';
@@ -28,6 +29,7 @@ import WhatsAppSettingsTab from './components/admin/WhatsAppSettingsTab';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import PublicTherapistProfile from './pages/PublicTherapistProfile';
+import PaymentSuccess from './pages/PaymentSuccess';
 import ChatWidget from './components/support/ChatWidget';
 import TermsConditionsModal from './components/modals/TermsConditionsModal';
 import SubscriptionPlanModal from './components/modals/SubscriptionPlanModal';
@@ -184,11 +186,13 @@ function AppRoutes() {
       <Route path="/therapist-signup/:token?" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <TherapistSignup />} />
       <Route path="/forgot-password" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <ForgotPassword />} />
       <Route path="/reset-password" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <ResetPassword />} />
+      <Route path="/setup-account" element={user ? <Navigate to={redirectPath} replace key={userKey} /> : <SetupAccount />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/auth/google/callback" element={<GoogleCalendarCallback />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/therapist/:partner_id" element={<PublicTherapistProfile />} />
+      <Route path="/payment-success" element={<PaymentSuccess />} />
       
       {/* Admin Routes - Use AdminLayout instead of Navbar */}
       <Route

@@ -375,8 +375,11 @@ class Partner {
 
   static async getUsers(partnerId) {
     const query = `
-      SELECT u.* FROM users u
+      SELECT u.*, 
+             CASE WHEN ac.id IS NOT NULL THEN true ELSE false END as has_auth_credentials
+      FROM users u
       JOIN user_partner_assignments upa ON u.id = upa.user_id
+      LEFT JOIN auth_credentials ac ON ac.reference_id = u.id AND ac.user_type = 'user'
       WHERE upa.partner_id = $1
     `;
     const result = await db.query(query, [partnerId]);

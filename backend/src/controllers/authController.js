@@ -6,6 +6,7 @@ const Organization = require('../models/Organization');
 const Admin = require('../models/Admin');
 const Auth = require('../models/Auth');
 const PasswordReset = require('../models/PasswordReset');
+const AccountSetup = require('../models/AccountSetup');
 const { sendPasswordResetEmail } = require('../utils/emailService');
 const db = require('../config/database');
 
@@ -997,6 +998,171 @@ const acceptTerms = async (req, res) => {
   }
 };
 
+const generateSetupLink = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const partnerId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Verify user is assigned to this partner
+    const Partner = require('../models/Partner');
+    const users = await Partner.getUsers(partnerId);
+    const isAssigned = users.some(u => u.id === parseInt(userId));
+
+    if (!isAssigned) {
+      return res.status(403).json({ error: 'User is not assigned to this partner' });
+    }
+
+    // Check if user already has credentials
+    const Auth = require('../models/Auth');
+    const hasCredentials = await Auth.hasCredentials(userId);
+    if (hasCredentials) {
+      return res.status(400).json({ error: 'User already has account credentials' });
+    }
+
+    // Generate setup token
+    const setupToken = await AccountSetup.createToken(userId);
+
+    // Construct full URL
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const setupUrl = `${frontendUrl}/setup-account?token=${setupToken.token}`;
+
+    res.json({
+      success: true,
+      token: setupToken.token,
+      url: setupUrl,
+      expires_at: setupToken.expires_at
+    });
+  } catch (error) {
+    console.error('Generate setup link error:', error);
+    res.status(500).json({ error: 'Failed to generate setup link' });
+  }
+};
+
+const verifySetupToken = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ error: 'Token is required' });
+    }
+
+    // Find and validate token
+    const setupToken = await AccountSetup.findByToken(token);
+    if (!setupToken) {
+      return res.status(400).json({ error: 'Invalid or expired setup token' });
+    }
+
+    // Get user details
+    const User = require('../models/User');
+    const user = await User.findById(setupToken.user_id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      },
+      expires_at: setupToken.expires_at
+    });
+  } catch (error) {
+    console.error('Verify setup token error:', error);
+    res.status(500).json({ error: 'Failed to verify setup token' });
+  }
+};
+
+const setupAccount = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ error: 'Token and password are required' });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    // Find and validate token
+    const setupToken = await AccountSetup.findByToken(token);
+    if (!setupToken) {
+      return res.status(400).json({ error: 'Invalid or expired setup token' });
+    }
+
+    // Get user details
+    const User = require('../models/User');
+    const user = await User.findById(setupToken.user_id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user already has credentials
+    const Auth = require('../models/Auth');
+    const hasCredentials = await Auth.hasCredentials(setupToken.user_id);
+    if (hasCredentials) {
+      return res.status(400).json({ error: 'User already has account credentials' });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // Determine email for auth_credentials (use email or contact)
+    const email = user.email || user.contact;
+
+    // Create auth credentials
+    await Auth.createCredentials({
+      user_type: 'user',
+      reference_id: setupToken.user_id,
+      email: email,
+      password_hash: passwordHash,
+      google_id: null,
+      is_google_user: false
+    });
+
+    // Delete used token
+    await AccountSetup.deleteToken(token);
+
+    // Generate JWT token for auto-login
+    const jwt = require('jsonwebtoken');
+    const authToken = jwt.sign(
+      {
+        id: user.id,
+        email: email,
+        userType: 'user'
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    console.log(`Account setup successful for user ID: ${user.id}`);
+
+    res.json({
+      success: true,
+      message: 'Account setup successful',
+      token: authToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        userType: 'user'
+      }
+    });
+  } catch (error) {
+    console.error('Setup account error:', error);
+    res.status(500).json({ error: 'Failed to setup account' });
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -1006,6 +1172,9 @@ module.exports = {
   changePassword,
   verifyEmail,
   therapistSignup,
-  acceptTerms
+  acceptTerms,
+  generateSetupLink,
+  verifySetupToken,
+  setupAccount
 };
 

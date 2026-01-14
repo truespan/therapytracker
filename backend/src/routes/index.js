@@ -52,6 +52,9 @@ router.get('/auth/verify-email', authController.verifyEmail);
 router.post('/auth/change-password', authenticateToken, authController.changePassword);
 router.post('/auth/therapist-signup', authController.therapistSignup);
 router.post('/auth/accept-terms', authenticateToken, authController.acceptTerms);
+router.post('/auth/generate-setup-link', authenticateToken, checkRole('partner'), authController.generateSetupLink);
+router.get('/auth/verify-setup-token', authController.verifySetupToken);
+router.post('/auth/setup-account', authController.setupAccount);
 
 // ==================== GOOGLE CALENDAR ROUTES ====================
 router.get('/google-calendar/auth', authenticateToken, googleCalendarController.initiateOAuth);

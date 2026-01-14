@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { partnerAPI, chartAPI, questionnaireAPI, googleCalendarAPI } from '../../services/api';
+import { partnerAPI, chartAPI, questionnaireAPI, googleCalendarAPI, authAPI } from '../../services/api';
 import QuestionnaireComparison from '../charts/QuestionnaireComparison';
 import PartnerCalendar from '../calendar/PartnerCalendar';
 import VideoSessionsTab from '../video/VideoSessionsTab';
@@ -24,7 +24,7 @@ import EarningsTab from '../earnings/EarningsTab';
 import BlogManagement from '../blogs/BlogManagement';
 import SupportDashboard from '../support/SupportDashboard';
 import ReviewsTab from '../reviews/ReviewsTab';
-import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, UserPlus, Share, CalendarClock, Edit, Headphones, Sun, Calendar as CalendarIcon, AlertCircle, Link2, Unlink, Star } from 'lucide-react';
+import { Users, Activity, User, Calendar, BarChart3, CheckCircle, Video, ClipboardList, CalendarDays, ChevronDown, Copy, Check, Settings, FileText, Brain, UserPlus, Share, CalendarClock, Edit, Headphones, Sun, Calendar as CalendarIcon, AlertCircle, Link2, Unlink, Star, KeyRound } from 'lucide-react';
 import { CurrencyIcon } from '../../utils/currencyIcon';
 import CreatePatientModal from '../partner/CreatePatientModal';
 import EditClientModal from '../partner/EditClientModal';
@@ -77,6 +77,9 @@ const PartnerDashboard = () => {
   const [copiedSignupUrl, setCopiedSignupUrl] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copiedProfileUrl, setCopiedProfileUrl] = useState(false);
+  const [setupLink, setSetupLink] = useState(null);
+  const [setupLinkLoading, setSetupLinkLoading] = useState(false);
+  const [copiedSetupLink, setCopiedSetupLink] = useState(false);
 
   // Questionnaire state
   const [questionnaireView, setQuestionnaireView] = useState('list'); // 'list', 'create', 'edit'
@@ -124,6 +127,10 @@ const PartnerDashboard = () => {
       // Find the selected user from the users list
       const selected = users.find(u => u.id === selectedUserId);
       setSelectedUser(selected);
+      
+      // Reset setup link when selecting different user
+      setSetupLink(null);
+      setCopiedSetupLink(false);
 
       // Load charts sent to this user
       const chartsResponse = await chartAPI.getPartnerUserCharts(user.id, selectedUserId);
@@ -1070,7 +1077,7 @@ const PartnerDashboard = () => {
                 <option value="">Select a Client</option>
                 {users.map((client) => (
                   <option key={client.id} value={client.id} className="py-2">
-                    {client.name} - {client.sex}, {client.age} yrs
+                    {client.name} {!client.has_auth_credentials ? '⚠️' : ''} - {client.sex}, {client.age} yrs
                   </option>
                 ))}
               </select>
@@ -1109,7 +1116,18 @@ const PartnerDashboard = () => {
                     <div className="flex items-center space-x-3">
                       <User className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-base text-gray-900 dark:text-dark-text-primary truncate">{client.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-base text-gray-900 dark:text-dark-text-primary truncate">{client.name}</p>
+                          {!client.has_auth_credentials && (
+                            <span 
+                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 flex-shrink-0"
+                              title="Client needs to set up account"
+                            >
+                              <KeyRound className="h-3 w-3 mr-1" />
+                              Setup Required
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-600 dark:text-dark-text-secondary">{client.sex}, {client.age} years</p>
                       </div>
                     </div>
@@ -1155,6 +1173,93 @@ const PartnerDashboard = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Account Setup Link Section */}
+              {selectedUser && !selectedUser.has_auth_credentials && (
+                <div className="card bg-yellow-50 dark:bg-dark-bg-secondary border border-yellow-200 dark:border-yellow-800">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <KeyRound className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                      <h3 className="text-lg font-semibold text-yellow-900 dark:text-yellow-300">
+                        Account Setup Required
+                      </h3>
+                    </div>
+                  </div>
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-4">
+                    This client needs to set up their account password. Generate a setup link to share with them.
+                  </p>
+                  {setupLinkLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-yellow-800 dark:text-yellow-300">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600"></div>
+                      Generating link...
+                    </div>
+                  ) : setupLink ? (
+                    <div className="space-y-3">
+                      <div className="bg-white dark:bg-dark-bg-primary rounded-md p-3 border border-yellow-300 dark:border-yellow-700">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                          Account Setup Link
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 text-xs text-gray-900 dark:text-dark-text-primary break-all">
+                            {setupLink}
+                          </code>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(setupLink);
+                              setCopiedSetupLink(true);
+                              setTimeout(() => setCopiedSetupLink(false), 2000);
+                            }}
+                            className="flex-shrink-0 p-2 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900 rounded-md transition-colors"
+                            title="Copy link"
+                          >
+                            {copiedSetupLink ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <Copy className="h-5 w-5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          setSetupLinkLoading(true);
+                          try {
+                            const response = await authAPI.generateSetupLink(selectedUser.id);
+                            setSetupLink(response.data.url);
+                          } catch (err) {
+                            console.error('Failed to generate setup link:', err);
+                            alert(err.response?.data?.error || 'Failed to generate setup link');
+                          } finally {
+                            setSetupLinkLoading(false);
+                          }
+                        }}
+                        className="text-sm text-yellow-700 dark:text-yellow-400 hover:text-yellow-900 dark:hover:text-yellow-300 underline"
+                      >
+                        Generate New Link
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        setSetupLinkLoading(true);
+                        try {
+                          const response = await authAPI.generateSetupLink(selectedUser.id);
+                          setSetupLink(response.data.url);
+                        } catch (err) {
+                          console.error('Failed to generate setup link:', err);
+                          alert(err.response?.data?.error || 'Failed to generate setup link');
+                        } finally {
+                          setSetupLinkLoading(false);
+                        }
+                      }}
+                      className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-md transition-colors flex items-center justify-center gap-2"
+                    >
+                      <KeyRound className="h-4 w-4" />
+                      Generate Setup Link
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Tab Navigation */}
               <div className="border-b border-gray-200">

@@ -226,6 +226,12 @@ class Auth {
     const result = await db.query(query, [email]);
     return result.rows[0];
   }
+
+  static async hasCredentials(userId) {
+    const query = 'SELECT id FROM auth_credentials WHERE user_type = $1 AND reference_id = $2';
+    const result = await db.query(query, ['user', userId]);
+    return result.rows.length > 0;
+  }
 }
 
 module.exports = Auth;

@@ -25,6 +25,8 @@ api.interceptors.request.use(
                              config.url.includes('/auth/login') ||
                              config.url.includes('/auth/forgot-password') ||
                              config.url.includes('/auth/reset-password') ||
+                             config.url.includes('/auth/verify-setup-token') ||
+                             config.url.includes('/auth/setup-account') ||
                              config.url.includes('/google-calendar/callback') ||
                              config.url.includes('/contact') ||
                              config.url.includes('/public/partners') ||
@@ -110,6 +112,9 @@ export const authAPI = {
   changePassword: (currentPassword, newPassword) => api.post('/auth/change-password', { currentPassword, newPassword }),
   verifyEmail: (token, type) => api.get('/auth/verify-email', { params: { token, type } }),
   acceptTerms: () => api.post('/auth/accept-terms'),
+  generateSetupLink: (userId) => api.post('/auth/generate-setup-link', { userId }),
+  verifySetupToken: (token) => api.get('/auth/verify-setup-token', { params: { token } }),
+  setupAccount: (token, password) => api.post('/auth/setup-account', { token, password }),
 };
 
 // User APIs

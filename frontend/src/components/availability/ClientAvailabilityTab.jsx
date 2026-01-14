@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, RefreshCw, AlertCircle } from 'lucide-react';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import BookingConfirmationModal from './BookingConfirmationModal';
@@ -6,6 +7,7 @@ import { availabilityAPI, appointmentAPI, partnerAPI, razorpayAPI } from '../../
 import { initializeRazorpayCheckout } from '../../utils/razorpayHelper';
 
 const ClientAvailabilityTab = ({ userId, partners, defaultPartnerId = null }) => {
+  const navigate = useNavigate();
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -177,19 +179,18 @@ const ClientAvailabilityTab = ({ userId, partners, defaultPartnerId = null }) =>
         setShowBookingModal(false);
         setBookingLoading(false);
 
-        // Check if there was a Google Calendar conflict
-        if (bookingResponse.data.google_conflict) {
-          alert(
-            'Payment successful! Booking confirmed!\n\n' +
-            'Note: There was a conflict with Google Calendar, so the appointment was not added to the calendar. ' +
-            'However, your booking has been confirmed in the system.'
-          );
-        } else {
-          alert('Payment successful! Appointment booked successfully! The appointment has been added to your calendar.');
-        }
-
-        // Reload slots to show updated availability
-        loadAvailableSlots(selectedPartner.id);
+        // Navigate to payment success page with payment details
+        navigate('/payment-success', {
+          state: {
+            payment: verifyResponse.data.payment,
+            booking: {
+              slot_id: selectedSlot.id,
+              appointment_id: bookingResponse.data.appointment_id,
+              google_conflict: bookingResponse.data.google_conflict
+            }
+          },
+          replace: true
+        });
       } else {
         throw new Error('Payment verification failed');
       }
