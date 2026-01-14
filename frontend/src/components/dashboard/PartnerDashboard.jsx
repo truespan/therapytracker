@@ -545,7 +545,7 @@ const PartnerDashboard = () => {
 
       {/* Mobile Welcome Section - Mobile only (hidden on desktop) */}
       <div className="lg:hidden mb-4">
-        <div className="flex items-start space-x-3 mb-3">
+        <div className="flex items-start space-x-3 mb-2">
           {/* Profile Picture */}
           <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
             {user.photo_url ? (
@@ -570,70 +570,51 @@ const PartnerDashboard = () => {
           </div>
         </div>
         
-        {/* Mode Toggle and Share Link Bar - Mobile only */}
-        <div className="flex items-center justify-between mb-3">
-          <DarkModeToggle variant="button" showLabel />
-          {/* Show buttons only on mobile (below sm), not on tablet */}
-          {user.partner_id && (
-            <div className="sm:hidden flex items-center gap-2 min-w-0 flex-1 justify-end">
-              {/* Google Calendar Connect Button */}
-              {loadingCalendarStatus ? (
-                <div className="flex items-center justify-center py-1 px-2">
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
-                </div>
-              ) : googleCalendarStatus?.connected ? (
-                <button
-                  onClick={disconnectGoogleCalendar}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
-                  title="Disconnect Google Calendar"
-                >
-                  <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                  <span>GCal</span>
-                </button>
-              ) : (
-                <button
-                  onClick={connectGoogleCalendar}
-                  disabled={connectingCalendar}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 whitespace-nowrap"
-                >
-                  {connectingCalendar ? (
-                    <>
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
-                      <span>Connecting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CalendarIcon className="h-3.5 w-3.5" />
-                      <span>Connect GCal</span>
-                    </>
-                  )}
-                </button>
-              )}
-              
-              {/* Share Signup & Appointment Link Button */}
+        {/* GCal and Dark Mode Toggle - Mobile only, right aligned */}
+        {user.partner_id && (
+          <div className="sm:hidden flex items-center justify-end gap-2 mb-2">
+            {/* Google Calendar Connect Button */}
+            {loadingCalendarStatus ? (
+              <div className="flex items-center justify-center py-1 px-2">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
+              </div>
+            ) : googleCalendarStatus?.connected ? (
               <button
-                onClick={handleShareSignupUrl}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 min-w-0 max-w-full"
+                onClick={disconnectGoogleCalendar}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+                title="Disconnect Google Calendar"
               >
-                {copiedSignupUrl ? (
+                <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                <span>GCal</span>
+              </button>
+            ) : (
+              <button
+                onClick={connectGoogleCalendar}
+                disabled={connectingCalendar}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 whitespace-nowrap"
+              >
+                {connectingCalendar ? (
                   <>
-                    <Check className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="truncate">URL Copied!</span>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
+                    <span>Connecting...</span>
                   </>
                 ) : (
                   <>
-                    <Share className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="truncate">Share Signup & Appointment link</span>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    <span>Connect GCal</span>
                   </>
                 )}
               </button>
-            </div>
-          )}
-        </div>
+            )}
+            
+            {/* Dark Mode Toggle */}
+            <DarkModeToggle variant="button" showLabel />
+          </div>
+        )}
         
-        {/* Share Availability-Public Link Button - Mobile only (below Share Signup link) */}
+        {/* Share Availability-Public Link Button - Mobile only, right aligned */}
         {user.partner_id && (
-          <div className="sm:hidden mt-2 flex justify-end">
+          <div className="sm:hidden flex justify-end">
             <button
               onClick={handleCopyProfileUrl}
               className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap max-w-full"
@@ -1047,7 +1028,7 @@ const PartnerDashboard = () => {
       {activeTab === 'clients' && (
         <div className="space-y-4">
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <button
               onClick={() => setShowCreatePatientModal(true)}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
@@ -1056,6 +1037,29 @@ const PartnerDashboard = () => {
               <UserPlus className="h-5 w-5" />
               Create New Client
             </button>
+            {user.partner_id && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <button
+                  onClick={handleShareSignupUrl}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm"
+                >
+                  {copiedSignupUrl ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      URL Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Share className="h-4 w-4" />
+                      Share Signup & Appointment Link
+                    </>
+                  )}
+                </button>
+                <span className="text-sm text-gray-600 dark:text-dark-text-secondary text-center sm:text-left">
+                  Send to known clients for sign up
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
