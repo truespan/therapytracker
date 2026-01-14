@@ -556,16 +556,16 @@ const PartnerDashboard = () => {
         
         {/* GCal, Dark Mode Toggle, and Share Availability-Public Link - Mobile only, same row */}
         {user.partner_id && (
-          <div className="sm:hidden flex items-center justify-end gap-2 flex-wrap">
+          <div className="sm:hidden flex items-center justify-end gap-1.5 flex-nowrap overflow-x-auto">
             {/* Google Calendar Connect Button */}
             {loadingCalendarStatus ? (
-              <div className="flex items-center justify-center py-1 px-2">
+              <div className="flex items-center justify-center py-1 px-2 flex-shrink-0">
                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
               </div>
             ) : googleCalendarStatus?.connected ? (
               <button
                 onClick={disconnectGoogleCalendar}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+                className="flex items-center gap-1 px-2 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap flex-shrink-0"
                 title="Disconnect Google Calendar"
               >
                 <CheckCircle className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
@@ -575,7 +575,7 @@ const PartnerDashboard = () => {
               <button
                 onClick={connectGoogleCalendar}
                 disabled={connectingCalendar}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 whitespace-nowrap"
+                className="flex items-center gap-1 px-2 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 whitespace-nowrap flex-shrink-0"
               >
                 {connectingCalendar ? (
                   <>
@@ -592,22 +592,24 @@ const PartnerDashboard = () => {
             )}
             
             {/* Dark Mode Toggle */}
-            <DarkModeToggle variant="button" showLabel />
+            <div className="flex-shrink-0">
+              <DarkModeToggle variant="button" showLabel />
+            </div>
             
             {/* Share Availability-Public Link Button */}
             <button
               onClick={handleCopyProfileUrl}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
+              className="flex items-center gap-1 px-2 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap flex-shrink-0"
             >
               {copiedProfileUrl ? (
                 <>
                   <Check className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span>URL Copied!</span>
+                  <span>Copied!</span>
                 </>
               ) : (
                 <>
                   <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="truncate">Share Availability-Public Link</span>
+                  <span>Share Availability</span>
                 </>
               )}
             </button>
