@@ -184,17 +184,31 @@ class Auth {
       }
     }
 
-    // Update last_login
+    // Ensure first_login column exists
+    try {
+      await db.query('ALTER TABLE auth_credentials ADD COLUMN IF NOT EXISTS first_login TIMESTAMP');
+    } catch (alterError) {
+      // Column might already exist, ignore the error
+      if (alterError.code !== '42703' && alterError.code !== '42P16') {
+        console.error('Error ensuring first_login column exists:', alterError.message);
+      }
+    }
+
+    // Update last_login and first_login (if null)
     const query = `
       UPDATE auth_credentials
-      SET last_login = CURRENT_TIMESTAMP
+      SET last_login = CURRENT_TIMESTAMP,
+          first_login = COALESCE(first_login, CURRENT_TIMESTAMP)
       WHERE user_type = $1 AND reference_id = $2
-      RETURNING id, user_type, reference_id, email, last_login
+      RETURNING id, user_type, reference_id, email, last_login, first_login
     `;
     try {
       const result = await db.query(query, [userType, referenceId]);
       if (result.rows.length > 0) {
         console.log(`[AUTH] Updated last_login for ${userType} ID ${referenceId}: ${result.rows[0].last_login}`);
+        if (result.rows[0].first_login) {
+          console.log(`[AUTH] First login for ${userType} ID ${referenceId}: ${result.rows[0].first_login}`);
+        }
         return result.rows[0];
       } else {
         console.warn(`[AUTH] No auth_credentials found for ${userType} ID ${referenceId} to update last_login`);

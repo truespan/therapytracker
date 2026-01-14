@@ -451,6 +451,17 @@ class Organization {
       console.log('Note: Could not ensure last_login column exists:', error.message);
     }
 
+    // Ensure first_login column exists in auth_credentials table
+    try {
+      await db.query(`
+        ALTER TABLE auth_credentials 
+        ADD COLUMN IF NOT EXISTS first_login TIMESTAMP
+      `);
+    } catch (error) {
+      // Column might already exist or there's a permission issue, continue anyway
+      console.log('Note: Could not ensure first_login column exists:', error.message);
+    }
+
     // Ensure subscription_plan_events table exists (for backward compatibility)
     try {
       await db.query(`
@@ -466,6 +477,7 @@ class Organization {
         p.*,
         MAX(ts.created_at) as last_session_date,
         ac.last_login,
+        ac.first_login,
         p.is_active,
         p.email_verified,
         -- Subscription plan event data
@@ -480,7 +492,7 @@ class Organization {
       LEFT JOIN subscription_plan_events spe2 ON spe2.user_type = 'partner' AND spe2.user_id = p.id AND spe2.event_type = 'payment_attempted'
       LEFT JOIN subscription_plan_events spe3 ON spe3.user_type = 'partner' AND spe3.user_id = p.id AND spe3.event_type = 'payment_completed'
       WHERE p.organization_id = $1
-      GROUP BY p.id, ac.last_login, p.is_active, p.email_verified
+      GROUP BY p.id, ac.last_login, ac.first_login, p.is_active, p.email_verified
       ORDER BY p.created_at DESC
     `;
     const result = await db.query(query, [orgId]);

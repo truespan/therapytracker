@@ -326,6 +326,12 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled, disab
                           {formatDateTime(partner.last_login)}
                         </span>
                       </div>
+                      <div className="mb-2 text-sm">
+                        <span className="text-gray-600 dark:text-dark-text-secondary">First login:</span>
+                        <span className="font-medium text-gray-900 dark:text-dark-text-primary ml-2">
+                          {formatDateTime(partner.first_login)}
+                        </span>
+                      </div>
                       {subscription ? (
                         <div className="space-y-1 text-sm">
                           <div className="flex items-center space-x-2">
@@ -340,9 +346,17 @@ const SubscriptionManagement = ({ organizationId, isTheraPTrackControlled, disab
                               {getBillingPeriodLabel(subscription.billing_period)}
                             </span>
                           </div>
+                          {subscription.subscription_start_date && (
+                            <div className="flex items-center space-x-2">
+                              <span className="text-gray-600 dark:text-dark-text-secondary">Plan start date and time:</span>
+                              <span className="font-medium text-gray-900 dark:text-dark-text-primary">
+                                {formatDateTime(subscription.subscription_start_date)}
+                              </span>
+                            </div>
+                          )}
                           {subscription.subscription_end_date && (
                             <div className="flex items-center space-x-2">
-                              <span className="text-gray-600 dark:text-dark-text-secondary">Expires:</span>
+                              <span className="text-gray-600 dark:text-dark-text-secondary">Plan end date and time:</span>
                               <span className="font-medium text-gray-900 dark:text-dark-text-primary">
                                 {formatDateTime(subscription.subscription_end_date)}
                               </span>
