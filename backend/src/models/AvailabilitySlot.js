@@ -246,9 +246,11 @@ class AvailabilitySlot {
 
   /**
    * Check for conflicts with Google Calendar (appointments and video sessions)
+   * Two time ranges overlap if: start1 < end2 AND start2 < end1
    */
   static async checkGoogleCalendarConflict(partnerId, startDatetime, endDatetime) {
     // Check appointments table
+    // Convert string inputs to timestamptz for proper comparison
     const appointmentQuery = `
       SELECT
         a.*,
@@ -259,11 +261,8 @@ class AvailabilitySlot {
       JOIN users u ON a.user_id = u.id
       WHERE a.partner_id = $1
       AND a.status != 'cancelled'
-      AND (
-        (a.appointment_date <= $2 AND a.end_date > $2)
-        OR (a.appointment_date < $3 AND a.end_date >= $3)
-        OR (a.appointment_date >= $2 AND a.end_date <= $3)
-      )
+      AND a.appointment_date < $3::timestamptz
+      AND a.end_date > $2::timestamptz
     `;
     const appointmentResult = await db.query(appointmentQuery, [partnerId, startDatetime, endDatetime]);
 
@@ -278,11 +277,8 @@ class AvailabilitySlot {
       JOIN users u ON v.user_id = u.id
       WHERE v.partner_id = $1
       AND v.status != 'cancelled'
-      AND (
-        (v.session_date <= $2 AND v.end_date > $2)
-        OR (v.session_date < $3 AND v.end_date >= $3)
-        OR (v.session_date >= $2 AND v.end_date <= $3)
-      )
+      AND v.session_date < $3::timestamptz
+      AND v.end_date > $2::timestamptz
     `;
     const videoResult = await db.query(videoQuery, [partnerId, startDatetime, endDatetime]);
 
