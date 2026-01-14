@@ -442,22 +442,6 @@ const PartnerDashboard = () => {
             <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
               Your Therapist ID: <span className="font-semibold text-gray-900 dark:text-dark-text-primary">{user.partner_id}</span>
             </p>
-            <button
-              onClick={handleShareSignupUrl}
-              className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
-            >
-              {copiedSignupUrl ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  URL Copied!
-                </>
-              ) : (
-                <>
-                  <Share className="h-4 w-4" />
-                  Share Signup & Appointment link
-                </>
-              )}
-            </button>
             
             {/* Google Calendar Integration */}
             <div className="w-full mt-2">
@@ -544,7 +528,7 @@ const PartnerDashboard = () => {
       </div>
 
       {/* Mobile Welcome Section - Mobile only (hidden on desktop) */}
-      <div className="lg:hidden mb-4">
+      <div className="lg:hidden mb-2">
         <div className="flex items-start space-x-3 mb-2">
           {/* Profile Picture */}
           <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300 flex-shrink-0">
@@ -570,9 +554,9 @@ const PartnerDashboard = () => {
           </div>
         </div>
         
-        {/* GCal and Dark Mode Toggle - Mobile only, right aligned */}
+        {/* GCal, Dark Mode Toggle, and Share Availability-Public Link - Mobile only, same row */}
         {user.partner_id && (
-          <div className="sm:hidden flex items-center justify-end gap-2 mb-2">
+          <div className="sm:hidden flex items-center justify-end gap-2 flex-wrap">
             {/* Google Calendar Connect Button */}
             {loadingCalendarStatus ? (
               <div className="flex items-center justify-center py-1 px-2">
@@ -609,15 +593,11 @@ const PartnerDashboard = () => {
             
             {/* Dark Mode Toggle */}
             <DarkModeToggle variant="button" showLabel />
-          </div>
-        )}
-        
-        {/* Share Availability-Public Link Button - Mobile only, right aligned */}
-        {user.partner_id && (
-          <div className="sm:hidden flex justify-end">
+            
+            {/* Share Availability-Public Link Button */}
             <button
               onClick={handleCopyProfileUrl}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap max-w-full"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap"
             >
               {copiedProfileUrl ? (
                 <>
@@ -641,22 +621,6 @@ const PartnerDashboard = () => {
           <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-3">
             Your Therapist ID: <span className="font-semibold text-gray-900 dark:text-dark-text-primary">{user.partner_id}</span>
           </p>
-          <button
-            onClick={handleShareSignupUrl}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium mb-3"
-          >
-            {copiedSignupUrl ? (
-              <>
-                <Check className="h-4 w-4" />
-                URL Copied!
-              </>
-            ) : (
-              <>
-                <Share className="h-4 w-4" />
-                Share Signup & Appointment link
-              </>
-            )}
-          </button>
           
           {/* Google Calendar Integration */}
           {loadingCalendarStatus ? (
