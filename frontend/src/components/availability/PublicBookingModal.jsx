@@ -138,9 +138,8 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
       }
     }
 
-    if (!formData.whatsapp_number.trim()) {
-      newErrors.whatsapp_number = 'WhatsApp number is required';
-    } else {
+    // WhatsApp number is optional, but validate format if provided
+    if (formData.whatsapp_number.trim()) {
       // Validate phone number format (only digits, 7-15 digits)
       const phoneRegex = /^\d{7,15}$/;
       if (!phoneRegex.test(formData.whatsapp_number.trim())) {
@@ -173,7 +172,7 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
       sex: formData.sex,
       location: formData.location.trim() || null,
       contact: `${countryCode}${formData.contact.trim()}`,
-      whatsapp_number: `${whatsappCountryCode}${formData.whatsapp_number.trim()}`,
+      whatsapp_number: formData.whatsapp_number.trim() ? `${whatsappCountryCode}${formData.whatsapp_number.trim()}` : null,
       email: formData.email.trim() || null
     };
 
@@ -417,6 +416,44 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                 />
               </div>
 
+              {/* WhatsApp Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  WhatsApp Number <span className="text-gray-500">(Optional)</span>
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={whatsappCountryCode}
+                    onChange={(e) => setWhatsappCountryCode(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
+                  >
+                    <option value="+91">+91 (IN)</option>
+                    <option value="+1">+1 (US/CA)</option>
+                    <option value="+44">+44 (UK)</option>
+                    <option value="+61">+61 (AU)</option>
+                  </select>
+                  <input
+                    type="tel"
+                    name="whatsapp_number"
+                    value={formData.whatsapp_number}
+                    onChange={handleChange}
+                    className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary ${
+                      errors.whatsapp_number ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'
+                    }`}
+                    placeholder="WhatsApp number"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-600 dark:text-dark-text-tertiary">
+                  Use your WhatsApp number so you can receive messages for bookings, appointments, updates and reminders.
+                </p>
+                {errors.whatsapp_number && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.whatsapp_number}
+                  </p>
+                )}
+              </div>
+
               {/* Contact Number */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
@@ -452,41 +489,6 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                 )}
               </div>
 
-              {/* WhatsApp Number */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  WhatsApp Number <span className="text-red-500">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    value={whatsappCountryCode}
-                    onChange={(e) => setWhatsappCountryCode(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
-                  >
-                    <option value="+91">+91 (IN)</option>
-                    <option value="+1">+1 (US/CA)</option>
-                    <option value="+44">+44 (UK)</option>
-                    <option value="+61">+61 (AU)</option>
-                  </select>
-                  <input
-                    type="tel"
-                    name="whatsapp_number"
-                    value={formData.whatsapp_number}
-                    onChange={handleChange}
-                    className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary ${
-                      errors.whatsapp_number ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'
-                    }`}
-                    placeholder="WhatsApp number"
-                  />
-                </div>
-                {errors.whatsapp_number && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-                    <AlertCircle className="h-4 w-4" />
-                    {errors.whatsapp_number}
-                  </p>
-                )}
-              </div>
-
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
@@ -502,6 +504,9 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                   }`}
                   placeholder="your.email@example.com"
                 />
+                <p className="mt-1 text-xs text-gray-600 dark:text-dark-text-tertiary">
+                  Email will be used as the username. If not provided, the mobile number will serve as the login username.
+                </p>
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
