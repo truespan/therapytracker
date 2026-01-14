@@ -1512,6 +1512,9 @@ const verifyPublicBookingPayment = async (req, res) => {
         });
       }
 
+      // Fetch user data for the response (needed for account setup modal)
+      const user = await User.findById(userId);
+      
       res.json({
         message: 'Payment verified and booking confirmed successfully',
         success: true,
@@ -1529,7 +1532,12 @@ const verifyPublicBookingPayment = async (req, res) => {
           status: 'confirmed',
           is_existing_user: isExistingUser,
           needs_account_setup: needsAccountSetup,
-          setup_token: setupToken
+          setup_token: setupToken,
+          user: user ? {
+            email: user.email,
+            whatsapp_number: user.whatsapp_number,
+            contact: user.contact
+          } : null
         },
         booking_confirmed: true
       });

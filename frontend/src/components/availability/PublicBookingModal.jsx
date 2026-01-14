@@ -235,7 +235,7 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
         navigate('/payment-success', {
           state: {
             payment: verifyResponse.data.payment,
-            booking: {
+            booking: verifyResponse.data.booking || {
               slot_id: slot.id,
               appointment_id: verifyResponse.data.booking?.appointment_id,
               is_public_booking: true

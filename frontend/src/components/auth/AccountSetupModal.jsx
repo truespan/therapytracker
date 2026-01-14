@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, User } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const AccountSetupModal = ({ setupToken, userId, onSuccess }) => {
+const AccountSetupModal = ({ setupToken, userId, username, onSuccess }) => {
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: ''
@@ -149,6 +149,26 @@ const AccountSetupModal = ({ setupToken, userId, onSuccess }) => {
               Your booking was successful! Please set a password to access your account and view your appointments.
             </p>
           </div>
+
+          {/* Username field (read-only) */}
+          {username && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                <User className="inline h-4 w-4 mr-1" />
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md bg-gray-50 dark:bg-dark-bg-primary text-gray-700 dark:text-dark-text-secondary cursor-not-allowed"
+                readOnly
+                disabled
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
+                You'll use this to log in to your account
+              </p>
+            </div>
+          )}
 
           {/* Password field */}
           <div>

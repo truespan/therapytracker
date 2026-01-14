@@ -64,7 +64,8 @@ const PaymentSuccess = () => {
 
   const handleAccountSetupSuccess = () => {
     setAccountSetupComplete(true);
-    // Show success message after account setup
+    // Redirect to client dashboard after account setup
+    navigate('/user/dashboard', { replace: true });
   };
 
   if (!paymentData) {
@@ -77,23 +78,13 @@ const PaymentSuccess = () => {
     );
   }
 
-  // Show account setup modal if needed
-  if (bookingData?.needs_account_setup && !accountSetupComplete && bookingData?.setup_token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg-primary">
-        <AccountSetupModal
-          setupToken={bookingData.setup_token}
-          userId={bookingData.user_id}
-          onSuccess={handleAccountSetupSuccess}
-        />
-      </div>
-    );
-  }
-
   const currencySymbol = paymentData.currency === 'INR' ? '₹' : 
                          paymentData.currency === 'USD' ? '$' : 
                          paymentData.currency === 'EUR' ? '€' : 
                          paymentData.currency || '₹';
+
+  // Determine username: email > whatsapp_number > contact
+  const username = bookingData?.user?.email || bookingData?.user?.whatsapp_number || bookingData?.user?.contact || '';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg-primary px-4 py-8">
@@ -176,10 +167,22 @@ const PaymentSuccess = () => {
         </button>
 
         {/* Auto-redirect notice */}
-        <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-4">
-          Redirecting to dashboard in {countdown} seconds...
-        </p>
+        {!bookingData?.needs_account_setup && (
+          <p className="text-sm text-gray-500 dark:text-dark-text-tertiary mt-4">
+            Redirecting to dashboard in {countdown} seconds...
+          </p>
+        )}
       </div>
+
+      {/* Account Setup Modal - Show on top if needed */}
+      {bookingData?.needs_account_setup && !accountSetupComplete && bookingData?.setup_token && (
+        <AccountSetupModal
+          setupToken={bookingData.setup_token}
+          userId={bookingData.user_id}
+          username={username}
+          onSuccess={handleAccountSetupSuccess}
+        />
+      )}
     </div>
   );
 };
