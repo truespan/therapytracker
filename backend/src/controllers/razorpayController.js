@@ -667,6 +667,7 @@ const createBookingOrder = async (req, res) => {
     let bookingFee = 0;
     let orderCurrency = 'INR';
     let receipt = '';
+    let feeSettings = null;
 
     if (paymentType === 'event_enrollment') {
       // For event enrollment, use provided amount
@@ -676,7 +677,7 @@ const createBookingOrder = async (req, res) => {
     } else {
       // Get partner fee settings for booking
       const Partner = require('../models/Partner');
-      const feeSettings = await Partner.getFeeSettings(partner_id);
+      feeSettings = await Partner.getFeeSettings(partner_id);
       
       if (!feeSettings) {
         return res.status(404).json({ error: 'Partner not found' });
@@ -785,7 +786,7 @@ const createBookingOrder = async (req, res) => {
       console.log(`[CREATE_BOOKING_ORDER] Order ${razorpayOrder.id} created successfully with notes:`, JSON.stringify(dbOrder.notes));
     }
 
-    res.status(201).json({
+    const response = {
       message: 'Booking order created successfully',
       test_mode: false,
       skip_payment: false,
@@ -796,13 +797,19 @@ const createBookingOrder = async (req, res) => {
         receipt: razorpayOrder.receipt,
         status: razorpayOrder.status,
         key_id: process.env.RAZORPAY_KEY_ID
-      },
-      feeDetails: {
+      }
+    };
+
+    // Only include feeDetails if feeSettings is available (not for event enrollment)
+    if (feeSettings) {
+      response.feeDetails = {
         session_fee: feeSettings.session_fee,
         booking_fee: feeSettings.booking_fee,
         currency: orderCurrency
-      }
-    });
+      };
+    }
+
+    res.status(201).json(response);
   } catch (error) {
     console.error('Create booking order error:', error);
     res.status(500).json({
