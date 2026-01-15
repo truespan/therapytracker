@@ -58,10 +58,9 @@ const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, o
   const isOnline = slot.location_type === 'online' || slot.status.includes('online');
 
   // Fee calculations - ensure values are numbers
+  // Use session_fee (same as public booking flow)
   const sessionFee = parseFloat(feeSettings?.session_fee) || 0;
-  const bookingFee = parseFloat(feeSettings?.booking_fee) || 0;
   const currency = feeSettings?.fee_currency || 'INR';
-  const remaining = sessionFee > bookingFee ? sessionFee - bookingFee : 0;
 
   // Currency symbol helper
   const getCurrencySymbol = (curr) => {
@@ -77,7 +76,7 @@ const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, o
   };
 
   const currencySymbol = getCurrencySymbol(currency);
-  const hasFees = sessionFee > 0 || bookingFee > 0;
+  const hasFees = sessionFee > 0;
 
   return (
     <div 
@@ -159,25 +158,9 @@ const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, o
               <div className="space-y-2">
                 {sessionFee > 0 && (
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Per session fee:</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">
-                      {currencySymbol}{sessionFee.toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                {bookingFee > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Booking fee (to be paid now):</span>
+                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Session fee (to be paid now):</span>
                     <span className="text-sm font-semibold text-green-700 dark:text-green-400">
-                      {currencySymbol}{bookingFee.toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                {remaining > 0 && (
-                  <div className="flex justify-between items-center pt-2 border-t border-green-200 dark:border-green-700">
-                    <span className="text-sm text-gray-700 dark:text-dark-text-secondary">Remaining (to be paid later):</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">
-                      {currencySymbol}{remaining.toFixed(2)}
+                      {currencySymbol}{sessionFee.toFixed(2)}
                     </span>
                   </div>
                 )}
@@ -189,12 +172,12 @@ const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, o
             <p className="text-sm text-yellow-800 dark:text-yellow-300">
               <strong>Important:</strong> Please arrive on time for your appointment.
               {isOnline && ' You will receive session details after booking.'}
-              {hasFees && bookingFee > 0 && ' You will be redirected to payment gateway to complete the booking.'}
+              {hasFees && sessionFee > 0 && ' You will be redirected to payment gateway to complete the booking.'}
             </p>
           </div>
 
           <p className="text-sm text-gray-600 dark:text-dark-text-secondary mt-4">
-            {hasFees && bookingFee > 0 
+            {hasFees && sessionFee > 0 
               ? 'Click "Proceed to Payment" to complete your booking.'
               : 'Are you sure you want to book this appointment?'}
           </p>
@@ -218,8 +201,8 @@ const BookingConfirmationModal = ({ slot, partnerName, feeSettings, onConfirm, o
               }`}
             >
               {loading 
-                ? (hasFees && bookingFee > 0 ? 'Processing...' : 'Booking...') 
-                : (hasFees && bookingFee > 0 ? 'Proceed to Payment' : 'Confirm Booking')}
+                ? (hasFees && sessionFee > 0 ? 'Processing...' : 'Booking...') 
+                : (hasFees && sessionFee > 0 ? 'Proceed to Payment' : 'Confirm Booking')}
             </button>
           </div>
         </div>

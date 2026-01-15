@@ -683,13 +683,18 @@ const createBookingOrder = async (req, res) => {
         return res.status(404).json({ error: 'Partner not found' });
       }
 
-      bookingFee = feeSettings.booking_fee || 0;
+      // Use session_fee instead of booking_fee (same as public booking flow)
+      bookingFee = feeSettings.session_fee || 0;
       orderCurrency = feeSettings.fee_currency || 'INR';
       receipt = `booking_${slot_id}_${Date.now()}`;
     }
 
     // Check if we're in development/test environment (localhost)
     const isTestMode = RazorpayService.isTestMode();
+    const nodeEnv = process.env.NODE_ENV || 'development';
+    
+    // Log environment for debugging
+    console.log(`[CREATE_BOOKING_ORDER] NODE_ENV: ${nodeEnv}, isTestMode: ${isTestMode}, sessionFee: ${bookingFee}`);
 
     // If in development environment and fee exists, skip payment and return test mode flag
     // In production, this will NEVER be true, so payment is always required
@@ -698,6 +703,7 @@ const createBookingOrder = async (req, res) => {
         ? `[CREATE_BOOKING_ORDER] Test mode detected - skipping payment for event ${eventId}`
         : `[CREATE_BOOKING_ORDER] Test mode detected - skipping payment for slot ${slot_id}`;
       console.log(logMessage);
+      console.log(`[CREATE_BOOKING_ORDER] WARNING: Payment bypassed! NODE_ENV=${nodeEnv}`);
       return res.status(201).json({
         message: 'Test mode: Payment skipped',
         test_mode: true,
@@ -710,7 +716,7 @@ const createBookingOrder = async (req, res) => {
       return res.status(400).json({
         error: paymentType === 'event_enrollment' 
           ? 'Event fee must be greater than 0'
-          : 'No booking fee configured for this therapist'
+          : 'No session fee configured for this therapist'
       });
     }
 
@@ -805,7 +811,6 @@ const createBookingOrder = async (req, res) => {
     if (feeSettings) {
       response.feeDetails = {
         session_fee: feeSettings.session_fee,
-        booking_fee: feeSettings.booking_fee,
         currency: orderCurrency
       };
     }

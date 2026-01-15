@@ -77,19 +77,27 @@ const ClientAvailabilityTab = ({ userId, partners, defaultPartnerId = null }) =>
   };
 
   /**
-   * Confirm booking - with payment flow if booking fee exists
+   * Confirm booking - with payment flow if session fee exists
    */
   const confirmBooking = async () => {
     try {
       setBookingLoading(true);
 
-      const bookingFee = feeSettings?.booking_fee || 0;
+      // Parse session fee as float to handle string values from API
+      // Use session_fee (same as public booking flow)
+      const sessionFee = parseFloat(feeSettings?.session_fee) || 0;
 
-      // If booking fee exists, initiate payment flow
-      if (bookingFee > 0) {
+      // Debug logging (remove in production if needed)
+      console.log('[BOOKING] Fee settings:', feeSettings);
+      console.log('[BOOKING] Session fee:', sessionFee);
+
+      // If session fee exists, initiate payment flow
+      if (sessionFee > 0) {
+        console.log('[BOOKING] Initiating payment flow for session fee:', sessionFee);
         await handleBookingWithPayment();
       } else {
         // Direct booking without payment
+        console.log('[BOOKING] No session fee, proceeding with direct booking');
         await handleDirectBooking();
       }
     } catch (error) {
@@ -105,7 +113,7 @@ const ClientAvailabilityTab = ({ userId, partners, defaultPartnerId = null }) =>
    */
   const handleBookingWithPayment = async () => {
     try {
-      // Create Razorpay order for booking fee
+      // Create Razorpay order for session fee
       const orderResponse = await razorpayAPI.createBookingOrder({
         slot_id: selectedSlot.id,
         partner_id: selectedPartner.id
@@ -160,7 +168,7 @@ const ClientAvailabilityTab = ({ userId, partners, defaultPartnerId = null }) =>
       // Initialize Razorpay checkout
       const paymentResult = await initializeRazorpayCheckout(order, {
         name: 'TheraP Track',
-        description: 'Booking Fee Payment',
+        description: 'Session Fee Payment',
         prefill: userDetails
       });
 
