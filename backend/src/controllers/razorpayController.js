@@ -688,10 +688,11 @@ const createBookingOrder = async (req, res) => {
       receipt = `booking_${slot_id}_${Date.now()}`;
     }
 
-    // Check if we're in test mode
+    // Check if we're in development/test environment (localhost)
     const isTestMode = RazorpayService.isTestMode();
 
-    // If test mode and fee exists, skip payment and return test mode flag
+    // If in development environment and fee exists, skip payment and return test mode flag
+    // In production, this will NEVER be true, so payment is always required
     if (isTestMode && bookingFee > 0) {
       const logMessage = paymentType === 'event_enrollment' 
         ? `[CREATE_BOOKING_ORDER] Test mode detected - skipping payment for event ${eventId}`
@@ -856,10 +857,11 @@ const createPublicBookingOrder = async (req, res) => {
     const sessionFee = parseFloat(feeSettings.session_fee) || 0;
     const orderCurrency = feeSettings.fee_currency || 'INR';
 
-    // Check if we're in test mode
+    // Check if we're in development/test environment (localhost)
     const isTestMode = RazorpayService.isTestMode();
 
-    // If test mode and fee exists, skip payment and return test mode flag
+    // If in development environment and fee exists, skip payment and return test mode flag
+    // In production, this will NEVER be true, so payment is always required
     if (isTestMode && sessionFee > 0) {
       console.log(`[CREATE_PUBLIC_BOOKING_ORDER] Test mode detected - skipping payment for slot ${slot_id}`);
       return res.status(201).json({
@@ -933,7 +935,9 @@ const createPublicBookingOrder = async (req, res) => {
 };
 
 /**
- * Verify booking payment in test mode (skip actual payment verification)
+ * Verify booking payment in development/test environment (skip actual payment verification)
+ * This is ONLY called when NODE_ENV is 'development' or 'test' (localhost)
+ * In production, this function is never called
  */
 const verifyBookingPaymentTestMode = async (req, res) => {
   try {
@@ -1148,12 +1152,13 @@ const verifyPublicBookingPayment = async (req, res) => {
       clientData: requestClientData
     } = req.body;
 
-    // Check if test mode - if all payment IDs are null/undefined and we have slot_id, it's test mode
+    // Check if in development/test environment - if all payment IDs are null/undefined and we have slot_id, it's test mode
+    // In production (NODE_ENV=production), isTestMode() returns false, so payment is always required
     const isTestMode = RazorpayService.isTestMode() && 
                        (!razorpay_order_id && !razorpay_payment_id && !razorpay_signature) &&
                        (requestSlotId && requestPartnerId && requestClientData);
 
-    // If test mode, find partner by partner_id string to get internal ID
+    // If in development environment, find partner by partner_id string to get internal ID
     let partnerInternalId = null;
     if (isTestMode) {
       const Partner = require('../models/Partner');
@@ -1887,10 +1892,11 @@ const createRemainingPaymentOrder = async (req, res) => {
       });
     }
 
-    // Check if we're in test mode
+    // Check if we're in development/test environment (localhost)
     const isTestMode = RazorpayService.isTestMode();
 
-    // If test mode, skip payment and return test mode flag
+    // If in development environment, skip payment and return test mode flag
+    // In production, this will NEVER be true, so payment is always required
     if (isTestMode) {
       console.log(`[CREATE_REMAINING_PAYMENT_ORDER] Test mode detected - skipping payment for slot ${slot_id}`);
       return res.status(201).json({

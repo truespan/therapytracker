@@ -26,12 +26,15 @@ function getRazorpayInstance() {
 
 class RazorpayService {
   /**
-   * Check if Razorpay is in test mode (using test keys)
-   * @returns {boolean} True if test keys are being used
+   * Check if we should bypass payment (only in development/localhost)
+   * In production, payment should ALWAYS be required regardless of Razorpay key type
+   * @returns {boolean} True if in development environment (localhost)
    */
   static isTestMode() {
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    return keyId && keyId.startsWith('rzp_test_');
+    // Only bypass payment in development environment
+    // Production should ALWAYS require payment, even with test Razorpay keys
+    const nodeEnv = process.env.NODE_ENV || 'development';
+    return nodeEnv === 'development' || nodeEnv === 'test';
   }
 
   /**

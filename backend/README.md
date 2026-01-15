@@ -51,6 +51,11 @@ JWT_SECRET=your_secret_key_here
 NODE_ENV=development
 ```
 
+**Important:** 
+- Set `NODE_ENV=production` in production environments
+- Payment bypass is ONLY enabled when `NODE_ENV=development` or `NODE_ENV=test`
+- In production (`NODE_ENV=production`), Razorpay payment is ALWAYS required for bookings with fees, regardless of whether you use test or live Razorpay keys
+
 ## API Endpoints
 
 See main README.md for complete API documentation.
