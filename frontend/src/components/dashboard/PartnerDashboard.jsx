@@ -643,7 +643,7 @@ const PartnerDashboard = () => {
               className="flex items-center gap-1 px-2 py-1.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 whitespace-nowrap flex-shrink-0"
             >
               <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
-              <span>Share Availability</span>
+              <span>Share Availability-Public Link</span>
             </button>
           </div>
         )}
@@ -1612,7 +1612,7 @@ const PartnerDashboard = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary mb-4">
-              Share Availability Link
+              Share Availability-Public Link
             </h3>
             <div className="space-y-3">
               <button
