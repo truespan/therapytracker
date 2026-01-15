@@ -498,7 +498,7 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
               {/* WhatsApp Number - Second Field (Optional with checkbox) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  💬 WhatsApp Number <span className="text-gray-500">(Optional)</span>
+                  💬 WhatsApp Number <span className="text-gray-500"></span>
                 </label>
                 <div className="flex gap-2 mb-2">
                   <select
@@ -536,9 +536,11 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                     ☑ Same as contact number
                   </label>
                 </div>
-                <p className="mt-1 text-xs text-gray-600 dark:text-dark-text-tertiary">
-                  Used for appointments, cancellations, updates and quick communication
-                </p>
+                <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                  <p className="text-xs font-semibold text-blue-800 dark:text-blue-300">
+                    💡 Used for bookings, appointments, updates, reminders and quick communication
+                  </p>
+                </div>
                 {errors.whatsapp_number && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
@@ -562,9 +564,11 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                   }`}
                   placeholder="your.email@example.com"
                 />
-                <p className="mt-1 text-xs text-gray-600 dark:text-dark-text-tertiary">
-                  Used only for account access and rarely for important notifications
-                </p>
+                <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
+                  <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                    💡 Used only for account access and rarely for important notifications
+                  </p>
+                </div>
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
