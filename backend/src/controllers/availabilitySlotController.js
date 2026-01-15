@@ -699,23 +699,54 @@ const bookSlot = async (req, res) => {
     // Get partner fee settings to determine booking status
     const partner = await Partner.findById(slot.partner_id);
     const sessionFee = partner ? (parseFloat(partner.session_fee) || 0) : 0;
-    const bookingFee = partner ? (parseFloat(partner.booking_fee) || 0) : 0;
     
-    // Determine status based on payment conditions
+    // Check if payment has already been made for this slot
+    // Since we now collect full session_fee upfront, check for existing payment
     let bookingStatus = 'booked'; // Default for backward compatibility
+    let hasPayment = false;
+    let totalPaid = 0;
     
-    if (bookingFee > 0) {
-      // Booking fee was collected
-      if (bookingFee >= sessionFee) {
-        // Full payment received
+    if (sessionFee > 0) {
+      // Check if there's a payment record for this slot
+      // Handle both JSONB and string formats for notes field
+      const paymentCheckQuery = `
+        SELECT COALESCE(SUM(rp.amount), 0) as total_paid
+        FROM razorpay_payments rp
+        INNER JOIN razorpay_orders ro ON rp.razorpay_order_id = ro.razorpay_order_id
+        WHERE (
+          (ro.notes->>'slot_id')::integer = $1
+          OR (ro.notes->>'slot_id') = $1::text
+          OR (ro.notes::text LIKE '%"slot_id":' || $1 || '%')
+        )
+        AND (
+          ro.notes->>'payment_type' = 'booking_fee'
+          OR ro.notes::text LIKE '%"payment_type":"booking_fee"%'
+        )
+        AND rp.status IN ('captured', 'authorized')
+      `;
+      const paymentResult = await client.query(paymentCheckQuery, [id]);
+      totalPaid = parseFloat(paymentResult.rows[0]?.total_paid || 0);
+      hasPayment = totalPaid > 0;
+      
+      console.log(`[BOOK_SLOT] Slot ${id}: sessionFee=${sessionFee}, totalPaid=${totalPaid}, hasPayment=${hasPayment}`);
+      
+      if (hasPayment && totalPaid >= sessionFee) {
+        // Full payment received - set to confirmed
         bookingStatus = 'confirmed';
-      } else {
-        // Partial payment - balance pending
+        console.log(`[BOOK_SLOT] Slot ${id}: Full payment received, setting status to 'confirmed'`);
+      } else if (hasPayment && totalPaid < sessionFee) {
+        // Partial payment (shouldn't happen with new flow, but handle for backward compatibility)
         bookingStatus = 'confirmed_balance_pending';
+        console.log(`[BOOK_SLOT] Slot ${id}: Partial payment (${totalPaid}/${sessionFee}), setting status to 'confirmed_balance_pending'`);
+      } else {
+        // No payment made yet - payment pending
+        bookingStatus = 'confirmed_payment_pending';
+        console.log(`[BOOK_SLOT] Slot ${id}: No payment found, setting status to 'confirmed_payment_pending'`);
       }
     } else {
-      // No booking fee collected - payment pending
-      bookingStatus = 'confirmed_payment_pending';
+      // No session fee - free booking, set to confirmed
+      bookingStatus = 'confirmed';
+      console.log(`[BOOK_SLOT] Slot ${id}: No session fee, setting status to 'confirmed'`);
     }
 
     // Update slot with appropriate status
