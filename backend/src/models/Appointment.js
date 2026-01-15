@@ -1,7 +1,7 @@
 const db = require('../config/database');
 
 class Appointment {
-  static async create(appointmentData) {
+  static async create(appointmentData, client = null) {
     const { partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes, timezone } = appointmentData;
     const query = `
       INSERT INTO appointments (partner_id, user_id, title, appointment_date, end_date, duration_minutes, notes, timezone)
@@ -9,7 +9,8 @@ class Appointment {
       RETURNING *
     `;
     const values = [partner_id, user_id, title, appointment_date, end_date, duration_minutes || 60, notes, timezone || 'UTC'];
-    const result = await db.query(query, values);
+    const dbClient = client || db;
+    const result = await dbClient.query(query, values);
     return result.rows[0];
   }
 

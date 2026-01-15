@@ -1,27 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, KeyRound } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import AccountSetupModal from '../components/auth/AccountSetupModal';
 
 const SetupAccount = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { login } = useAuth();
   const token = searchParams.get('token');
-
-  const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: ''
-  });
   const [userInfo, setUserInfo] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { updateUser } = useAuth();
 
   // Verify token on mount
   useEffect(() => {
@@ -45,199 +33,63 @@ const SetupAccount = () => {
     verifyToken();
   }, [token]);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setError('');
+  const handleSuccess = () => {
+    // Redirect to dashboard after successful setup
+    navigate('/user/dashboard', { replace: true });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess(false);
-
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    // Validate password length
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
-    if (!token) {
-      setError('Invalid setup link. Please contact your therapist for a new link.');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await authAPI.setupAccount(token, formData.password);
-      
-      // Auto-login the user
-      if (response.data.token && response.data.user) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('lastActivityTimestamp', Date.now().toString());
-        
-        // Update auth context
-        if (updateUser) {
-          updateUser(response.data.user);
-        }
-      }
-
-      setSuccess(true);
-      
-      // Redirect to dashboard after 2 seconds
-      setTimeout(() => {
-        navigate('/user/dashboard', { replace: true });
-      }, 2000);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to set up account. The link may have expired.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Determine username: email > whatsapp_number > contact
+  const username = userInfo?.email || userInfo?.whatsapp_number || userInfo?.contact || '';
 
   if (verifying) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full">
-          <div className="bg-white rounded-lg shadow-xl p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Verifying setup link...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg-primary">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-dark-text-secondary">Verifying setup link...</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          <div className="text-center mb-8">
-            <div className="h-16 w-16 mx-auto mb-4 bg-white rounded-full flex items-center justify-center p-2 shadow-md">
-              <img
-                src="/TheraPTrackLogoBgRemoved.png"
-                alt="TheraP Track Logo"
-                className="h-full w-full object-contain"
-              />
+  if (error || !token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg-primary px-4">
+        <div className="max-w-md w-full bg-white dark:bg-dark-bg-secondary rounded-lg shadow-xl p-8 text-center">
+          <div className="mb-4">
+            <div className="h-16 w-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+              <svg className="h-8 w-8 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Set Up Your Account</h2>
-            {userInfo && (
-              <p className="text-gray-600 mt-2">Welcome, {userInfo.name}!</p>
-            )}
-            <p className="text-gray-600 mt-1">Create a password to access your account</p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text-primary mb-2">
+              Invalid Setup Link
+            </h2>
+            <p className="text-gray-600 dark:text-dark-text-secondary">
+              {error || 'The setup link is invalid or has expired. Please contact your therapist for a new link.'}
+            </p>
           </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
-              <span className="text-sm">{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2 text-green-700">
-              <CheckCircle className="h-5 w-5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium">Account setup successful!</p>
-                <p>Redirecting to dashboard...</p>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="label">
-                <Lock className="inline h-4 w-4 mr-1" />
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="input pr-10"
-                  placeholder="Enter password (min. 6 characters)"
-                  required
-                  disabled={success || loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  disabled={success || loading}
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="label">
-                <Lock className="inline h-4 w-4 mr-1" />
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="input pr-10"
-                  placeholder="Confirm your password"
-                  required
-                  disabled={success || loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  disabled={success || loading}
-                >
-                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || success}
-              className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Setting up...
-                </>
-              ) : (
-                <>
-                  <KeyRound className="h-4 w-4" />
-                  Set Up Account
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link 
-              to="/login" 
-              className="text-primary-600 hover:text-primary-700 font-medium"
-            >
-              Back to Login
-            </Link>
-          </div>
+          <button
+            onClick={() => navigate('/login')}
+            className="mt-4 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+          >
+            Back to Login
+          </button>
         </div>
       </div>
+    );
+  }
+
+  // Use the same AccountSetupModal component used in PaymentSuccess
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg-primary">
+      <AccountSetupModal
+        setupToken={token}
+        userId={userInfo?.id}
+        username={username}
+        onSuccess={handleSuccess}
+        message="Please set a password to access your account and view your appointments."
+      />
     </div>
   );
 };

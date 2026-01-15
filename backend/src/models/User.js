@@ -20,19 +20,21 @@ class User {
     return result.rows[0];
   }
 
-  static async findByEmail(email) {
+  static async findByEmail(email, client = null) {
     const query = 'SELECT * FROM users WHERE email = $1';
-    const result = await db.query(query, [email]);
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [email]);
     return result.rows[0];
   }
 
-  static async findByContact(contact) {
+  static async findByContact(contact, client = null) {
     const query = 'SELECT * FROM users WHERE contact = $1';
-    const result = await db.query(query, [contact]);
+    const dbClient = client || db;
+    const result = await dbClient.query(query, [contact]);
     return result.rows[0];
   }
 
-  static async update(id, userData) {
+  static async update(id, userData, client = null) {
     const { name, sex, age, email, contact, whatsapp_number, address, photo_url } = userData;
     const query = `
       UPDATE users 
@@ -48,7 +50,8 @@ class User {
       RETURNING *
     `;
     const values = [name, sex, age, email, contact, whatsapp_number, address, photo_url, id];
-    const result = await db.query(query, values);
+    const dbClient = client || db;
+    const result = await dbClient.query(query, values);
     return result.rows[0];
   }
 

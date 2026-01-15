@@ -868,7 +868,8 @@ const createPublicBookingOrder = async (req, res) => {
         skip_payment: true,
         order: null,
         slot_id,
-        partner_id: partner.id
+        partner_id: partner_id, // Return the partner_id string (e.g., "AB12345") not internal ID
+        partner_internal_id: partner.id // Also include internal ID for reference
       });
     }
 
@@ -1141,9 +1142,262 @@ const verifyPublicBookingPayment = async (req, res) => {
     const {
       razorpay_order_id,
       razorpay_payment_id,
-      razorpay_signature
+      razorpay_signature,
+      slot_id: requestSlotId,
+      partner_id: requestPartnerId,
+      clientData: requestClientData
     } = req.body;
 
+    // Check if test mode - if all payment IDs are null/undefined and we have slot_id, it's test mode
+    const isTestMode = RazorpayService.isTestMode() && 
+                       (!razorpay_order_id && !razorpay_payment_id && !razorpay_signature) &&
+                       (requestSlotId && requestPartnerId && requestClientData);
+
+    // If test mode, find partner by partner_id string to get internal ID
+    let partnerInternalId = null;
+    if (isTestMode) {
+      const Partner = require('../models/Partner');
+      const partner = await Partner.findByPartnerId(requestPartnerId);
+      if (!partner) {
+        return res.status(404).json({ error: 'Therapist not found' });
+      }
+      partnerInternalId = partner.id;
+    }
+
+    if (isTestMode) {
+      console.log(`[VERIFY_PUBLIC_BOOKING_PAYMENT] Test mode - skipping payment verification for slot ${requestSlotId}`);
+      
+      // In test mode, directly process the booking without payment verification
+      // Import required modules for booking
+      const AvailabilitySlot = require('../models/AvailabilitySlot');
+      const Appointment = require('../models/Appointment');
+      const User = require('../models/User');
+      const Partner = require('../models/Partner');
+      const PartnerSubscription = require('../models/PartnerSubscription');
+      const googleCalendarService = require('../services/googleCalendarService');
+      const whatsappService = require('../services/whatsappService');
+      const db = require('../config/database');
+      const client = await db.getClient();
+
+      try {
+        const { name, age, sex, location, contact, whatsapp_number, email } = requestClientData;
+
+        // Validate age
+        const ageNum = parseInt(age);
+        if (isNaN(ageNum) || ageNum < 1 || ageNum > 150) {
+          await client.release();
+          return res.status(400).json({ error: 'Invalid age in client data' });
+        }
+
+        await client.query('SET timezone = "UTC"');
+        await client.query('BEGIN');
+
+        // Lock the slot row
+        const lockQuery = `
+          SELECT * FROM availability_slots
+          WHERE id = $1
+          FOR UPDATE
+        `;
+        const lockResult = await client.query(lockQuery, [requestSlotId]);
+        const slot = lockResult.rows[0];
+
+        if (!slot) {
+          await client.query('ROLLBACK');
+          await client.release();
+          return res.status(404).json({ error: 'Slot not found' });
+        }
+
+        // Verify slot is still available
+        const bookedStatuses = ['booked', 'confirmed', 'confirmed_balance_pending', 'confirmed_payment_pending'];
+        if (bookedStatuses.includes(slot.status)) {
+          await client.query('ROLLBACK');
+          await client.release();
+          return res.status(400).json({ error: 'Slot is already booked' });
+        }
+
+        // Check if user exists, create if not
+        let userId = null;
+        let isExistingUser = false;
+        const existingUserByContact = await User.findByContact(contact, client);
+        if (existingUserByContact) {
+          userId = existingUserByContact.id;
+          isExistingUser = true;
+          await User.update(userId, {
+            whatsapp_number: whatsapp_number || existingUserByContact.whatsapp_number,
+            email: email || existingUserByContact.email,
+            address: location || existingUserByContact.address
+          }, client);
+        } else if (email) {
+          const existingUserByEmail = await User.findByEmail(email, client);
+          if (existingUserByEmail) {
+            userId = existingUserByEmail.id;
+            isExistingUser = true;
+            await User.update(userId, {
+              whatsapp_number: whatsapp_number || existingUserByEmail.whatsapp_number,
+              address: location || existingUserByEmail.address
+            }, client);
+          }
+        }
+
+        if (!userId) {
+          const newUser = await User.create({
+            name,
+            age: ageNum,
+            sex,
+            email: email || null,
+            contact,
+            whatsapp_number,
+            address: location || null
+          }, client);
+          userId = newUser.id;
+          console.log(`[VERIFY_PUBLIC_BOOKING_PAYMENT] Created new user with ID: ${userId}`);
+        } else {
+          console.log(`[VERIFY_PUBLIC_BOOKING_PAYMENT] Using existing user with ID: ${userId}`);
+        }
+
+        // Link user to partner (use partnerInternalId from test mode or slot.partner_id from normal flow)
+        const effectivePartnerId = partnerInternalId || slot.partner_id;
+        await User.assignToPartner(userId, effectivePartnerId, client);
+
+        // Check if user has auth credentials, generate setup token if not
+        const Auth = require('../models/Auth');
+        const AccountSetup = require('../models/AccountSetup');
+        let setupToken = null;
+        let needsAccountSetup = false;
+        
+        const hasCredentials = await Auth.hasCredentials(userId);
+        if (!hasCredentials) {
+          needsAccountSetup = true;
+          const setupTokenRecord = await AccountSetup.createToken(userId, client);
+          setupToken = setupTokenRecord.token;
+        }
+
+        // Create appointment (use effectivePartnerId already defined above)
+        const conflicts = await AvailabilitySlot.checkGoogleCalendarConflict(
+          effectivePartnerId,
+          slot.start_datetime,
+          slot.end_datetime
+        );
+
+        let appointmentId = null;
+        if (conflicts.length === 0) {
+          const subscription = await PartnerSubscription.getActiveSubscription(effectivePartnerId);
+          if (subscription && subscription.max_appointments !== null && subscription.max_appointments !== undefined) {
+            const currentMonthCount = await Appointment.countCurrentMonthAppointments(effectivePartnerId);
+            if (currentMonthCount >= subscription.max_appointments) {
+              await client.query('ROLLBACK');
+              await client.release();
+              return res.status(403).json({ 
+                error: `Therapist has reached maximum appointments limit` 
+              });
+            }
+          }
+
+          const appointment = await Appointment.create({
+            user_id: userId,
+            partner_id: effectivePartnerId,
+            title: 'Therapy Session',
+            appointment_date: slot.start_datetime,
+            end_date: slot.end_datetime,
+            duration_minutes: slot.duration_minutes,
+            notes: `Public booking - ${slot.location_type === 'online' ? 'Online' : 'In-person'} session`
+          }, client);
+          appointmentId = appointment.id;
+
+          // Update slot status
+          const updateSlotQuery = `
+            UPDATE availability_slots
+            SET status = 'booked',
+                is_available = FALSE,
+                booked_by_user_id = $1,
+                booked_at = CURRENT_TIMESTAMP,
+                appointment_id = $2,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+            RETURNING *
+          `;
+          await client.query(updateSlotQuery, [userId, appointmentId, requestSlotId]);
+
+          // Sync with Google Calendar if enabled
+          const partner = await Partner.findById(effectivePartnerId);
+          if (partner && partner.google_calendar_enabled) {
+            try {
+              await googleCalendarService.createAppointmentEvent(
+                effectivePartnerId,
+                appointmentId,
+                slot.start_datetime,
+                slot.end_datetime,
+                name,
+                contact,
+                slot.location_type === 'online'
+              );
+            } catch (calendarError) {
+              console.error('[VERIFY_PUBLIC_BOOKING_PAYMENT] Google Calendar sync error:', calendarError);
+              // Don't fail the booking if calendar sync fails
+            }
+          }
+
+          // Send WhatsApp notification
+          try {
+            if (whatsapp_number) {
+              const formattedDate = new Date(slot.start_datetime).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+              const formattedTime = new Date(slot.start_datetime).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+
+              await whatsappService.sendBookingConfirmation(
+                whatsapp_number,
+                name,
+                partner.name || 'Your therapist',
+                formattedDate,
+                formattedTime,
+                slot.location_type === 'online'
+              );
+            }
+          } catch (whatsappError) {
+            console.error('[VERIFY_PUBLIC_BOOKING_PAYMENT] WhatsApp notification error:', whatsappError);
+            // Don't fail the booking if WhatsApp fails
+          }
+        } else {
+          await client.query('ROLLBACK');
+          await client.release();
+          return res.status(409).json({
+            error: 'Time slot conflicts with existing appointment'
+          });
+        }
+
+        await client.query('COMMIT');
+        await client.release();
+
+        return res.json({
+          message: 'Test mode: Booking confirmed (payment skipped)',
+          booking_confirmed: true,
+          appointment_id: appointmentId,
+          user_id: userId,
+          is_existing_user: isExistingUser,
+          needs_account_setup: needsAccountSetup,
+          setup_token: setupToken,
+          payment: {
+            id: `test_payment_${Date.now()}`,
+            status: 'captured',
+            amount: 0
+          },
+          test_mode: true
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        await client.release();
+        throw error;
+      }
+    }
+
+    // Normal payment flow - require all payment IDs
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({
         error: 'razorpay_order_id, razorpay_payment_id, and razorpay_signature are required'
@@ -1264,7 +1518,7 @@ const verifyPublicBookingPayment = async (req, res) => {
       // Check if user exists, create if not
       let userId = null;
       let isExistingUser = false;
-      const existingUserByContact = await User.findByContact(contact);
+      const existingUserByContact = await User.findByContact(contact, client);
       if (existingUserByContact) {
         userId = existingUserByContact.id;
         isExistingUser = true;
@@ -1272,16 +1526,16 @@ const verifyPublicBookingPayment = async (req, res) => {
           whatsapp_number: whatsapp_number || existingUserByContact.whatsapp_number,
           email: email || existingUserByContact.email,
           address: location || existingUserByContact.address
-        });
+        }, client);
       } else if (email) {
-        const existingUserByEmail = await User.findByEmail(email);
+        const existingUserByEmail = await User.findByEmail(email, client);
         if (existingUserByEmail) {
           userId = existingUserByEmail.id;
           isExistingUser = true;
           await User.update(userId, {
             whatsapp_number: whatsapp_number || existingUserByEmail.whatsapp_number,
             address: location || existingUserByEmail.address
-          });
+          }, client);
         }
       }
 
@@ -1296,6 +1550,9 @@ const verifyPublicBookingPayment = async (req, res) => {
           address: location || null
         }, client);
         userId = newUser.id;
+        console.log(`[VERIFY_PUBLIC_BOOKING_PAYMENT] Created new user with ID: ${userId}`);
+      } else {
+        console.log(`[VERIFY_PUBLIC_BOOKING_PAYMENT] Using existing user with ID: ${userId}`);
       }
 
       // Link user to partner
@@ -1325,7 +1582,6 @@ const verifyPublicBookingPayment = async (req, res) => {
       if (conflicts.length === 0) {
         const subscription = await PartnerSubscription.getActiveSubscription(slot.partner_id);
         if (subscription && subscription.max_appointments !== null && subscription.max_appointments !== undefined) {
-          const Appointment = require('../models/Appointment');
           const currentMonthCount = await Appointment.countCurrentMonthAppointments(slot.partner_id);
           if (currentMonthCount >= subscription.max_appointments) {
             await client.query('ROLLBACK');

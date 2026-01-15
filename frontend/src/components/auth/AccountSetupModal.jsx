@@ -4,7 +4,7 @@ import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const AccountSetupModal = ({ setupToken, userId, username, onSuccess }) => {
+const AccountSetupModal = ({ setupToken, userId, username, onSuccess, message }) => {
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: ''
@@ -146,7 +146,7 @@ const AccountSetupModal = ({ setupToken, userId, username, onSuccess }) => {
           {/* Info message */}
           <div className="bg-blue-50 dark:bg-dark-bg-primary border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-300">
-              Your booking was successful! Please set a password to access your account and view your appointments.
+              {message || 'Your booking was successful! Please set a password to access your account and view your appointments.'}
             </p>
           </div>
 

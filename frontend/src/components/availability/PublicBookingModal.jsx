@@ -234,14 +234,44 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
       // Check if test mode - skip payment flow
       if (orderResponse.data.skip_payment || orderResponse.data.test_mode) {
         // Test mode: Skip payment and directly verify
+        // Pass slot_id, partner_id, and clientData for test mode processing
         const verifyResponse = await publicBookingAPI.verifyBookingPayment({
           razorpay_order_id: null,
           razorpay_payment_id: null,
-          razorpay_signature: null
+          razorpay_signature: null,
+          slot_id: slot.id,
+          partner_id: partnerId,
+          clientData: clientData
         });
 
         if (verifyResponse.data.booking_confirmed) {
-          onConfirm(null, true); // Pass true to indicate success
+          // Navigate to payment success page with booking data (same as normal flow)
+          // This ensures the AccountSetupModal is shown if needed
+          navigate('/payment-success', {
+            state: {
+              payment: verifyResponse.data.payment || {
+                id: `test_payment_${Date.now()}`,
+                status: 'captured',
+                amount: 0,
+                currency: feeSettings?.fee_currency || 'INR',
+                razorpay_payment_id: null
+              },
+              booking: {
+                slot_id: slot.id,
+                appointment_id: verifyResponse.data.appointment_id,
+                is_public_booking: true,
+                needs_account_setup: verifyResponse.data.needs_account_setup,
+                setup_token: verifyResponse.data.setup_token,
+                user_id: verifyResponse.data.user_id,
+                user: {
+                  email: clientData.email,
+                  whatsapp_number: clientData.whatsapp_number,
+                  contact: clientData.contact
+                }
+              }
+            },
+            replace: true
+          });
         } else {
           throw new Error('Booking verification failed');
         }
