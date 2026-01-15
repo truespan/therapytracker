@@ -20,6 +20,7 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
   const [errors, setErrors] = useState({});
   const [countryCode, setCountryCode] = useState('+91');
   const [whatsappCountryCode, setWhatsappCountryCode] = useState('+91');
+  const [sameAsContact, setSameAsContact] = useState(false);
   const modalRef = useRef(null);
   const backdropRef = useRef(null);
 
@@ -109,6 +110,45 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
         ...prev,
         [name]: ''
       }));
+    }
+    
+    // If contact number changes and "same as contact" is checked, update WhatsApp
+    if (name === 'contact' && sameAsContact) {
+      setFormData(prev => ({
+        ...prev,
+        whatsapp_number: value
+      }));
+      setWhatsappCountryCode(countryCode);
+    }
+  };
+
+  const handleSameAsContactChange = (e) => {
+    const checked = e.target.checked;
+    setSameAsContact(checked);
+    
+    if (checked) {
+      // Copy contact number to WhatsApp
+      setFormData(prev => ({
+        ...prev,
+        whatsapp_number: prev.contact
+      }));
+      setWhatsappCountryCode(countryCode);
+    } else {
+      // Clear WhatsApp number
+      setFormData(prev => ({
+        ...prev,
+        whatsapp_number: ''
+      }));
+    }
+  };
+
+  const handleCountryCodeChange = (e) => {
+    const newCode = e.target.value;
+    setCountryCode(newCode);
+    
+    // If "same as contact" is checked, update WhatsApp country code too
+    if (sameAsContact) {
+      setWhatsappCountryCode(newCode);
     }
   };
 
@@ -416,53 +456,15 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                 />
               </div>
 
-              {/* WhatsApp Number */}
+              {/* Contact Number - First Field (Mandatory) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  WhatsApp Number <span className="text-gray-500">(Optional)</span>
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    value={whatsappCountryCode}
-                    onChange={(e) => setWhatsappCountryCode(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
-                  >
-                    <option value="+91">+91 (IN)</option>
-                    <option value="+1">+1 (US/CA)</option>
-                    <option value="+44">+44 (UK)</option>
-                    <option value="+61">+61 (AU)</option>
-                  </select>
-                  <input
-                    type="tel"
-                    name="whatsapp_number"
-                    value={formData.whatsapp_number}
-                    onChange={handleChange}
-                    className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary ${
-                      errors.whatsapp_number ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'
-                    }`}
-                    placeholder="WhatsApp number"
-                  />
-                </div>
-                <p className="mt-1 text-xs text-gray-600 dark:text-dark-text-tertiary">
-                  Use your WhatsApp number so you can receive messages for bookings, appointments, updates and reminders.
-                </p>
-                {errors.whatsapp_number && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-                    <AlertCircle className="h-4 w-4" />
-                    {errors.whatsapp_number}
-                  </p>
-                )}
-              </div>
-
-              {/* Contact Number */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  Contact Number <span className="text-red-500">*</span>
+                  📞 Contact Number <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
                   <select
                     value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
+                    onChange={handleCountryCodeChange}
                     className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary"
                   >
                     <option value="+91">+91 (IN)</option>
@@ -479,8 +481,12 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                       errors.contact ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'
                     }`}
                     placeholder="Phone number"
+                    required
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-600 dark:text-dark-text-tertiary">
+                  Required. We'll use this to reach you if needed.
+                </p>
                 {errors.contact && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
@@ -489,10 +495,62 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                 )}
               </div>
 
-              {/* Email */}
+              {/* WhatsApp Number - Second Field (Optional with checkbox) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
-                  Email ID <span className="text-gray-500">(Optional)</span>
+                  💬 WhatsApp Number <span className="text-gray-500">(Optional)</span>
+                </label>
+                <div className="flex gap-2 mb-2">
+                  <select
+                    value={whatsappCountryCode}
+                    onChange={(e) => setWhatsappCountryCode(e.target.value)}
+                    disabled={sameAsContact}
+                    className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="+91">+91 (IN)</option>
+                    <option value="+1">+1 (US/CA)</option>
+                    <option value="+44">+44 (UK)</option>
+                    <option value="+61">+61 (AU)</option>
+                  </select>
+                  <input
+                    type="tel"
+                    name="whatsapp_number"
+                    value={formData.whatsapp_number}
+                    onChange={handleChange}
+                    disabled={sameAsContact}
+                    className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-dark-bg-secondary dark:text-dark-text-primary disabled:opacity-50 disabled:cursor-not-allowed ${
+                      errors.whatsapp_number ? 'border-red-500' : 'border-gray-300 dark:border-dark-border'
+                    }`}
+                    placeholder="WhatsApp number"
+                  />
+                </div>
+                <div className="flex items-center mb-2">
+                  <input
+                    type="checkbox"
+                    id="sameAsContact"
+                    checked={sameAsContact}
+                    onChange={handleSameAsContactChange}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="sameAsContact" className="ml-2 text-sm text-gray-700 dark:text-dark-text-secondary">
+                    ☑ Same as contact number
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-600 dark:text-dark-text-tertiary">
+                  Used for appointments, cancellations, updates and quick communication
+                </p>
+                {errors.whatsapp_number && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.whatsapp_number}
+                  </p>
+                )}
+              </div>
+
+              {/* Email - Last Field (Optional) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1">
+                  📧 Email Address <span className="text-gray-500">(Optional)</span>
                 </label>
                 <input
                   type="email"
@@ -505,7 +563,7 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                   placeholder="your.email@example.com"
                 />
                 <p className="mt-1 text-xs text-gray-600 dark:text-dark-text-tertiary">
-                  Email will be used as the username. If not provided, the mobile number will serve as the login username.
+                  Used only for account access and rarely for important notifications
                 </p>
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
@@ -514,6 +572,14 @@ const PublicBookingModal = ({ slot, partnerName, partnerId, feeSettings, onConfi
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Login & Account Access Microcopy */}
+            <div className="p-3 bg-blue-50 dark:bg-dark-bg-secondary border border-blue-200 dark:border-blue-800 rounded-md">
+              <p className="text-xs text-blue-800 dark:text-blue-300">
+                <strong>Login & Account Access</strong><br />
+                We automatically create your login using Email → WhatsApp → Contact Number (in that order).
+              </p>
             </div>
 
             {/* Fee Information */}
