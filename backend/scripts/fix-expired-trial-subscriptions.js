@@ -12,7 +12,9 @@
 const db = require('../src/config/database');
 
 async function fixExpiredTrialSubscriptions() {
-  const client = await db.connect();
+  // `backend/src/config/database.js` exports `getClient()` / `pool`, not `connect()`.
+  // Use `getClient()` so the session timezone is enforced.
+  const client = db.getClient ? await db.getClient() : await db.pool.connect();
   
   try {
     console.log('🔍 Starting trial subscription verification...\n');

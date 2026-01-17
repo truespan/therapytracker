@@ -1,5 +1,12 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load env vars for both runtime contexts:
+// - API server started from `backend/`
+// - one-off scripts started from repo root (e.g. `node backend/scripts/...`)
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
