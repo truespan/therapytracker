@@ -211,6 +211,23 @@ class RazorpayService {
   }
 
   /**
+   * Fetch payments for a specific settlement
+   * @param {string} settlementId - Razorpay settlement ID
+   * @returns {Promise<Object>} List of payments in the settlement
+   */
+  static async fetchSettlementPayments(settlementId) {
+    try {
+      const razorpay = getRazorpayInstance();
+      // Fetch payments that belong to this settlement
+      const payments = await razorpay.settlements.fetchAllDemands(settlementId);
+      return payments;
+    } catch (error) {
+      console.error('Razorpay fetch settlement payments error:', error);
+      throw new Error(`Failed to fetch settlement payments: ${error.message}`);
+    }
+  }
+
+  /**
    * Cancel a subscription
    * @param {string} subscriptionId - Razorpay subscription ID
    * @param {Object} options - Cancel options

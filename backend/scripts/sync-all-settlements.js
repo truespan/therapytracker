@@ -27,47 +27,50 @@ async function syncAllSettlements() {
       return;
     }
     
-    // Fetch recent settlements from Razorpay
-    console.log('Fetching recent settlements from Razorpay...');
-    const settlementsResponse = await RazorpayService.fetchSettlements({ count: 100 });
-    const settlements = settlementsResponse.items || [];
-    
-    console.log(`Found ${settlements.length} recent settlements`);
-    
-    // Debug: Check settlement structure
-    if (settlements.length > 0) {
-      console.log('Sample settlement structure:', JSON.stringify(settlements[0], null, 2));
-    }
-    
-    // Build payment ID -> settlement ID map
-    // Razorpay settlements may need to be fetched individually to get payment IDs
+    // Build payment ID -> settlement ID map by checking each pending payment
+    // Razorpay doesn't provide payment IDs in settlement list, need to check payments individually
     const paymentToSettlementMap = {};
     
-    console.log('\nFetching detailed settlement information...');
-    for (let i = 0; i < Math.min(settlements.length, 20); i++) {
-      const settlement = settlements[i];
-      try {
-        // Fetch full settlement details to get payment IDs
-        const settlementDetails = await RazorpayService.fetchSettlement(settlement.id);
-        
-        // Check various possible fields for payment IDs
-        const paymentIds = settlementDetails.entity_ids || 
-                          settlementDetails.payment_ids || 
-                          (settlementDetails.items && settlementDetails.items.map(item => item.entity_id)) ||
-                          [];
-        
-        if (paymentIds.length > 0) {
-          console.log(`   Settlement ${settlement.id}: ${paymentIds.length} payments`);
-          for (const paymentId of paymentIds) {
-            paymentToSettlementMap[paymentId] = settlement.id;
-          }
+    console.log('Checking which payments have settlement IDs...\n');
+    
+    // Collect all pending payment IDs first
+    const allPendingPayments = [];
+    for (const candidate of pendingCandidates) {
+      const { recipient_id, recipient_type } = candidate;
+      const pendingEarningsList = await Earnings.getEarnings(recipient_id, recipient_type, {
+        status: 'pending'
+      });
+      
+      for (const earnings of pendingEarningsList) {
+        if (earnings.razorpay_payment_id) {
+          allPendingPayments.push({
+            payment_id: earnings.razorpay_payment_id,
+            earnings_id: earnings.id,
+            recipient_id,
+            recipient_type
+          });
         }
-      } catch (error) {
-        console.error(`   Error fetching settlement ${settlement.id}:`, error.message);
       }
     }
     
-    console.log(`\nSettlement map contains ${Object.keys(paymentToSettlementMap).length} payments\n`);
+    console.log(`Checking ${allPendingPayments.length} pending payments for settlement status...`);
+    
+    // Check each payment for settlement_id
+    for (const item of allPendingPayments) {
+      try {
+        const payment = await RazorpayService.fetchPayment(item.payment_id);
+        
+        // Check if payment has settlement_id
+        if (payment.settlement_id) {
+          paymentToSettlementMap[item.payment_id] = payment.settlement_id;
+          console.log(`   ✓ Payment ${item.payment_id} → Settlement ${payment.settlement_id}`);
+        }
+      } catch (error) {
+        console.error(`   ✗ Error checking payment ${item.payment_id}:`, error.message);
+      }
+    }
+    
+    console.log(`\nFound ${Object.keys(paymentToSettlementMap).length} payments with settlements\n`);
     console.log('='.repeat(80));
     
     let totalSynced = 0;
