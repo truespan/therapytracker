@@ -83,6 +83,33 @@ const assignSubscriptions = async (req, res) => {
       return res.status(404).json({ error: 'Subscription plan not found' });
     }
 
+    // Compute dates ON ASSIGN so trial plans never end up with NULL end_date.
+    // (Previously bulk assignment inserted rows without subscription_start_date/end_date.)
+    const startDate = new Date();
+    let endDate = null;
+    const isFreePlan = plan.plan_name && plan.plan_name.toLowerCase() === 'free plan';
+    if (!isFreePlan) {
+      endDate = new Date(startDate);
+      if (plan.plan_duration_days && plan.plan_duration_days > 0) {
+        // Trial plan with fixed duration
+        endDate.setDate(endDate.getDate() + plan.plan_duration_days);
+      } else {
+        // Regular paid plan (fallback to billing period)
+        switch (billing_period) {
+          case 'yearly':
+            endDate.setFullYear(endDate.getFullYear() + 1);
+            break;
+          case 'quarterly':
+            endDate.setMonth(endDate.getMonth() + 3);
+            break;
+          case 'monthly':
+          default:
+            endDate.setMonth(endDate.getMonth() + 1);
+            break;
+        }
+      }
+    }
+
     // Validate all partners belong to the organization
     const partners = await Organization.getPartners(id);
     const partnerIds = partners.map(p => p.id);
@@ -98,7 +125,11 @@ const assignSubscriptions = async (req, res) => {
     const assignments = partner_ids.map(partner_id => ({
       partner_id: parseInt(partner_id),
       subscription_plan_id: parseInt(subscription_plan_id),
-      billing_period
+      billing_period,
+      subscription_start_date: startDate,
+      subscription_end_date: endDate,
+      // Mark as paid so access is granted immediately (trial is effectively "paid" by org/admin).
+      payment_status: 'paid'
     }));
 
     const results = await db.transaction(async (client) => {
@@ -154,8 +185,9 @@ const updateSubscription = async (req, res) => {
     }
 
     // Validate subscription plan if provided
+    let plan = null;
     if (subscription_plan_id) {
-      const plan = await SubscriptionPlan.findById(subscription_plan_id);
+      plan = await SubscriptionPlan.findById(subscription_plan_id);
       if (!plan) {
         return res.status(404).json({ error: 'Subscription plan not found' });
       }
@@ -168,10 +200,40 @@ const updateSubscription = async (req, res) => {
       });
     }
 
+    // If plan or billing period changes, refresh the start/end dates so the subscription is valid.
+    // This prevents trial plans from having NULL end_date after updates.
+    const startDate = new Date();
+    let endDate = null;
+    const effectiveBilling = billing_period || subscription.billing_period;
+    const effectivePlan = plan || (subscription.subscription_plan_id ? await SubscriptionPlan.findById(subscription.subscription_plan_id) : null);
+    const isFreePlan = effectivePlan && effectivePlan.plan_name && effectivePlan.plan_name.toLowerCase() === 'free plan';
+    if (effectivePlan && !isFreePlan) {
+      endDate = new Date(startDate);
+      if (effectivePlan.plan_duration_days && effectivePlan.plan_duration_days > 0) {
+        endDate.setDate(endDate.getDate() + effectivePlan.plan_duration_days);
+      } else {
+        switch (effectiveBilling) {
+          case 'yearly':
+            endDate.setFullYear(endDate.getFullYear() + 1);
+            break;
+          case 'quarterly':
+            endDate.setMonth(endDate.getMonth() + 3);
+            break;
+          case 'monthly':
+          default:
+            endDate.setMonth(endDate.getMonth() + 1);
+            break;
+        }
+      }
+    }
+
     // Update subscription
     const updated = await PartnerSubscription.update(subscriptionId, {
       subscription_plan_id,
-      billing_period
+      billing_period,
+      subscription_start_date: startDate,
+      subscription_end_date: endDate,
+      payment_status: isFreePlan ? null : 'paid'
     });
 
     res.json({

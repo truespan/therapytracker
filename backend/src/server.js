@@ -13,7 +13,41 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+// CORS
+// Render + browser clients (www.theraptrack.com) require proper preflight handling.
+// If you see: "No 'Access-Control-Allow-Origin' header" on OPTIONS preflight,
+// ensure the requesting origin is included below (or provided via CORS_ORIGINS).
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const defaultAllowedOrigins = [
+  'https://www.theraptrack.com',
+  'https://theraptrack.com',
+  'http://localhost:3000',
+  'http://localhost:5173'
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser requests (no Origin header)
+    if (!origin) return callback(null, true);
+
+    const list = allowedOrigins.length > 0 ? allowedOrigins : defaultAllowedOrigins;
+    if (list.includes(origin)) return callback(null, true);
+
+    // Fail closed (no CORS) for unknown origins
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // JSON body parser - skip webhook route (needs raw body for signature verification)
 app.use((req, res, next) => {
