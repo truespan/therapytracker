@@ -17,7 +17,7 @@ async function diagnoseEarningsSettlement(partnerId = null, organizationId = nul
     let pendingQuery = `
       SELECT 
         id, recipient_id, recipient_type, razorpay_payment_id, 
-        amount, status, created_at, updated_at, payout_date
+        razorpay_settlement_id, amount, status, created_at, updated_at, payout_date
       FROM earnings
       WHERE status = 'pending'
     `;
@@ -45,6 +45,7 @@ async function diagnoseEarningsSettlement(partnerId = null, organizationId = nul
         const ageInDays = Math.floor((new Date() - new Date(earnings.created_at)) / (1000 * 60 * 60 * 24));
         console.log(`\n${index + 1}. Earnings ID: ${earnings.id}`);
         console.log(`   Payment ID: ${earnings.razorpay_payment_id || 'N/A'}`);
+        console.log(`   Settlement ID: ${earnings.razorpay_settlement_id || 'Not yet settled'}`);
         console.log(`   Recipient: ${earnings.recipient_type} #${earnings.recipient_id}`);
         console.log(`   Amount: ₹${parseFloat(earnings.amount).toFixed(2)}`);
         console.log(`   Status: ${earnings.status}`);
@@ -61,7 +62,7 @@ async function diagnoseEarningsSettlement(partnerId = null, organizationId = nul
     let availableQuery = `
       SELECT 
         id, recipient_id, recipient_type, razorpay_payment_id, 
-        amount, status, created_at, updated_at, payout_date
+        razorpay_settlement_id, amount, status, created_at, updated_at, payout_date
       FROM earnings
       WHERE status = 'available'
     `;
@@ -89,7 +90,7 @@ async function diagnoseEarningsSettlement(partnerId = null, organizationId = nul
       console.log(`   Total Available Balance: ₹${totalAvailable.toFixed(2)}\n`);
       
       availableEarnings.slice(0, 5).forEach((earnings, index) => {
-        console.log(`   ${index + 1}. Payment ID: ${earnings.razorpay_payment_id || 'N/A'} - ₹${parseFloat(earnings.amount).toFixed(2)} (Settled: ${earnings.updated_at})`);
+        console.log(`   ${index + 1}. Payment ID: ${earnings.razorpay_payment_id || 'N/A'} | Settlement ID: ${earnings.razorpay_settlement_id || 'N/A'} - ₹${parseFloat(earnings.amount).toFixed(2)} (Settled: ${earnings.updated_at})`);
       });
       if (availableEarnings.length > 5) {
         console.log(`   ... and ${availableEarnings.length - 5} more`);
@@ -158,7 +159,7 @@ async function diagnoseEarningsSettlement(partnerId = null, organizationId = nul
       SELECT 
         event_id, event_type, entity_id, created_at
       FROM razorpay_webhooks
-      WHERE event_type IN ('payment.settled', 'payment.transferred')
+      WHERE event_type IN ('settlement.processed', 'payment.settled', 'payment.transferred')
         AND created_at >= NOW() - INTERVAL '7 days'
       ORDER BY created_at DESC
       LIMIT 20
@@ -168,12 +169,26 @@ async function diagnoseEarningsSettlement(partnerId = null, organizationId = nul
     const webhookEvents = webhookResult.rows;
 
     if (webhookEvents.length > 0) {
-      webhookEvents.forEach((event, index) => {
-        console.log(`   ${index + 1}. ${event.event_type} - Payment ID: ${event.entity_id} - ${event.created_at}`);
-      });
+      const settlementEvents = webhookEvents.filter(e => e.event_type === 'settlement.processed');
+      const legacyEvents = webhookEvents.filter(e => e.event_type !== 'settlement.processed');
+      
+      if (settlementEvents.length > 0) {
+        console.log(`   ✅ Found ${settlementEvents.length} settlement.processed events (correct):`);
+        settlementEvents.forEach((event, index) => {
+          console.log(`      ${index + 1}. ${event.event_type} - Settlement ID: ${event.entity_id} - ${event.created_at}`);
+        });
+      }
+      
+      if (legacyEvents.length > 0) {
+        console.log(`\n   ⚠️  Found ${legacyEvents.length} legacy events (payment.settled/transferred):`);
+        legacyEvents.forEach((event, index) => {
+          console.log(`      ${index + 1}. ${event.event_type} - Payment ID: ${event.entity_id} - ${event.created_at}`);
+        });
+      }
     } else {
       console.log('   ⚠️  No settlement webhook events found in the last 7 days.');
       console.log('   This could indicate webhooks are not being received or processed.');
+      console.log('   Make sure "settlement.processed" event is enabled in Razorpay webhook settings.');
     }
 
     console.log(`\n${'='.repeat(80)}`);

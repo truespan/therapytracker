@@ -173,6 +173,44 @@ class RazorpayService {
   }
 
   /**
+   * Fetch settlement details from Razorpay
+   * @param {string} settlementId - Razorpay settlement ID (e.g., setl_xxxxx)
+   * @returns {Promise<Object>} Settlement details including payment IDs
+   */
+  static async fetchSettlement(settlementId) {
+    try {
+      const razorpay = getRazorpayInstance();
+      const settlement = await razorpay.settlements.fetch(settlementId);
+      return settlement;
+    } catch (error) {
+      console.error('Razorpay fetch settlement error:', error);
+      throw new Error(`Failed to fetch settlement: ${error.message}`);
+    }
+  }
+
+  /**
+   * Fetch all settlements with optional filters
+   * @param {Object} options - Query options
+   * @param {number} options.count - Number of settlements to fetch (default: 10, max: 100)
+   * @param {number} options.skip - Number of settlements to skip (for pagination)
+   * @returns {Promise<Object>} List of settlements
+   */
+  static async fetchSettlements(options = {}) {
+    try {
+      const razorpay = getRazorpayInstance();
+      const queryOptions = {
+        count: options.count || 10,
+        skip: options.skip || 0
+      };
+      const settlements = await razorpay.settlements.all(queryOptions);
+      return settlements;
+    } catch (error) {
+      console.error('Razorpay fetch settlements error:', error);
+      throw new Error(`Failed to fetch settlements: ${error.message}`);
+    }
+  }
+
+  /**
    * Cancel a subscription
    * @param {string} subscriptionId - Razorpay subscription ID
    * @param {Object} options - Cancel options

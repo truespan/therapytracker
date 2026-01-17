@@ -135,23 +135,65 @@ class Earnings {
   /**
    * Update earnings status by Razorpay payment ID
    */
-  static async updateStatusByPaymentId(razorpayPaymentId, status, payoutDate = null) {
+  static async updateStatusByPaymentId(razorpayPaymentId, status, payoutDate = null, settlementId = null) {
     let query = `
       UPDATE earnings
       SET status = $1, updated_at = CURRENT_TIMESTAMP
     `;
     const values = [status];
+    let paramIndex = 2;
 
     if (payoutDate) {
-      query += `, payout_date = $2 WHERE razorpay_payment_id = $3 RETURNING *`;
-      values.push(payoutDate, razorpayPaymentId);
-    } else {
-      query += ` WHERE razorpay_payment_id = $2 RETURNING *`;
-      values.push(razorpayPaymentId);
+      query += `, payout_date = $${paramIndex}`;
+      values.push(payoutDate);
+      paramIndex++;
     }
+
+    if (settlementId) {
+      query += `, razorpay_settlement_id = $${paramIndex}`;
+      values.push(settlementId);
+      paramIndex++;
+    }
+
+    query += ` WHERE razorpay_payment_id = $${paramIndex} RETURNING *`;
+    values.push(razorpayPaymentId);
 
     const result = await db.query(query, values);
     return result.rows[0];
+  }
+
+  /**
+   * Update multiple earnings by payment IDs with settlement info
+   */
+  static async updateMultipleByPaymentIds(paymentIds, status, payoutDate = null, settlementId = null) {
+    if (!paymentIds || paymentIds.length === 0) {
+      return [];
+    }
+
+    let query = `
+      UPDATE earnings
+      SET status = $1, updated_at = CURRENT_TIMESTAMP
+    `;
+    const values = [status];
+    let paramIndex = 2;
+
+    if (payoutDate) {
+      query += `, payout_date = $${paramIndex}`;
+      values.push(payoutDate);
+      paramIndex++;
+    }
+
+    if (settlementId) {
+      query += `, razorpay_settlement_id = $${paramIndex}`;
+      values.push(settlementId);
+      paramIndex++;
+    }
+
+    query += ` WHERE razorpay_payment_id = ANY($${paramIndex}::text[]) AND status = 'pending' RETURNING *`;
+    values.push(paymentIds);
+
+    const result = await db.query(query, values);
+    return result.rows;
   }
 
   /**

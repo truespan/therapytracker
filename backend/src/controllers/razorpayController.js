@@ -370,8 +370,15 @@ const handleWebhook = async (req, res) => {
 
     // Log incoming webhook event for debugging
     console.log(`[WEBHOOK] Received event: ${event.event} (ID: ${event.id})`);
-    if (event.event === 'payment.transferred' || event.event === 'payment.settled') {
+    if (event.event === 'settlement.processed') {
       console.log(`[WEBHOOK] Settlement event details:`, {
+        event_type: event.event,
+        event_id: event.id,
+        settlement_id: event.payload?.settlement?.entity?.id,
+        timestamp: new Date().toISOString()
+      });
+    } else if (event.event === 'payment.transferred' || event.event === 'payment.settled') {
+      console.log(`[WEBHOOK] Legacy settlement event details:`, {
         event_type: event.event,
         event_id: event.id,
         payment_id: event.payload?.payment?.entity?.id,
@@ -384,7 +391,11 @@ const handleWebhook = async (req, res) => {
       await handlePaymentSuccess(event);
     } else if (event.event === 'payment.failed') {
       await handlePaymentFailure(event);
+    } else if (event.event === 'settlement.processed') {
+      // PRIMARY: Handle settlement events (this is the correct way to track settlements)
+      await handleSettlementProcessed(event);
     } else if (event.event === 'payment.transferred' || event.event === 'payment.settled') {
+      // LEGACY: Keep for backwards compatibility, but settlement.processed is preferred
       await handlePaymentSettled(event);
     } else if (event.event === 'payout.processed' || event.event === 'payout.completed') {
       await handlePayoutProcessed(event);
@@ -630,6 +641,82 @@ async function handlePaymentSettled(event) {
       error: error.message,
       stack: error.stack,
       payment_id: payment?.id,
+      event_id: event.id
+    });
+    // Don't throw - webhook should still respond successfully
+  }
+}
+
+/**
+ * Handle settlement processed - update earnings from 'pending' to 'available'
+ * This is the correct webhook for Razorpay settlements
+ */
+async function handleSettlementProcessed(event) {
+  const settlement = event.payload.settlement?.entity;
+  
+  console.log(`[EARNINGS] Processing settlement event:`, {
+    settlement_id: settlement?.id,
+    event_type: event.event,
+    event_id: event.id,
+    has_settlement_entity: !!settlement
+  });
+  
+  if (!settlement || !settlement.id) {
+    console.warn('[EARNINGS] Settlement event missing settlement entity. Full event payload:', JSON.stringify(event.payload, null, 2));
+    return;
+  }
+
+  try {
+    const settlementId = settlement.id;
+    const RazorpayService = require('../services/razorpayService');
+    
+    // Fetch full settlement details from Razorpay API to get payment IDs
+    console.log(`[EARNINGS] Fetching settlement details from Razorpay for ${settlementId}...`);
+    const settlementDetails = await RazorpayService.fetchSettlement(settlementId);
+    
+    // Extract payment IDs from settlement
+    // Razorpay settlements contain an array of payment IDs
+    const paymentIds = settlementDetails.entity_ids || [];
+    
+    console.log(`[EARNINGS] Settlement ${settlementId} contains ${paymentIds.length} payments:`, paymentIds);
+    
+    if (paymentIds.length === 0) {
+      console.warn(`[EARNINGS] Settlement ${settlementId} has no payment IDs`);
+      return;
+    }
+    
+    // Calculate next Saturday for payout scheduling
+    const { getNextSaturday, formatDate } = require('../utils/dateUtils');
+    const nextSaturday = getNextSaturday();
+    const payoutDate = formatDate(nextSaturday);
+    
+    // Update all earnings for these payments
+    const Earnings = require('../models/Earnings');
+    const updatedEarnings = await Earnings.updateMultipleByPaymentIds(
+      paymentIds,
+      'available',
+      payoutDate,
+      settlementId
+    );
+    
+    console.log(`[EARNINGS] ✅ Successfully updated ${updatedEarnings.length} earnings to 'available' from settlement ${settlementId}`, {
+      settlement_id: settlementId,
+      payment_count: paymentIds.length,
+      updated_count: updatedEarnings.length,
+      payout_date: payoutDate,
+      updated_earnings: updatedEarnings.map(e => ({
+        id: e.id,
+        payment_id: e.razorpay_payment_id,
+        amount: e.amount,
+        recipient: `${e.recipient_type}#${e.recipient_id}`
+      }))
+    });
+    
+  } catch (error) {
+    console.error('[EARNINGS] ❌ Error handling settlement:', {
+      error: error.message,
+      stack: error.stack,
+      settlement_id: settlement?.id,
       event_id: event.id
     });
     // Don't throw - webhook should still respond successfully

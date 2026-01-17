@@ -133,56 +133,96 @@ const syncSettlementStatus = async (req, res) => {
     let errorCount = 0;
     const errors = [];
 
-    // Check each pending earnings record against Razorpay
-    for (const earnings of pendingEarnings) {
-      if (!earnings.razorpay_payment_id) {
-        console.log(`[EARNINGS SYNC] Skipping earnings ${earnings.id} - no payment ID`);
-        skippedCount++;
-        continue;
+    // Fetch recent settlements from Razorpay to check if payments are settled
+    console.log(`[EARNINGS SYNC] Fetching recent settlements from Razorpay...`);
+    
+    try {
+      // Fetch recent settlements (last 100)
+      const settlementsResponse = await RazorpayService.fetchSettlements({ count: 100 });
+      const settlements = settlementsResponse.items || [];
+      
+      console.log(`[EARNINGS SYNC] Found ${settlements.length} recent settlements`);
+      
+      // Build a map of payment ID -> settlement ID for quick lookup
+      const paymentToSettlementMap = {};
+      for (const settlement of settlements) {
+        if (settlement.entity_ids && Array.isArray(settlement.entity_ids)) {
+          for (const paymentId of settlement.entity_ids) {
+            paymentToSettlementMap[paymentId] = settlement.id;
+          }
+        }
       }
+      
+      console.log(`[EARNINGS SYNC] Settlement map contains ${Object.keys(paymentToSettlementMap).length} payments`);
+      
+      // Check each pending earnings record
+      for (const earnings of pendingEarnings) {
+        if (!earnings.razorpay_payment_id) {
+          console.log(`[EARNINGS SYNC] Skipping earnings ${earnings.id} - no payment ID`);
+          skippedCount++;
+          continue;
+        }
 
-      try {
-        // Fetch payment status from Razorpay
-        const payment = await RazorpayService.fetchPayment(earnings.razorpay_payment_id);
+        const paymentId = earnings.razorpay_payment_id;
+        const settlementId = paymentToSettlementMap[paymentId];
         
-        // Check if payment is settled
-        // Razorpay marks payments as settled when they've been transferred to the merchant account
-        // Check for settlement status or transferred status
-        const isSettled = payment.status === 'captured' && 
-                         (payment.order_id && (payment.settled === 1 || payment.transfers?.length > 0));
-
-        // Also check if payment has been transferred (which indicates settlement)
-        const hasTransfers = payment.transfers && payment.transfers.length > 0;
-        
-        // Check if payment notes indicate settlement
-        const settlementIndicators = [
-          payment.status === 'captured',
-          payment.settled === 1,
-          hasTransfers,
-          payment.notes?.settlement_status === 'settled'
-        ];
-
-        // If payment appears to be settled, update earnings status
-        if (isSettled || hasTransfers || settlementIndicators.some(ind => ind === true)) {
+        if (settlementId) {
+          // Payment is in a settlement - update to available
           const nextSaturday = getNextSaturday();
           const payoutDate = formatDate(nextSaturday);
           
-          await Earnings.updateStatusByPaymentId(earnings.razorpay_payment_id, 'available', payoutDate);
+          await Earnings.updateStatusByPaymentId(paymentId, 'available', payoutDate, settlementId);
           
-          console.log(`[EARNINGS SYNC] ✅ Updated earnings ${earnings.id} (payment ${earnings.razorpay_payment_id}) to 'available'`);
+          console.log(`[EARNINGS SYNC] ✅ Updated earnings ${earnings.id} (payment ${paymentId}) to 'available' with settlement ${settlementId}`);
           syncedCount++;
         } else {
-          console.log(`[EARNINGS SYNC] ⏳ Earnings ${earnings.id} (payment ${earnings.razorpay_payment_id}) still pending. Payment status: ${payment.status}, settled: ${payment.settled || 'N/A'}`);
+          // Payment not found in recent settlements - still pending
+          console.log(`[EARNINGS SYNC] ⏳ Earnings ${earnings.id} (payment ${paymentId}) not found in recent settlements, still pending`);
           skippedCount++;
         }
-      } catch (error) {
-        console.error(`[EARNINGS SYNC] ❌ Error checking payment ${earnings.razorpay_payment_id}:`, error.message);
-        errorCount++;
-        errors.push({
-          earnings_id: earnings.id,
-          payment_id: earnings.razorpay_payment_id,
-          error: error.message
-        });
+      }
+    } catch (error) {
+      console.error(`[EARNINGS SYNC] ❌ Error fetching settlements:`, error.message);
+      
+      // Fallback: Check individual payments if settlement fetch fails
+      console.log(`[EARNINGS SYNC] Falling back to individual payment checks...`);
+      
+      for (const earnings of pendingEarnings) {
+        if (!earnings.razorpay_payment_id) {
+          skippedCount++;
+          continue;
+        }
+
+        try {
+          const payment = await RazorpayService.fetchPayment(earnings.razorpay_payment_id);
+          
+          // Check if payment has settlement_id in its metadata
+          if (payment.settlement_id) {
+            const nextSaturday = getNextSaturday();
+            const payoutDate = formatDate(nextSaturday);
+            
+            await Earnings.updateStatusByPaymentId(
+              earnings.razorpay_payment_id, 
+              'available', 
+              payoutDate, 
+              payment.settlement_id
+            );
+            
+            console.log(`[EARNINGS SYNC] ✅ Updated earnings ${earnings.id} via payment check`);
+            syncedCount++;
+          } else {
+            console.log(`[EARNINGS SYNC] ⏳ Payment ${earnings.razorpay_payment_id} not yet settled`);
+            skippedCount++;
+          }
+        } catch (paymentError) {
+          console.error(`[EARNINGS SYNC] ❌ Error checking payment ${earnings.razorpay_payment_id}:`, paymentError.message);
+          errorCount++;
+          errors.push({
+            earnings_id: earnings.id,
+            payment_id: earnings.razorpay_payment_id,
+            error: paymentError.message
+          });
+        }
       }
     }
 
