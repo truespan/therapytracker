@@ -26,6 +26,7 @@ async function fixExpiredTrialSubscriptions() {
         ps.partner_id,
         p.email,
         p.name,
+        ps.assigned_at,
         ps.subscription_start_date,
         ps.subscription_end_date,
         sp.plan_name,
@@ -35,9 +36,10 @@ async function fixExpiredTrialSubscriptions() {
           WHEN ps.subscription_end_date > CURRENT_TIMESTAMP THEN 'ACTIVE'
           ELSE 'EXPIRED'
         END as current_status,
+        COALESCE(ps.subscription_start_date, ps.assigned_at) as calculated_start_date,
         CASE
-          WHEN ps.subscription_start_date IS NOT NULL AND sp.plan_duration_days IS NOT NULL THEN
-            ps.subscription_start_date + (sp.plan_duration_days || ' days')::INTERVAL
+          WHEN COALESCE(ps.subscription_start_date, ps.assigned_at) IS NOT NULL AND sp.plan_duration_days IS NOT NULL THEN
+            COALESCE(ps.subscription_start_date, ps.assigned_at) + (sp.plan_duration_days || ' days')::INTERVAL
           ELSE NULL
         END as calculated_end_date
       FROM partner_subscriptions ps
@@ -61,18 +63,25 @@ async function fixExpiredTrialSubscriptions() {
     // Step 2: Categorize subscriptions
     const needsEndDate = [];
     const needsUpdate = [];
+    const cannotCalculate = [];
     const expired = [];
     const active = [];
     
     for (const sub of trialSubs) {
       console.log(`\n📋 Partner: ${sub.email} (${sub.name})`);
       console.log(`   Plan: ${sub.plan_name} (${sub.plan_duration_days} days)`);
+      console.log(`   Assigned At: ${sub.assigned_at}`);
       console.log(`   Start Date: ${sub.subscription_start_date}`);
       console.log(`   Current End Date: ${sub.subscription_end_date || 'NULL'}`);
+      console.log(`   Calculated Start Date: ${sub.calculated_start_date}`);
       console.log(`   Calculated End Date: ${sub.calculated_end_date}`);
       console.log(`   Status: ${sub.current_status}`);
       
-      if (!sub.subscription_end_date) {
+      // If we can't calculate an end date, don't "fix" it to NULL.
+      if (!sub.calculated_end_date) {
+        cannotCalculate.push(sub);
+        console.log(`   ⚠️  ACTION NEEDED: Cannot calculate end_date (missing start date)`);
+      } else if (!sub.subscription_end_date) {
         needsEndDate.push(sub);
         console.log(`   ⚠️  ACTION NEEDED: Missing end_date`);
       } else if (sub.subscription_end_date !== sub.calculated_end_date) {
@@ -91,6 +100,7 @@ async function fixExpiredTrialSubscriptions() {
     console.log(`   Total trial subscriptions: ${trialSubs.length}`);
     console.log(`   Missing end_date: ${needsEndDate.length}`);
     console.log(`   Incorrect end_date: ${needsUpdate.length}`);
+    console.log(`   Cannot calculate (missing start date): ${cannotCalculate.length}`);
     console.log(`   Expired trials: ${expired.length}`);
     console.log(`   Active trials: ${active.length}`);
     
@@ -106,15 +116,17 @@ async function fixExpiredTrialSubscriptions() {
         try {
           const updateQuery = `
             UPDATE partner_subscriptions
-            SET subscription_end_date = $1,
+            SET subscription_start_date = COALESCE(subscription_start_date, $1),
+                subscription_end_date = $2,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2
+            WHERE id = $3
             RETURNING *
           `;
           
-          await client.query(updateQuery, [sub.calculated_end_date, sub.subscription_id]);
+          await client.query(updateQuery, [sub.calculated_start_date, sub.calculated_end_date, sub.subscription_id]);
           
           console.log(`✅ Fixed subscription for ${sub.email}`);
+          console.log(`   Set start_date to: ${sub.calculated_start_date}`);
           console.log(`   Set end_date to: ${sub.calculated_end_date}`);
         } catch (err) {
           console.error(`❌ Failed to fix subscription for ${sub.email}:`, err.message);
@@ -138,6 +150,15 @@ async function fixExpiredTrialSubscriptions() {
       
       console.log('\n⚠️  NOTE: These users will be automatically blocked by the backend middleware');
       console.log('   and will be prompted to upgrade when they next log in.');
+    }
+
+    // Step 4b: Report rows we could not fix
+    if (cannotCalculate.length > 0) {
+      console.log(`\n\n⚠️  COULD NOT FIX (missing start date) (${cannotCalculate.length}):`);
+      console.log('These trial subscriptions have no usable start date, so end_date cannot be computed:\n');
+      for (const sub of cannotCalculate) {
+        console.log(`   - ${sub.email} (${sub.name}) | subscription_id=${sub.subscription_id}`);
+      }
     }
     
     // Step 5: Check specific partner if email provided

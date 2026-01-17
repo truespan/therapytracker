@@ -11,17 +11,56 @@ class PartnerSubscription {
    * @returns {Promise<Object>} Created subscription assignment
    */
   static async create(subscriptionData, client = null) {
-    const { partner_id, subscription_plan_id, billing_period } = subscriptionData;
+    // IMPORTANT:
+    // Several code paths (signup, org partner creation, trial assignment) pass
+    // `subscription_start_date` / `subscription_end_date` into this method.
+    // Historically this method ignored those fields and only inserted
+    // (partner_id, subscription_plan_id, billing_period), causing NULL end dates
+    // for trial plans.
+    const {
+      partner_id,
+      subscription_plan_id,
+      billing_period,
+      subscription_start_date,
+      subscription_end_date,
+      payment_status,
+      razorpay_subscription_id,
+      razorpay_payment_id
+    } = subscriptionData;
+
+    const columns = ['partner_id', 'subscription_plan_id', 'billing_period'];
+    const values = [partner_id, subscription_plan_id, billing_period];
+    const optionalFields = {
+      subscription_start_date,
+      subscription_end_date,
+      payment_status,
+      razorpay_subscription_id,
+      razorpay_payment_id
+    };
+
+    for (const [key, value] of Object.entries(optionalFields)) {
+      if (value !== undefined) {
+        columns.push(key);
+        values.push(value);
+      }
+    }
+
+    const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+    const conflictUpdates = ['updated_at = CURRENT_TIMESTAMP'];
+    for (const key of Object.keys(optionalFields)) {
+      if (optionalFields[key] !== undefined) {
+        conflictUpdates.push(`${key} = EXCLUDED.${key}`);
+      }
+    }
 
     const query = `
-      INSERT INTO partner_subscriptions (partner_id, subscription_plan_id, billing_period)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (partner_id, subscription_plan_id, billing_period) 
-      DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+      INSERT INTO partner_subscriptions (${columns.join(', ')})
+      VALUES (${placeholders})
+      ON CONFLICT (partner_id, subscription_plan_id, billing_period)
+      DO UPDATE SET ${conflictUpdates.join(', ')}
       RETURNING *
     `;
 
-    const values = [partner_id, subscription_plan_id, billing_period];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
     return result.rows[0];
@@ -356,7 +395,13 @@ class PartnerSubscription {
       FROM partner_subscriptions ps
       JOIN subscription_plans sp ON ps.subscription_plan_id = sp.id
       WHERE ps.partner_id = $1
-        AND (ps.subscription_end_date IS NULL OR ps.subscription_end_date > CURRENT_TIMESTAMP)
+        AND (
+          -- Trial plans MUST have a non-NULL end date and it must be in the future
+          (sp.plan_duration_days IS NOT NULL AND sp.plan_duration_days > 0 AND ps.subscription_end_date > CURRENT_TIMESTAMP)
+          OR
+          -- Non-trial plans: NULL end_date means no expiry
+          ((sp.plan_duration_days IS NULL OR sp.plan_duration_days <= 0) AND (ps.subscription_end_date IS NULL OR ps.subscription_end_date > CURRENT_TIMESTAMP))
+        )
         AND (ps.is_cancelled = FALSE OR ps.is_cancelled IS NULL)
       ORDER BY ps.assigned_at DESC
       LIMIT 1
@@ -428,4 +473,3 @@ class PartnerSubscription {
 }
 
 module.exports = PartnerSubscription;
-
