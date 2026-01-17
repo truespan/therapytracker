@@ -60,10 +60,17 @@ async function syncAllSettlements() {
       try {
         const payment = await RazorpayService.fetchPayment(item.payment_id);
         
+        // Debug: Show payment structure for first payment
+        if (allPendingPayments.indexOf(item) === 0) {
+          console.log('Sample payment structure:', JSON.stringify(payment, null, 2));
+        }
+        
         // Check if payment has settlement_id
         if (payment.settlement_id) {
           paymentToSettlementMap[item.payment_id] = payment.settlement_id;
           console.log(`   ✓ Payment ${item.payment_id} → Settlement ${payment.settlement_id}`);
+        } else {
+          console.log(`   ✗ Payment ${item.payment_id} has no settlement_id (status: ${payment.status})`);
         }
       } catch (error) {
         console.error(`   ✗ Error checking payment ${item.payment_id}:`, error.message);
