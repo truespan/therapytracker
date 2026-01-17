@@ -245,9 +245,150 @@ const syncSettlementStatus = async (req, res) => {
   }
 };
 
+/**
+ * Admin endpoint - sync settlements for all partners/organizations
+ * Requires admin role
+ */
+const syncAllSettlements = async (req, res) => {
+  try {
+    console.log(`[ADMIN SYNC] Starting global settlement sync...`);
+    
+    // Fetch all earnings candidates with pending earnings
+    const candidates = await Earnings.getEarningsCandidates();
+    const pendingCandidates = candidates.filter(c => parseFloat(c.pending_earnings) > 0);
+    
+    console.log(`[ADMIN SYNC] Found ${pendingCandidates.length} recipients with pending earnings`);
+    
+    if (pendingCandidates.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No pending earnings to sync',
+        total_synced: 0,
+        total_skipped: 0,
+        total_errors: 0,
+        recipients: []
+      });
+    }
+    
+    // Fetch recent settlements from Razorpay
+    console.log(`[ADMIN SYNC] Fetching recent settlements from Razorpay...`);
+    const settlementsResponse = await RazorpayService.fetchSettlements({ count: 100 });
+    const settlements = settlementsResponse.items || [];
+    
+    console.log(`[ADMIN SYNC] Found ${settlements.length} recent settlements`);
+    
+    // Build payment ID -> settlement ID map
+    const paymentToSettlementMap = {};
+    for (const settlement of settlements) {
+      if (settlement.entity_ids && Array.isArray(settlement.entity_ids)) {
+        for (const paymentId of settlement.entity_ids) {
+          paymentToSettlementMap[paymentId] = settlement.id;
+        }
+      }
+    }
+    
+    console.log(`[ADMIN SYNC] Settlement map contains ${Object.keys(paymentToSettlementMap).length} payments`);
+    
+    let totalSynced = 0;
+    let totalSkipped = 0;
+    let totalErrors = 0;
+    const recipientResults = [];
+    
+    // Process each recipient
+    for (const candidate of pendingCandidates) {
+      const { recipient_id, recipient_type } = candidate;
+      
+      console.log(`[ADMIN SYNC] Processing ${recipient_type} #${recipient_id}...`);
+      
+      let recipientSynced = 0;
+      let recipientSkipped = 0;
+      let recipientErrors = 0;
+      
+      try {
+        // Get pending earnings for this recipient
+        const pendingEarnings = await Earnings.getEarnings(recipient_id, recipient_type, {
+          status: 'pending'
+        });
+        
+        console.log(`[ADMIN SYNC] ${recipient_type} #${recipient_id} has ${pendingEarnings.length} pending earnings`);
+        
+        // Check each pending earning
+        for (const earnings of pendingEarnings) {
+          if (!earnings.razorpay_payment_id) {
+            recipientSkipped++;
+            continue;
+          }
+          
+          const paymentId = earnings.razorpay_payment_id;
+          const settlementId = paymentToSettlementMap[paymentId];
+          
+          if (settlementId) {
+            // Payment is in a settlement - update to available
+            const nextSaturday = getNextSaturday();
+            const payoutDate = formatDate(nextSaturday);
+            
+            await Earnings.updateStatusByPaymentId(paymentId, 'available', payoutDate, settlementId);
+            
+            console.log(`[ADMIN SYNC] ✅ Updated earnings ${earnings.id} (payment ${paymentId}) with settlement ${settlementId}`);
+            recipientSynced++;
+          } else {
+            recipientSkipped++;
+          }
+        }
+        
+        recipientResults.push({
+          recipient_id,
+          recipient_type,
+          synced: recipientSynced,
+          skipped: recipientSkipped,
+          errors: recipientErrors,
+          pending_count: pendingEarnings.length
+        });
+        
+        totalSynced += recipientSynced;
+        totalSkipped += recipientSkipped;
+        
+      } catch (error) {
+        console.error(`[ADMIN SYNC] ❌ Error processing ${recipient_type} #${recipient_id}:`, error.message);
+        recipientErrors++;
+        totalErrors++;
+        
+        recipientResults.push({
+          recipient_id,
+          recipient_type,
+          synced: recipientSynced,
+          skipped: recipientSkipped,
+          errors: recipientErrors,
+          error: error.message
+        });
+      }
+    }
+    
+    console.log(`[ADMIN SYNC] Complete. Total synced: ${totalSynced}, skipped: ${totalSkipped}, errors: ${totalErrors}`);
+    
+    res.json({
+      success: true,
+      message: `Global settlement sync completed. ${totalSynced} earnings updated across ${pendingCandidates.length} recipients`,
+      total_synced: totalSynced,
+      total_skipped: totalSkipped,
+      total_errors: totalErrors,
+      recipients_processed: pendingCandidates.length,
+      recipients: recipientResults
+    });
+    
+  } catch (error) {
+    console.error('[ADMIN SYNC] ❌ Global sync failed:', error);
+    res.status(500).json({
+      error: 'Failed to sync settlements',
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   getEarningsSummary,
   getEarnings,
-  syncSettlementStatus
+  syncSettlementStatus,
+  syncAllSettlements
 };
 

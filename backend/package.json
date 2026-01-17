@@ -8,7 +8,8 @@
     "dev": "nodemon src/server.js",
     "diagnose:earnings": "node scripts/diagnose-earnings-settlement.js",
     "diagnose:earnings:partner": "node scripts/diagnose-earnings-settlement.js partner:",
-    "diagnose:earnings:org": "node scripts/diagnose-earnings-settlement.js org:"
+    "diagnose:earnings:org": "node scripts/diagnose-earnings-settlement.js org:",
+    "sync:settlements": "node scripts/sync-all-settlements.js"
   },
   "keywords": [
     "therapy",

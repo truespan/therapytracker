@@ -352,6 +352,7 @@ const earningsController = require('../controllers/earningsController');
 router.get('/earnings/summary', authenticateToken, earningsController.getEarningsSummary);
 router.get('/earnings', authenticateToken, earningsController.getEarnings);
 router.post('/earnings/sync-settlement', authenticateToken, earningsController.syncSettlementStatus);
+router.post('/admin/earnings/sync-all-settlements', authenticateToken, checkRole('admin'), earningsController.syncAllSettlements);
 
 // ==================== PAYOUT ROUTES ====================
 const payoutController = require('../controllers/payoutController');
