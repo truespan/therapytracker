@@ -376,6 +376,20 @@ class PartnerSubscription {
     const now = new Date();
     const endDate = subscription.subscription_end_date ? new Date(subscription.subscription_end_date) : null;
     
+    // For trial plans (with plan_duration_days > 0), MUST have end_date and it must be in the future
+    // This ensures expired trials are immediately blocked
+    if (subscription.plan_duration_days && subscription.plan_duration_days > 0) {
+      if (!endDate) {
+        console.warn(`[PartnerSubscription] Trial plan without end_date detected for subscription ID ${subscription.id}`);
+        return false; // Trial without end date = invalid/expired
+      }
+      const isActive = endDate > now;
+      if (!isActive) {
+        console.log(`[PartnerSubscription] Trial plan expired for subscription ID ${subscription.id}. End date: ${endDate}, Now: ${now}`);
+      }
+      return isActive;
+    }
+    
     // If cancelled, check if still within active period
     if (subscription.is_cancelled) {
       return endDate && endDate > now;

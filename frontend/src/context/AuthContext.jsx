@@ -332,6 +332,29 @@ export const AuthProvider = ({ children }) => {
         return true;
       }
       
+      // Check if on Trial Plan FIRST (before general expiry check)
+      const subscriptionPlanDurationDays = user.subscription?.plan_duration_days;
+      const isTrialPlan = subscriptionPlanDurationDays && subscriptionPlanDurationDays > 0;
+      
+      if (isTrialPlan) {
+        // Check if trial has expired
+        if (user.subscription_end_date) {
+          const endDate = new Date(user.subscription_end_date);
+          const now = new Date();
+          if (endDate <= now) {
+            // Trial expired - MUST upgrade (non-cancellable modal)
+            console.log('[needsSubscription] Trial expired - must upgrade (non-cancellable)');
+            // Store flag to make modal non-cancellable
+            sessionStorage.setItem('trialExpired', 'true');
+            return true;
+          }
+        }
+        // Trial still active - show modal but cancellable
+        console.log('[needsSubscription] Trial active - showing cancellable modal');
+        sessionStorage.removeItem('trialExpired');
+        return true;
+      }
+      
       // Check if subscription has expired (paid plans that expired should fall back to Free Plan)
       // This check handles cases where backend hasn't reverted yet or subscription_end_date indicates expiration
       if (user.subscription_end_date) {
@@ -341,15 +364,6 @@ export const AuthProvider = ({ children }) => {
           console.log('[needsSubscription] Subscription expired - should fall back to Free Plan, showing modal');
           return true;
         }
-      }
-      
-      // Check if on Trial Plan (should always show modal, but cancellable)
-      const subscriptionPlanDurationDays = user.subscription?.plan_duration_days;
-      const isTrialPlan = subscriptionPlanDurationDays && subscriptionPlanDurationDays > 0;
-      
-      if (isTrialPlan) {
-        // Trial Plan users: Always show modal (cancellable)
-        return true;
       }
       
       // Paid Plan users with active subscription: Don't show modal (they already have a paid subscription)

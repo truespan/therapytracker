@@ -21,8 +21,9 @@ const SubscriptionPlanModal = ({ isOpen, user, onSubscriptionComplete, onClose }
   // Check if user is on Free Plan
   const isFreePlan = user?.subscription?.plan_name?.toLowerCase().includes('free');
   
-  // Check if trial has ended
-  const isTrialEnded = isOnTrialPlan && user?.subscription_end_date && new Date(user.subscription_end_date) <= new Date();
+  // Check if trial has ended (from sessionStorage flag set by AuthContext)
+  const trialExpiredFlag = sessionStorage.getItem('trialExpired') === 'true';
+  const isTrialEnded = (isOnTrialPlan && user?.subscription_end_date && new Date(user.subscription_end_date) <= new Date()) || trialExpiredFlag;
   
   // Determine trial plan type (3-day or 7-day)
   const getTrialPlanType = () => {

@@ -6,10 +6,6 @@ const PartnerSubscription = require('../models/PartnerSubscription');
 const lastUpdateCache = new Map();
 const UPDATE_THROTTLE_MS = 5 * 60 * 1000; // Update at most once every 5 minutes
 
-// Cache for subscription checks to avoid excessive DB queries
-const subscriptionCheckCache = new Map();
-const SUBSCRIPTION_CHECK_THROTTLE_MS = 1 * 60 * 1000; // Check at most once per minute
-
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -24,33 +20,28 @@ const authenticateToken = (req, res, next) => {
     }
     req.user = user;
     
-    // For partners, check subscription validity (throttled)
+    // For partners, check subscription validity on EVERY request (no caching)
+    // This ensures expired trials are immediately blocked
     if (user.userType === 'partner') {
-      const subCacheKey = `partner_sub_${user.id}`;
-      const lastSubCheck = subscriptionCheckCache.get(subCacheKey);
-      const now = Date.now();
-      
-      // Check subscription if it hasn't been checked recently
-      if (!lastSubCheck || (now - lastSubCheck) > SUBSCRIPTION_CHECK_THROTTLE_MS) {
-        try {
-          const activeSub = await PartnerSubscription.getActiveSubscription(user.id);
-          
-          // If subscription is expired or invalid, block access
-          if (!activeSub || !PartnerSubscription.isActive(activeSub)) {
-            console.log(`[AUTH] Partner ${user.id} has expired subscription, blocking access`);
-            return res.status(403).json({ 
-              error: 'Your subscription has expired. Please log in again to renew or select a plan.',
-              code: 'SUBSCRIPTION_EXPIRED',
-              requiresRelogin: true
-            });
-          }
-          
-          // Update cache to indicate subscription was checked
-          subscriptionCheckCache.set(subCacheKey, now);
-        } catch (subError) {
-          console.error('Error checking subscription in middleware:', subError);
-          // On error, allow request to proceed (fail open) but log the error
+      try {
+        const activeSub = await PartnerSubscription.getActiveSubscription(user.id);
+        
+        // If subscription is expired or invalid, block access
+        if (!activeSub || !PartnerSubscription.isActive(activeSub)) {
+          console.log(`[AUTH] Partner ${user.id} has expired/invalid subscription, blocking access`);
+          return res.status(403).json({
+            error: 'Your subscription has expired. Please log in again to renew or select a plan.',
+            code: 'SUBSCRIPTION_EXPIRED',
+            requiresRelogin: true
+          });
         }
+      } catch (subError) {
+        console.error('Error checking subscription in middleware:', subError);
+        // On error, block access (fail closed) for security
+        return res.status(500).json({
+          error: 'Unable to verify subscription status. Please try again.',
+          code: 'SUBSCRIPTION_CHECK_ERROR'
+        });
       }
       
       // Update last_login for partners when they use the system (throttled)
