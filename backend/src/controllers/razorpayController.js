@@ -368,6 +368,17 @@ const handleWebhook = async (req, res) => {
       JSON.stringify(event)
     ]);
 
+    // Log incoming webhook event for debugging
+    console.log(`[WEBHOOK] Received event: ${event.event} (ID: ${event.id})`);
+    if (event.event === 'payment.transferred' || event.event === 'payment.settled') {
+      console.log(`[WEBHOOK] Settlement event details:`, {
+        event_type: event.event,
+        event_id: event.id,
+        payment_id: event.payload?.payment?.entity?.id,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     // Handle different event types
     if (event.event === 'payment.captured' || event.event === 'payment.authorized') {
       await handlePaymentSuccess(event);
@@ -562,14 +573,29 @@ async function handleSubscriptionResumed(event) {
 async function handlePaymentSettled(event) {
   const payment = event.payload.payment?.entity;
   
+  console.log(`[EARNINGS] Processing settlement event for payment:`, {
+    payment_id: payment?.id,
+    event_type: event.event,
+    event_id: event.id,
+    has_payment_entity: !!payment
+  });
+  
   if (!payment || !payment.id) {
-    console.warn('[EARNINGS] Payment settlement event missing payment entity');
+    console.warn('[EARNINGS] Payment settlement event missing payment entity. Full event payload:', JSON.stringify(event.payload, null, 2));
     return;
   }
 
   try {
     // Find earnings record by Razorpay payment ID
     const earnings = await Earnings.findByPaymentId(payment.id);
+    
+    console.log(`[EARNINGS] Found earnings record for payment ${payment.id}:`, {
+      earnings_id: earnings?.id,
+      current_status: earnings?.status,
+      amount: earnings?.amount,
+      recipient_id: earnings?.recipient_id,
+      recipient_type: earnings?.recipient_type
+    });
     
     if (earnings && earnings.status === 'pending') {
       // Calculate next Saturday for payout scheduling
@@ -579,16 +605,33 @@ async function handlePaymentSettled(event) {
       const payoutDate = formatDate(nextSaturday); // Format as YYYY-MM-DD for DATE column
       
       // Update earnings status to 'available' and set payout_date
-      await Earnings.updateStatusByPaymentId(payment.id, 'available', payoutDate);
+      const updatedEarnings = await Earnings.updateStatusByPaymentId(payment.id, 'available', payoutDate);
       
-      console.log(`[EARNINGS] Updated earnings status to 'available' for payment ${payment.id}, scheduled for payout on ${payoutDate}`);
+      console.log(`[EARNINGS] ✅ Successfully updated earnings status to 'available' for payment ${payment.id}`, {
+        earnings_id: updatedEarnings?.id,
+        old_status: 'pending',
+        new_status: 'available',
+        amount: updatedEarnings?.amount,
+        payout_date: payoutDate,
+        recipient_id: updatedEarnings?.recipient_id,
+        recipient_type: updatedEarnings?.recipient_type
+      });
     } else if (earnings) {
-      console.log(`[EARNINGS] Earnings for payment ${payment.id} already has status: ${earnings.status}`);
+      console.log(`[EARNINGS] ⚠️  Earnings for payment ${payment.id} already has status: ${earnings.status}. Skipping update.`, {
+        earnings_id: earnings.id,
+        current_status: earnings.status,
+        amount: earnings.amount
+      });
     } else {
-      console.log(`[EARNINGS] No earnings record found for payment ${payment.id}`);
+      console.warn(`[EARNINGS] ⚠️  No earnings record found for payment ${payment.id}. This payment may not have an associated earnings record.`);
     }
   } catch (error) {
-    console.error('[EARNINGS] Error handling payment settlement:', error);
+    console.error('[EARNINGS] ❌ Error handling payment settlement:', {
+      error: error.message,
+      stack: error.stack,
+      payment_id: payment?.id,
+      event_id: event.id
+    });
     // Don't throw - webhook should still respond successfully
   }
 }

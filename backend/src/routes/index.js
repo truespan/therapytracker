@@ -351,6 +351,7 @@ router.use('/razorpay', razorpayRoutes);
 const earningsController = require('../controllers/earningsController');
 router.get('/earnings/summary', authenticateToken, earningsController.getEarningsSummary);
 router.get('/earnings', authenticateToken, earningsController.getEarnings);
+router.post('/earnings/sync-settlement', authenticateToken, earningsController.syncSettlementStatus);
 
 // ==================== PAYOUT ROUTES ====================
 const payoutController = require('../controllers/payoutController');
