@@ -933,48 +933,73 @@ const OrganizationDashboard = () => {
                   <h3 className="text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-3">
                     Client List ({partnerClients.length})
                   </h3>
+                  {/* Show message if client details are hidden */}
+                  {user?.theraptrack_controlled && user?.show_therapist_client_details === false && (
+                    <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <p className="text-xs text-yellow-800 dark:text-yellow-300">
+                        Client details are hidden. Only client count is visible.
+                      </p>
+                    </div>
+                  )}
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {partnerClients.map((client) => (
-                      <div
-                        key={client.id}
-                        className={`flex items-center justify-between p-3 sm:p-4 border rounded-lg transition-all ${
-                          selectedClient?.id === client.id
-                            ? 'border-primary-500 bg-primary-50 dark:bg-dark-bg-secondary'
-                            : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-bg-secondary hover:border-gray-300 dark:hover:border-dark-border hover:shadow-sm'
-                        }`}
-                      >
-                        <button
-                          onClick={() => handleClientSelect(client)}
-                          className="flex-1 text-left min-w-0"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                              <UserIcon className="h-5 w-5 text-primary-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-dark-text-primary truncate">
-                                {client.name}
-                              </p>
-                              <p className="text-xs sm:text-sm text-gray-500 dark:text-dark-text-tertiary">
-                                {client.sex}, {client.age} years
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => openDeleteClientModal(client)}
-                          className="flex-shrink-0 ml-2 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete client"
-                        >
-                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </button>
+                    {user?.theraptrack_controlled && user?.show_therapist_client_details === false ? (
+                      // Hide client names - only show count
+                      <div className="text-center py-8 text-gray-500 dark:text-dark-text-tertiary">
+                        <Users className="h-12 w-12 mx-auto mb-3 text-gray-400 dark:text-dark-text-tertiary" />
+                        <p className="text-sm">{partnerClients.length} client{partnerClients.length !== 1 ? 's' : ''} assigned</p>
+                        <p className="text-xs mt-1">Client details are hidden</p>
                       </div>
-                    ))}
+                    ) : (
+                      // Show full client list with names
+                      partnerClients.map((client) => (
+                        <div
+                          key={client.id}
+                          className={`flex items-center justify-between p-3 sm:p-4 border rounded-lg transition-all ${
+                            selectedClient?.id === client.id && (user?.theraptrack_controlled === false || user?.show_therapist_client_details !== false)
+                              ? 'border-primary-500 bg-primary-50 dark:bg-dark-bg-secondary'
+                              : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-bg-secondary hover:border-gray-300 dark:hover:border-dark-border hover:shadow-sm'
+                          }`}
+                        >
+                          <button
+                            onClick={() => {
+                              // Only allow client selection if show_therapist_client_details is enabled
+                              if (user?.theraptrack_controlled && user?.show_therapist_client_details === false) {
+                                return;
+                              }
+                              handleClientSelect(client);
+                            }}
+                            disabled={user?.theraptrack_controlled && user?.show_therapist_client_details === false}
+                            className={`flex-1 text-left min-w-0 ${user?.theraptrack_controlled && user?.show_therapist_client_details === false ? 'cursor-default' : ''}`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                <UserIcon className="h-5 w-5 text-primary-600" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-dark-text-primary truncate">
+                                  {client.name}
+                                </p>
+                                <p className="text-xs sm:text-sm text-gray-500 dark:text-dark-text-tertiary">
+                                  {client.sex}, {client.age} years
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => openDeleteClientModal(client)}
+                            className="flex-shrink-0 ml-2 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete client"
+                          >
+                            <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                          </button>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
-                {/* Session Details */}
-                {selectedClient && (
+                {/* Session Details - Only show if show_therapist_client_details is enabled or org is not theraptrack_controlled */}
+                {selectedClient && (user?.theraptrack_controlled === false || user?.show_therapist_client_details !== false) && (
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary flex items-center">
                       <CalendarIcon className="h-5 w-5 mr-2 text-primary-600" />

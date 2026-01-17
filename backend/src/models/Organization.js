@@ -88,7 +88,7 @@ class Organization {
       video_sessions_enabled, theraptrack_controlled, number_of_therapists, 
       subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date,
       query_resolver, referral_code, referral_code_discount, referral_code_discount_type,
-      hide_therapists_tab, hide_questionnaires_tab, disable_therapist_plan_change
+      hide_therapists_tab, hide_questionnaires_tab, disable_therapist_plan_change, show_therapist_client_details
     } = orgData;
     
     // Validate referral code can only be set for theraptrack_controlled organizations
@@ -115,9 +115,9 @@ class Organization {
         is_active, video_sessions_enabled, theraptrack_controlled, number_of_therapists,
         subscription_plan_id, subscription_billing_period, subscription_start_date, subscription_end_date,
         query_resolver, referral_code, referral_code_discount, referral_code_discount_type,
-        hide_therapists_tab, hide_questionnaires_tab, disable_therapist_plan_change
+        hide_therapists_tab, hide_questionnaires_tab, disable_therapist_plan_change, show_therapist_client_details
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
       RETURNING *
     `;
     const values = [
@@ -143,7 +143,8 @@ class Organization {
       referral_code_discount_type || null,
       hide_therapists_tab !== undefined ? hide_therapists_tab : false,
       hide_questionnaires_tab !== undefined ? hide_questionnaires_tab : false,
-      disable_therapist_plan_change !== undefined ? disable_therapist_plan_change : false
+      disable_therapist_plan_change !== undefined ? disable_therapist_plan_change : false,
+      show_therapist_client_details !== undefined ? show_therapist_client_details : true
     ];
     const dbClient = client || db;
     const result = await dbClient.query(query, values);
@@ -191,7 +192,7 @@ class Organization {
   }
 
   static async getAll() {
-    const query = 'SELECT id, name, email, contact, address, photo_url, gst_no, subscription_plan, is_active, video_sessions_enabled, theraptrack_controlled, number_of_therapists, referral_code, referral_code_discount, referral_code_discount_type, hide_therapists_tab, hide_questionnaires_tab, disable_therapist_plan_change, created_at FROM organizations ORDER BY name';
+    const query = 'SELECT id, name, email, contact, address, photo_url, gst_no, subscription_plan, is_active, video_sessions_enabled, theraptrack_controlled, number_of_therapists, referral_code, referral_code_discount, referral_code_discount_type, hide_therapists_tab, hide_questionnaires_tab, disable_therapist_plan_change, show_therapist_client_details, created_at FROM organizations ORDER BY name';
     const result = await db.query(query);
     return result.rows;
   }
@@ -205,7 +206,7 @@ class Organization {
       bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified,
       query_resolver, referral_code, referral_code_discount, referral_code_discount_type,
       for_new_therapists, hide_therapists_tab, hide_questionnaires_tab, disable_therapist_plan_change,
-      support_display_name, support_photo_url
+      show_therapist_client_details, support_display_name, support_photo_url
     } = orgData;
 
     console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
@@ -329,6 +330,10 @@ class Organization {
     if (disable_therapist_plan_change !== undefined) {
       updates.push(`disable_therapist_plan_change = $${paramIndex++}`);
       values.push(disable_therapist_plan_change);
+    }
+    if (show_therapist_client_details !== undefined) {
+      updates.push(`show_therapist_client_details = $${paramIndex++}`);
+      values.push(show_therapist_client_details);
     }
     if (support_display_name !== undefined) {
       updates.push(`support_display_name = $${paramIndex++}`);
@@ -786,7 +791,8 @@ class Organization {
                  o.subscription_plan, o.is_active, o.video_sessions_enabled, o.theraptrack_controlled,
                  o.for_new_therapists, o.number_of_therapists, o.deactivated_at, o.deactivated_by, o.created_at,
                  o.referral_code, o.referral_code_discount, o.referral_code_discount_type,
-                 o.hide_therapists_tab, o.hide_questionnaires_tab, o.disable_therapist_plan_change
+                 o.hide_therapists_tab, o.hide_questionnaires_tab, o.disable_therapist_plan_change,
+                 o.show_therapist_client_details
       )
       SELECT
         om.*,

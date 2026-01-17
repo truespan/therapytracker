@@ -18,6 +18,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     hide_therapists_tab: false,
     hide_questionnaires_tab: false,
     disable_therapist_plan_change: false,
+    show_therapist_client_details: true,
   });
 
   const [errors, setErrors] = useState({});
@@ -104,6 +105,7 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
       hide_therapists_tab: false,
       hide_questionnaires_tab: false,
       disable_therapist_plan_change: false,
+      show_therapist_client_details: true,
     });
     setErrors({});
     onClose();
@@ -378,6 +380,35 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                   </div>
                   <p className="text-xs text-gray-600 mt-0.5">
                     When checked, therapists in this organization will not be able to change their subscription plans from the Subscription Management tab.
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
+
+          {/* Show Therapist Client Details - Only shown if TheraPTrack Controlled is enabled */}
+          {formData.theraptrack_controlled && (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <div className="flex items-center h-5">
+                  <input
+                    type="checkbox"
+                    name="show_therapist_client_details"
+                    checked={formData.show_therapist_client_details}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-primary-700 bg-white border-gray-300 rounded focus:ring-primary-500 focus:ring-2"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 text-indigo-700 mr-2" />
+                    <span className="text-xs font-medium text-gray-900">
+                      Show Therapist Client Details
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    When checked, organization admins can see client names and details when a therapist is selected in the Therapists Management tab. When unchecked, client information will be hidden.
                   </p>
                 </div>
               </label>
