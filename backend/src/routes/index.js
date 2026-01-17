@@ -310,6 +310,7 @@ router.get('/questionnaires/:id/shared-partners', authenticateToken, checkRole('
 // ==================== ADMIN ROUTES ====================
 // Admin management routes - require admin role
 router.get('/admin/organizations', authenticateToken, checkRole('admin'), adminController.getAllOrganizations);
+router.get('/admin/organizations/:id', authenticateToken, checkRole('admin'), organizationController.getOrganizationById);
 router.post('/admin/organizations', authenticateToken, checkRole('admin'), adminController.createOrganization);
 router.put('/admin/organizations/:id', authenticateToken, checkRole('admin'), adminController.updateOrganization);
 router.post('/admin/organizations/:id/deactivate', authenticateToken, checkRole('admin'), adminController.deactivateOrganization);

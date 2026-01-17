@@ -678,9 +678,18 @@ const AdminDashboard = () => {
                           <TrendingUp className="h-5 w-5" />
                         </button>
                         <button
-                          onClick={() => {
-                            setSelectedOrg(org);
-                            setShowEditModal(true);
+                          onClick={async () => {
+                            try {
+                              // Fetch full organization details to ensure all fields are present
+                              const response = await adminAPI.getOrganizationById(org.id);
+                              setSelectedOrg(response.data.organization);
+                              setShowEditModal(true);
+                            } catch (error) {
+                              console.error('Error fetching organization:', error);
+                              // Fallback to org from list if fetch fails
+                              setSelectedOrg(org);
+                              setShowEditModal(true);
+                            }
                           }}
                           className="text-primary-700 dark:text-dark-primary-400 hover:text-primary-900 dark:hover:text-dark-primary-300 p-1 rounded hover:bg-primary-50 dark:hover:bg-dark-bg-secondary"
                           title="Edit"

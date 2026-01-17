@@ -40,6 +40,15 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
                               referralCode.trim() !== '' && 
                               referralCode.trim().toUpperCase() !== 'NULL';
       
+      // Handle show_therapist_client_details: explicitly check for false (including string "false"), otherwise default to true
+      // This handles cases where the value might be false, "false", null, undefined, or not present
+      const showTherapistClientDetailsValue = organization.show_therapist_client_details;
+      const showTherapistClientDetails = showTherapistClientDetailsValue === false || 
+                                         showTherapistClientDetailsValue === 'false' ||
+                                         showTherapistClientDetailsValue === 0
+        ? false 
+        : true;
+      
       setFormData({
         name: organization.name || '',
         email: organization.email || '',
@@ -58,7 +67,7 @@ const EditOrganizationModal = ({ isOpen, onClose, onSubmit, isLoading, organizat
         hide_therapists_tab: organization.hide_therapists_tab ?? false,
         hide_questionnaires_tab: organization.hide_questionnaires_tab ?? false,
         disable_therapist_plan_change: organization.disable_therapist_plan_change ?? false,
-        show_therapist_client_details: organization.show_therapist_client_details !== false,
+        show_therapist_client_details: showTherapistClientDetails,
       });
       
       // Initialize discount edit data

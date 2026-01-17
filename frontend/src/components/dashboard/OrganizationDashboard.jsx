@@ -911,8 +911,8 @@ const OrganizationDashboard = () => {
           )}
         </div>
 
-        {/* Therapist's Clients */}
-        {selectedPartner && (
+        {/* Therapist's Clients - Only show if show_therapist_client_details is enabled or org is not theraptrack_controlled */}
+        {selectedPartner && (user?.theraptrack_controlled === false || user?.show_therapist_client_details !== false) && (
           <div className="card">
             <div className="mb-4">
               <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text-primary flex items-center">

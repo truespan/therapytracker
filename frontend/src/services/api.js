@@ -202,6 +202,7 @@ export const organizationAPI = {
 // Admin APIs
 export const adminAPI = {
   getAllOrganizations: () => api.get('/admin/organizations'),
+  getOrganizationById: (id) => api.get(`/admin/organizations/${id}`),
   createOrganization: (data) => api.post('/admin/organizations', data),
   updateOrganization: (id, data) => api.put(`/admin/organizations/${id}`, data),
   deactivateOrganization: (id) => api.post(`/admin/organizations/${id}/deactivate`),
