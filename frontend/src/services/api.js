@@ -620,6 +620,8 @@ export const supportAPI = {
   sendMessage: (id, message) => api.post(`/support/conversations/${id}/messages`, { message }),
   markMessagesAsRead: (id) => api.put(`/support/conversations/${id}/messages/read`),
   getSupportTeamMembers: () => api.get('/support/team'),
+  getSupportSettings: () => api.get('/support/settings'),
+  updateSupportSettings: (settings) => api.put('/support/settings', settings),
   
   // Support team routes
   closeConversation: (id) => api.put(`/support/conversations/${id}/close`),

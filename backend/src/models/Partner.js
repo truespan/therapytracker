@@ -205,7 +205,7 @@ class Partner {
   }
 
   static async update(id, partnerData) {
-    const { name, sex, age, email, contact, qualification, qualification_degree, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency, session_fee, booking_fee, video_sessions_enabled, bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified, query_resolver, language_preferences } = partnerData;
+    const { name, sex, age, email, contact, qualification, qualification_degree, license_id, address, photo_url, work_experience, other_practice_details, email_verified, default_report_template_id, default_report_background, fee_min, fee_max, fee_currency, session_fee, booking_fee, video_sessions_enabled, bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified, query_resolver, language_preferences, support_display_name, support_photo_url } = partnerData;
     
     // Build dynamic update query
     const updates = [];
@@ -303,6 +303,14 @@ class Partner {
     if (language_preferences !== undefined) {
       updates.push(`language_preferences = $${paramIndex++}`);
       values.push(language_preferences);
+    }
+    if (support_display_name !== undefined) {
+      updates.push(`support_display_name = $${paramIndex++}`);
+      values.push(support_display_name);
+    }
+    if (support_photo_url !== undefined) {
+      updates.push(`support_photo_url = $${paramIndex++}`);
+      values.push(support_photo_url);
     }
     
     // Bank account fields - encrypt before storing

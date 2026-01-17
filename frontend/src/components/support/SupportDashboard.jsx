@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supportAPI } from '../../services/api';
-import { MessageCircle, X, Search, Filter, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { MessageCircle, X, Search, Filter, AlertCircle, CheckCircle, Clock, Settings, User, Upload, Save } from 'lucide-react';
 import { format } from 'date-fns';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -38,9 +38,20 @@ const SupportDashboard = () => {
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'open', 'closed'
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [supportSettings, setSupportSettings] = useState({
+    support_display_name: '',
+    support_photo_url: '',
+    name: '',
+    photo_url: ''
+  });
+  const [loadingSettings, setLoadingSettings] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
 
   useEffect(() => {
     loadConversations();
+    loadSupportSettings();
     // Poll for new conversations every 10 seconds
     const interval = setInterval(() => {
       loadConversations();
@@ -191,17 +202,67 @@ const SupportDashboard = () => {
     return false;
   };
 
+  const loadSupportSettings = async () => {
+    try {
+      setLoadingSettings(true);
+      const response = await supportAPI.getSupportSettings();
+      setSupportSettings({
+        support_display_name: response.data.support_display_name || '',
+        support_photo_url: response.data.support_photo_url || '',
+        name: response.data.name || '',
+        photo_url: response.data.photo_url || ''
+      });
+      setSettingsError('');
+    } catch (err) {
+      console.error('Failed to load support settings:', err);
+      setSettingsError(err.response?.data?.error || 'Failed to load settings');
+    } finally {
+      setLoadingSettings(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      setSavingSettings(true);
+      setSettingsError('');
+      await supportAPI.updateSupportSettings({
+        support_display_name: supportSettings.support_display_name || null,
+        support_photo_url: supportSettings.support_photo_url || null
+      });
+      await loadSupportSettings();
+      setShowSettings(false);
+      // Reload messages to reflect the new display name/photo
+      if (selectedConversation) {
+        loadMessages();
+      }
+    } catch (err) {
+      console.error('Failed to save support settings:', err);
+      setSettingsError(err.response?.data?.error || 'Failed to save settings');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   return (
     <div className="flex h-full bg-white dark:bg-dark-bg-secondary rounded-lg shadow-sm border border-gray-200 dark:border-dark-border">
       {/* Conversations list */}
       <div className="w-1/3 border-r border-gray-200 dark:border-dark-border flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-dark-border">
-          <div className="flex items-center gap-2 mb-4">
-            <MessageCircle className="h-5 w-5 text-primary-600 dark:text-dark-primary-500" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
-              Support Conversations
-            </h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-primary-600 dark:text-dark-primary-500" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
+                Support Conversations
+              </h2>
+            </div>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 text-gray-600 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary rounded-lg transition-colors"
+              title="Support Settings"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
           </div>
 
           {/* Search */}
@@ -447,6 +508,148 @@ const SupportDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Support Settings Modal */}
+      {showSettings && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+          onClick={() => setShowSettings(false)}
+        >
+          <div 
+            className="bg-white dark:bg-dark-bg-tertiary rounded-lg shadow-xl max-w-md w-full p-6" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
+                Support Chat Settings
+              </h3>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-dark-text-secondary mb-4">
+              Set a custom display name and photo that will be shown to users when you reply to support chats.
+            </p>
+
+            {settingsError && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-800 dark:text-red-200">
+                {settingsError}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {/* Current Display Info */}
+              <div className="p-3 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg">
+                <div className="text-xs font-medium text-gray-500 dark:text-dark-text-tertiary mb-2">
+                  Current Profile (Fallback)
+                </div>
+                <div className="flex items-center gap-3">
+                  {supportSettings.photo_url && getImageUrl(supportSettings.photo_url) ? (
+                    <img
+                      src={getImageUrl(supportSettings.photo_url)}
+                      alt={supportSettings.name}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-dark-bg-tertiary flex items-center justify-center">
+                      <User className="h-5 w-5 text-gray-400 dark:text-dark-text-tertiary" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-dark-text-primary">
+                      {supportSettings.name || 'No name'}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-dark-text-tertiary">
+                      {supportSettings.photo_url 
+                        ? 'Used if support display name/photo not set'
+                        : 'No profile photo available'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Support Display Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                  Support Display Name
+                </label>
+                <input
+                  type="text"
+                  value={supportSettings.support_display_name}
+                  onChange={(e) => setSupportSettings({ ...supportSettings, support_display_name: e.target.value })}
+                  placeholder={supportSettings.name || 'Enter display name'}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-dark-bg-tertiary dark:text-dark-text-primary placeholder-gray-400 dark:placeholder-dark-text-tertiary"
+                  disabled={loadingSettings || savingSettings}
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
+                  Leave empty to use your regular name
+                </p>
+              </div>
+
+              {/* Support Photo URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-2">
+                  Support Photo URL
+                </label>
+                <input
+                  type="text"
+                  value={supportSettings.support_photo_url}
+                  onChange={(e) => setSupportSettings({ ...supportSettings, support_photo_url: e.target.value })}
+                  placeholder={supportSettings.photo_url || 'Enter photo URL'}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-dark-bg-tertiary dark:text-dark-text-primary placeholder-gray-400 dark:placeholder-dark-text-tertiary"
+                  disabled={loadingSettings || savingSettings}
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-dark-text-tertiary">
+                  Leave empty to use your regular photo
+                </p>
+                {supportSettings.support_photo_url && (
+                  <div className="mt-2">
+                    <img
+                      src={getImageUrl(supportSettings.support_photo_url)}
+                      alt="Preview"
+                      className="h-16 w-16 rounded-full object-cover border-2 border-gray-300 dark:border-dark-border"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="flex-1 px-4 py-2 text-gray-700 dark:text-dark-text-secondary bg-gray-100 dark:bg-dark-bg-secondary rounded-lg hover:bg-gray-200 dark:hover:bg-dark-bg-tertiary transition-colors"
+                disabled={savingSettings}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                disabled={loadingSettings || savingSettings}
+                className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {savingSettings ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save Settings
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

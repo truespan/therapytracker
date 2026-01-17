@@ -298,11 +298,28 @@ const sendMessage = async (req, res) => {
       sender = await Organization.findById(userId);
     }
 
+    // Use support-specific name/photo if available, otherwise fall back to regular name/photo
+    let senderName = null;
+    let senderPhotoUrl = null;
+    
+    if (sender) {
+      if (senderType === 'admin') {
+        senderName = sender.support_display_name || sender.name;
+        senderPhotoUrl = sender.support_photo_url || null; // Admins don't have photo_url
+      } else if (senderType === 'partner' || senderType === 'organization') {
+        senderName = sender.support_display_name || sender.name;
+        senderPhotoUrl = sender.support_photo_url || sender.photo_url;
+      } else {
+        senderName = sender.name;
+        senderPhotoUrl = sender.photo_url;
+      }
+    }
+
     const messageWithSender = {
       ...newMessage,
-      sender_name: sender ? sender.name : null,
+      sender_name: senderName,
       sender_email: sender ? sender.email : null,
-      sender_photo_url: sender ? sender.photo_url : null
+      sender_photo_url: senderPhotoUrl
     };
 
     res.status(201).json({
@@ -406,6 +423,109 @@ const closeConversation = async (req, res) => {
 };
 
 /**
+ * Update support display settings (name and photo) for the current support person
+ */
+const updateSupportSettings = async (req, res) => {
+  try {
+    const userType = req.user.userType;
+    const userId = req.user.id;
+    const { support_display_name, support_photo_url } = req.body;
+
+    // Admins, partners, and organizations with query_resolver can update support settings
+    if (userType === 'admin') {
+      await Admin.update(userId, { support_display_name, support_photo_url });
+      const updatedAdmin = await Admin.findById(userId);
+      res.json({
+        message: 'Support settings updated successfully',
+        support_display_name: updatedAdmin.support_display_name,
+        support_photo_url: updatedAdmin.support_photo_url
+      });
+      return;
+    } else if (userType === 'partner') {
+      const partner = await Partner.findById(userId);
+      if (partner && partner.query_resolver === true) {
+        await Partner.update(userId, { support_display_name, support_photo_url });
+        const updatedPartner = await Partner.findById(userId);
+        res.json({
+          message: 'Support settings updated successfully',
+          support_display_name: updatedPartner.support_display_name,
+          support_photo_url: updatedPartner.support_photo_url
+        });
+        return;
+      }
+    } else if (userType === 'organization') {
+      const org = await Organization.findById(userId);
+      if (org && org.query_resolver === true) {
+        await Organization.update(userId, { support_display_name, support_photo_url });
+        const updatedOrg = await Organization.findById(userId);
+        res.json({
+          message: 'Support settings updated successfully',
+          support_display_name: updatedOrg.support_display_name,
+          support_photo_url: updatedOrg.support_photo_url
+        });
+        return;
+      }
+    }
+
+    res.status(403).json({ error: 'Only support team members can update support settings' });
+  } catch (error) {
+    console.error('Update support settings error:', error);
+    res.status(500).json({ error: 'Failed to update support settings', details: error.message });
+  }
+};
+
+/**
+ * Get support display settings for the current support person
+ */
+const getSupportSettings = async (req, res) => {
+  try {
+    const userType = req.user.userType;
+    const userId = req.user.id;
+
+    // Admins, partners, and organizations with query_resolver can get support settings
+    if (userType === 'admin') {
+      const admin = await Admin.findById(userId);
+      if (admin) {
+        res.json({
+          support_display_name: admin.support_display_name,
+          support_photo_url: admin.support_photo_url,
+          name: admin.name,
+          photo_url: null // Admins don't have photo_url
+        });
+        return;
+      }
+    } else if (userType === 'partner') {
+      const partner = await Partner.findById(userId);
+      if (partner && partner.query_resolver === true) {
+        res.json({
+          support_display_name: partner.support_display_name,
+          support_photo_url: partner.support_photo_url,
+          name: partner.name,
+          photo_url: partner.photo_url
+        });
+        return;
+      }
+    } else if (userType === 'organization') {
+      const org = await Organization.findById(userId);
+      if (org && org.query_resolver === true) {
+        res.json({
+          support_display_name: org.support_display_name,
+          support_photo_url: org.support_photo_url,
+          name: org.name,
+          photo_url: org.photo_url
+        });
+        return;
+      }
+    }
+
+    res.status(403).json({ error: 'Only support team members can access support settings' });
+  } catch (error) {
+    console.error('Get support settings error:', error);
+    res.status(500).json({ error: 'Failed to get support settings', details: error.message });
+  }
+};
+
+/**
  * Get support team members list (for display to app users)
  */
 const getSupportTeamMembers = async (req, res) => {
@@ -466,6 +586,8 @@ module.exports = {
   sendMessage,
   markMessagesAsRead,
   closeConversation,
-  getSupportTeamMembers
+  getSupportTeamMembers,
+  updateSupportSettings,
+  getSupportSettings
 };
 

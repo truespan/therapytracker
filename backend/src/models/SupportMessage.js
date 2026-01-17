@@ -46,9 +46,9 @@ class SupportMessage {
       SELECT 
         sm.*,
         CASE 
-          WHEN sm.sender_type = 'admin' THEN a.name
-          WHEN sm.sender_type = 'partner' THEN p.name
-          WHEN sm.sender_type = 'organization' THEN o.name
+          WHEN sm.sender_type = 'admin' THEN COALESCE(a.support_display_name, a.name)
+          WHEN sm.sender_type = 'partner' THEN COALESCE(p.support_display_name, p.name)
+          WHEN sm.sender_type = 'organization' THEN COALESCE(o.support_display_name, o.name)
           WHEN sm.sender_type = 'user' THEN u.name
         END as sender_name,
         CASE 
@@ -58,9 +58,9 @@ class SupportMessage {
           WHEN sm.sender_type = 'user' THEN u.email
         END as sender_email,
         CASE 
-          WHEN sm.sender_type = 'admin' THEN NULL
-          WHEN sm.sender_type = 'partner' THEN p.photo_url
-          WHEN sm.sender_type = 'organization' THEN o.photo_url
+          WHEN sm.sender_type = 'admin' THEN a.support_photo_url
+          WHEN sm.sender_type = 'partner' THEN COALESCE(p.support_photo_url, p.photo_url)
+          WHEN sm.sender_type = 'organization' THEN COALESCE(o.support_photo_url, o.photo_url)
           WHEN sm.sender_type = 'user' THEN u.photo_url
         END as sender_photo_url
       FROM support_messages sm

@@ -59,15 +59,42 @@ class Admin {
    * @returns {Object} Updated admin record
    */
   static async update(id, adminData) {
-    const { name, email } = adminData;
+    const { name, email, support_display_name, support_photo_url } = adminData;
+    
+    // Build dynamic update query
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (email !== undefined) {
+      updates.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+    if (support_display_name !== undefined) {
+      updates.push(`support_display_name = $${paramIndex++}`);
+      values.push(support_display_name);
+    }
+    if (support_photo_url !== undefined) {
+      updates.push(`support_photo_url = $${paramIndex++}`);
+      values.push(support_photo_url);
+    }
+
+    if (updates.length === 0) {
+      // No updates to make, return current record
+      return await this.findById(id);
+    }
+
+    values.push(id);
     const query = `
       UPDATE admins 
-      SET name = COALESCE($1, name),
-          email = COALESCE($2, email)
-      WHERE id = $3
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
       RETURNING *
     `;
-    const values = [name, email, id];
     const result = await db.query(query, values);
     return result.rows[0];
   }

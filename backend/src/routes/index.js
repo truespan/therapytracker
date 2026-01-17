@@ -427,6 +427,8 @@ router.get('/support/team', authenticateToken, supportController.getSupportTeamM
 
 // Support team routes (Admin, Partners/Orgs with query_resolver flag)
 router.put('/support/conversations/:id/close', authenticateToken, checkSupportTeamAccess, supportController.closeConversation);
+router.get('/support/settings', authenticateToken, checkSupportTeamAccess, supportController.getSupportSettings);
+router.put('/support/settings', authenticateToken, checkSupportTeamAccess, supportController.updateSupportSettings);
 
 // Health check
 router.get('/health', (req, res) => {

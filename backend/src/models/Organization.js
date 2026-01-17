@@ -204,7 +204,8 @@ class Organization {
       razorpay_subscription_id, razorpay_customer_id, payment_status,
       bank_account_holder_name, bank_account_number, bank_ifsc_code, bank_name, bank_account_verified,
       query_resolver, referral_code, referral_code_discount, referral_code_discount_type,
-      for_new_therapists, hide_therapists_tab, hide_questionnaires_tab, disable_therapist_plan_change
+      for_new_therapists, hide_therapists_tab, hide_questionnaires_tab, disable_therapist_plan_change,
+      support_display_name, support_photo_url
     } = orgData;
 
     console.log('Organization.update called with:', { id, orgData, address, addressType: typeof address, addressUndefined: address === undefined });
@@ -328,6 +329,14 @@ class Organization {
     if (disable_therapist_plan_change !== undefined) {
       updates.push(`disable_therapist_plan_change = $${paramIndex++}`);
       values.push(disable_therapist_plan_change);
+    }
+    if (support_display_name !== undefined) {
+      updates.push(`support_display_name = $${paramIndex++}`);
+      values.push(support_display_name);
+    }
+    if (support_photo_url !== undefined) {
+      updates.push(`support_photo_url = $${paramIndex++}`);
+      values.push(support_photo_url);
     }
     if (number_of_therapists !== undefined) {
       // Convert empty string to null for integer field
