@@ -147,7 +147,9 @@ const syncSettlementStatus = async (req, res) => {
       const paymentToSettlementMap = {};
       for (const settlement of settlements) {
         if (settlement.entity_ids && Array.isArray(settlement.entity_ids)) {
-          for (const paymentId of settlement.entity_ids) {
+          // Filter to only include payment IDs (they start with 'pay_')
+          const paymentIds = settlement.entity_ids.filter(id => id && id.startsWith('pay_'));
+          for (const paymentId of paymentIds) {
             paymentToSettlementMap[paymentId] = settlement.id;
           }
         }
@@ -281,7 +283,9 @@ const syncAllSettlements = async (req, res) => {
     const paymentToSettlementMap = {};
     for (const settlement of settlements) {
       if (settlement.entity_ids && Array.isArray(settlement.entity_ids)) {
-        for (const paymentId of settlement.entity_ids) {
+        // Filter to only include payment IDs (they start with 'pay_')
+        const paymentIds = settlement.entity_ids.filter(id => id && id.startsWith('pay_'));
+        for (const paymentId of paymentIds) {
           paymentToSettlementMap[paymentId] = settlement.id;
         }
       }
