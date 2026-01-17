@@ -7,6 +7,7 @@ const routes = require('./routes');
 const { scheduleSlotArchival } = require('./jobs/archiveOldSlots');
 const { scheduleExpiredSessionCompletion } = require('./jobs/completeExpiredSessions');
 const { scheduleAppointmentReminders } = require('./jobs/sendAppointmentReminders');
+const { startSettlementSyncCron } = require('./jobs/settlementSyncCron');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -77,6 +78,7 @@ app.listen(PORT, '0.0.0.0', () => {
   scheduleSlotArchival();
   scheduleExpiredSessionCompletion();
   scheduleAppointmentReminders();
+  startSettlementSyncCron(); // Start settlement sync cron job (runs every 6 hours)
 });
 
 module.exports = app;

@@ -95,6 +95,7 @@ const getEarnings = async (req, res) => {
 /**
  * Manual settlement sync - check pending earnings and update to available if settled
  * This endpoint can be called manually if webhooks are delayed or missed
+ * Uses the centralized SettlementSyncService for consistency
  */
 const syncSettlementStatus = async (req, res) => {
   try {
@@ -111,138 +112,17 @@ const syncSettlementStatus = async (req, res) => {
       return res.status(403).json({ error: 'Access denied. Only partners and organizations can sync settlement status.' });
     }
 
-    // Get all pending earnings for this recipient
-    const pendingEarnings = await Earnings.getEarnings(recipientId, recipientType, {
-      status: 'pending'
-    });
+    console.log(`[EARNINGS SYNC] Starting manual settlement sync for ${recipientType} ${recipientId}`);
 
-    if (pendingEarnings.length === 0) {
-      return res.json({
-        success: true,
-        message: 'No pending earnings to sync',
-        synced: 0,
-        skipped: 0,
-        errors: 0
-      });
-    }
+    const SettlementSyncService = require('../services/settlementSyncService');
+    const result = await SettlementSyncService.syncRecipientSettlements(recipientId, recipientType);
 
-    console.log(`[EARNINGS SYNC] Starting manual settlement sync for ${recipientType} ${recipientId}. Found ${pendingEarnings.length} pending earnings.`);
-
-    let syncedCount = 0;
-    let skippedCount = 0;
-    let errorCount = 0;
-    const errors = [];
-
-    // Fetch recent settlements from Razorpay to check if payments are settled
-    console.log(`[EARNINGS SYNC] Fetching recent settlements from Razorpay...`);
-    
-    try {
-      // Fetch recent settlements (last 100)
-      const settlementsResponse = await RazorpayService.fetchSettlements({ count: 100 });
-      const settlements = settlementsResponse.items || [];
-      
-      console.log(`[EARNINGS SYNC] Found ${settlements.length} recent settlements`);
-      
-      // Build a map of payment ID -> settlement ID for quick lookup
-      const paymentToSettlementMap = {};
-      for (const settlement of settlements) {
-        if (settlement.entity_ids && Array.isArray(settlement.entity_ids)) {
-          // Filter to only include payment IDs (they start with 'pay_')
-          const paymentIds = settlement.entity_ids.filter(id => id && id.startsWith('pay_'));
-          for (const paymentId of paymentIds) {
-            paymentToSettlementMap[paymentId] = settlement.id;
-          }
-        }
-      }
-      
-      console.log(`[EARNINGS SYNC] Settlement map contains ${Object.keys(paymentToSettlementMap).length} payments`);
-      
-      // Check each pending earnings record
-      for (const earnings of pendingEarnings) {
-        if (!earnings.razorpay_payment_id) {
-          console.log(`[EARNINGS SYNC] Skipping earnings ${earnings.id} - no payment ID`);
-          skippedCount++;
-          continue;
-        }
-
-        const paymentId = earnings.razorpay_payment_id;
-        const settlementId = paymentToSettlementMap[paymentId];
-        
-        if (settlementId) {
-          // Payment is in a settlement - update to available
-          const nextSaturday = getNextSaturday();
-          const payoutDate = formatDate(nextSaturday);
-          
-          await Earnings.updateStatusByPaymentId(paymentId, 'available', payoutDate, settlementId);
-          
-          console.log(`[EARNINGS SYNC] ✅ Updated earnings ${earnings.id} (payment ${paymentId}) to 'available' with settlement ${settlementId}`);
-          syncedCount++;
-        } else {
-          // Payment not found in recent settlements - still pending
-          console.log(`[EARNINGS SYNC] ⏳ Earnings ${earnings.id} (payment ${paymentId}) not found in recent settlements, still pending`);
-          skippedCount++;
-        }
-      }
-    } catch (error) {
-      console.error(`[EARNINGS SYNC] ❌ Error fetching settlements:`, error.message);
-      
-      // Fallback: Check individual payments if settlement fetch fails
-      console.log(`[EARNINGS SYNC] Falling back to individual payment checks...`);
-      
-      for (const earnings of pendingEarnings) {
-        if (!earnings.razorpay_payment_id) {
-          skippedCount++;
-          continue;
-        }
-
-        try {
-          const payment = await RazorpayService.fetchPayment(earnings.razorpay_payment_id);
-          
-          // Check if payment has settlement_id in its metadata
-          if (payment.settlement_id) {
-            const nextSaturday = getNextSaturday();
-            const payoutDate = formatDate(nextSaturday);
-            
-            await Earnings.updateStatusByPaymentId(
-              earnings.razorpay_payment_id, 
-              'available', 
-              payoutDate, 
-              payment.settlement_id
-            );
-            
-            console.log(`[EARNINGS SYNC] ✅ Updated earnings ${earnings.id} via payment check`);
-            syncedCount++;
-          } else {
-            console.log(`[EARNINGS SYNC] ⏳ Payment ${earnings.razorpay_payment_id} not yet settled`);
-            skippedCount++;
-          }
-        } catch (paymentError) {
-          console.error(`[EARNINGS SYNC] ❌ Error checking payment ${earnings.razorpay_payment_id}:`, paymentError.message);
-          errorCount++;
-          errors.push({
-            earnings_id: earnings.id,
-            payment_id: earnings.razorpay_payment_id,
-            error: paymentError.message
-          });
-        }
-      }
-    }
-
-    console.log(`[EARNINGS SYNC] Sync complete. Synced: ${syncedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`);
-
-    res.json({
-      success: true,
-      message: `Settlement sync completed. ${syncedCount} earnings updated to 'available'`,
-      synced: syncedCount,
-      skipped: skippedCount,
-      errors: errorCount,
-      error_details: errors.length > 0 ? errors : undefined
-    });
+    res.json(result);
   } catch (error) {
     console.error('Error syncing settlement status:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to sync settlement status',
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -250,135 +130,16 @@ const syncSettlementStatus = async (req, res) => {
 /**
  * Admin endpoint - sync settlements for all partners/organizations
  * Requires admin role
+ * Uses the centralized SettlementSyncService for consistency
  */
 const syncAllSettlements = async (req, res) => {
   try {
     console.log(`[ADMIN SYNC] Starting global settlement sync...`);
     
-    // Fetch all earnings candidates with pending earnings
-    const candidates = await Earnings.getEarningsCandidates();
-    const pendingCandidates = candidates.filter(c => parseFloat(c.pending_earnings) > 0);
+    const SettlementSyncService = require('../services/settlementSyncService');
+    const result = await SettlementSyncService.syncAllSettlements({ verbose: true });
     
-    console.log(`[ADMIN SYNC] Found ${pendingCandidates.length} recipients with pending earnings`);
-    
-    if (pendingCandidates.length === 0) {
-      return res.json({
-        success: true,
-        message: 'No pending earnings to sync',
-        total_synced: 0,
-        total_skipped: 0,
-        total_errors: 0,
-        recipients: []
-      });
-    }
-    
-    // Fetch recent settlements from Razorpay
-    console.log(`[ADMIN SYNC] Fetching recent settlements from Razorpay...`);
-    const settlementsResponse = await RazorpayService.fetchSettlements({ count: 100 });
-    const settlements = settlementsResponse.items || [];
-    
-    console.log(`[ADMIN SYNC] Found ${settlements.length} recent settlements`);
-    
-    // Build payment ID -> settlement ID map
-    const paymentToSettlementMap = {};
-    for (const settlement of settlements) {
-      if (settlement.entity_ids && Array.isArray(settlement.entity_ids)) {
-        // Filter to only include payment IDs (they start with 'pay_')
-        const paymentIds = settlement.entity_ids.filter(id => id && id.startsWith('pay_'));
-        for (const paymentId of paymentIds) {
-          paymentToSettlementMap[paymentId] = settlement.id;
-        }
-      }
-    }
-    
-    console.log(`[ADMIN SYNC] Settlement map contains ${Object.keys(paymentToSettlementMap).length} payments`);
-    
-    let totalSynced = 0;
-    let totalSkipped = 0;
-    let totalErrors = 0;
-    const recipientResults = [];
-    
-    // Process each recipient
-    for (const candidate of pendingCandidates) {
-      const { recipient_id, recipient_type } = candidate;
-      
-      console.log(`[ADMIN SYNC] Processing ${recipient_type} #${recipient_id}...`);
-      
-      let recipientSynced = 0;
-      let recipientSkipped = 0;
-      let recipientErrors = 0;
-      
-      try {
-        // Get pending earnings for this recipient
-        const pendingEarnings = await Earnings.getEarnings(recipient_id, recipient_type, {
-          status: 'pending'
-        });
-        
-        console.log(`[ADMIN SYNC] ${recipient_type} #${recipient_id} has ${pendingEarnings.length} pending earnings`);
-        
-        // Check each pending earning
-        for (const earnings of pendingEarnings) {
-          if (!earnings.razorpay_payment_id) {
-            recipientSkipped++;
-            continue;
-          }
-          
-          const paymentId = earnings.razorpay_payment_id;
-          const settlementId = paymentToSettlementMap[paymentId];
-          
-          if (settlementId) {
-            // Payment is in a settlement - update to available
-            const nextSaturday = getNextSaturday();
-            const payoutDate = formatDate(nextSaturday);
-            
-            await Earnings.updateStatusByPaymentId(paymentId, 'available', payoutDate, settlementId);
-            
-            console.log(`[ADMIN SYNC] ✅ Updated earnings ${earnings.id} (payment ${paymentId}) with settlement ${settlementId}`);
-            recipientSynced++;
-          } else {
-            recipientSkipped++;
-          }
-        }
-        
-        recipientResults.push({
-          recipient_id,
-          recipient_type,
-          synced: recipientSynced,
-          skipped: recipientSkipped,
-          errors: recipientErrors,
-          pending_count: pendingEarnings.length
-        });
-        
-        totalSynced += recipientSynced;
-        totalSkipped += recipientSkipped;
-        
-      } catch (error) {
-        console.error(`[ADMIN SYNC] ❌ Error processing ${recipient_type} #${recipient_id}:`, error.message);
-        recipientErrors++;
-        totalErrors++;
-        
-        recipientResults.push({
-          recipient_id,
-          recipient_type,
-          synced: recipientSynced,
-          skipped: recipientSkipped,
-          errors: recipientErrors,
-          error: error.message
-        });
-      }
-    }
-    
-    console.log(`[ADMIN SYNC] Complete. Total synced: ${totalSynced}, skipped: ${totalSkipped}, errors: ${totalErrors}`);
-    
-    res.json({
-      success: true,
-      message: `Global settlement sync completed. ${totalSynced} earnings updated across ${pendingCandidates.length} recipients`,
-      total_synced: totalSynced,
-      total_skipped: totalSkipped,
-      total_errors: totalErrors,
-      recipients_processed: pendingCandidates.length,
-      recipients: recipientResults
-    });
+    res.json(result);
     
   } catch (error) {
     console.error('[ADMIN SYNC] ❌ Global sync failed:', error);

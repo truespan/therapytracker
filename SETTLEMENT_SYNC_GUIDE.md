@@ -31,31 +31,20 @@ When Razorpay processes a settlement, it sends a `settlement.processed` webhook 
 
 **Flow:**
 ```
-Razorpay Settlement → Webhook → handleSettlementProcessed() → Extract Payment IDs → Update Earnings
+Razorpay Settlement → Webhook → handleSettlementProcessed() → SettlementSyncService.processSettlement() → Update Earnings
 ```
 
-**Implementation:** [`backend/src/controllers/razorpayController.js`](backend/src/controllers/razorpayController.js:654)
+**Implementation:**
+- Webhook handler: [`backend/src/controllers/razorpayController.js`](backend/src/controllers/razorpayController.js:650)
+- Centralized logic: [`backend/src/services/settlementSyncService.js`](backend/src/services/settlementSyncService.js:1)
 
 ```javascript
 async function handleSettlementProcessed(event) {
-  // 1. Extract settlement ID from webhook
+  // Extract settlement ID from webhook
   const settlementId = event.payload.settlement.entity.id;
-  
-  // 2. Fetch full settlement details from Razorpay API
-  const settlementDetails = await RazorpayService.fetchSettlement(settlementId);
-  
-  // 3. Extract payment IDs (filter for 'pay_' prefix)
-  const paymentIds = settlementDetails.entity_ids.filter(id => id.startsWith('pay_'));
-  
-  // 4. Update all earnings for these payments to 'available'
-  await Earnings.updateMultipleByPaymentIds(
-    paymentIds,
-    'available',
-    payoutDate,
-    settlementId
-  );
-  
-  // 5. Log updated available balance for each recipient
+
+  // Delegate processing to the centralized service
+  await SettlementSyncService.processSettlement(settlementId);
 }
 ```
 
@@ -64,7 +53,7 @@ async function handleSettlementProcessed(event) {
 - ✅ Handles multiple payments in a single settlement
 - ✅ Updates `razorpay_settlement_id` in earnings table
 - ✅ Logs available balance updates for each affected therapist
-- ✅ Fallback to alternative API if `entity_ids` is empty
+- ✅ Centralized logic shared by webhook + cron + manual endpoints
 
 ---
 
@@ -79,10 +68,8 @@ Therapists can manually trigger a settlement sync if webhooks are delayed or mis
 **Implementation:** [`backend/src/controllers/earningsController.js`](backend/src/controllers/earningsController.js:99)
 
 **How it works:**
-1. Fetches all pending earnings for the authenticated user
-2. Fetches recent settlements from Razorpay (last 100)
-3. Builds a payment ID → settlement ID map
-4. Updates earnings that are found in settlements to 'available'
+Uses the same centralized service logic as cron/webhooks:
+- [`SettlementSyncService.syncRecipientSettlements()`](backend/src/services/settlementSyncService.js:177)
 
 **Example Request:**
 ```bash
@@ -111,13 +98,11 @@ Admins can sync settlements for all partners and organizations at once.
 
 **Authentication:** Required (Admin role)
 
-**Implementation:** [`backend/src/controllers/earningsController.js`](backend/src/controllers/earningsController.js:252)
+**Implementation:** [`backend/src/controllers/earningsController.js`](backend/src/controllers/earningsController.js:130)
 
 **How it works:**
-1. Fetches all recipients with pending earnings
-2. Fetches recent settlements from Razorpay
-3. Processes each recipient's pending earnings
-4. Returns detailed results for each recipient
+Uses the same centralized service logic as cron/webhooks:
+- [`SettlementSyncService.syncAllSettlements()`](backend/src/services/settlementSyncService.js:22)
 
 **Example Response:**
 ```json
@@ -140,6 +125,21 @@ Admins can sync settlements for all partners and organizations at once.
   ]
 }
 ```
+
+---
+
+### 4. Scheduled (Cron) Settlement Sync — Safety Net
+
+Even with webhooks enabled, operational issues can cause missed/delayed events (downtime, transient DB errors, webhook retries exhausted). To ensure **eventual consistency**, the backend also runs a cron job that periodically re-syncs settlements.
+
+**Schedule:** Every 6 hours (IST) at 00:00, 06:00, 12:00, 18:00.
+
+**Implementation:**
+- Cron job: [`backend/src/jobs/settlementSyncCron.js`](backend/src/jobs/settlementSyncCron.js:1)
+- Startup hook: [`backend/src/server.js`](backend/src/server.js:71)
+
+This cron job calls:
+- [`SettlementSyncService.syncAllSettlements()`](backend/src/services/settlementSyncService.js:22)
 
 ---
 

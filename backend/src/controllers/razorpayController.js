@@ -650,125 +650,39 @@ async function handlePaymentSettled(event) {
 /**
  * Handle settlement processed - update earnings from 'pending' to 'available'
  * This is the correct webhook for Razorpay settlements
+ * Uses the centralized SettlementSyncService for consistency
  */
 async function handleSettlementProcessed(event) {
   const settlement = event.payload.settlement?.entity;
   
-  console.log(`[EARNINGS] Processing settlement event:`, {
+  console.log(`[WEBHOOK] Processing settlement event:`, {
     settlement_id: settlement?.id,
     event_type: event.event,
     event_id: event.id,
-    has_settlement_entity: !!settlement,
-    full_settlement_data: settlement
+    has_settlement_entity: !!settlement
   });
   
   if (!settlement || !settlement.id) {
-    console.warn('[EARNINGS] Settlement event missing settlement entity. Full event payload:', JSON.stringify(event.payload, null, 2));
+    console.warn('[WEBHOOK] Settlement event missing settlement entity. Full event payload:', JSON.stringify(event.payload, null, 2));
     return;
   }
 
   try {
     const settlementId = settlement.id;
-    const RazorpayService = require('../services/razorpayService');
-    const Earnings = require('../models/Earnings');
+    const SettlementSyncService = require('../services/settlementSyncService');
     
-    // Fetch full settlement details from Razorpay API to get payment IDs
-    console.log(`[EARNINGS] Fetching settlement details from Razorpay for ${settlementId}...`);
-    const settlementDetails = await RazorpayService.fetchSettlement(settlementId);
+    // Use the centralized settlement sync service
+    const result = await SettlementSyncService.processSettlement(settlementId);
     
-    console.log(`[EARNINGS] Settlement details fetched:`, {
-      settlement_id: settlementDetails.id,
-      amount: settlementDetails.amount,
-      fees: settlementDetails.fees,
-      tax: settlementDetails.tax,
-      utr: settlementDetails.utr,
-      status: settlementDetails.status,
-      entity_ids_count: settlementDetails.entity_ids?.length || 0
-    });
-    
-    // Extract payment IDs from settlement
-    // Razorpay settlements contain an array of payment IDs in entity_ids
-    let paymentIds = settlementDetails.entity_ids || [];
-    
-    // Filter to only include payment IDs (they start with 'pay_')
-    paymentIds = paymentIds.filter(id => id && id.startsWith('pay_'));
-    
-    console.log(`[EARNINGS] Settlement ${settlementId} contains ${paymentIds.length} payment IDs:`, paymentIds);
-    
-    if (paymentIds.length === 0) {
-      console.warn(`[EARNINGS] Settlement ${settlementId} has no payment IDs. Checking if we need to fetch payments separately...`);
-      
-      // Try alternative method: fetch payments for this settlement
-      try {
-        const settlementPayments = await RazorpayService.fetchSettlementPayments(settlementId);
-        if (settlementPayments && settlementPayments.items) {
-          paymentIds = settlementPayments.items.map(p => p.id).filter(id => id && id.startsWith('pay_'));
-          console.log(`[EARNINGS] Fetched ${paymentIds.length} payment IDs from settlement payments API:`, paymentIds);
-        }
-      } catch (altError) {
-        console.warn(`[EARNINGS] Could not fetch settlement payments:`, altError.message);
-      }
-      
-      if (paymentIds.length === 0) {
-        console.warn(`[EARNINGS] No payment IDs found for settlement ${settlementId}. Settlement may not contain any payments yet.`);
-        return;
-      }
-    }
-    
-    // Calculate next Saturday for payout scheduling
-    const { getNextSaturday, formatDate } = require('../utils/dateUtils');
-    const nextSaturday = getNextSaturday();
-    const payoutDate = formatDate(nextSaturday);
-    
-    console.log(`[EARNINGS] Updating earnings for ${paymentIds.length} payments to 'available' status with payout date ${payoutDate}...`);
-    
-    // Update all earnings for these payments
-    const updatedEarnings = await Earnings.updateMultipleByPaymentIds(
-      paymentIds,
-      'available',
-      payoutDate,
-      settlementId
-    );
-    
-    // Log detailed results
-    const recipientSummary = {};
-    updatedEarnings.forEach(e => {
-      const key = `${e.recipient_type}#${e.recipient_id}`;
-      if (!recipientSummary[key]) {
-        recipientSummary[key] = { count: 0, total: 0 };
-      }
-      recipientSummary[key].count++;
-      recipientSummary[key].total += parseFloat(e.amount);
-    });
-    
-    console.log(`[EARNINGS] ✅ Successfully updated ${updatedEarnings.length} earnings to 'available' from settlement ${settlementId}`, {
+    console.log(`[WEBHOOK] ✅ Settlement processed successfully:`, {
       settlement_id: settlementId,
-      payment_count: paymentIds.length,
-      updated_count: updatedEarnings.length,
-      payout_date: payoutDate,
-      recipient_summary: recipientSummary,
-      updated_earnings: updatedEarnings.map(e => ({
-        id: e.id,
-        payment_id: e.razorpay_payment_id,
-        amount: e.amount,
-        recipient: `${e.recipient_type}#${e.recipient_id}`
-      }))
+      updated_count: result.updated_count,
+      payment_count: result.payment_count,
+      payout_date: result.payout_date
     });
-    
-    // Log available balance update for each affected recipient
-    for (const [recipientKey, summary] of Object.entries(recipientSummary)) {
-      const [recipientType, recipientId] = recipientKey.split('#');
-      const earningsSummary = await Earnings.getEarningsSummary(parseInt(recipientId), recipientType);
-      console.log(`[EARNINGS] Updated available balance for ${recipientKey}:`, {
-        available_balance: earningsSummary.available_balance,
-        pending_earnings: earningsSummary.pending_earnings,
-        total_earnings: earningsSummary.total_earnings,
-        newly_available: summary.total.toFixed(2)
-      });
-    }
     
   } catch (error) {
-    console.error('[EARNINGS] ❌ Error handling settlement:', {
+    console.error('[WEBHOOK] ❌ Error handling settlement:', {
       error: error.message,
       stack: error.stack,
       settlement_id: settlement?.id,
