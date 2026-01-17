@@ -202,9 +202,14 @@ if (args[0] && args[0].startsWith('partner:')) {
 diagnoseEarningsSettlement(partnerId, organizationId)
   .then(() => {
     console.log('Diagnostic completed successfully.');
+    return db.end();
+  })
+  .then(() => {
     process.exit(0);
   })
   .catch((error) => {
     console.error('Diagnostic failed:', error);
-    process.exit(1);
+    db.end().finally(() => {
+      process.exit(1);
+    });
   });
