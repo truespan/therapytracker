@@ -32,19 +32,42 @@ async function syncAllSettlements() {
     const settlementsResponse = await RazorpayService.fetchSettlements({ count: 100 });
     const settlements = settlementsResponse.items || [];
     
-    console.log(`Found ${settlements.length} recent settlements\n`);
+    console.log(`Found ${settlements.length} recent settlements`);
+    
+    // Debug: Check settlement structure
+    if (settlements.length > 0) {
+      console.log('Sample settlement structure:', JSON.stringify(settlements[0], null, 2));
+    }
     
     // Build payment ID -> settlement ID map
+    // Razorpay settlements may need to be fetched individually to get payment IDs
     const paymentToSettlementMap = {};
-    for (const settlement of settlements) {
-      if (settlement.entity_ids && Array.isArray(settlement.entity_ids)) {
-        for (const paymentId of settlement.entity_ids) {
-          paymentToSettlementMap[paymentId] = settlement.id;
+    
+    console.log('\nFetching detailed settlement information...');
+    for (let i = 0; i < Math.min(settlements.length, 20); i++) {
+      const settlement = settlements[i];
+      try {
+        // Fetch full settlement details to get payment IDs
+        const settlementDetails = await RazorpayService.fetchSettlement(settlement.id);
+        
+        // Check various possible fields for payment IDs
+        const paymentIds = settlementDetails.entity_ids || 
+                          settlementDetails.payment_ids || 
+                          (settlementDetails.items && settlementDetails.items.map(item => item.entity_id)) ||
+                          [];
+        
+        if (paymentIds.length > 0) {
+          console.log(`   Settlement ${settlement.id}: ${paymentIds.length} payments`);
+          for (const paymentId of paymentIds) {
+            paymentToSettlementMap[paymentId] = settlement.id;
+          }
         }
+      } catch (error) {
+        console.error(`   Error fetching settlement ${settlement.id}:`, error.message);
       }
     }
     
-    console.log(`Settlement map contains ${Object.keys(paymentToSettlementMap).length} payments\n`);
+    console.log(`\nSettlement map contains ${Object.keys(paymentToSettlementMap).length} payments\n`);
     console.log('='.repeat(80));
     
     let totalSynced = 0;
