@@ -26,7 +26,7 @@ async function diagnosePartnerEarnings() {
     // 1. Check if partner exists
     console.log('1. Checking if partner exists...');
     const partnerQuery = `
-      SELECT id, partner_id, first_name, last_name, email, status
+      SELECT id, partner_id, name, email, contact, organization_id
       FROM partners
       WHERE partner_id = $1
     `;
@@ -41,9 +41,10 @@ async function diagnosePartnerEarnings() {
     console.log('✅ Partner found:');
     console.log(`   ID: ${partner.id}`);
     console.log(`   Partner ID: ${partner.partner_id}`);
-    console.log(`   Name: ${partner.first_name} ${partner.last_name}`);
-    console.log(`   Email: ${partner.email}`);
-    console.log(`   Status: ${partner.status}`);
+    console.log(`   Name: ${partner.name}`);
+    console.log(`   Email: ${partner.email || 'N/A'}`);
+    console.log(`   Contact: ${partner.contact}`);
+    console.log(`   Organization ID: ${partner.organization_id}`);
     console.log('');
 
     // 2. Check earnings summary
