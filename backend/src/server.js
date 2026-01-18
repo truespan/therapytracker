@@ -35,14 +35,22 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     const list = allowedOrigins.length > 0 ? allowedOrigins : defaultAllowedOrigins;
-    if (list.includes(origin)) return callback(null, true);
+    if (list.includes(origin)) {
+      return callback(null, true);
+    }
 
-    // Fail closed (no CORS) for unknown origins
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    // Log blocked origin for debugging
+    console.warn(`CORS blocked for origin: ${origin}`);
+    console.warn(`Allowed origins:`, list);
+    
+    // Return false instead of error to avoid breaking the request
+    // This will still block CORS but won't crash the server
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   optionsSuccessStatus: 204
 };
 
