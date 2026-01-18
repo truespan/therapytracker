@@ -14,7 +14,8 @@ async function fixMissingEarnings() {
     console.log('='.repeat(80));
     console.log('');
 
-    // Find all captured/authorized public_booking payments without earnings records
+    // Find all captured/authorized payments without earnings records
+    // Join with razorpay_orders to get the notes field
     const query = `
       SELECT
         rp.id,
@@ -23,9 +24,11 @@ async function fixMissingEarnings() {
         rp.amount,
         rp.currency,
         rp.status,
-        rp.notes,
-        rp.created_at
+        rp.metadata,
+        rp.created_at,
+        ro.notes as order_notes
       FROM razorpay_payments rp
+      LEFT JOIN razorpay_orders ro ON ro.razorpay_order_id = rp.razorpay_order_id
       LEFT JOIN earnings e ON e.razorpay_payment_id = rp.razorpay_payment_id
       WHERE rp.status IN ('captured', 'authorized')
         AND e.id IS NULL
@@ -53,10 +56,10 @@ async function fixMissingEarnings() {
       console.log(`  Created: ${payment.created_at}`);
 
       try {
-        // Parse notes to check payment type
+        // Parse notes from order to check payment type
         let notes = {};
-        if (payment.notes) {
-          notes = typeof payment.notes === 'string' ? JSON.parse(payment.notes) : payment.notes;
+        if (payment.order_notes) {
+          notes = typeof payment.order_notes === 'string' ? JSON.parse(payment.order_notes) : payment.order_notes;
         }
 
         console.log(`  Payment Type: ${notes.payment_type || 'N/A'}`);
