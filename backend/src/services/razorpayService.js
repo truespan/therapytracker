@@ -3,6 +3,7 @@ const RazorpayOrder = require('../models/RazorpayOrder');
 const RazorpayPayment = require('../models/RazorpayPayment');
 const RazorpaySubscription = require('../models/RazorpaySubscription');
 const SubscriptionPlan = require('../models/SubscriptionPlan');
+const axios = require('axios');
 
 // Lazy-initialize Razorpay instance
 let razorpayInstance = null;
@@ -211,19 +212,52 @@ class RazorpayService {
   }
 
   /**
-   * Fetch payments for a specific settlement
+   * Fetch payments for a specific settlement using REST API
+   * Note: The Razorpay Node SDK doesn't support fetching settlement demands,
+   * so we use the REST API directly
    * @param {string} settlementId - Razorpay settlement ID
-   * @returns {Promise<Object>} List of payments in the settlement
+   * @returns {Promise<Array>} List of payment IDs in the settlement
    */
   static async fetchSettlementPayments(settlementId) {
     try {
-      const razorpay = getRazorpayInstance();
-      // Fetch payments that belong to this settlement
-      const payments = await razorpay.settlements.fetchAllDemands(settlementId);
-      return payments;
+      const keyId = process.env.RAZORPAY_KEY_ID;
+      const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+      if (!keyId || !keySecret) {
+        throw new Error('Razorpay credentials not configured');
+      }
+
+      // Use Razorpay REST API to fetch settlement recon (reconciliation data)
+      // This endpoint returns all payment/refund entries in the settlement
+      const url = `https://api.razorpay.com/v1/settlements/${settlementId}/recon/combined`;
+
+      const response = await axios.get(url, {
+        auth: {
+          username: keyId,
+          password: keySecret
+        },
+        params: {
+          count: 100 // Fetch up to 100 items per settlement
+        }
+      });
+
+      // Extract payment IDs from the response
+      const items = response.data.items || [];
+      const paymentIds = [];
+
+      for (const item of items) {
+        // Each item has entity_id which is the payment ID for payment type items
+        if (item.type === 'payment' && item.entity_id) {
+          paymentIds.push(item.entity_id);
+        }
+      }
+
+      console.log(`[SETTLEMENT] Found ${paymentIds.length} payments in settlement ${settlementId}`);
+      return paymentIds;
+
     } catch (error) {
-      console.error('Razorpay fetch settlement payments error:', error);
-      throw new Error(`Failed to fetch settlement payments: ${error.message}`);
+      console.error('Razorpay fetch settlement payments error:', error.response?.data || error.message);
+      throw new Error(`Failed to fetch settlement payments: ${error.response?.data?.error?.description || error.message}`);
     }
   }
 

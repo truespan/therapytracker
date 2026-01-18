@@ -278,28 +278,29 @@ class SettlementSyncService {
   /**
    * Process a specific settlement by ID
    * Used by webhooks when a settlement.processed event is received
-   * 
+   *
    * @param {string} settlementId - Razorpay settlement ID
    * @returns {Promise<Object>} Processing results
    */
   static async processSettlement(settlementId) {
     try {
       console.log(`[SETTLEMENT_SYNC] Processing settlement ${settlementId}...`);
-      
+
       // Fetch settlement details from Razorpay
       const settlement = await RazorpayService.fetchSettlement(settlementId);
-      
+
       console.log(`[SETTLEMENT_SYNC] Settlement details:`, {
         settlement_id: settlement.id,
-        amount: settlement.amount,
+        amount: settlement.amount / 100, // Convert paise to rupees
         status: settlement.status,
-        entity_ids_count: settlement.entity_ids?.length || 0
+        created_at: settlement.created_at
       });
-      
-      // Extract payment IDs from settlement
-      let paymentIds = settlement.entity_ids || [];
-      paymentIds = paymentIds.filter(id => id && id.startsWith('pay_'));
-      
+
+      // Fetch payment IDs in this settlement using REST API
+      // The settlement object doesn't directly contain entity_ids, we need to fetch them separately
+      console.log(`[SETTLEMENT_SYNC] Fetching payment IDs from settlement...`);
+      const paymentIds = await RazorpayService.fetchSettlementPayments(settlementId);
+
       console.log(`[SETTLEMENT_SYNC] Settlement contains ${paymentIds.length} payment IDs`);
       
       if (paymentIds.length === 0) {
