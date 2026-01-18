@@ -10,18 +10,22 @@ const { getNextSaturday, formatDate } = require('../src/utils/dateUtils');
 require('dotenv').config();
 
 // Manual mappings from Razorpay dashboard
+// Based on diagnostic output and Razorpay dashboard
 const MANUAL_SETTLEMENTS = [
+  // Partner TH71585 - Anahita Verma
   {
     payment_id: 'pay_S4EzoUPiSEFf6Z',
     settlement_id: 'setl_S4sBcxZ9wOEPYB',
     note: 'Partner TH71585 - Anahita Verma - ₹800.00'
   },
-  // Add more mappings here as needed
-  // {
-  //   payment_id: 'pay_xxxxx',
-  //   settlement_id: 'setl_xxxxx',
-  //   note: 'Description'
-  // },
+  // Partner TH78079 - Sanjeeb K S
+  {
+    payment_id: 'pay_RxTfjJidNjyeu1',
+    settlement_id: 'setl_Ry8mGcrW22OAWX',
+    note: 'Partner TH78079 - Sanjeeb K S - ₹101.00'
+  },
+  // Add more payment → settlement mappings from Razorpay dashboard here
+  // You can find these in: Razorpay Dashboard → Settlements → Click settlement → View payments
 ];
 
 async function manualSettlementUpdate() {

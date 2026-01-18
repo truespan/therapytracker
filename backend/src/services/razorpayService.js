@@ -212,14 +212,28 @@ class RazorpayService {
   }
 
   /**
-   * Fetch payments for a specific settlement using REST API
-   * Note: The Razorpay Node SDK doesn't support fetching settlement demands,
-   * so we use the REST API directly
-   * @param {string} settlementId - Razorpay settlement ID
-   * @returns {Promise<Array>} List of payment IDs in the settlement
+   * Fetch settlement reconciliation data for a specific month/day
+   * Uses date-based API as per Razorpay documentation
+   *
+   * API Endpoint: GET /v1/settlements/recon/combined?year=yyyy&month=mm
+   * Reference: https://razorpay.com/docs/api/settlements/fetch-recon/
+   *
+   * @param {Object} params - Query parameters
+   * @param {number} params.year - Year in YYYY format (e.g., 2026)
+   * @param {number} params.month - Month in MM format (e.g., 01)
+   * @param {number} params.day - Optional day in DD format (e.g., 15)
+   * @param {number} params.count - Number of records (default: 1000, max: 1000)
+   * @param {number} params.skip - Pagination offset (default: 0)
+   * @returns {Promise<Array>} Array of settlement items with payment IDs
    */
-  static async fetchSettlementPayments(settlementId) {
+  static async fetchSettlementRecon(params = {}) {
     try {
+      const { year, month, day, count = 1000, skip = 0 } = params;
+
+      if (!year || !month) {
+        throw new Error('year and month are required for settlement recon API');
+      }
+
       const keyId = process.env.RAZORPAY_KEY_ID;
       const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
@@ -227,37 +241,60 @@ class RazorpayService {
         throw new Error('Razorpay credentials not configured');
       }
 
-      // Use Razorpay REST API to fetch settlement recon (reconciliation data)
-      // This endpoint returns all payment/refund entries in the settlement
-      const url = `https://api.razorpay.com/v1/settlements/${settlementId}/recon/combined`;
+      const url = 'https://api.razorpay.com/v1/settlements/recon/combined';
+      const queryParams = {
+        year,
+        month,
+        count,
+        skip
+      };
 
-      const response = await axios.get(url, {
-        auth: {
-          username: keyId,
-          password: keySecret
-        },
-        params: {
-          count: 100 // Fetch up to 100 items per settlement
-        }
-      });
-
-      // Extract payment IDs from the response
-      const items = response.data.items || [];
-      const paymentIds = [];
-
-      for (const item of items) {
-        // Each item has entity_id which is the payment ID for payment type items
-        if (item.type === 'payment' && item.entity_id) {
-          paymentIds.push(item.entity_id);
-        }
+      if (day) {
+        queryParams.day = day;
       }
 
-      console.log(`[SETTLEMENT] Found ${paymentIds.length} payments in settlement ${settlementId}`);
+      const response = await axios.get(url, {
+        auth: { username: keyId, password: keySecret },
+        params: queryParams
+      });
+
+      return response.data.items || [];
+
+    } catch (error) {
+      console.error('Razorpay fetch settlement recon error:', error.response?.data || error.message);
+      throw new Error(`Failed to fetch settlement recon: ${error.response?.data?.error?.description || error.message}`);
+    }
+  }
+
+  /**
+   * Get payment IDs for a specific settlement from recon data
+   * Filters recon items by settlement_id and extracts payment entity_ids
+   *
+   * @param {string} settlementId - Settlement ID to filter by
+   * @param {Object} dateParams - Date parameters for recon API
+   * @param {number} dateParams.year - Year in YYYY format
+   * @param {number} dateParams.month - Month in MM format
+   * @param {number} dateParams.day - Optional day in DD format
+   * @returns {Promise<Array>} Array of payment IDs in this settlement
+   */
+  static async fetchPaymentsInSettlement(settlementId, dateParams) {
+    try {
+      const reconItems = await this.fetchSettlementRecon(dateParams);
+
+      const paymentIds = reconItems
+        .filter(item =>
+          item.settlement_id === settlementId &&
+          item.type === 'payment' &&
+          item.entity_id
+        )
+        .map(item => item.entity_id);
+
+      console.log(`[SETTLEMENT_RECON] Found ${paymentIds.length} payments for settlement ${settlementId}`);
       return paymentIds;
 
     } catch (error) {
-      console.error('Razorpay fetch settlement payments error:', error.response?.data || error.message);
-      throw new Error(`Failed to fetch settlement payments: ${error.response?.data?.error?.description || error.message}`);
+      console.error(`[SETTLEMENT_RECON] Error fetching payments for settlement ${settlementId}:`, error.message);
+      throw error;
     }
   }
 
