@@ -134,6 +134,7 @@ class Earnings {
 
   /**
    * Update earnings status by Razorpay payment ID
+   * Only updates earnings that are currently in 'pending' status to prevent accidental rollbacks
    */
   static async updateStatusByPaymentId(razorpayPaymentId, status, payoutDate = null, settlementId = null) {
     let query = `
@@ -155,7 +156,7 @@ class Earnings {
       paramIndex++;
     }
 
-    query += ` WHERE razorpay_payment_id = $${paramIndex} RETURNING *`;
+    query += ` WHERE razorpay_payment_id = $${paramIndex} AND status = 'pending' RETURNING *`;
     values.push(razorpayPaymentId);
 
     const result = await db.query(query, values);
