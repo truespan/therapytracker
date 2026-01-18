@@ -472,15 +472,24 @@ async function handlePaymentSuccess(event) {
           orderMetadata = typeof dbOrder.metadata === 'string' ? JSON.parse(dbOrder.metadata) : dbOrder.metadata;
         }
         
-        // Check if this is a booking payment
-        if (orderMetadata && orderMetadata.payment_type === 'booking_fee') {
+        // Check if this is a booking payment (booking_fee or public_booking)
+        if (orderMetadata && (orderMetadata.payment_type === 'booking_fee' || orderMetadata.payment_type === 'public_booking')) {
           const partnerIdFromMetadata = orderMetadata.partner_id;
-          
+
           if (partnerIdFromMetadata) {
-            // Find partner by partner_id string (e.g., "AB12345") to get internal ID
+            // For public_booking, partner_id is the internal database ID
+            // For booking_fee, it's the partner_id string (e.g., "AB12345")
             const Partner = require('../models/Partner');
-            const partner = await Partner.findByPartnerId(partnerIdFromMetadata);
-            
+            let partner = null;
+
+            if (orderMetadata.payment_type === 'public_booking') {
+              // partner_id is the internal database ID
+              partner = await Partner.findById(partnerIdFromMetadata);
+            } else {
+              // partner_id is the partner_id string
+              partner = await Partner.findByPartnerId(partnerIdFromMetadata);
+            }
+
             if (partner) {
               // Try to find appointment_id from slot_id if available
               let appointmentId = null;
@@ -510,15 +519,15 @@ async function handlePaymentSuccess(event) {
                 payout_date: null // Will be set when settled
               });
 
-              console.log(`[EARNINGS] Created earnings record for partner ${partner.id} (${partner.name}) from booking payment ${payment.id} (amount: ${paymentAmount} ${payment.currency}) via webhook`);
+              console.log(`[EARNINGS] Created earnings record for partner ${partner.id} (${partner.name}) from ${orderMetadata.payment_type} payment ${payment.id} (amount: ${paymentAmount} ${payment.currency}) via webhook`);
             } else {
-              console.warn(`[EARNINGS] Partner not found for partner_id: ${partnerIdFromMetadata} (webhook)`);
+              console.warn(`[EARNINGS] Partner not found for partner_id: ${partnerIdFromMetadata} (webhook, payment_type: ${orderMetadata.payment_type})`);
             }
           } else {
             console.warn(`[EARNINGS] No partner_id found in order metadata for payment ${payment.id} (webhook)`);
           }
         } else {
-          console.log(`[EARNINGS] Payment ${payment.id} is not a booking fee payment (payment_type: ${orderMetadata.payment_type || 'not set'}) - skipping earnings creation`);
+          console.log(`[EARNINGS] Payment ${payment.id} is not a booking payment (payment_type: ${orderMetadata.payment_type || 'not set'}) - skipping earnings creation`);
         }
       } else if (existingEarnings) {
         console.log(`[EARNINGS] Earnings record already exists for payment ${payment.id} (webhook)`);
@@ -1748,6 +1757,39 @@ const verifyPublicBookingPayment = async (req, res) => {
         RETURNING *
       `;
       await client.query(updateQuery, [userId, appointmentId, slot_id]);
+
+      // Create earnings record for the partner
+      try {
+        const Partner = require('../models/Partner');
+        const partner = await Partner.findById(slot.partner_id);
+
+        if (partner) {
+          // Check if earnings already exist
+          const existingEarnings = await Earnings.findByPaymentId(payment.id);
+          if (!existingEarnings) {
+            await Earnings.create({
+              recipient_id: partner.id,
+              recipient_type: 'partner',
+              razorpay_payment_id: payment.id,
+              amount: dbPayment.amount,
+              currency: dbPayment.currency,
+              status: 'pending',
+              appointment_id: appointmentId,
+              payout_date: null
+            }, client);
+
+            console.log(`[EARNINGS] Created earnings record for partner ${partner.id} from public booking payment ${payment.id} (amount: ${dbPayment.amount} ${dbPayment.currency})`);
+          } else {
+            console.log(`[EARNINGS] Earnings record already exists for payment ${payment.id}`);
+          }
+        } else {
+          console.warn(`[EARNINGS] Partner not found for slot ${slot_id}`);
+        }
+      } catch (earningsError) {
+        console.error('[EARNINGS] Failed to create earnings record for public booking:', earningsError);
+        // Don't fail the entire transaction if earnings creation fails
+        // The webhook can create it later or it can be manually fixed
+      }
 
       await client.query('COMMIT');
       await client.release();
