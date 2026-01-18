@@ -45,6 +45,7 @@ const authenticateToken = (req, res, next) => {
       }
       
       // Update last_login for partners when they use the system (throttled)
+      const now = Date.now();
       const cacheKey = `partner_${user.id}`;
       const lastUpdate = lastUpdateCache.get(cacheKey);
       
