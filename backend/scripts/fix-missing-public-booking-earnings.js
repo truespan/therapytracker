@@ -83,12 +83,24 @@ async function fixMissingEarnings() {
         console.log(`  Partner ID: ${partnerId}`);
         console.log(`  Slot ID: ${slotId || 'N/A'}`);
 
-        // For public_booking, partner_id is the internal database ID
-        // For booking_fee, we'd need to look it up by partner_id string
-        let partnerDbId = partnerId;
+        // partner_id can be either:
+        // 1. Internal database ID (most common for both public_booking and booking_fee)
+        // 2. Partner ID string like "TH12345" (rare case)
+        // Try internal ID first, then fall back to string lookup
+        let partnerDbId = null;
 
-        if (notes.payment_type === 'booking_fee') {
-          // Need to find internal ID from partner_id string
+        // First, try as internal database ID (most common)
+        if (!isNaN(partnerId)) {
+          const partnerCheckQuery = `SELECT id FROM partners WHERE id = $1`;
+          const partnerCheckResult = await db.query(partnerCheckQuery, [partnerId]);
+
+          if (partnerCheckResult.rows.length > 0) {
+            partnerDbId = partnerCheckResult.rows[0].id;
+          }
+        }
+
+        // If not found, try as partner_id string (e.g., "TH12345")
+        if (!partnerDbId) {
           const partnerQuery = `SELECT id FROM partners WHERE partner_id = $1`;
           const partnerResult = await db.query(partnerQuery, [partnerId]);
 
