@@ -53,24 +53,50 @@ class SettlementSyncService {
       log(`Fetching ${settlementCount} recent settlements from Razorpay...`);
       const settlementsResponse = await RazorpayService.fetchSettlements({ count: settlementCount });
       const settlements = settlementsResponse.items || [];
-      
+
       log(`Found ${settlements.length} settlements from Razorpay`);
-      
+
       // Build payment ID -> settlement ID map from settlements
+      // Use REST API to fetch payment IDs for each settlement
       const paymentToSettlementMap = {};
-      
-      for (const settlement of settlements) {
-        if (settlement.entity_ids && Array.isArray(settlement.entity_ids)) {
-          // Filter to only include payment IDs (they start with 'pay_')
-          const paymentIds = settlement.entity_ids.filter(id => id && id.startsWith('pay_'));
-          
+      let totalPaymentsFetched = 0;
+
+      for (let i = 0; i < settlements.length; i++) {
+        const settlement = settlements[i];
+
+        // Only process settled/processed settlements
+        if (settlement.status !== 'processed' && settlement.status !== 'settled') {
+          log(`Skipping settlement ${settlement.id} - status: ${settlement.status}`);
+          continue;
+        }
+
+        try {
+          log(`Fetching payments for settlement ${settlement.id} (${i + 1}/${settlements.length})...`);
+
+          // Use REST API to get payment IDs in this settlement
+          const paymentIds = await RazorpayService.fetchSettlementPayments(settlement.id);
+
+          log(`  Found ${paymentIds.length} payments in settlement ${settlement.id}`);
+
           paymentIds.forEach(paymentId => {
             paymentToSettlementMap[paymentId] = settlement.id;
           });
+
+          totalPaymentsFetched += paymentIds.length;
+
+          // Small delay to avoid rate limiting (every 10 settlements)
+          if ((i + 1) % 10 === 0 && i < settlements.length - 1) {
+            log(`  Rate limiting: waiting 1 second...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+
+        } catch (error) {
+          console.error(`[SETTLEMENT_SYNC] Error fetching payments for settlement ${settlement.id}:`, error.message);
+          // Continue with next settlement
         }
       }
-      
-      log(`Built settlement map with ${Object.keys(paymentToSettlementMap).length} payment IDs`);
+
+      log(`Built settlement map with ${Object.keys(paymentToSettlementMap).length} payment IDs from ${totalPaymentsFetched} total payments`);
       
       let totalSynced = 0;
       let totalSkipped = 0;
@@ -200,20 +226,42 @@ class SettlementSyncService {
       // Fetch recent settlements from Razorpay
       const settlementsResponse = await RazorpayService.fetchSettlements({ count: settlementCount });
       const settlements = settlementsResponse.items || [];
-      
+
       console.log(`[SETTLEMENT_SYNC] Found ${settlements.length} recent settlements`);
-      
-      // Build payment ID -> settlement ID map
+
+      // Build payment ID -> settlement ID map using REST API
       const paymentToSettlementMap = {};
-      for (const settlement of settlements) {
-        if (settlement.entity_ids && Array.isArray(settlement.entity_ids)) {
-          const paymentIds = settlement.entity_ids.filter(id => id && id.startsWith('pay_'));
+      for (let i = 0; i < settlements.length; i++) {
+        const settlement = settlements[i];
+
+        // Only process settled/processed settlements
+        if (settlement.status !== 'processed' && settlement.status !== 'settled') {
+          continue;
+        }
+
+        try {
+          console.log(`[SETTLEMENT_SYNC] Fetching payments for settlement ${settlement.id} (${i + 1}/${settlements.length})...`);
+
+          // Use REST API to get payment IDs in this settlement
+          const paymentIds = await RazorpayService.fetchSettlementPayments(settlement.id);
+
+          console.log(`[SETTLEMENT_SYNC]   Found ${paymentIds.length} payments`);
+
           for (const paymentId of paymentIds) {
             paymentToSettlementMap[paymentId] = settlement.id;
           }
+
+          // Small delay to avoid rate limiting (every 10 settlements)
+          if ((i + 1) % 10 === 0 && i < settlements.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+
+        } catch (error) {
+          console.error(`[SETTLEMENT_SYNC] Error fetching payments for settlement ${settlement.id}:`, error.message);
+          // Continue with next settlement
         }
       }
-      
+
       console.log(`[SETTLEMENT_SYNC] Settlement map contains ${Object.keys(paymentToSettlementMap).length} payments`);
       
       let syncedCount = 0;
